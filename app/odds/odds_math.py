@@ -28,6 +28,35 @@ def market_probs_from_american(home_ml: int, away_ml: int) -> tuple[float, float
     return remove_vig(raw_home, raw_away)
 
 
+def american_to_decimal(american_odds: int | float) -> float:
+    """American moneyline to decimal payout multiplier (stake + profit per $1)."""
+    odds = float(american_odds)
+    if odds > 0:
+        return 1.0 + odds / 100.0
+    return 1.0 + 100.0 / abs(odds)
+
+
+def parlay_decimal_payout(american_odds_list: list[int | float]) -> float:
+    """Product of leg decimal odds for a parlay."""
+    payout = 1.0
+    for odds in american_odds_list:
+        payout *= american_to_decimal(odds)
+    return payout
+
+
+def joint_probability(leg_probs: list[float]) -> float:
+    """Independence assumption: product of leg win probabilities."""
+    prob = 1.0
+    for p in leg_probs:
+        prob *= p
+    return prob
+
+
+def parlay_ev(model_joint_prob: float, decimal_payout: float) -> float:
+    """EV per $1 staked: (joint_prob × payout) - 1."""
+    return model_joint_prob * decimal_payout - 1.0
+
+
 def american_payout_profit(american_odds: int | float, won: bool) -> float:
     """Flat $1 stake profit (negative if loss)."""
     if not won:

@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db.database import get_connection, init_db
 from app.db.market_status import get_market_eval_status
+from app.db.parlay_status import get_parlay_status
 from app.db.mlb_status import get_mlb_data_status
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -32,9 +33,10 @@ async def health():
     return {
         "status": "ok",
         "sport": "mlb",
-        "phase": "3",
+        "phase": "4",
         **data_status,
         **get_market_eval_status(),
+        **get_parlay_status(),
     }
 
 

@@ -117,3 +117,17 @@ ODDS_API_KEY=your_key_here
 One `h2h` request for all MLB games ≈ 1 credit. `app/odds/the_odds_api.py` skips gracefully if the key is empty. Do not use paid/historical Odds API endpoints.
 
 See `MARKET.md` for match rate, paper-trade ROI, and advisor recommendation.
+
+## MLB parlay ranker (Phase 4)
+
+```powershell
+python scripts/rank_mlb_parlays.py
+```
+
+Historical demo (no API key):
+
+```powershell
+python scripts/rank_mlb_parlays.py --date 2025-08-15 --use-cache
+```
+
+Defaults: 2–4 legs, cross-game only, `min_edge=5%`, top 5 parlays. See `PARLAY.md` for formulas and assumptions.
