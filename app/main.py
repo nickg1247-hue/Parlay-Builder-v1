@@ -5,7 +5,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.db.database import init_db
+from app.db.database import get_connection, init_db
+from app.db.mlb_status import get_mlb_data_status
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -22,7 +23,17 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "sport": "mlb", "phase": "0"}
+    conn = get_connection()
+    try:
+        data_status = get_mlb_data_status(conn)
+    finally:
+        conn.close()
+    return {
+        "status": "ok",
+        "sport": "mlb",
+        "phase": "1",
+        **data_status,
+    }
 
 
 @app.get("/")

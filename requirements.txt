@@ -3,3 +3,6 @@ uvicorn[standard]>=0.27.0,<0.33.0
 python-dotenv>=1.0.0,<2.0.0
 pytest>=8.0.0,<9.0.0
 httpx>=0.26.0,<0.28.0
+pandas>=2.1.0,<3.0.0
+pyarrow>=19.0.0,<22.0.0
+pybaseball>=2.2.7,<3.0.0
