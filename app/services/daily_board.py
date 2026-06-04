@@ -17,9 +17,13 @@ from app.db.mlb_status import get_mlb_data_status
 from app.db.parlay_status import get_parlay_status
 from app.odds.odds_math import market_probs_from_american
 from app.odds.team_aliases import is_valid_american_odds
+from app.models.calibration import (
+    blend_display_prob,
+    model_disagrees_heavy_favorite,
+)
+from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import (
     DEFAULT_MAX_PARLAYS,
-    DEFAULT_MIN_EDGE,
     attach_market_odds,
     rank_parlays,
     _candidate_legs,
@@ -27,7 +31,7 @@ from app.parlay.ev_ranker import (
 from app.parlay.slate import build_slate_dataframe, build_slate_from_history
 
 DAILY_BOARD_CACHE = PROJECT_ROOT / "data" / "processed" / "daily_board.json"
-SINGLE_EDGE_THRESHOLD = 0.05
+SINGLE_EDGE_THRESHOLD = DEFAULT_MIN_EDGE
 DISCLAIMER = (
     "Experimental analytics — not betting advice. EV signals are not validated."
 )
@@ -79,6 +83,9 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool) -> list[dict[str, Any]]:
                         "american_odds": am,
                     }
 
+        display_home = blend_display_prob(model_home, market_home)
+        disagree = model_disagrees_heavy_favorite(model_home, market_home)
+
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -86,10 +93,12 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool) -> list[dict[str, Any]]:
                 "away_team": row.away_team,
                 "home_team": row.home_team,
                 "model_prob_home": round(model_home, 4),
+                "display_prob_home": round(display_home, 4),
                 "market_prob_home": round(market_home, 4) if market_home else None,
                 "edge_home": round(edge_home, 4) if edge_home is not None else None,
                 "plus_ev_single": plus_ev,
                 "best_pick": best_pick,
+                "model_disagrees_heavy_favorite": disagree,
             }
         )
     return rows
@@ -224,6 +233,11 @@ def build_daily_board(
         "slate": slate,
         "top_singles": top_singles,
         "top_parlays": top_parlays,
+        "display_note": (
+            "Win % uses 50% model + 50% market when odds available; "
+            "raw model when odds missing."
+        ),
+        "edge_threshold": SINGLE_EDGE_THRESHOLD,
         "status": _status_footer(),
     }
     _write_cache(payload)

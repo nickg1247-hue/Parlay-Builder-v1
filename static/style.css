@@ -228,6 +228,16 @@ tr.plus-ev td {
   color: var(--muted);
 }
 
+.disagree-row {
+  background: #2a1a1a;
+}
+
+.row-warn {
+  font-size: 0.75rem;
+  color: #f4212e;
+  margin-top: 0.25rem;
+}
+
 .footer {
   margin-top: 2rem;
   padding-top: 1rem;

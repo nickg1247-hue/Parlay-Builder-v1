@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 PARLAYS_OUTPUT = PROJECT_ROOT / "data" / "processed" / "mlb_parlays_today.json"
 
-DEFAULT_MIN_EDGE = 0.05
+from app.models.constants import DEFAULT_MIN_EDGE
 DEFAULT_MAX_PARLAYS = 5
 DEFAULT_MIN_LEGS = 2
 DEFAULT_MAX_LEGS = 4

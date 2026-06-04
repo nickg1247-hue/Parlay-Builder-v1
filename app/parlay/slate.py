@@ -10,6 +10,7 @@ from typing import Any
 import httpx
 import pandas as pd
 
+from app.data.pitcher_lookup import lookup_pitcher_rates
 from app.models.mlb_baseline import (
     NEUTRAL_LAST10_RUN_DIFF,
     NEUTRAL_LAST10_WIN_PCT,
@@ -110,8 +111,10 @@ def build_slate_dataframe(
         )
 
         season = gdt.year
-        home_era = era_medians.get(season, era_medians["default"])
-        away_era = era_medians.get(season, era_medians["default"])
+        home_sp = _pitcher_name(home)
+        away_sp = _pitcher_name(away)
+        home_era, home_fip = lookup_pitcher_rates(home_sp, season, era_medians)
+        away_era, away_fip = lookup_pitcher_rates(away_sp, season, era_medians)
 
         rows.append(
             {
@@ -121,14 +124,16 @@ def build_slate_dataframe(
                 "away_team": away_team,
                 "home_pitcher_era": home_era,
                 "away_pitcher_era": away_era,
+                "home_pitcher_fip": home_fip,
+                "away_pitcher_fip": away_fip,
                 "home_last10_win_pct": h_wp if h_wp is not None else NEUTRAL_LAST10_WIN_PCT,
                 "away_last10_win_pct": a_wp if a_wp is not None else NEUTRAL_LAST10_WIN_PCT,
                 "home_last10_run_diff": h_rd if h_rd is not None else NEUTRAL_LAST10_RUN_DIFF,
                 "away_last10_run_diff": a_rd if a_rd is not None else NEUTRAL_LAST10_RUN_DIFF,
                 "home_rest_days": home_rest if home_rest is not None else rest_fill,
                 "away_rest_days": away_rest if away_rest is not None else rest_fill,
-                "home_starting_pitcher": _pitcher_name(home),
-                "away_starting_pitcher": _pitcher_name(away),
+                "home_starting_pitcher": home_sp,
+                "away_starting_pitcher": away_sp,
                 "season": season,
             }
         )
