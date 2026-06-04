@@ -239,9 +239,13 @@ def build_daily_board(
     game_date: date | None = None,
     use_cache: bool = False,
     refresh: bool = False,
+    skip_totals: bool = False,
 ) -> dict[str, Any]:
     game_date = game_date or date.today()
-    cache_key = f"{game_date.isoformat()}_{'cache' if use_cache else 'live'}"
+    cache_key = (
+        f"{game_date.isoformat()}_{'cache' if use_cache else 'live'}"
+        f"_{'no_totals' if skip_totals else 'totals'}"
+    )
 
     if not refresh and DAILY_BOARD_CACHE.exists():
         cached = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
@@ -288,7 +292,9 @@ def build_daily_board(
         )
 
     has_odds = odds_source != "none"
-    totals_by_game = _totals_by_game(game_date, use_cache, slate_df)
+    totals_by_game = (
+        {} if skip_totals else _totals_by_game(game_date, use_cache, slate_df)
+    )
     slate = _slate_rows(merged, has_odds, totals_by_game)
     top_singles = _top_singles(slate) if has_odds else []
     top_parlays = _top_parlays_payload(merged, odds_source) if has_odds else []

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
+from collections import defaultdict
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
@@ -61,11 +64,18 @@ class _GameRecord:
 
 
 class _TeamTracker:
+    """Per-team chronological indexes for O(log n) pre-game lookups."""
+
     def __init__(self) -> None:
-        self.records: list[_GameRecord] = []
+        self._records: dict[str, list[_GameRecord]] = defaultdict(list)
+        self._dates: dict[str, list[pd.Timestamp]] = defaultdict(list)
 
     def games_before(self, team: str, before: pd.Timestamp) -> list[_GameRecord]:
-        return [r for r in self.records if r.team == team and r.date < before]
+        dates = self._dates.get(team)
+        if not dates:
+            return []
+        idx = bisect_left(dates, before)
+        return self._records[team][:idx]
 
     def update_from_result(
         self,
@@ -76,12 +86,46 @@ class _TeamTracker:
         home_rd: int,
         season: int,
     ) -> None:
-        self.records.append(
-            _GameRecord(game_date, home_team, int(home_win), home_rd, True, season)
+        for team, win, rd, is_home in (
+            (home_team, int(home_win), home_rd, True),
+            (away_team, 1 - int(home_win), -home_rd, False),
+        ):
+            self._records[team].append(
+                _GameRecord(game_date, team, win, rd, is_home, season)
+            )
+            self._dates[team].append(game_date)
+
+
+def build_team_tracker_from_history(games_df: pd.DataFrame) -> _TeamTracker:
+    tracker = _TeamTracker()
+    df = games_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    for row in df.sort_values(["date", "game_id"]).itertuples(index=False):
+        if not hasattr(row, "home_win") or pd.isna(getattr(row, "home_win", None)):
+            continue
+        game_date = pd.to_datetime(row.date)
+        season = int(getattr(row, "season", game_date.year))
+        home_rd = int(row.home_score) - int(row.away_score)
+        tracker.update_from_result(
+            game_date,
+            row.home_team,
+            row.away_team,
+            int(row.home_win),
+            home_rd,
+            season,
         )
-        self.records.append(
-            _GameRecord(game_date, away_team, 1 - int(home_win), -home_rd, False, season)
-        )
+    return tracker
+
+
+@lru_cache(maxsize=16)
+def _cached_team_tracker_before(cutoff_date_iso: str) -> _TeamTracker:
+    hist = load_games()
+    hist = hist[hist["date"] < pd.Timestamp(cutoff_date_iso)].copy()
+    return build_team_tracker_from_history(hist)
+
+
+def get_team_tracker_before(before: pd.Timestamp) -> _TeamTracker:
+    return _cached_team_tracker_before(pd.to_datetime(before).isoformat())
 
 
 def _load_park_factors() -> dict[str, float]:
@@ -166,6 +210,63 @@ def _compute_rest_days(
     return float((game_date - last).days)
 
 
+def _row_features(
+    row,
+    tracker: _TeamTracker,
+    all_teams: set[str],
+    park_map: dict[str, float],
+    era_medians: dict[int | str, float],
+    rest_fill: float,
+    default_whip: float,
+    default_ip: float,
+) -> dict[str, float | str | None]:
+    game_date = pd.to_datetime(row.date)
+    season = int(getattr(row, "season", game_date.year))
+    before = game_date
+
+    home_prior = tracker.games_before(row.home_team, before)
+    away_prior = tracker.games_before(row.away_team, before)
+    home_l10_wp, home_l10_rd = _last_n_from_prior(home_prior, 10)
+    away_l10_wp, away_l10_rd = _last_n_from_prior(away_prior, 10)
+
+    home_sp = getattr(row, "home_starting_pitcher", None)
+    away_sp = getattr(row, "away_starting_pitcher", None)
+    home_prof = lookup_pitcher_profile(
+        home_sp, season, era_medians, default_whip, default_ip
+    )
+    away_prof = lookup_pitcher_profile(
+        away_sp, season, era_medians, default_whip, default_ip
+    )
+
+    feats: dict[str, float | str | None] = {
+        "game_id": str(row.game_id),
+        "date": game_date,
+        "home_team": row.home_team,
+        "away_team": row.away_team,
+        "season": season,
+        "home_pitcher_era": home_prof["era"],
+        "away_pitcher_era": away_prof["era"],
+        "home_pitcher_whip": home_prof["whip"],
+        "away_pitcher_whip": away_prof["whip"],
+        "home_pitcher_ip": home_prof["ip"],
+        "away_pitcher_ip": away_prof["ip"],
+        "home_last10_win_pct": home_l10_wp,
+        "away_last10_win_pct": away_l10_wp,
+        "home_last10_run_diff": home_l10_rd,
+        "away_last10_run_diff": away_l10_rd,
+        "home_rest_days": _compute_rest_days(home_prior, game_date, rest_fill),
+        "away_rest_days": _compute_rest_days(away_prior, game_date, rest_fill),
+        "park_factor_runs": park_map.get(row.home_team, DEFAULT_PARK_FACTOR),
+    }
+    feats.update(
+        _team_feature_block(row.home_team, before, season, tracker, all_teams, True)
+    )
+    feats.update(
+        _team_feature_block(row.away_team, before, season, tracker, all_teams, False)
+    )
+    return feats
+
+
 def build_features(
     games_df: pd.DataFrame,
     era_medians: dict[int | str, float] | None = None,
@@ -173,6 +274,7 @@ def build_features(
     default_whip: float = DEFAULT_WHIP,
     default_ip: float = DEFAULT_IP,
     update_state: bool = True,
+    tracker: _TeamTracker | None = None,
 ) -> pd.DataFrame:
     """
     Build Wave 1 + legacy features for each row using only prior completed games.
@@ -190,63 +292,25 @@ def build_features(
 
     park_map = _load_park_factors()
     all_teams = set(df["home_team"]) | set(df["away_team"])
-    tracker = _TeamTracker()
+    state = tracker if tracker is not None else _TeamTracker()
     feature_rows: list[dict] = []
 
     for row in df.itertuples(index=False):
-        game_date = pd.to_datetime(row.date)
-        season = int(getattr(row, "season", game_date.year))
-        before = game_date
-
-        home_prior = tracker.games_before(row.home_team, before)
-        away_prior = tracker.games_before(row.away_team, before)
-
-        home_l10_wp, home_l10_rd = _last_n_from_prior(home_prior, 10)
-        away_l10_wp, away_l10_rd = _last_n_from_prior(away_prior, 10)
-
-        home_sp = getattr(row, "home_starting_pitcher", None)
-        away_sp = getattr(row, "away_starting_pitcher", None)
-        home_prof = lookup_pitcher_profile(
-            home_sp, season, era_medians, default_whip, default_ip
+        feats = _row_features(
+            row, state, all_teams, park_map, era_medians, rest_fill, default_whip, default_ip
         )
-        away_prof = lookup_pitcher_profile(
-            away_sp, season, era_medians, default_whip, default_ip
-        )
-
-        feats: dict[str, float | str | None] = {
-            "game_id": str(row.game_id),
-            "date": game_date,
-            "home_team": row.home_team,
-            "away_team": row.away_team,
-            "season": season,
-            "home_pitcher_era": home_prof["era"],
-            "away_pitcher_era": away_prof["era"],
-            "home_pitcher_whip": home_prof["whip"],
-            "away_pitcher_whip": away_prof["whip"],
-            "home_pitcher_ip": home_prof["ip"],
-            "away_pitcher_ip": away_prof["ip"],
-            "home_last10_win_pct": home_l10_wp,
-            "away_last10_win_pct": away_l10_wp,
-            "home_last10_run_diff": home_l10_rd,
-            "away_last10_run_diff": away_l10_rd,
-            "home_rest_days": _compute_rest_days(home_prior, game_date, rest_fill),
-            "away_rest_days": _compute_rest_days(away_prior, game_date, rest_fill),
-            "park_factor_runs": park_map.get(row.home_team, DEFAULT_PARK_FACTOR),
-        }
-        feats.update(_team_feature_block(row.home_team, before, season, tracker, all_teams, True))
-        feats.update(_team_feature_block(row.away_team, before, season, tracker, all_teams, False))
-
         if hasattr(row, "home_win") and pd.notna(getattr(row, "home_win", None)):
             feats["home_win"] = int(row.home_win)
         if hasattr(row, "home_score"):
             feats["home_score"] = row.home_score
             feats["away_score"] = row.away_score
-
         feature_rows.append(feats)
 
         if update_state and hasattr(row, "home_win") and pd.notna(row.home_win):
+            game_date = pd.to_datetime(row.date)
+            season = int(getattr(row, "season", game_date.year))
             home_rd = int(row.home_score) - int(row.away_score)
-            tracker.update_from_result(
+            state.update_from_result(
                 game_date, row.home_team, row.away_team, int(row.home_win), home_rd, season
             )
 
@@ -265,16 +329,37 @@ def build_features_for_slate(
     era_medians: dict | None = None,
     rest_fill: float = 1.0,
 ) -> pd.DataFrame:
-    """Features for upcoming games using history only (no slate leakage)."""
-    hist = history_df if history_df is not None else load_games()
-    min_date = pd.to_datetime(slate_df["date"]).min()
-    hist = hist[hist["date"] < min_date].copy()
-    combined = pd.concat([hist, slate_df], ignore_index=True)
-    combined = combined.sort_values(["date", "game_id"]).reset_index(drop=True)
-    feats = build_features(
-        combined, era_medians=era_medians, rest_fill=rest_fill, update_state=True
-    )
-    return feats.iloc[len(hist) :].copy().reset_index(drop=True)
+    """Score slate rows only; history precomputed in one O(n) pass (cached by date)."""
+    slate = slate_df.copy()
+    slate["date"] = pd.to_datetime(slate["date"])
+    min_date = slate["date"].min()
+
+    if history_df is not None:
+        tracker = build_team_tracker_from_history(
+            history_df[pd.to_datetime(history_df["date"]) < min_date]
+        )
+    else:
+        tracker = get_team_tracker_before(min_date)
+
+    if era_medians is None:
+        era_medians = {"default": 4.0}
+
+    park_map = _load_park_factors()
+    all_teams = set(slate["home_team"]) | set(slate["away_team"])
+    rows = [
+        _row_features(
+            row,
+            tracker,
+            all_teams,
+            park_map,
+            era_medians,
+            rest_fill,
+            DEFAULT_WHIP,
+            DEFAULT_IP,
+        )
+        for row in slate.sort_values(["date", "game_id"]).itertuples(index=False)
+    ]
+    return pd.DataFrame(rows)
 
 
 def attach_elo_to_wave1(df: pd.DataFrame, history_df: pd.DataFrame | None = None) -> pd.DataFrame:

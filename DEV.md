@@ -170,3 +170,5 @@ python scripts/backtest_mlb_totals_recent.py --days 7
 See `TOTALS.md` for metrics and production gate (log loss vs market, not accuracy %).
 
 Demo dashboard includes O/U columns when `use_cache=true` and `mlb_totals_2025.csv` is present.
+
+Fast moneyline-only board: `http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true&skip_totals=true`

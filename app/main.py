@@ -49,6 +49,7 @@ async def daily_board(
     date_param: str | None = Query(None, alias="date"),
     use_cache: bool = Query(False),
     refresh: bool = Query(False),
+    skip_totals: bool = Query(False),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
@@ -57,6 +58,7 @@ async def daily_board(
         game_date=game_date,
         use_cache=use_cache,
         refresh=refresh,
+        skip_totals=skip_totals,
     )
 
 
