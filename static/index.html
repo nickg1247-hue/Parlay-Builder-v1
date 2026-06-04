@@ -7,10 +7,55 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <main>
-    <h1>Parlay Builder v1</h1>
-    <p class="tagline">MLB — coming soon</p>
-    <p class="hint">Local dev · Phase 0</p>
-  </main>
+  <div class="page">
+    <header class="header">
+      <div>
+        <h1>Parlay Builder v1 — MLB</h1>
+        <p class="date-line" id="board-date">Loading…</p>
+      </div>
+      <button type="button" class="btn" id="refresh-btn">Refresh</button>
+    </header>
+
+    <div class="banner" id="disclaimer"></div>
+    <div class="warnings" id="warnings"></div>
+    <div class="error" id="error"></div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Loading daily board…</p>
+    </div>
+
+    <main class="content hidden" id="content">
+      <section>
+        <h2>Today&rsquo;s slate</h2>
+        <div class="table-wrap">
+          <table id="slate-table">
+            <thead>
+              <tr>
+                <th>Matchup</th>
+                <th>Model P(home)</th>
+                <th>Market P(home)</th>
+                <th>Edge (home)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Top singles <span class="sub">(≥5% edge)</span></h2>
+        <div id="singles-list" class="card-list"></div>
+      </section>
+
+      <section>
+        <h2>Top parlays <span class="sub">(cross-game, ≥5% EV)</span></h2>
+        <div id="parlays-list" class="card-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer" id="status-footer"></footer>
+  </div>
+  <script src="/static/app.js"></script>
 </body>
 </html>

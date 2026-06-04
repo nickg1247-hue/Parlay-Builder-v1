@@ -11,7 +11,7 @@ def test_health():
     body = response.json()
     assert body["status"] == "ok"
     assert body["sport"] == "mlb"
-    assert body["phase"] == "4"
+    assert body["phase"] == "5"
     assert "mlb_games_count" in body
     assert "mlb_date_range" in body
     assert "market_eval_status" in body

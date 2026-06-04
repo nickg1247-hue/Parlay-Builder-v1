@@ -131,3 +131,28 @@ python scripts/rank_mlb_parlays.py --date 2025-08-15 --use-cache
 ```
 
 Defaults: 2–4 legs, cross-game only, `min_edge=5%`, top 5 parlays. See `PARLAY.md` for formulas and assumptions.
+
+## Daily dashboard (Phase 5)
+
+**Start server:**
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Or open browser automatically:
+
+```powershell
+.\scripts\open_daily.ps1
+```
+
+**URLs:**
+
+| Mode | URL |
+|------|-----|
+| Live dashboard | http://127.0.0.1:8000 |
+| Demo (cached odds) | http://127.0.0.1:8000/?date=2025-08-15&use_cache=true |
+| API (live) | http://127.0.0.1:8000/api/daily |
+| API (demo) | http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true |
+
+Live mode requires `ODDS_API_KEY` in `.env`. The board caches responses for 5 minutes in `data/processed/daily_board.json` unless you click **Refresh** or pass `refresh=true`.
