@@ -94,3 +94,26 @@ python scripts/train_mlb_baseline.py
 | `home_rest_days` / `away_rest_days` | Median rest days from 2023–2024 training games |
 
 FIP columns are ignored (all null). See `MODEL.md` for holdout metrics and phase gate.
+
+## MLB market comparison (Phase 3)
+
+From project root:
+
+```powershell
+python scripts/load_mlb_odds_free.py
+python scripts/evaluate_mlb_market.py
+```
+
+Optional edge threshold: `python scripts/evaluate_mlb_market.py --edge-threshold 0.03`
+
+**Historical odds:** Free JSON release from [mlb-odds-scraper](https://github.com/ArnavSaraogi/mlb-odds-scraper/releases/tag/dataset) (SportsBookReview-derived, pre-built; not live sportsbook scraping). Cached to `data/processed/mlb_odds_2025.csv`.
+
+**Live odds stub (optional):** Sign up at [the-odds-api.com](https://the-odds-api.com) (free tier, 500 credits/month). Add to `.env`:
+
+```
+ODDS_API_KEY=your_key_here
+```
+
+One `h2h` request for all MLB games ≈ 1 credit. `app/odds/the_odds_api.py` skips gracefully if the key is empty. Do not use paid/historical Odds API endpoints.
+
+See `MARKET.md` for match rate, paper-trade ROI, and advisor recommendation.

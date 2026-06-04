@@ -242,6 +242,22 @@ def run_training() -> dict:
     return results
 
 
+def load_model_artifact() -> dict:
+    if not MODEL_ARTIFACT.exists():
+        raise FileNotFoundError(
+            f"Model not found at {MODEL_ARTIFACT}. Run scripts/train_mlb_baseline.py first."
+        )
+    return joblib.load(MODEL_ARTIFACT)
+
+
+def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
+    artifact = load_model_artifact()
+    prepared = prepare_features(
+        df, artifact["era_medians"], artifact["rest_fill"]
+    )
+    return artifact["model"].predict_proba(prepared[FEATURE_COLUMNS].values)[:, 1]
+
+
 def format_metrics_table(results: dict) -> str:
     lines = [
         "| Model | Log loss | Brier | Accuracy |",
