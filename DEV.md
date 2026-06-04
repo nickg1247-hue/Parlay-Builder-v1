@@ -73,3 +73,24 @@ python scripts/validate_mlb_data.py
 Checks row count, date range, null counts, and duplicate `game_id` (must be 0).
 
 Rolling features (`home_last10_*`, `away_last10_*`) use only games **before** each row (no leakage). Early-season games have null rolling stats until a team has prior games.
+
+## MLB baseline model (Phase 2)
+
+**Train** (requires Phase 1 data in SQLite or parquet):
+
+```powershell
+python scripts/train_mlb_baseline.py
+```
+
+**Split:** 2023–2024 train · 2025 holdout (time-based, no shuffle).
+
+**Imputation** (applied before train/test split using train-only stats where noted):
+
+| Field | Rule |
+|-------|------|
+| `home_pitcher_era` / `away_pitcher_era` | Season median ERA from 2023–2024 training games |
+| `home_last10_win_pct` / `away_last10_win_pct` | `0.5` when null (opening day / no history) |
+| `home_last10_run_diff` / `away_last10_run_diff` | `0.0` when null |
+| `home_rest_days` / `away_rest_days` | Median rest days from 2023–2024 training games |
+
+FIP columns are ignored (all null). See `MODEL.md` for holdout metrics and phase gate.
