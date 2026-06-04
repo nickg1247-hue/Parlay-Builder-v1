@@ -41,9 +41,9 @@ def _build_team_state(history: pd.DataFrame) -> tuple[
     team_history: dict[str, list[tuple[int, int]]] = defaultdict(list)
     team_last_date: dict[str, datetime] = {}
     for row in history.itertuples(index=False):
-        game_date = (
-            row.date if isinstance(row.date, datetime) else pd.to_datetime(row.date)
-        )
+        game_date = pd.to_datetime(row.date)
+        if getattr(game_date, "tzinfo", None) is not None:
+            game_date = game_date.tz_convert(None)
         home_win = 1 if row.home_score > row.away_score else 0
         away_win = 1 - home_win
         home_rd = row.home_score - row.away_score
@@ -97,7 +97,8 @@ def build_slate_dataframe(
         away = game["teams"]["away"]
         home_team = normalize_team_name(home["team"]["name"])
         away_team = normalize_team_name(away["team"]["name"])
-        gdt = pd.to_datetime(game.get("gameDate", game_date.isoformat()))
+        gdt = pd.to_datetime(game.get("gameDate", game_date.isoformat()), utc=True)
+        gdt = gdt.tz_convert(None) if gdt.tzinfo else gdt
 
         h_wp, h_rd = _last_n_metrics(team_history[home_team])
         a_wp, a_rd = _last_n_metrics(team_history[away_team])
