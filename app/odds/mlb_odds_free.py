@@ -23,6 +23,7 @@ ODDS_DATASET_URL = (
 )
 RAW_JSON_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_odds_dataset.json"
 ODDS_2025_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_odds_2025.csv"
+TOTALS_2025_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_totals_2025.csv"
 TARGET_SEASON = 2025
 
 
@@ -41,6 +42,32 @@ def download_raw_dataset(force: bool = False) -> Path:
                     f.write(chunk)
     logger.info("Saved %s", RAW_JSON_CACHE)
     return RAW_JSON_CACHE
+
+
+def _consensus_totals(
+    totals_entries: list[dict[str, Any]],
+) -> tuple[float | None, int | None, int | None]:
+    lines: list[float] = []
+    over_odds: list[int] = []
+    under_odds: list[int] = []
+    for entry in totals_entries:
+        line = entry.get("currentLine") or entry.get("openingLine")
+        if not line:
+            continue
+        total = line.get("total")
+        over = line.get("overOdds")
+        under = line.get("underOdds")
+        if total is not None and over is not None and under is not None:
+            lines.append(float(total))
+            over_odds.append(int(over))
+            under_odds.append(int(under))
+    if not lines:
+        return None, None, None
+    return (
+        float(statistics.median(lines)),
+        int(statistics.median(over_odds)),
+        int(statistics.median(under_odds)),
+    )
 
 
 def _consensus_moneyline(moneyline_entries: list[dict[str, Any]]) -> tuple[int | None, int | None]:
@@ -97,6 +124,48 @@ def parse_2025_odds(raw_path: Path) -> pd.DataFrame:
     return df.sort_values(["date", "home_team", "away_team"]).reset_index(drop=True)
 
 
+def parse_2025_totals(raw_path: Path) -> pd.DataFrame:
+    """Parse O/U lines from the same free SBR JSON release as moneylines."""
+    with raw_path.open(encoding="utf-8") as f:
+        data = json.load(f)
+
+    rows: list[dict[str, Any]] = []
+    for date_str, games in data.items():
+        if not date_str.startswith(str(TARGET_SEASON)):
+            continue
+        for game in games:
+            view = game.get("gameView", {})
+            home_name = normalize_team_name(view.get("homeTeam", {}).get("fullName", ""))
+            away_name = normalize_team_name(view.get("awayTeam", {}).get("fullName", ""))
+            ou_line, over_odds, under_odds = _consensus_totals(
+                game.get("odds", {}).get("totals", [])
+            )
+            if ou_line is None:
+                continue
+            if not is_valid_american_odds(over_odds) or not is_valid_american_odds(
+                under_odds
+            ):
+                continue
+            rows.append(
+                {
+                    "date": date_str,
+                    "home_team": home_name,
+                    "away_team": away_name,
+                    "ou_line": ou_line,
+                    "over_odds": over_odds,
+                    "under_odds": under_odds,
+                    "odds_line_type": "currentLine_median",
+                }
+            )
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    return df.drop_duplicates(
+        subset=["date", "home_team", "away_team"], keep="first"
+    ).sort_values(["date", "home_team", "away_team"]).reset_index(drop=True)
+
+
 def load_or_build_2025_csv(
     force_download: bool = False, force_parse: bool = False
 ) -> pd.DataFrame:
@@ -108,4 +177,18 @@ def load_or_build_2025_csv(
     ODDS_2025_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(ODDS_2025_CSV, index=False)
     logger.info("Wrote %s rows to %s", len(df), ODDS_2025_CSV)
+    return df
+
+
+def load_or_build_2025_totals_csv(
+    force_download: bool = False, force_parse: bool = False
+) -> pd.DataFrame:
+    if TOTALS_2025_CSV.exists() and not force_download and not force_parse:
+        return pd.read_csv(TOTALS_2025_CSV)
+
+    raw_path = download_raw_dataset(force=force_download)
+    df = parse_2025_totals(raw_path)
+    TOTALS_2025_CSV.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(TOTALS_2025_CSV, index=False)
+    logger.info("Wrote %s totals rows to %s", len(df), TOTALS_2025_CSV)
     return df

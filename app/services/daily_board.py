@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
+import math
 import os
 from dataclasses import asdict
 from datetime import date, datetime, timezone
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from app.config import PROJECT_ROOT
@@ -29,12 +32,28 @@ from app.parlay.ev_ranker import (
     _candidate_legs,
 )
 from app.parlay.slate import build_slate_dataframe, build_slate_from_history
+from app.parlay.totals_slate import build_totals_slate
+
+logger = logging.getLogger(__name__)
 
 DAILY_BOARD_CACHE = PROJECT_ROOT / "data" / "processed" / "daily_board.json"
 SINGLE_EDGE_THRESHOLD = DEFAULT_MIN_EDGE
 DISCLAIMER = (
-    "Experimental analytics — not betting advice. EV signals are not validated."
+    "Experimental analytics — not betting advice. EV signals are not validated. "
+    "Totals model is separate from moneyline."
 )
+
+
+def _sanitize_json(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_json(v) for v in obj]
+    if isinstance(obj, float) and math.isnan(obj):
+        return None
+    if isinstance(obj, (np.floating,)) and np.isnan(obj):
+        return None
+    return obj
 
 
 def _has_odds_api_key() -> bool:
@@ -49,7 +68,25 @@ def _build_slate(game_date: date, use_cache: bool) -> pd.DataFrame:
     return build_slate_dataframe(game_date)
 
 
-def _slate_rows(merged: pd.DataFrame, has_odds: bool) -> list[dict[str, Any]]:
+def _top_totals(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
+    picks = [
+        {
+            "matchup": g["matchup"],
+            "pick": g["totals_pick"],
+            "ou_line": g["ou_line"],
+            "expected_total_runs": g["expected_total_runs"],
+            "edge": g["total_edge"],
+        }
+        for g in slate
+        if g.get("plus_ev_total") and g.get("totals_pick") and g.get("total_edge") is not None
+    ]
+    picks.sort(key=lambda p: p["edge"], reverse=True)
+    return picks[:limit]
+
+
+def _slate_rows(
+    merged: pd.DataFrame, has_odds: bool, totals_by_game: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for row in merged.itertuples(index=False):
         matchup = f"{row.away_team} @ {row.home_team}"
@@ -86,6 +123,10 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool) -> list[dict[str, Any]]:
         display_home = blend_display_prob(model_home, market_home)
         disagree = model_disagrees_heavy_favorite(model_home, market_home)
 
+        totals = totals_by_game.get(str(row.game_id), {})
+        ou_line = totals.get("ou_line")
+        if ou_line is not None and pd.isna(ou_line):
+            ou_line = None
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -99,9 +140,38 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool) -> list[dict[str, Any]]:
                 "plus_ev_single": plus_ev,
                 "best_pick": best_pick,
                 "model_disagrees_heavy_favorite": disagree,
+                "ou_line": ou_line,
+                "expected_total_runs": totals.get("expected_total_runs"),
+                "totals_pick": totals.get("pick"),
+                "total_edge": totals.get("total_edge"),
+                "plus_ev_total": totals.get("plus_ev_total", False),
             }
         )
     return rows
+
+
+def _totals_by_game(
+    game_date: date, use_cache: bool, slate_df: pd.DataFrame
+) -> dict[str, dict[str, Any]]:
+    try:
+        totals_df = build_totals_slate(
+            game_date, use_cache=use_cache, moneyline_slate=slate_df
+        )
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        logger.warning("Totals slate skipped: %s", exc)
+        return {}
+    if totals_df.empty:
+        return {}
+    return {
+        str(r.game_id): {
+            "ou_line": getattr(r, "ou_line", None),
+            "expected_total_runs": getattr(r, "expected_total_runs", None),
+            "pick": getattr(r, "pick", None),
+            "total_edge": getattr(r, "total_edge", None),
+            "plus_ev_total": getattr(r, "plus_ev_total", False),
+        }
+        for r in totals_df.itertuples(index=False)
+    }
 
 
 def _top_singles(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
@@ -203,8 +273,10 @@ def build_daily_board(
             "slate": [],
             "top_singles": [],
             "top_parlays": [],
+            "top_totals": [],
             "status": _status_footer(),
         }
+        payload = _sanitize_json(payload)
         _write_cache(payload)
         return payload
 
@@ -216,9 +288,11 @@ def build_daily_board(
         )
 
     has_odds = odds_source != "none"
-    slate = _slate_rows(merged, has_odds)
+    totals_by_game = _totals_by_game(game_date, use_cache, slate_df)
+    slate = _slate_rows(merged, has_odds, totals_by_game)
     top_singles = _top_singles(slate) if has_odds else []
     top_parlays = _top_parlays_payload(merged, odds_source) if has_odds else []
+    top_totals = _top_totals(slate) if totals_by_game else []
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -233,6 +307,8 @@ def build_daily_board(
         "slate": slate,
         "top_singles": top_singles,
         "top_parlays": top_parlays,
+        "top_totals": top_totals,
+        "totals_disclaimer": "Totals O/U model is experimental and separate from moneyline v3.",
         "display_note": (
             "Win % uses 50% model + 50% market when odds available; "
             "raw model when odds missing."
@@ -240,6 +316,7 @@ def build_daily_board(
         "edge_threshold": SINGLE_EDGE_THRESHOLD,
         "status": _status_footer(),
     }
+    payload = _sanitize_json(payload)
     _write_cache(payload)
     return payload
 

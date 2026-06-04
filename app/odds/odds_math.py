@@ -21,6 +21,15 @@ def remove_vig(implied_home: float, implied_away: float) -> tuple[float, float]:
     return implied_home / total, implied_away / total
 
 
+def market_probs_from_american_totals(
+    over_odds: int, under_odds: int
+) -> tuple[float, float]:
+    """Vig-free over/under implied probabilities."""
+    raw_over = american_to_implied_prob(over_odds)
+    raw_under = american_to_implied_prob(under_odds)
+    return remove_vig(raw_over, raw_under)
+
+
 def market_probs_from_american(home_ml: int, away_ml: int) -> tuple[float, float]:
     """Raw implied then vig-free home/away win probabilities."""
     raw_home = american_to_implied_prob(home_ml)

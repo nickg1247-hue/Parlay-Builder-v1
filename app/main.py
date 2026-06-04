@@ -11,6 +11,7 @@ from app.services.daily_board import build_daily_board
 from app.db.market_status import get_market_eval_status
 from app.db.parlay_status import get_parlay_status
 from app.db.mlb_status import get_mlb_data_status
+from app.db.totals_status import get_totals_model_status
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -39,6 +40,7 @@ async def health():
         **data_status,
         **get_market_eval_status(),
         **get_parlay_status(),
+        **get_totals_model_status(),
     }
 
 

@@ -322,6 +322,7 @@ def build_modeling_table() -> pd.DataFrame:
     df = _attach_pitcher_rates(df)
     logger.info("Computing rolling features and rest days...")
     df = _compute_rolling_and_rest(df)
+    df["total_runs"] = df["home_score"] + df["away_score"]
     return df[MLB_GAMES_COLUMNS]
 
 

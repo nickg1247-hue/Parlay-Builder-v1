@@ -114,7 +114,7 @@ Optional edge threshold: `python scripts/evaluate_mlb_market.py --edge-threshold
 ODDS_API_KEY=your_key_here
 ```
 
-One `h2h` request for all MLB games ≈ 1 credit. `app/odds/the_odds_api.py` skips gracefully if the key is empty. Do not use paid/historical Odds API endpoints.
+One request for all MLB games ≈ **1 credit**, whether you request `markets=h2h` only or `markets=h2h,totals` together (same endpoint). `app/odds/the_odds_api.py` fetches both moneyline and O/U in a single call when `ODDS_API_KEY` is set. Skips gracefully if the key is empty. Do not use paid/historical Odds API endpoints.
 
 See `MARKET.md` for match rate, paper-trade ROI, and advisor recommendation.
 
@@ -156,3 +156,17 @@ Or open browser automatically:
 | API (demo) | http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true |
 
 Live mode requires `ODDS_API_KEY` in `.env`. The board caches responses for 5 minutes in `data/processed/daily_board.json` unless you click **Refresh** or pass `refresh=true`.
+
+## MLB totals O/U (v1)
+
+**Train** (requires Phase 1 games + totals odds CSV):
+
+```powershell
+python scripts/load_mlb_totals_odds_free.py
+python scripts/train_mlb_totals.py
+python scripts/backtest_mlb_totals_recent.py --days 7
+```
+
+See `TOTALS.md` for metrics and production gate (log loss vs market, not accuracy %).
+
+Demo dashboard includes O/U columns when `use_cache=true` and `mlb_totals_2025.csv` is present.

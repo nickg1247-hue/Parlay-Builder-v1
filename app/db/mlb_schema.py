@@ -18,6 +18,7 @@ MLB_GAMES_COLUMNS = [
     "away_last10_run_diff",
     "home_rest_days",
     "away_rest_days",
+    "total_runs",
 ]
 
 CREATE_MLB_GAMES_SQL = """
@@ -40,7 +41,8 @@ CREATE TABLE IF NOT EXISTS mlb_games (
     home_last10_run_diff REAL,
     away_last10_run_diff REAL,
     home_rest_days INTEGER,
-    away_rest_days INTEGER
+    away_rest_days INTEGER,
+    total_runs INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_mlb_games_date ON mlb_games(date);
 """

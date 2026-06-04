@@ -61,6 +61,7 @@ def test_build_daily_board_structure():
         patch("app.services.daily_board.rank_parlays", return_value=[mock_parlay]),
         patch("app.services.daily_board._status_footer", return_value={"mlb_games_count": 100}),
         patch("app.services.daily_board._write_cache"),
+        patch("app.services.daily_board.build_totals_slate", return_value=pd.DataFrame()),
     ):
         board = build_daily_board(
             game_date=date(2025, 8, 15),

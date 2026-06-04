@@ -13,6 +13,8 @@ const els = {
   slateBody: document.querySelector("#slate-table tbody"),
   singles: document.getElementById("singles-list"),
   parlays: document.getElementById("parlays-list"),
+  totals: document.getElementById("totals-list"),
+  totalsNote: document.getElementById("totals-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
 };
@@ -74,14 +76,23 @@ function renderSlate(slate) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="4" class="empty">No games on slate</td></tr>';
+      '<tr><td colspan="8" class="empty">No games on slate</td></tr>';
     return;
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
-    if (game.plus_ev_single) tr.classList.add("plus-ev");
+    if (game.plus_ev_single || game.plus_ev_total) tr.classList.add("plus-ev");
+    const ou = game.ou_line != null ? game.ou_line : "—";
+    const runs = game.expected_total_runs != null ? game.expected_total_runs : "—";
+    const pick = game.totals_pick || "—";
+    const tEdge =
+      game.total_edge != null ? `${(game.total_edge * 100).toFixed(1)}%` : "—";
     tr.innerHTML = `
       <td>${game.matchup}</td>
+      <td>${ou}</td>
+      <td>${runs}</td>
+      <td>${pick}</td>
+      <td class="${game.total_edge != null && game.total_edge >= 0.08 ? "edge-pos" : ""}">${tEdge}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
       <td class="${game.edge_home != null && game.edge_home >= 0.08 ? "edge-pos" : ""}">
@@ -104,6 +115,27 @@ function renderSingles(singles) {
     <div class="card">
       <div class="card-title">${s.team} <span class="edge-pos">+${(s.edge * 100).toFixed(1)}%</span></div>
       <div class="card-meta">${s.matchup} · ${s.side} · Model ${pct(s.model_prob)} · ${s.american_odds > 0 ? "+" : ""}${s.american_odds}</div>
+    </div>`
+    )
+    .join("");
+}
+
+function renderTotals(totals, note) {
+  if (els.totalsNote) {
+    els.totalsNote.textContent =
+      note || "Separate from moneyline model. Not betting advice.";
+  }
+  if (!totals.length) {
+    els.totals.innerHTML =
+      '<p class="empty">No totals met the 8% edge threshold.</p>';
+    return;
+  }
+  els.totals.innerHTML = totals
+    .map(
+      (t) => `
+    <div class="card">
+      <div class="card-title">${t.pick} <span class="edge-pos">+${(t.edge * 100).toFixed(1)}%</span></div>
+      <div class="card-meta">${t.matchup} · Line ${t.ou_line} · Model ${t.expected_total_runs} runs</div>
     </div>`
     )
     .join("");
@@ -148,6 +180,7 @@ function renderFooter(data) {
     <span>Parlays cached: ${s.parlay_count ?? "—"}</span>
     <span>Odds: ${oddsLabel}</span>
     <span>Mode: ${data.mode ?? "—"}</span>
+    <span>Totals model: ${s.totals_model_version ?? "—"}</span>
   `;
 }
 
@@ -176,6 +209,7 @@ async function loadBoard(refresh = false) {
       display_note: data.display_note,
     });
     renderSlate(data.slate || []);
+    renderTotals(data.top_totals || [], data.totals_disclaimer);
     renderSingles(data.top_singles || []);
     renderParlays(data.top_parlays || []);
     renderFooter(data);
