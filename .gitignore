@@ -1,0 +1,38 @@
+# Secrets — never commit these
+.env
+.env.*
+*.pem
+credentials.json
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Data (often too large for Git)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.db
+*.sqlite
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node (if you add a frontend later)
+node_modules/
+dist/
+.next/
