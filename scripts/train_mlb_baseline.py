@@ -20,6 +20,7 @@ if __name__ == "__main__":
             f"{fav['agreement_rate']:.1%} ({fav.get('n_model_agrees')}/{fav.get('n_market_home_favorite')})"
         )
     print(f"\nProduction model: {results.get('production_model')}")
-    print(f"Replaced artifact with v2: {results.get('replaced_artifact')}")
+    print(f"Replaced production artifact: {results.get('replaced_artifact')}")
     gate = results.get("phase_gate", {})
-    print(f"v2 beats market log loss: {gate.get('v2_beats_market_log_loss')}")
+    print(f"Wave1 logistic beats market+v1: {gate.get('wave1_logistic_beats_market_and_v1')}")
+    print(f"Wave1 GBC beats market+v1: {gate.get('wave1_gbc_beats_market_and_v1')}")

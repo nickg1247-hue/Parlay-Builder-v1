@@ -25,7 +25,12 @@ from app.models.calibration import (
 )
 
 MODEL_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "mlb_baseline_model.joblib"
+MODEL_ARTIFACT_V3_EXPERIMENTAL = (
+    PROJECT_ROOT / "data" / "processed" / "mlb_baseline_model_v3_experimental.joblib"
+)
 METRICS_JSON = PROJECT_ROOT / "data" / "processed" / "mlb_baseline_metrics.json"
+MARKET_LOG_LOSS_BENCHMARK = 0.6770
+V1_LOG_LOSS_BENCHMARK = 0.6777
 PARQUET_PATH = PROJECT_ROOT / "data" / "processed" / "mlb_games.parquet"
 
 FEATURE_COLUMNS = [
@@ -179,6 +184,7 @@ def train_logistic(
     train: pd.DataFrame,
     test: pd.DataFrame,
     feature_cols: list[str] | None = None,
+    metrics_name: str = "logistic_regression_v1",
 ) -> tuple[Pipeline, HoldoutMetrics]:
     cols = feature_cols or FEATURE_COLUMNS
     x_train = train[cols].values
@@ -197,12 +203,15 @@ def train_logistic(
     )
     model.fit(x_train, y_train)
     prob = model.predict_proba(x_test)[:, 1]
-    metrics = compute_metrics("logistic_regression_v1", y_test, prob)
+    metrics = compute_metrics(metrics_name, y_test, prob)
     return model, metrics
 
 
-def train_gbc_v2(
-    train: pd.DataFrame, test: pd.DataFrame
+def train_gbc(
+    train: pd.DataFrame,
+    test: pd.DataFrame,
+    feature_cols: list[str],
+    metrics_name: str,
 ) -> tuple[GradientBoostingClassifier, HoldoutMetrics]:
     clf = GradientBoostingClassifier(
         n_estimators=120,
@@ -210,14 +219,20 @@ def train_gbc_v2(
         learning_rate=0.08,
         random_state=42,
     )
-    x_train = train[FEATURE_COLUMNS_V2].values
+    x_train = train[feature_cols].values
     y_train = train["home_win"].values
-    x_test = test[FEATURE_COLUMNS_V2].values
+    x_test = test[feature_cols].values
     y_test = test["home_win"].values
     clf.fit(x_train, y_train)
     prob = clf.predict_proba(x_test)[:, 1]
-    metrics = compute_metrics("gradient_boosting_v2_elo", y_test, prob)
+    metrics = compute_metrics(metrics_name, y_test, prob)
     return clf, metrics
+
+
+def train_gbc_v2(
+    train: pd.DataFrame, test: pd.DataFrame
+) -> tuple[GradientBoostingClassifier, HoldoutMetrics]:
+    return train_gbc(train, test, FEATURE_COLUMNS_V2, "gradient_boosting_v2_elo")
 
 
 def _favorite_agreement_v1_market(
@@ -288,6 +303,12 @@ def attach_elo_for_slate(df: pd.DataFrame, history: pd.DataFrame | None = None) 
 
 
 def run_training() -> dict:
+    from app.features.mlb_pregame import (
+        FEATURE_COLUMNS_WAVE1,
+        FEATURE_COLUMNS_WAVE1_ELO,
+        build_features_for_history,
+    )
+
     raw = load_games()
     train_raw, test_raw = time_split(raw)
 
@@ -300,25 +321,38 @@ def run_training() -> dict:
     if math.isnan(rest_fill):
         rest_fill = float(DEFAULT_REST_DAYS)
 
-    train = prepare_features(train_raw, era_medians, rest_fill)
-    test = prepare_features(test_raw, era_medians, rest_fill)
-    full = prepare_features(
+    train_v1 = prepare_features(train_raw, era_medians, rest_fill)
+    test_v1 = prepare_features(test_raw, era_medians, rest_fill)
+
+    feat_all = build_features_for_history(raw)
+    feat_all = attach_elo_features(feat_all)
+    train_w = feat_all[feat_all["season"].isin([2023, 2024])].copy()
+    test_w = feat_all[feat_all["season"] == 2025].copy()
+
+    y_test = test_v1["home_win"].values
+    n_train = len(train_raw)
+    full_v1 = prepare_features(
         pd.concat([train_raw, test_raw], ignore_index=True),
         era_medians,
         rest_fill,
     )
-    full = attach_elo_features(full)
-    train = full.iloc[: len(train)].copy()
-    test = full.iloc[len(train) :].copy()
+    elo_test_probs = predict_elo(attach_elo_features(full_v1.copy()))[n_train:]
+    home_probs = predict_home_always(test_v1)
 
-    y_test = test["home_win"].values
-    n_train = len(train_raw)
+    v1_model, v1_holdout = train_logistic(train_v1, test_v1, FEATURE_COLUMNS)
+    wave1_log_model, wave1_log_metrics = train_logistic(
+        train_w,
+        test_w,
+        FEATURE_COLUMNS_WAVE1,
+        metrics_name="logistic_regression_v2_wave1",
+    )
+    gbc_model, gbc_metrics = train_gbc(
+        train_w,
+        test_w,
+        FEATURE_COLUMNS_WAVE1_ELO,
+        "gradient_boosting_wave1_elo",
+    )
 
-    elo_test_probs = predict_elo(full)[n_train:]
-    home_probs = predict_home_always(test)
-
-    v1_model, v1_metrics = train_logistic(train, test, FEATURE_COLUMNS)
-    v2_model, v2_metrics = train_gbc_v2(train, test)
     home_metrics = compute_metrics("home_always_wins", y_test, home_probs)
     elo_metrics = compute_metrics("elo_baseline", y_test, elo_test_probs)
 
@@ -329,35 +363,67 @@ def run_training() -> dict:
         else None
     )
 
-    fav_agreement = _favorite_agreement_v1_market(test_raw, test, v1_model)
+    fav_agreement = _favorite_agreement_v1_market(test_raw, test_v1, v1_model)
 
-    replace_with_v2 = market_ll is not None and v2_metrics.log_loss < market_ll
-    production_model = v2_model if replace_with_v2 else v1_model
-    production_cols = FEATURE_COLUMNS_V2 if replace_with_v2 else FEATURE_COLUMNS
-    production_version = "v2_gbc_elo" if replace_with_v2 else "v1_logistic"
-    production_metrics = v2_metrics if replace_with_v2 else v1_metrics
-
-    MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(
-        {
-            "model": production_model,
-            "model_version": production_version,
-            "feature_columns": production_cols,
-            "era_medians": era_medians,
-            "rest_fill": rest_fill,
-            "neutral_last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
-            "neutral_last10_run_diff": NEUTRAL_LAST10_RUN_DIFF,
-        },
-        MODEL_ARTIFACT,
+    logistic_ok = market_ll is not None and (
+        wave1_log_metrics.log_loss < market_ll
+        and wave1_log_metrics.log_loss < v1_holdout.log_loss
     )
+    gbc_ok = market_ll is not None and (
+        gbc_metrics.log_loss < market_ll
+        and gbc_metrics.log_loss < v1_holdout.log_loss
+    )
+    best_wave1_ll = min(wave1_log_metrics.log_loss, gbc_metrics.log_loss)
+    replace_production = logistic_ok or gbc_ok
+    if gbc_ok and (not logistic_ok or gbc_metrics.log_loss <= wave1_log_metrics.log_loss):
+        production_model = gbc_model
+        production_cols = FEATURE_COLUMNS_WAVE1_ELO
+        production_version = "v3_gbc_wave1_elo"
+        production_metrics = gbc_metrics
+    elif logistic_ok:
+        production_model = wave1_log_model
+        production_cols = FEATURE_COLUMNS_WAVE1
+        production_version = "v3_logistic_wave1"
+        production_metrics = wave1_log_metrics
+    else:
+        production_model = v1_model
+        production_cols = FEATURE_COLUMNS
+        production_version = "v1_logistic"
+        production_metrics = v1_holdout
+
+    artifact_payload = {
+        "model": production_model,
+        "model_version": production_version,
+        "feature_columns": production_cols,
+        "era_medians": era_medians,
+        "rest_fill": rest_fill,
+        "neutral_last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
+        "neutral_last10_run_diff": NEUTRAL_LAST10_RUN_DIFF,
+    }
+    MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(artifact_payload, MODEL_ARTIFACT)
+
+    experimental = {
+        **artifact_payload,
+        "model": gbc_model
+        if gbc_metrics.log_loss <= wave1_log_metrics.log_loss
+        else wave1_log_model,
+        "model_version": "v3_experimental_wave1",
+        "feature_columns": FEATURE_COLUMNS_WAVE1_ELO
+        if gbc_metrics.log_loss <= wave1_log_metrics.log_loss
+        else FEATURE_COLUMNS_WAVE1,
+        "wave1_logistic_log_loss": wave1_log_metrics.log_loss,
+        "wave1_gbc_log_loss": gbc_metrics.log_loss,
+    }
+    joblib.dump(experimental, MODEL_ARTIFACT_V3_EXPERIMENTAL)
 
     results = {
         "train_seasons": [2023, 2024],
         "holdout_season": 2025,
-        "train_rows": len(train),
-        "holdout_rows": len(test),
+        "train_rows": len(train_w),
+        "holdout_rows": len(test_w),
         "production_model": production_version,
-        "replaced_artifact": replace_with_v2,
+        "replaced_artifact": replace_production,
         "imputation": {
             "era": "season median from 2023-2024 training games",
             "last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
@@ -374,12 +440,20 @@ def run_training() -> dict:
                 "brier": m.brier,
                 "accuracy": m.accuracy,
             }
-            for m in (home_metrics, elo_metrics, v1_metrics, v2_metrics)
+            for m in (
+                home_metrics,
+                elo_metrics,
+                v1_holdout,
+                wave1_log_metrics,
+                gbc_metrics,
+            )
         },
         "market_implied_baseline": market_metrics,
         "phase_gate": {
-            "v1_beats_elo": v1_metrics.log_loss < elo_metrics.log_loss,
-            "v2_beats_market_log_loss": replace_with_v2,
+            "wave1_logistic_beats_market_and_v1": logistic_ok,
+            "wave1_gbc_beats_market_and_v1": gbc_ok,
+            "best_wave1_log_loss": best_wave1_ll,
+            "replaced_production": replace_production,
         },
     }
     if market_metrics:
@@ -397,13 +471,32 @@ def load_model_artifact() -> dict:
 
 
 def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
-    artifact = load_model_artifact()
-    prepared = prepare_features(
-        df, artifact["era_medians"], artifact["rest_fill"]
+    from app.features.mlb_pregame import (
+        FEATURE_COLUMNS_WAVE1,
+        build_features_for_slate,
     )
+
+    artifact = load_model_artifact()
     cols = artifact.get("feature_columns", FEATURE_COLUMNS)
-    if "elo_home_pre" in cols:
-        prepared = attach_elo_for_slate(prepared)
+    era_medians = artifact["era_medians"]
+    rest_fill = artifact["rest_fill"]
+
+    if "home_season_win_pct" in cols or any(
+        c in cols for c in FEATURE_COLUMNS_WAVE1 if c not in FEATURE_COLUMNS
+    ):
+        if "home_season_win_pct" not in df.columns:
+            prepared = build_features_for_slate(
+                df, era_medians=era_medians, rest_fill=rest_fill
+            )
+        else:
+            prepared = df.copy()
+        if "elo_home_pre" in cols and "elo_home_pre" not in prepared.columns:
+            prepared = attach_elo_for_slate(prepared)
+    else:
+        prepared = prepare_features(df, era_medians, rest_fill)
+        if "elo_home_pre" in cols:
+            prepared = attach_elo_for_slate(prepared)
+
     return artifact["model"].predict_proba(prepared[cols].values)[:, 1]
 
 

@@ -25,15 +25,20 @@ def test_live_slate_uses_different_pitcher_eras():
         }
     ]
 
-    def fake_lookup(name, season, era_medians):
+    def fake_profile(name, season, era_medians, default_whip=1.3, default_ip=150.0):
         table = {
-            "gerrit cole": (3.20, None),
-            "chris sale": (4.85, None),
+            "gerrit cole": {"era": 3.20, "fip": None, "whip": 1.05, "ip": 160.0},
+            "chris sale": {"era": 4.85, "fip": None, "whip": 1.40, "ip": 120.0},
         }
         key = (name or "").lower().strip()
         if key in table:
             return table[key]
-        return era_medians.get(season, era_medians["default"]), None
+        return {
+            "era": era_medians.get(season, era_medians["default"]),
+            "fip": None,
+            "whip": default_whip,
+            "ip": default_ip,
+        }
 
     empty_history = pd.DataFrame(
         columns=[
@@ -44,20 +49,20 @@ def test_live_slate_uses_different_pitcher_eras():
             "home_score",
             "away_score",
             "home_win",
+            "season",
         ]
     )
 
     with (
         patch("app.parlay.slate.fetch_mlb_schedule_day", return_value=fake_games),
         patch("app.parlay.slate.load_games", return_value=empty_history),
-        patch("app.parlay.slate.lookup_pitcher_rates", side_effect=fake_lookup),
+        patch(
+            "app.features.mlb_pregame.lookup_pitcher_profile",
+            side_effect=fake_profile,
+        ),
         patch(
             "app.parlay.slate.predict_home_win_proba",
             return_value=pd.Series([0.55]),
-        ),
-        patch(
-            "app.parlay.slate.load_model_artifact",
-            return_value={"era_medians": {2026: 4.0, "default": 4.0}, "rest_fill": 1},
         ),
     ):
         from datetime import date
