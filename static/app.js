@@ -9,6 +9,7 @@ const els = {
   warnings: document.getElementById("warnings"),
   error: document.getElementById("error"),
   boardDate: document.getElementById("board-date"),
+  simpleBody: document.querySelector("#simple-table tbody"),
   slateBody: document.querySelector("#slate-table tbody"),
   singles: document.getElementById("singles-list"),
   parlays: document.getElementById("parlays-list"),
@@ -27,6 +28,33 @@ function buildApiUrl(refresh = false) {
   if (useCache) url.searchParams.set("use_cache", "true");
   if (refresh) url.searchParams.set("refresh", "true");
   return url.toString();
+}
+
+function winPct(modelProbHome, isHome) {
+  const pct = (isHome ? modelProbHome : 1 - modelProbHome) * 100;
+  return `${pct.toFixed(1)}%`;
+}
+
+function renderSimpleSlate(slate) {
+  els.simpleBody.innerHTML = "";
+  if (!slate.length) {
+    els.simpleBody.innerHTML =
+      '<tr><td colspan="4" class="empty">No games on slate</td></tr>';
+    return;
+  }
+  for (const game of slate) {
+    const homePct = game.model_prob_home * 100;
+    const awayPct = (1 - game.model_prob_home) * 100;
+    const homeFav = homePct >= awayPct;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${game.matchup}</td>
+      <td>${game.home_team}</td>
+      <td class="${homeFav ? "favorite-pct" : "not-favorite-pct"}">${winPct(game.model_prob_home, true)}</td>
+      <td class="${!homeFav ? "favorite-pct" : "not-favorite-pct"}">${winPct(game.model_prob_home, false)}</td>
+    `;
+    els.simpleBody.appendChild(tr);
+  }
 }
 
 function renderSlate(slate) {
@@ -131,6 +159,7 @@ async function loadBoard(refresh = false) {
       els.error.textContent = data.error;
     }
 
+    renderSimpleSlate(data.slate || []);
     renderSlate(data.slate || []);
     renderSingles(data.top_singles || []);
     renderParlays(data.top_parlays || []);

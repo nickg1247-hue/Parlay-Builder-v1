@@ -209,6 +209,25 @@ tr.plus-ev td {
   font-style: italic;
 }
 
+.simple-section {
+  margin-bottom: 2rem;
+}
+
+.simple-note {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.favorite-pct {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.not-favorite-pct {
+  color: var(--muted);
+}
+
 .footer {
   margin-top: 2rem;
   padding-top: 1rem;
