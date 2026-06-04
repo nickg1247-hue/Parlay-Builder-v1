@@ -172,3 +172,5 @@ See `TOTALS.md` for metrics and production gate (log loss vs market, not accurac
 Demo dashboard includes O/U columns when `use_cache=true` and `mlb_totals_2025.csv` is present.
 
 Fast moneyline-only board: `http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true&skip_totals=true`
+
+**Live board** (default skips totals for speed): `http://127.0.0.1:8000/` — add `?skip_totals=false` to include O/U on live odds.

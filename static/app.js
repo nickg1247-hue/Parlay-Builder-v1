@@ -1,6 +1,8 @@
 const params = new URLSearchParams(window.location.search);
 const demoDate = params.get("date");
 const useCache = params.get("use_cache") === "true";
+const skipTotalsParam = params.get("skip_totals");
+const isLiveMode = !useCache && !demoDate;
 
 const els = {
   loading: document.getElementById("loading"),
@@ -17,7 +19,21 @@ const els = {
   totalsNote: document.getElementById("totals-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
+  loadingMessage: document.getElementById("loading-message"),
 };
+
+function loadingHint() {
+  if (skipTotalsParam === "true" || (isLiveMode && skipTotalsParam !== "false")) {
+    return "Loading live board (moneyline + parlays)…";
+  }
+  if (isLiveMode) {
+    return "Loading live board… First load with totals may take 2–3 minutes.";
+  }
+  if (useCache) {
+    return "Loading demo board (cached odds + totals)…";
+  }
+  return "Loading daily board…";
+}
 
 function pct(value) {
   if (value == null) return "—";
@@ -28,6 +44,11 @@ function buildApiUrl(refresh = false) {
   const url = new URL("/api/daily", window.location.origin);
   if (demoDate) url.searchParams.set("date", demoDate);
   if (useCache) url.searchParams.set("use_cache", "true");
+  if (skipTotalsParam === "true") {
+    url.searchParams.set("skip_totals", "true");
+  } else if (skipTotalsParam === "false") {
+    url.searchParams.set("skip_totals", "false");
+  }
   if (refresh) url.searchParams.set("refresh", "true");
   return url.toString();
 }
@@ -188,6 +209,9 @@ async function loadBoard(refresh = false) {
   els.loading.classList.remove("hidden");
   els.content.classList.add("hidden");
   els.error.textContent = "";
+  if (els.loadingMessage) {
+    els.loadingMessage.textContent = loadingHint();
+  }
 
   try {
     const res = await fetch(buildApiUrl(refresh));

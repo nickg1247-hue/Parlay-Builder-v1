@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
-from app.data.mlb_games import load_games_with_totals
 from app.features.mlb_totals_pregame import build_totals_features_for_slate
 from app.models.mlb_totals import (
+    load_totals_artifact,
     predict_expected_total_runs,
     predict_prob_over,
+    prob_over_poisson,
     score_totals_pick,
 )
 from app.odds.odds_math import market_probs_from_american_totals
@@ -34,9 +36,6 @@ def build_totals_slate(
     if ml.empty:
         return pd.DataFrame()
 
-    history = load_games_with_totals()
-    history = history[history["date"] < pd.Timestamp(game_date)].copy()
-
     base = ml[["game_id", "date", "home_team", "away_team"]].copy()
     if "season" in ml.columns:
         base["season"] = ml["season"]
@@ -45,17 +44,20 @@ def build_totals_slate(
     for col in ("home_starting_pitcher", "away_starting_pitcher"):
         if col in ml.columns:
             base[col] = ml[col]
-    featured = build_totals_features_for_slate(base, history_df=history)
+
+    artifact = load_totals_artifact()
+    featured = build_totals_features_for_slate(
+        base,
+        era_medians=artifact["era_medians"],
+        rest_fill=artifact["rest_fill"],
+    )
     featured["expected_total_runs"] = predict_expected_total_runs(featured)
 
     merged = attach_totals_odds(featured, game_date, use_cache=use_cache)
-    model_over_arr: list[float | None] = [None] * len(merged)
-    if "ou_line" in merged.columns:
-        for i, line in enumerate(merged["ou_line"]):
-            if pd.notna(line):
-                model_over_arr[i] = float(
-                    predict_prob_over(featured.iloc[[i]], float(line))[0]
-                )
+    model_over_arr: np.ndarray | None = None
+    if "ou_line" in merged.columns and merged["ou_line"].notna().any():
+        lines = merged["ou_line"].astype(float).values
+        model_over_arr = predict_prob_over(featured, lines)
 
     rows: list[dict] = []
     for i, row in enumerate(merged.itertuples(index=False)):
@@ -70,7 +72,7 @@ def build_totals_slate(
                 )
         model_over = (
             float(model_over_arr[i])
-            if model_over_arr[i] is not None and pd.notna(ou)
+            if model_over_arr is not None and pd.notna(ou)
             else None
         )
         ou_val = float(ou) if pd.notna(ou) else None
@@ -90,8 +92,12 @@ def build_totals_slate(
                 "away_team": row.away_team,
                 "matchup": f"{row.away_team} @ {row.home_team}",
                 **scored,
-                "over_odds": int(row.over_odds) if pd.notna(getattr(row, "over_odds", None)) else None,
-                "under_odds": int(row.under_odds) if pd.notna(getattr(row, "under_odds", None)) else None,
+                "over_odds": int(row.over_odds)
+                if pd.notna(getattr(row, "over_odds", None))
+                else None,
+                "under_odds": int(row.under_odds)
+                if pd.notna(getattr(row, "under_odds", None))
+                else None,
             }
         )
     return pd.DataFrame(rows)

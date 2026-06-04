@@ -239,9 +239,12 @@ def build_daily_board(
     game_date: date | None = None,
     use_cache: bool = False,
     refresh: bool = False,
-    skip_totals: bool = False,
+    skip_totals: bool | None = None,
 ) -> dict[str, Any]:
     game_date = game_date or date.today()
+    # Live board defaults to fast path; pass skip_totals=false to include O/U model.
+    if skip_totals is None:
+        skip_totals = not use_cache
     cache_key = (
         f"{game_date.isoformat()}_{'cache' if use_cache else 'live'}"
         f"_{'no_totals' if skip_totals else 'totals'}"
@@ -320,6 +323,7 @@ def build_daily_board(
             "raw model when odds missing."
         ),
         "edge_threshold": SINGLE_EDGE_THRESHOLD,
+        "skip_totals": skip_totals,
         "status": _status_footer(),
     }
     payload = _sanitize_json(payload)

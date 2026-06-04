@@ -320,16 +320,11 @@ def build_totals_features_for_slate(
     rest_fill: float = 1.0,
 ) -> pd.DataFrame:
     """Score slate rows only; history precomputed in one O(n) pass (cached by date)."""
+    del history_df  # unused — always use cached tracker (avoids per-request O(n) rebuild)
     slate = slate_df.copy()
     slate["date"] = pd.to_datetime(slate["date"])
     min_date = slate["date"].min()
-
-    if history_df is not None:
-        tracker = build_runs_tracker_from_history(
-            history_df[history_df["date"] < min_date]
-        )
-    else:
-        tracker = get_runs_tracker_before(min_date)
+    tracker = get_runs_tracker_before(min_date)
 
     if era_medians is None:
         era_medians = {"default": 4.0}
