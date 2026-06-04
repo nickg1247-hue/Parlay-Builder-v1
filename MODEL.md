@@ -10,7 +10,7 @@
 
 ## Holdout metrics (2025)
 
-Train rows: 4,869 (2023–2024) · Holdout rows: 2,420 (2025)
+Train rows: 4,859 (2023–2024) · Holdout rows: 2,430 (2025)
 
 | Model | Log loss | Brier | Accuracy |
 |-------|----------|-------|----------|
