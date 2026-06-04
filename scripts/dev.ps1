@@ -14,7 +14,8 @@ Write-Host "Installing dependencies..."
 
 Write-Host ""
 Write-Host "Parlay Builder v1 — local server"
-Write-Host "  http://127.0.0.1:8000"
+Write-Host "  Home:  http://127.0.0.1:8000/"
+Write-Host "  MLB:   http://127.0.0.1:8000/mlb"
 Write-Host "  Health: http://127.0.0.1:8000/health"
 Write-Host ""
 

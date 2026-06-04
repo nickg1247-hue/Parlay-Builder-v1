@@ -22,5 +22,5 @@ if __name__ == "__main__":
     print(f"\nProduction model: {results.get('production_model')}")
     print(f"Replaced production artifact: {results.get('replaced_artifact')}")
     gate = results.get("phase_gate", {})
-    print(f"Wave1 logistic beats market+v1: {gate.get('wave1_logistic_beats_market_and_v1')}")
-    print(f"Wave1 GBC beats market+v1: {gate.get('wave1_gbc_beats_market_and_v1')}")
+    print(f"Platt passes gate: {gate.get('platt_passes')}")
+    print(f"Pruned logistic passes gate: {gate.get('pruned_passes')}")

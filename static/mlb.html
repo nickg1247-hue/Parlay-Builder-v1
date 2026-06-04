@@ -3,26 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parlay Builder v1 — MLB</title>
+  <title>MLB Daily Board — Parlay Builder v1</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="page">
     <header class="header">
       <div>
-        <h1>Parlay Builder v1 — MLB</h1>
-        <p class="date-line" id="board-date">Loading…</p>
+        <p class="nav-back"><a href="/">← Home</a></p>
+        <h1>MLB Daily Board</h1>
+        <p class="date-line" id="board-date">Click Run live or Demo to load the board.</p>
       </div>
-      <button type="button" class="btn" id="refresh-btn">Refresh</button>
     </header>
 
-    <div class="banner" id="disclaimer"></div>
+    <div class="toolbar" id="board-toolbar">
+      <button type="button" class="btn" id="run-live-btn">Run live</button>
+      <button type="button" class="btn btn-secondary" id="run-demo-btn">Demo</button>
+      <label class="toolbar-check">
+        <input type="checkbox" id="ou-checkbox" checked />
+        O/U
+      </label>
+      <button type="button" class="btn btn-secondary hidden" id="refresh-btn">Refresh</button>
+    </div>
+
+    <div class="banner hidden" id="disclaimer"></div>
     <div class="warnings" id="warnings"></div>
     <div class="error" id="error"></div>
 
     <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p id="loading-message">Loading daily board…</p>
+      <div class="spinner hidden" id="loading-spinner"></div>
+      <p id="loading-message">Click Run live or Demo to load the board.</p>
     </div>
 
     <main class="content hidden" id="content">
@@ -51,9 +61,11 @@
             <thead>
               <tr>
                 <th>Matchup</th>
-                <th>O/U</th>
+                <th>O/U line</th>
                 <th>Model runs</th>
-                <th>Pick</th>
+                <th>O/U pick</th>
+                <th>Model P(over)</th>
+                <th>Market P(over)</th>
                 <th>Total edge</th>
                 <th>Model P(home)</th>
                 <th>Market P(home)</th>
@@ -82,8 +94,22 @@
       </section>
     </main>
 
-    <footer class="footer" id="status-footer"></footer>
+    <section class="accuracy-section" id="accuracy-section">
+      <h2>Model accuracy (30 days)</h2>
+      <div class="toolbar toolbar-compact">
+        <button type="button" class="btn btn-secondary" id="load-saved-backtest">Load saved</button>
+        <button type="button" class="btn" id="run-backtest-btn">Run backtest</button>
+      </div>
+      <p class="accuracy-idle" id="backtest-idle">Load saved report or run a new 30-day backtest.</p>
+      <div class="loading hidden" id="backtest-loading">
+        <div class="spinner"></div>
+        <p id="backtest-loading-message">Running backtest…</p>
+      </div>
+      <div class="accuracy-panel hidden" id="backtest-panel"></div>
+    </section>
+
+    <footer class="footer hidden" id="status-footer"></footer>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="/static/mlb.js"></script>
 </body>
 </html>

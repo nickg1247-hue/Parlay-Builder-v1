@@ -21,10 +21,19 @@ from app.odds.totals_odds import attach_totals_odds
 from app.parlay.slate import build_slate_dataframe, build_slate_from_history
 
 
+def _safe_int_odds(value) -> int | None:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return None
+    if pd.isna(value):
+        return None
+    return int(value)
+
+
 def build_totals_slate(
     game_date: date,
     use_cache: bool = False,
     moneyline_slate: pd.DataFrame | None = None,
+    attach_market_odds: bool = True,
 ) -> pd.DataFrame:
     ml = moneyline_slate
     if ml is None:
@@ -53,28 +62,25 @@ def build_totals_slate(
     )
     featured["expected_total_runs"] = predict_expected_total_runs(featured)
 
-    merged = attach_totals_odds(featured, game_date, use_cache=use_cache)
-    model_over_arr: np.ndarray | None = None
-    if "ou_line" in merged.columns and merged["ou_line"].notna().any():
-        lines = merged["ou_line"].astype(float).values
-        model_over_arr = predict_prob_over(featured, lines)
+    if attach_market_odds:
+        merged = attach_totals_odds(featured, game_date, use_cache=use_cache)
+    else:
+        merged = featured.copy()
 
     rows: list[dict] = []
     for i, row in enumerate(merged.itertuples(index=False)):
         ou = getattr(row, "ou_line", None)
         market_over = None
-        if pd.notna(ou) and pd.notna(getattr(row, "over_odds", None)):
-            if is_valid_american_odds(row.over_odds) and is_valid_american_odds(
-                row.under_odds
-            ):
-                market_over, _ = market_probs_from_american_totals(
-                    int(row.over_odds), int(row.under_odds)
-                )
-        model_over = (
-            float(model_over_arr[i])
-            if model_over_arr is not None and pd.notna(ou)
-            else None
-        )
+        over_am = _safe_int_odds(getattr(row, "over_odds", None))
+        under_am = _safe_int_odds(getattr(row, "under_odds", None))
+        if pd.notna(ou) and over_am is not None and under_am is not None:
+            if is_valid_american_odds(over_am) and is_valid_american_odds(under_am):
+                market_over, _ = market_probs_from_american_totals(over_am, under_am)
+        model_over = None
+        if pd.notna(ou):
+            model_over = float(
+                predict_prob_over(featured.iloc[[i]], float(ou))[0]
+            )
         ou_val = float(ou) if pd.notna(ou) else None
         scored = score_totals_pick(
             float(row.expected_total_runs),
@@ -92,12 +98,8 @@ def build_totals_slate(
                 "away_team": row.away_team,
                 "matchup": f"{row.away_team} @ {row.home_team}",
                 **scored,
-                "over_odds": int(row.over_odds)
-                if pd.notna(getattr(row, "over_odds", None))
-                else None,
-                "under_odds": int(row.under_odds)
-                if pd.notna(getattr(row, "under_odds", None))
-                else None,
+                "over_odds": over_am,
+                "under_odds": under_am,
             }
         )
     return pd.DataFrame(rows)

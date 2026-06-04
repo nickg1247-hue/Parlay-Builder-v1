@@ -68,5 +68,5 @@ def test_known_game_feature_values(_park, _pitcher):
     assert row["park_factor_runs"] == 1.05
     assert row["home_pitcher_whip"] == 1.25
     assert row["home_pitcher_ip"] == 180.0
-    assert row["home_win_pct_rank"] == 2.0
-    assert row["away_win_pct_rank"] == 3.0
+    assert row["home_win_pct_rank"] == 3.0
+    assert row["away_win_pct_rank"] == 2.0

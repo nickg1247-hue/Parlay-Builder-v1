@@ -249,6 +249,164 @@ tr.plus-ev td {
   gap: 0.5rem 1.25rem;
 }
 
+.home-page .header {
+  margin-bottom: 2rem;
+}
+
+.sport-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sport-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sport-card-active:hover {
+  border-color: var(--accent);
+  background: #1e2730;
+}
+
+.sport-card-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sport-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.sport-arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sport-badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.nav-back {
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.nav-back a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.nav-back a:hover {
+  text-decoration: underline;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar-compact {
+  margin-bottom: 0.75rem;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  filter: none;
+  border-color: var(--accent);
+}
+
+.toolbar-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.accuracy-section {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.accuracy-idle {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.accuracy-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.accuracy-note {
+  font-size: 0.85rem;
+  color: var(--warn-text);
+  margin-bottom: 0.5rem;
+}
+
+.accuracy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .accuracy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accuracy-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.accuracy-block h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.accuracy-block dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 1rem;
+  font-size: 0.85rem;
+}
+
+.accuracy-block dt {
+  color: var(--muted);
+}
+
+.accuracy-block dd {
+  font-weight: 600;
+  text-align: right;
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;

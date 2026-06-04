@@ -148,12 +148,16 @@ Or open browser automatically:
 
 **URLs:**
 
-| Mode | URL |
+| Page | URL |
 |------|-----|
-| Live dashboard | http://127.0.0.1:8000 |
-| Demo (cached odds) | http://127.0.0.1:8000/?date=2025-08-15&use_cache=true |
+| Home (no API) | http://127.0.0.1:8000/ |
+| MLB board | http://127.0.0.1:8000/mlb |
 | API (live) | http://127.0.0.1:8000/api/daily |
 | API (demo) | http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true |
+| Backtest (30d) | http://127.0.0.1:8000/api/backtest?days=30 |
+| Saved backtest | http://127.0.0.1:8000/api/backtest/saved |
+
+On `/mlb`, click **Run live** or **Demo** to load the board (no fetch on page load). Check **O/U** before Run to include totals. **Model accuracy** uses **Load saved** / **Run backtest** at the bottom.
 
 Live mode requires `ODDS_API_KEY` in `.env`. The board caches responses for 5 minutes in `data/processed/daily_board.json` unless you click **Refresh** or pass `refresh=true`.
 
@@ -165,7 +169,10 @@ Live mode requires `ODDS_API_KEY` in `.env`. The board caches responses for 5 mi
 python scripts/load_mlb_totals_odds_free.py
 python scripts/train_mlb_totals.py
 python scripts/backtest_mlb_totals_recent.py --days 7
+python scripts/backtest_mlb_recent.py --days 30
 ```
+
+**Rolling backtest API:** `GET /api/backtest?days=30` returns moneyline + totals metrics for the last N completed 2025 games (cached to `data/processed/mlb_backtest_report.json`). Requires `mlb_odds_2025.csv` and `mlb_totals_2025.csv`.
 
 See `TOTALS.md` for metrics and production gate (log loss vs market, not accuracy %).
 
@@ -173,4 +180,4 @@ Demo dashboard includes O/U columns when `use_cache=true` and `mlb_totals_2025.c
 
 Fast moneyline-only board: `http://127.0.0.1:8000/api/daily?date=2025-08-15&use_cache=true&skip_totals=true`
 
-**Live board** (default skips totals for speed): `http://127.0.0.1:8000/` — add `?skip_totals=false` to include O/U on live odds.
+**Live board** (default skips totals for speed): use **Run live** on `/mlb` without the O/U checkbox. API: `skip_totals=false` to include O/U on live odds.

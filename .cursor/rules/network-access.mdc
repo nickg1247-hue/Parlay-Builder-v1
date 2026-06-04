@@ -1,0 +1,16 @@
+---
+description: Allow network access for MLB data ingest, APIs, pip installs, and documentation lookups
+alwaysApply: true
+---
+
+# Network access
+
+This project requires internet access for:
+
+- MLB data ingestion (pybaseball, MLB Stats API, free public stats sources)
+- `pip install` and package updates
+- API and library documentation lookups
+
+When a task needs external data or network commands, use network permissions proactively. Do not skip ingest, API calls, or installs because of sandbox concerns.
+
+Document any new external data sources in DEV.md.

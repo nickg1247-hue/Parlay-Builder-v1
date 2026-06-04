@@ -20,9 +20,11 @@ from sklearn.preprocessing import StandardScaler
 from app.config import PROJECT_ROOT
 from app.db.database import get_connection
 from app.models.calibration import (
+    display_blend_description,
     favorite_pick_agreement_rate,
     market_log_loss_holdout,
 )
+from app.models.platt_calibration import PlattCalibrator
 
 MODEL_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "mlb_baseline_model.joblib"
 MODEL_ARTIFACT_V3_EXPERIMENTAL = (
@@ -31,6 +33,17 @@ MODEL_ARTIFACT_V3_EXPERIMENTAL = (
 METRICS_JSON = PROJECT_ROOT / "data" / "processed" / "mlb_baseline_metrics.json"
 MARKET_LOG_LOSS_BENCHMARK = 0.6770
 V1_LOG_LOSS_BENCHMARK = 0.6777
+
+
+def production_gate_passes(
+    log_loss: float,
+    v1_log_loss: float,
+    market_log_loss: float | None,
+) -> bool:
+    """Promote only if beat v1 and not worse than market (Phase 2.7 gate)."""
+    if market_log_loss is None:
+        return False
+    return log_loss < v1_log_loss and log_loss <= market_log_loss
 PARQUET_PATH = PROJECT_ROOT / "data" / "processed" / "mlb_games.parquet"
 
 FEATURE_COLUMNS = [
@@ -303,6 +316,7 @@ def attach_elo_for_slate(df: pd.DataFrame, history: pd.DataFrame | None = None) 
 
 
 def run_training() -> dict:
+    from app.features.feature_selection import drop_redundant_features
     from app.features.mlb_pregame import (
         FEATURE_COLUMNS_WAVE1,
         FEATURE_COLUMNS_WAVE1_ELO,
@@ -328,6 +342,9 @@ def run_training() -> dict:
     feat_all = attach_elo_features(feat_all)
     train_w = feat_all[feat_all["season"].isin([2023, 2024])].copy()
     test_w = feat_all[feat_all["season"] == 2025].copy()
+    train_2023 = feat_all[feat_all["season"] == 2023].copy()
+    cal_2024 = feat_all[feat_all["season"] == 2024].copy()
+    pruned_cols, dropped_cols, _ = drop_redundant_features(train_w, FEATURE_COLUMNS_WAVE1)
 
     y_test = test_v1["home_win"].values
     n_train = len(train_raw)
@@ -352,6 +369,23 @@ def run_training() -> dict:
         FEATURE_COLUMNS_WAVE1_ELO,
         "gradient_boosting_wave1_elo",
     )
+    pruned_model, pruned_metrics = train_logistic(
+        train_w,
+        test_w,
+        pruned_cols,
+        metrics_name="logistic_wave1_pruned",
+    )
+    platt_base, _ = train_logistic(
+        train_2023, cal_2024, pruned_cols, metrics_name="platt_base_2023"
+    )
+    platt = PlattCalibrator()
+    raw_cal = platt_base.predict_proba(cal_2024[pruned_cols].values)[:, 1]
+    raw_test = platt_base.predict_proba(test_w[pruned_cols].values)[:, 1]
+    platt.fit(raw_cal, cal_2024["home_win"].values)
+    platt_probs = platt.transform(raw_test)
+    platt_metrics = compute_metrics(
+        "logistic_wave1_pruned_platt", test_w["home_win"].values, platt_probs
+    )
 
     home_metrics = compute_metrics("home_always_wins", y_test, home_probs)
     elo_metrics = compute_metrics("elo_baseline", y_test, elo_test_probs)
@@ -365,31 +399,59 @@ def run_training() -> dict:
 
     fav_agreement = _favorite_agreement_v1_market(test_raw, test_v1, v1_model)
 
-    logistic_ok = market_ll is not None and (
-        wave1_log_metrics.log_loss < market_ll
-        and wave1_log_metrics.log_loss < v1_holdout.log_loss
-    )
-    gbc_ok = market_ll is not None and (
-        gbc_metrics.log_loss < market_ll
-        and gbc_metrics.log_loss < v1_holdout.log_loss
-    )
-    best_wave1_ll = min(wave1_log_metrics.log_loss, gbc_metrics.log_loss)
-    replace_production = logistic_ok or gbc_ok
-    if gbc_ok and (not logistic_ok or gbc_metrics.log_loss <= wave1_log_metrics.log_loss):
-        production_model = gbc_model
-        production_cols = FEATURE_COLUMNS_WAVE1_ELO
-        production_version = "v3_gbc_wave1_elo"
-        production_metrics = gbc_metrics
-    elif logistic_ok:
-        production_model = wave1_log_model
-        production_cols = FEATURE_COLUMNS_WAVE1
-        production_version = "v3_logistic_wave1"
-        production_metrics = wave1_log_metrics
+    v1_ll = v1_holdout.log_loss
+    platt_ok = production_gate_passes(platt_metrics.log_loss, v1_ll, market_ll)
+    pruned_ok = production_gate_passes(pruned_metrics.log_loss, v1_ll, market_ll)
+    wave1_ok = production_gate_passes(wave1_log_metrics.log_loss, v1_ll, market_ll)
+    gbc_ok = production_gate_passes(gbc_metrics.log_loss, v1_ll, market_ll)
+
+    candidates: list[tuple[str, object, list[str], HoldoutMetrics, PlattCalibrator | None]] = []
+    if platt_ok:
+        candidates.append(
+            (
+                "v3_logistic_pruned_platt",
+                platt_base,
+                pruned_cols,
+                platt_metrics,
+                platt,
+            )
+        )
+    if pruned_ok:
+        candidates.append(
+            ("v3_logistic_pruned", pruned_model, pruned_cols, pruned_metrics, None)
+        )
+    if wave1_ok:
+        candidates.append(
+            (
+                "v3_logistic_wave1",
+                wave1_log_model,
+                FEATURE_COLUMNS_WAVE1,
+                wave1_log_metrics,
+                None,
+            )
+        )
+    if gbc_ok:
+        candidates.append(
+            (
+                "v3_gbc_wave1_elo",
+                gbc_model,
+                FEATURE_COLUMNS_WAVE1_ELO,
+                gbc_metrics,
+                None,
+            )
+        )
+
+    replace_production = bool(candidates)
+    if candidates:
+        production_version, production_model, production_cols, production_metrics, platt_cal = (
+            candidates[0]
+        )
     else:
         production_model = v1_model
         production_cols = FEATURE_COLUMNS
         production_version = "v1_logistic"
         production_metrics = v1_holdout
+        platt_cal = None
 
     artifact_payload = {
         "model": production_model,
@@ -399,6 +461,9 @@ def run_training() -> dict:
         "rest_fill": rest_fill,
         "neutral_last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
         "neutral_last10_run_diff": NEUTRAL_LAST10_RUN_DIFF,
+        "platt_calibrator": platt_cal,
+        "wave1_pruned_columns": pruned_cols,
+        "wave1_dropped_columns": dropped_cols,
     }
     MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(artifact_payload, MODEL_ARTIFACT)
@@ -432,7 +497,13 @@ def run_training() -> dict:
         },
         "calibration": {
             "favorite_pick_agreement": fav_agreement,
-            "display_blend": "0.5 * model + 0.5 * market (UI only)",
+            "display_blend": display_blend_description(),
+            "platt_fit_season": 2024,
+            "platt_train_season": 2023,
+        },
+        "feature_ablation": {
+            "wave1_pruned_n": len(pruned_cols),
+            "dropped_redundant": dropped_cols,
         },
         "metrics": {
             m.name: {
@@ -445,14 +516,18 @@ def run_training() -> dict:
                 elo_metrics,
                 v1_holdout,
                 wave1_log_metrics,
+                pruned_metrics,
+                platt_metrics,
                 gbc_metrics,
             )
         },
         "market_implied_baseline": market_metrics,
         "phase_gate": {
-            "wave1_logistic_beats_market_and_v1": logistic_ok,
-            "wave1_gbc_beats_market_and_v1": gbc_ok,
-            "best_wave1_log_loss": best_wave1_ll,
+            "rule": "log_loss < v1 AND log_loss <= market",
+            "platt_passes": platt_ok,
+            "pruned_passes": pruned_ok,
+            "wave1_logistic_passes": wave1_ok,
+            "wave1_gbc_passes": gbc_ok,
             "replaced_production": replace_production,
         },
     }
@@ -497,7 +572,11 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
         if "elo_home_pre" in cols:
             prepared = attach_elo_for_slate(prepared)
 
-    return artifact["model"].predict_proba(prepared[cols].values)[:, 1]
+    raw = artifact["model"].predict_proba(prepared[cols].values)[:, 1]
+    platt = artifact.get("platt_calibrator")
+    if platt is not None:
+        return platt.transform(raw)
+    return raw
 
 
 def format_metrics_table(results: dict) -> str:

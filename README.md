@@ -28,10 +28,8 @@ Sports prediction and parlay optimization platform. Starting with **MLB**, expan
 
 | Item | Status |
 |------|--------|
-| **Phase** | Phase 0 — Project shell (in progress) |
-| **Active sport** | MLB (in season) |
-| **Git / GitHub** | Connected — [Parlay-Builder-v1](https://github.com/nickg1247-hue/Parlay-Builder-v1) |
-| **Last updated** | 2026-06-03 |
+| **Phase** | MLB v1 complete — ML v3 production + totals dashboard (totals did not beat market gate) |
+| **Last updated** | 2026-06-04 |
 
 ### Decisions locked
 
@@ -260,7 +258,9 @@ When ready to build, advisor provides this to the coder:
 |------|-------|--------|
 | 2026-06-03 | Phase 0 | README created; MLB chosen as first sport; Git linked to GitHub |
 | 2026-06-03 | Phase 0 | Locked: $0 budget, local localhost UI, cross-game parlays, stats-first edge |
-| | | |
+| 2026-06-04 | Phase 2.6 | Wave 1 features — did not beat market; v1 kept |
+| 2026-06-04 | Phase 2.7 | Ablation + Platt — **v3 promoted** (log loss 0.6762), beats market |
+| 2026-06-04 | Totals v1 | O/U model + dashboard — gate not passed; commit 21d274f |
 
 *Advisor updates this table when phases start, complete, or priorities change.*
 

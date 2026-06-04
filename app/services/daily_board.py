@@ -127,6 +127,7 @@ def _slate_rows(
         ou_line = totals.get("ou_line")
         if ou_line is not None and pd.isna(ou_line):
             ou_line = None
+        exp_runs = totals.get("expected_total_runs")
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -141,8 +142,12 @@ def _slate_rows(
                 "best_pick": best_pick,
                 "model_disagrees_heavy_favorite": disagree,
                 "ou_line": ou_line,
-                "expected_total_runs": totals.get("expected_total_runs"),
+                "expected_total_runs": (
+                    round(float(exp_runs), 2) if exp_runs is not None else None
+                ),
                 "totals_pick": totals.get("pick"),
+                "model_prob_over": totals.get("model_prob_over"),
+                "market_prob_over": totals.get("market_prob_over"),
                 "total_edge": totals.get("total_edge"),
                 "plus_ev_total": totals.get("plus_ev_total", False),
             }
@@ -151,27 +156,38 @@ def _slate_rows(
 
 
 def _totals_by_game(
-    game_date: date, use_cache: bool, slate_df: pd.DataFrame
+    game_date: date,
+    use_cache: bool,
+    slate_df: pd.DataFrame,
+    attach_market_odds: bool = True,
 ) -> dict[str, dict[str, Any]]:
     try:
         totals_df = build_totals_slate(
-            game_date, use_cache=use_cache, moneyline_slate=slate_df
+            game_date,
+            use_cache=use_cache,
+            moneyline_slate=slate_df,
+            attach_market_odds=attach_market_odds,
         )
     except (FileNotFoundError, KeyError, ValueError) as exc:
         logger.warning("Totals slate skipped: %s", exc)
         return {}
     if totals_df.empty:
         return {}
-    return {
-        str(r.game_id): {
-            "ou_line": getattr(r, "ou_line", None),
+    out: dict[str, dict[str, Any]] = {}
+    for r in totals_df.itertuples(index=False):
+        ou = getattr(r, "ou_line", None)
+        if ou is not None and pd.isna(ou):
+            ou = None
+        out[str(r.game_id)] = {
+            "ou_line": ou,
             "expected_total_runs": getattr(r, "expected_total_runs", None),
             "pick": getattr(r, "pick", None),
+            "model_prob_over": getattr(r, "model_prob_over", None),
+            "market_prob_over": getattr(r, "market_prob_over", None),
             "total_edge": getattr(r, "total_edge", None),
             "plus_ev_total": getattr(r, "plus_ev_total", False),
         }
-        for r in totals_df.itertuples(index=False)
-    }
+    return out
 
 
 def _top_singles(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
@@ -295,9 +311,29 @@ def build_daily_board(
         )
 
     has_odds = odds_source != "none"
-    totals_by_game = (
-        {} if skip_totals else _totals_by_game(game_date, use_cache, slate_df)
+    # Always score model runs; attach sportsbook O/U when skip_totals is false.
+    totals_by_game = _totals_by_game(
+        game_date,
+        use_cache,
+        slate_df,
+        attach_market_odds=not skip_totals,
     )
+    if skip_totals:
+        warnings.append(
+            "O/U unchecked: showing model runs only. Check O/U and Refresh for "
+            "sportsbook lines, picks, and total edge."
+        )
+    elif not totals_by_game:
+        warnings.append(
+            "Totals model unavailable — O/U columns empty. Run train_mlb_totals.py."
+        )
+    else:
+        with_line = sum(1 for t in totals_by_game.values() if t.get("ou_line") is not None)
+        if with_line == 0 and not skip_totals:
+            warnings.append(
+                "No sportsbook O/U lines matched this slate. Model runs still shown."
+            )
+
     slate = _slate_rows(merged, has_odds, totals_by_game)
     top_singles = _top_singles(slate) if has_odds else []
     top_parlays = _top_parlays_payload(merged, odds_source) if has_odds else []

@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db.database import get_connection, init_db
 from app.services.daily_board import build_daily_board
+from app.services.backtest_report import load_saved_backtest_report, run_backtest_report
 from app.db.market_status import get_market_eval_status
 from app.db.parlay_status import get_parlay_status
 from app.db.mlb_status import get_mlb_data_status
@@ -55,6 +56,16 @@ async def health():
     }
 
 
+@app.get("/api/backtest")
+async def backtest_report(days: int = Query(30, ge=1, le=120)):
+    return run_backtest_report(days, write_cache=True)
+
+
+@app.get("/api/backtest/saved")
+async def backtest_saved():
+    return load_saved_backtest_report()
+
+
 @app.get("/api/daily")
 async def daily_board(
     date_param: str | None = Query(None, alias="date"),
@@ -77,5 +88,10 @@ async def daily_board(
 
 
 @app.get("/")
-async def index():
-    return FileResponse(STATIC_DIR / "index.html")
+async def home():
+    return FileResponse(STATIC_DIR / "home.html")
+
+
+@app.get("/mlb")
+async def mlb_board():
+    return FileResponse(STATIC_DIR / "mlb.html")

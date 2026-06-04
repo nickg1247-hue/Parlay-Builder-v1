@@ -1,11 +1,10 @@
-const params = new URLSearchParams(window.location.search);
-const demoDate = params.get("date");
-const useCache = params.get("use_cache") === "true";
-const skipTotalsParam = params.get("skip_totals");
-const isLiveMode = !useCache && !demoDate;
+const DEMO_DATE = "2025-08-15";
+
+let boardMode = null;
 
 const els = {
   loading: document.getElementById("loading"),
+  loadingSpinner: document.getElementById("loading-spinner"),
   content: document.getElementById("content"),
   disclaimer: document.getElementById("disclaimer"),
   warnings: document.getElementById("warnings"),
@@ -19,20 +18,34 @@ const els = {
   totalsNote: document.getElementById("totals-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
+  runLive: document.getElementById("run-live-btn"),
+  runDemo: document.getElementById("run-demo-btn"),
+  ouCheckbox: document.getElementById("ou-checkbox"),
   loadingMessage: document.getElementById("loading-message"),
+  loadSavedBacktest: document.getElementById("load-saved-backtest"),
+  runBacktest: document.getElementById("run-backtest-btn"),
+  backtestIdle: document.getElementById("backtest-idle"),
+  backtestLoading: document.getElementById("backtest-loading"),
+  backtestLoadingMessage: document.getElementById("backtest-loading-message"),
+  backtestPanel: document.getElementById("backtest-panel"),
 };
 
+function includeTotals() {
+  return els.ouCheckbox && els.ouCheckbox.checked;
+}
+
 function loadingHint() {
-  if (skipTotalsParam === "true" || (isLiveMode && skipTotalsParam !== "false")) {
-    return "Loading live board (moneyline + parlays)…";
+  if (boardMode === "demo") {
+    return includeTotals()
+      ? "Loading demo board (cached odds + totals)…"
+      : "Loading demo board (moneyline)…";
   }
-  if (isLiveMode) {
-    return "Loading live board… First load with totals may take 2–3 minutes.";
+  if (boardMode === "live") {
+    return includeTotals()
+      ? "Loading live board… First load with totals may take 2–3 minutes."
+      : "Loading live board (moneyline + parlays)…";
   }
-  if (useCache) {
-    return "Loading demo board (cached odds + totals)…";
-  }
-  return "Loading daily board…";
+  return "Click Run live or Demo to load the board.";
 }
 
 function pct(value) {
@@ -42,20 +55,18 @@ function pct(value) {
 
 function buildApiUrl(refresh = false) {
   const url = new URL("/api/daily", window.location.origin);
-  if (demoDate) url.searchParams.set("date", demoDate);
-  if (useCache) url.searchParams.set("use_cache", "true");
-  if (skipTotalsParam === "true") {
-    url.searchParams.set("skip_totals", "true");
-  } else if (skipTotalsParam === "false") {
-    url.searchParams.set("skip_totals", "false");
+  if (boardMode === "demo") {
+    url.searchParams.set("date", DEMO_DATE);
+    url.searchParams.set("use_cache", "true");
   }
+  url.searchParams.set("skip_totals", includeTotals() ? "false" : "true");
   if (refresh) url.searchParams.set("refresh", "true");
   return url.toString();
 }
 
 function winPct(probHome, isHome) {
-  const pct = (isHome ? probHome : 1 - probHome) * 100;
-  return `${pct.toFixed(1)}%`;
+  const p = (isHome ? probHome : 1 - probHome) * 100;
+  return `${p.toFixed(1)}%`;
 }
 
 function renderSimpleSlate(slate, meta) {
@@ -93,18 +104,23 @@ function renderSimpleSlate(slate, meta) {
   }
 }
 
+function fmtRuns(value) {
+  if (value == null) return "—";
+  return Number(value).toFixed(1);
+}
+
 function renderSlate(slate) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="8" class="empty">No games on slate</td></tr>';
+      '<tr><td colspan="10" class="empty">No games on slate</td></tr>';
     return;
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
     if (game.plus_ev_single || game.plus_ev_total) tr.classList.add("plus-ev");
     const ou = game.ou_line != null ? game.ou_line : "—";
-    const runs = game.expected_total_runs != null ? game.expected_total_runs : "—";
+    const runs = fmtRuns(game.expected_total_runs);
     const pick = game.totals_pick || "—";
     const tEdge =
       game.total_edge != null ? `${(game.total_edge * 100).toFixed(1)}%` : "—";
@@ -113,6 +129,8 @@ function renderSlate(slate) {
       <td>${ou}</td>
       <td>${runs}</td>
       <td>${pick}</td>
+      <td>${pct(game.model_prob_over)}</td>
+      <td>${pct(game.market_prob_over)}</td>
       <td class="${game.total_edge != null && game.total_edge >= 0.08 ? "edge-pos" : ""}">${tEdge}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
@@ -203,22 +221,33 @@ function renderFooter(data) {
     <span>Mode: ${data.mode ?? "—"}</span>
     <span>Totals model: ${s.totals_model_version ?? "—"}</span>
   `;
+  els.footer.classList.remove("hidden");
 }
 
 async function loadBoard(refresh = false) {
+  if (!boardMode) return;
+
   els.loading.classList.remove("hidden");
+  els.loadingSpinner.classList.remove("hidden");
   els.content.classList.add("hidden");
+  els.disclaimer.classList.add("hidden");
   els.error.textContent = "";
-  if (els.loadingMessage) {
-    els.loadingMessage.textContent = loadingHint();
-  }
+  els.loadingMessage.textContent = loadingHint();
+  els.refresh.classList.remove("hidden");
 
   try {
     const res = await fetch(buildApiUrl(refresh));
     if (!res.ok) throw new Error(`API error ${res.status}`);
     const data = await res.json();
 
-    els.disclaimer.textContent = data.disclaimer || "";
+    const disclaimer = data.disclaimer || "";
+    if (disclaimer) {
+      els.disclaimer.textContent = disclaimer;
+      els.disclaimer.classList.remove("hidden");
+    } else {
+      els.disclaimer.classList.add("hidden");
+    }
+
     els.boardDate.textContent = `Board date: ${data.date} · ${data.mode === "demo" ? "Demo" : "Live"}`;
 
     els.warnings.innerHTML = (data.warnings || [])
@@ -229,9 +258,7 @@ async function loadBoard(refresh = false) {
       els.error.textContent = data.error;
     }
 
-    renderSimpleSlate(data.slate || [], {
-      display_note: data.display_note,
-    });
+    renderSimpleSlate(data.slate || [], { display_note: data.display_note });
     renderSlate(data.slate || []);
     renderTotals(data.top_totals || [], data.totals_disclaimer);
     renderSingles(data.top_singles || []);
@@ -241,10 +268,92 @@ async function loadBoard(refresh = false) {
     els.loading.classList.add("hidden");
     els.content.classList.remove("hidden");
   } catch (err) {
-    els.loading.classList.add("hidden");
+    els.loadingSpinner.classList.add("hidden");
+    els.loadingMessage.textContent = "Click Run live or Demo to try again.";
     els.error.textContent = `Failed to load board: ${err.message}`;
   }
 }
 
+function renderBacktest(data) {
+  const ml = data.moneyline || {};
+  const tot = data.totals || {};
+  const beats = ml.model_beats_market ? "yes" : "no";
+  const range =
+    data.start_date && data.end_date
+      ? `${data.start_date} → ${data.end_date}`
+      : "—";
+  const note = data.error
+    ? `<p class="accuracy-note">${data.error}</p>`
+    : "";
+
+  els.backtestPanel.innerHTML = `
+    ${note}
+    <p class="accuracy-meta">Generated ${data.generated_at || "—"} · ${data.games_in_window ?? 0} games · ${range}</p>
+    <div class="accuracy-grid">
+      <div class="accuracy-block">
+        <h3>Moneyline</h3>
+        <dl>
+          <dt>Games w/ odds</dt><dd>${ml.games_with_odds ?? 0}</dd>
+          <dt>Winner accuracy</dt><dd>${ml.winner_accuracy_pct ?? 0}%</dd>
+          <dt>+EV picks (≥8%)</dt><dd>${ml.plus_ev_picks ?? 0}</dd>
+          <dt>+EV accuracy</dt><dd>${ml.plus_ev_accuracy_pct ?? 0}%</dd>
+          <dt>Log loss (model)</dt><dd>${ml.log_loss_model ?? "—"}</dd>
+          <dt>Log loss (market)</dt><dd>${ml.log_loss_market ?? "—"}</dd>
+          <dt>Beats market</dt><dd>${beats}</dd>
+        </dl>
+      </div>
+      <div class="accuracy-block">
+        <h3>Totals</h3>
+        <dl>
+          <dt>Games w/ O/U</dt><dd>${tot.games_with_ou_line ?? 0}</dd>
+          <dt>O/U pick accuracy</dt><dd>${tot.ou_pick_accuracy_pct ?? 0}%</dd>
+          <dt>+EV O/U picks</dt><dd>${tot.plus_ev_ou_picks ?? 0}</dd>
+          <dt>+EV O/U accuracy</dt><dd>${tot.plus_ev_ou_accuracy_pct ?? 0}%</dd>
+          <dt>Runs MAE</dt><dd>${tot.total_runs_mae ?? "—"}</dd>
+          <dt>Runs bias</dt><dd>${tot.total_runs_bias ?? "—"}</dd>
+        </dl>
+      </div>
+    </div>
+  `;
+  els.backtestPanel.classList.remove("hidden");
+  els.backtestIdle.classList.add("hidden");
+}
+
+async function fetchBacktest(url, message) {
+  els.backtestLoading.classList.remove("hidden");
+  els.backtestLoadingMessage.textContent = message;
+  els.backtestPanel.classList.add("hidden");
+  els.error.textContent = "";
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Backtest API error ${res.status}`);
+    const data = await res.json();
+    renderBacktest(data);
+  } catch (err) {
+    els.error.textContent = `Backtest failed: ${err.message}`;
+    els.backtestIdle.classList.remove("hidden");
+  } finally {
+    els.backtestLoading.classList.add("hidden");
+  }
+}
+
+els.runLive.addEventListener("click", () => {
+  boardMode = "live";
+  loadBoard(false);
+});
+
+els.runDemo.addEventListener("click", () => {
+  boardMode = "demo";
+  loadBoard(false);
+});
+
 els.refresh.addEventListener("click", () => loadBoard(true));
-loadBoard(false);
+
+els.loadSavedBacktest.addEventListener("click", () => {
+  fetchBacktest("/api/backtest/saved", "Loading saved report…");
+});
+
+els.runBacktest.addEventListener("click", () => {
+  fetchBacktest("/api/backtest?days=30", "Running 30-day backtest (may take ~15s)…");
+});

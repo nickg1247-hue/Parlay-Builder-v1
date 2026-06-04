@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -14,16 +15,31 @@ from app.odds.mlb_odds_free import ODDS_2025_CSV
 from app.odds.odds_math import market_probs_from_american
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
 
-DISPLAY_BLEND_WEIGHT = 0.5
+def _display_blend_model_weight() -> float:
+    """Fraction of model in UI display blend (default 0.5; set DISPLAY_BLEND_MODEL_WEIGHT=0.7 for 70/30)."""
+    raw = os.getenv("DISPLAY_BLEND_MODEL_WEIGHT", "0.5").strip()
+    try:
+        w = float(raw)
+    except ValueError:
+        return 0.5
+    return min(max(w, 0.0), 1.0)
+
+
 HEAVY_FAVORITE_THRESHOLD = 0.60
 
 
 def blend_display_prob(model_prob: float, market_prob: float | None) -> float:
-    """UI display probability: 50/50 model + market when odds exist."""
+    """UI display probability: blend model + market when odds exist (not used for +EV)."""
     if market_prob is None:
         return model_prob
-    w = DISPLAY_BLEND_WEIGHT
+    w = _display_blend_model_weight()
     return w * model_prob + (1.0 - w) * market_prob
+
+
+def display_blend_description() -> str:
+    w = _display_blend_model_weight()
+    pct = int(round(w * 100))
+    return f"{pct}% model + {100 - pct}% market (UI only)"
 
 
 def model_disagrees_heavy_favorite(

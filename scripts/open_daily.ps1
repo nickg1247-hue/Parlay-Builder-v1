@@ -8,13 +8,18 @@ if (-not (Test-Path $venvPython)) {
     exit 1
 }
 
-$url = "http://127.0.0.1:8000"
-Write-Host "Starting server at $url ..."
+$homeUrl = "http://127.0.0.1:8000/"
+$mlbUrl = "http://127.0.0.1:8000/mlb"
+Write-Host "Starting server (Home + MLB on one port)..."
 Start-Process $venvPython -ArgumentList @(
     "-m", "uvicorn", "app.main:app",
     "--reload", "--host", "127.0.0.1", "--port", "8000"
 ) -WorkingDirectory $ProjectRoot
 
 Start-Sleep -Seconds 3
-Start-Process $url
-Write-Host "Opened browser. Press Ctrl+C in the server window to stop."
+Start-Process $homeUrl
+Start-Process $mlbUrl
+Write-Host "Opened Home and MLB in browser."
+Write-Host "  Home: $homeUrl"
+Write-Host "  MLB:  $mlbUrl"
+Write-Host "Close the uvicorn window to stop the server."
