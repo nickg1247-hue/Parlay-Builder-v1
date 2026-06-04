@@ -1,0 +1,38 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #0f1419;
+  color: #e7e9ea;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+main {
+  text-align: center;
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin-top: 0.75rem;
+  font-size: 1.25rem;
+  color: #1d9bf0;
+}
+
+.hint {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #71767b;
+}
