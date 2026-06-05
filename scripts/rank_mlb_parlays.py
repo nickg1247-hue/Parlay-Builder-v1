@@ -9,13 +9,19 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import run_parlay_ranker_with_message
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rank MLB cross-game parlays by EV")
     parser.add_argument("--date", type=str, default=None, help="YYYY-MM-DD (default: today)")
-    parser.add_argument("--min-edge", type=float, default=0.05, help="Min parlay EV (default 0.05)")
+    parser.add_argument(
+        "--min-edge",
+        type=float,
+        default=DEFAULT_MIN_EDGE,
+        help=f"Min parlay EV (default {DEFAULT_MIN_EDGE})",
+    )
     parser.add_argument("--max-parlays", type=int, default=5, help="Max parlays to show")
     parser.add_argument("--min-legs", type=int, default=2)
     parser.add_argument("--max-legs", type=int, default=4)

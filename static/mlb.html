@@ -10,7 +10,7 @@
   <div class="page">
     <header class="header">
       <div>
-        <p class="nav-back"><a href="/">← Home</a></p>
+        <p class="nav-back"><a href="/">← Home</a> · <a href="/mlb/lab">Model Lab</a></p>
         <h1>MLB Daily Board</h1>
         <p class="date-line" id="board-date">Click Run live or Demo to load the board.</p>
       </div>
@@ -22,6 +22,14 @@
       <label class="toolbar-check">
         <input type="checkbox" id="ou-checkbox" checked />
         O/U
+      </label>
+      <label class="toolbar-field">
+        Min edge %
+        <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
+      </label>
+      <label class="toolbar-field">
+        Max parlays
+        <input type="number" id="max-parlays-input" min="1" max="20" step="1" value="5" />
       </label>
       <button type="button" class="btn btn-secondary hidden" id="refresh-btn">Refresh</button>
     </div>
@@ -78,18 +86,18 @@
       </section>
 
       <section>
-        <h2>Top totals <span class="sub">(≥8% edge, experimental)</span></h2>
+        <h2>Top totals <span class="sub" id="totals-threshold-label">(≥8% edge, experimental)</span></h2>
         <p class="simple-note" id="totals-note"></p>
         <div id="totals-list" class="card-list"></div>
       </section>
 
       <section>
-        <h2>Top singles <span class="sub">(≥8% edge)</span></h2>
+        <h2>Top singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
         <div id="singles-list" class="card-list"></div>
       </section>
 
       <section>
-        <h2>Top parlays <span class="sub">(cross-game, ≥5% EV)</span></h2>
+        <h2>Top parlays <span class="sub" id="parlays-threshold-label">(cross-game, ≥8% EV)</span></h2>
         <div id="parlays-list" class="card-list"></div>
       </section>
     </main>

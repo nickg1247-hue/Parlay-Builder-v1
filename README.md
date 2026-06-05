@@ -28,22 +28,40 @@ Sports prediction and parlay optimization platform. Starting with **MLB**, expan
 
 | Item | Status |
 |------|--------|
-| **Phase** | MLB v1 complete — ML v3 production + totals dashboard (totals did not beat market gate) |
+| **Phase** | **Phase 5 — MLB daily workflow** (primary focus before Phase 6 / next sport) |
+| **MLB moneyline** | Production model **v3** (Platt + pruned Wave 1) — beats market on 2025 holdout log loss (see `MODEL.md`) |
+| **MLB market / +EV** | Infrastructure done; **edge not proven** for live betting — see `MARKET.md` |
+| **MLB parlays** | Phase 4 ranker + dashboard integration — **experimental** (see `PARLAY.md`) |
+| **MLB totals O/U** | Built; **did not pass** production gate vs market — see `TOTALS.md` |
 | **Last updated** | 2026-06-04 |
+
+### Truth table (what “done” means)
+
+| Track | Shipped? | Betting-ready? |
+|-------|----------|----------------|
+| Data ingest + features | Yes | — |
+| Moneyline model v3 | Yes | Holdout metric passes; forward CLV still TBD |
+| Market compare + paper trade | Yes | Conditional — modest paper ROI, weak vs market log loss in `MARKET.md` eval |
+| Parlay EV ranker | Yes | No — use conservative filters |
+| Daily dashboard (`/mlb`) | Yes (Phase 5 in progress) | Personal tool; polish + live workflow |
+| Totals O/U | Yes (side track) | No — gate failed |
 
 ### Decisions locked
 
 - [x] First sport: **MLB**
 - [x] Advisor vs coder split defined
 - [x] Git repository initialized and linked to GitHub
-- [x] **Data budget:** $0 — free data sources only for now
+- [x] **Data budget:** $0 — free data sources only for now (optional `ODDS_API_KEY` for live board)
 - [x] **V1 audience:** Local personal tool (PowerShell + localhost) until ready for public rollout
 - [x] **Parlay v1 scope:** Cross-game only
 - [x] **Edge hypothesis:** Stats + CLV tracking first; parlay EV math in Phase 4
+- [x] Python 3.11 + venv, SQLite, FastAPI localhost app (see `DEV.md`)
 
-### Decisions open (Phase 0)
+### Decisions open
 
-- [ ] None blocking Phase 0 shell — proceed with project scaffold
+- [ ] Phase 5 exit: confirm daily morning workflow (ingest refresh cadence, live vs demo default)
+- [ ] Better closing-line data before trusting Phase 3–4 signals (Odds API forward CLV vs SBR proxy)
+- [ ] Phase 6 sport order after MLB Phase 5 sign-off (default: NBA → NFL → CFB → NHL)
 
 ---
 
@@ -61,7 +79,9 @@ Data in → Features → Model → Predictions → Parlay EV ranker → UI
 | **Parlay optimizer** | Rank multi-leg parlays by EV vs sportsbook implied probability |
 | **UI** | Daily slate, model vs market, top EV singles and parlays |
 
-**Stack:** Python + SQLite, local dev server (localhost via PowerShell). Free data only until budget increases. No microservices.
+**Stack:** Python + SQLite, local dev server (localhost via PowerShell). Free data until budget increases. No microservices.
+
+**Detail docs:** [`DEV.md`](DEV.md) · [`MODEL.md`](MODEL.md) · [`MARKET.md`](MARKET.md) · [`PARLAY.md`](PARLAY.md) · [`TOTALS.md`](TOTALS.md)
 
 ---
 
@@ -76,155 +96,132 @@ We do not add features or sports until these are measured on holdout/backtest da
 | **Paper-trade ROI** | Simulated returns on flagged +EV plays |
 | **Parlay EV** | `our_joint_prob × payout − 1` vs book implied joint prob |
 
-**Phase gate:** Baseline model must beat naive baseline (home win rate + simple Elo) before adding odds comparison or parlays.
+**Phase gate:** Baseline model must beat naive baseline (home win rate + simple Elo) before adding odds comparison or parlays. **Met** for moneyline v3 on 2025 holdout.
 
 ---
 
 ## Roadmap
 
-### Phase 0 — Foundation & decisions
+### Phase 0 — Foundation & decisions ✅
 
-**Owner:** Advisor (decisions) + Coder (scaffold)
+**Objective:** Lock scope, repo hygiene, and environment.
 
-**Objective:** Lock scope, repo hygiene, and environment so Phase 1 can start cleanly.
-
-| Task | Owner | Status |
-|------|-------|--------|
-| Git + GitHub connected | Coder | Done |
-| `.gitignore` (secrets, data, venv) | Coder | Done |
-| This README / roadmap | Advisor | Done |
-| Lock data budget | Advisor + User | Not started |
-| Lock V1 audience (personal vs public) | Advisor + User | Not started |
-| Choose Python env + project layout | Coder | Not started |
-| Add `.env.example` (no secrets) | Coder | Not started |
-| Document required data sources (MLB) | Advisor | Not started |
-
-**Exit criteria:** Open decisions resolved; coder has empty project structure ready for data ingest.
+| Task | Status |
+|------|--------|
+| Git + GitHub connected | Done |
+| `.gitignore` (secrets, data, venv) | Done |
+| This README / roadmap | Done |
+| Lock data budget ($0 + optional live key) | Done |
+| Lock V1 audience (local personal tool) | Done |
+| Python env + project layout | Done |
+| `.env.example` | Done |
+| Data sources documented | Done (`DEV.md`) |
 
 ---
 
-### Phase 1 — MLB data foundation
+### Phase 1 — MLB data foundation ✅
 
-**Owner:** Coder (implement) · Advisor (spec + review)
+**Objective:** Reliable labeled dataset — one row per game.
 
-**Objective:** Reliable labeled dataset — one row per game, no model yet.
-
-| Task | Owner | Status |
-|------|-------|--------|
-| Historical game results (2+ seasons) | Coder | Not started |
-| Starting pitchers / probable starters | Coder | Not started |
-| Team stats (recent form, home/away) | Coder | Not started |
-| Daily schedule ingestion | Coder | Not started |
-| Data stored locally (not in Git) | Coder | Not started |
-| Validation: row count, date ranges, no duplicate game IDs | Coder | Not started |
-
-**MLB features (v1 — prioritize in this order)**
-
-1. Starting pitcher quality (ERA / FIP / xFIP or season aggregates)
-2. Team recent form (last 10–20 games, run differential)
-3. Home / away
-4. Rest days / day-after-night-game flag
-5. Head-to-head or platoon splits *(optional v1.1)*
-
-**Out of scope:** Player props, live in-game, weather API, deep learning.
-
-**Exit criteria:** Script/notebook produces a clean modeling table with home-win label for backtest window.
+| Task | Status |
+|------|--------|
+| Historical game results (2023–2025) | Done |
+| Starting pitchers / ERA | Done (FIP null — documented) |
+| Team stats (rolling form, home/away, park, rest) | Done |
+| Daily schedule ingestion | Done |
+| Data stored locally (not in Git) | Done |
+| Validation script | Done |
 
 ---
 
-### Phase 2 — MLB baseline model
+### Phase 2 — MLB baseline model ✅
 
-**Owner:** Coder (implement) · Advisor (metrics review)
+**Objective:** Simple model that beats naive baseline on holdout.
 
-**Objective:** Simple model that beats naive baseline on holdout data.
+| Task | Status |
+|------|--------|
+| Season-based holdout (2023–24 train · 2025 test) | Done |
+| Baseline: home win rate + Elo | Done |
+| Model iterations (v1 → Wave 1 → ablation → **v3 Platt**) | Done |
+| Log loss, Brier, accuracy reporting | Done |
+| Phase gate vs market | Done (v3) |
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Train/test split (season-based holdout) | Coder | Not started |
-| Baseline: home win rate + Elo | Coder | Not started |
-| Model v1: logistic regression or gradient boosting | Coder | Not started |
-| Report log loss, Brier score, accuracy | Coder | Not started |
-| Advisor review vs phase gate | Advisor | Not started |
-
-**Exit criteria:** Model v1 beats baseline on holdout; probabilities are reasonably calibrated.
+**Sub-phases (changelog):** 2.6 Wave 1 (no market beat) · 2.7 ablation + Platt (**production**). See `MODEL.md`.
 
 ---
 
-### Phase 3 — Market comparison (MLB moneyline)
+### Phase 3 — Market comparison (MLB moneyline) ✅ (conditional)
 
-**Owner:** Coder (implement) · Advisor (EV logic review)
+**Objective:** Compare model to implied probabilities; track CLV / paper trade.
 
-**Objective:** Compare model probabilities to sportsbook implied probabilities; track CLV.
+| Task | Status |
+|------|--------|
+| Free historical odds (SBR dataset) | Done |
+| Vig removal + +EV flags | Done |
+| Paper-trade simulation | Done |
+| Live odds stub (`ODDS_API_KEY`) | Done |
+| Durable edge proven | **No** — proceed with caution (`MARKET.md`) |
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Integrate odds source (API per data budget) | Coder | Not started |
-| Remove vig from implied probabilities | Coder | Not started |
-| Flag +EV single-game moneyline plays | Coder | Not started |
-| Log picks vs closing line (CLV tracking) | Coder | Not started |
-| Paper-trade simulation (flat stake) | Coder | Not started |
-
-**Exit criteria:** CLV tracking runs daily; advisor confirms edge signal before Phase 4.
+**Exit criteria (revised):** Infrastructure runs daily; **do not** treat +EV as strong edge until closing-line quality improves.
 
 ---
 
-### Phase 4 — MLB parlay builder (v1)
+### Phase 4 — MLB parlay builder (v1) ✅ (experimental)
 
-**Owner:** Coder (implement) · Advisor (parlay rules review)
+**Objective:** Rank cross-game parlays by EV.
 
-**Objective:** Rank daily cross-game parlays by expected ROI, not “most likely to hit.”
+| Task | Status |
+|------|--------|
+| Moneyline odds on slate | Done |
+| 2–4 leg cross-game combinations | Done |
+| Independence joint prob + EV rank | Done |
+| CLI + JSON output | Done |
+| Wired into daily board API | Done |
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Pull moneyline odds for full daily slate | Coder | Not started |
-| 2–4 leg cross-game combinations | Coder | Not started |
-| Joint probability from model (independence assumption v1) | Coder | Not started |
-| EV ranking vs best available book price | Coder | Not started |
-| Output: EV %, est. hit rate, legs, book | Coder | Not started |
-| Minimum EV threshold filter | Coder | Not started |
-
-**Parlay v1 rules**
-
-- Cross-game only (no same-game parlays until correlation logic exists)
-- Rank by **EV**, not hit rate
-- Show both model joint prob and book implied joint prob
-
-**Out of scope:** Same-game parlays, auto-betting, live odds.
-
-**Exit criteria:** Daily ranked parlay list with documented EV math; advisor sign-off.
+**Rules:** Cross-game only; rank by EV. See `PARLAY.md`.
 
 ---
 
-### Phase 5 — Minimal UI / daily workflow
+### Phase 5 — Minimal UI / daily workflow 🔄 **current**
 
-**Owner:** Coder (implement) · Advisor (UX scope)
+**Objective:** Usable morning tool on localhost before expanding sports.
 
-**Objective:** Usable daily tool — personal use first unless V1 audience decision says public.
+| Task | Status |
+|------|--------|
+| FastAPI app + health | Done |
+| Today’s MLB slate (`/mlb`) | Done |
+| Model prob vs market (moneyline) | Done |
+| Top +EV singles + parlays on board | Done |
+| Optional O/U on board (`skip_totals` / checkbox) | Done |
+| Backtest panel (30d moneyline + totals) | Done |
+| `open_daily.ps1` one-click browser | Done |
+| UI filters (min EV, max legs) configurable in browser | **Partial** — thresholds mostly fixed in API/UI |
+| Documented “every morning” refresh steps | **Partial** — see `DEV.md`; ingest cadence TBD |
+| Advisor sign-off on Phase 5 exit | **Not started** |
 
-| Task | Owner | Status |
-|------|-------|--------|
-| Today’s MLB slate view | Coder | Not started |
-| Model prob vs market implied prob | Coder | Not started |
-| Top +EV singles and parlays | Coder | Not started |
-| Simple filters (min EV, max legs) | Coder | Not started |
+**Exit criteria:** Open app each morning; see slate, edges, and parlays with a repeatable refresh path (live key or demo cache). **Close this phase before Phase 6.**
 
-**Exit criteria:** User can open app/site each morning and see actionable MLB output.
+**Suggested Phase 5 finish (advisor):**
+
+1. Lock default workflow: demo vs live, when to re-run `ingest_mlb.py`.
+2. Optional UI: min EV / max parlay legs without editing code.
+3. Short “Morning checklist” block in `DEV.md` linked from here.
 
 ---
 
-### Phase 6 — Expand sports (order TBD after MLB proven)
+### Phase 6 — Expand sports ⏸️ (after MLB Phase 5)
 
-**Default expansion order** (advisor recommendation — revise when Phase 4 completes):
+**Default order** (revise after MLB daily workflow is signed off):
 
 | Order | Sport | Parlay module? | Notes |
 |-------|-------|----------------|-------|
-| 1 | **MLB** | Yes | Current focus |
-| 2 | **NBA** | Yes | High daily volume, parlay-friendly |
-| 3 | **NFL** | Yes | Weekly slate; add before or with CFB based on season |
-| 4 | **College football** | Later | Higher variance; messier data |
+| 1 | **MLB** | Yes | Finish Phase 5 first |
+| 2 | **NBA** | Yes | High daily volume |
+| 3 | **NFL** | Yes | Weekly slate |
+| 4 | **College football** | Later | Higher variance |
 | 5 | **NHL** | Later | Thinner markets |
 
-Each new sport repeats Phases 1–4 with sport-specific features. Reuse shared odds + EV engine.
+Each sport repeats data → model → market → parlay; reuse odds + EV engine.
 
 ---
 
@@ -256,11 +253,12 @@ When ready to build, advisor provides this to the coder:
 
 | Date | Phase | Update |
 |------|-------|--------|
-| 2026-06-03 | Phase 0 | README created; MLB chosen as first sport; Git linked to GitHub |
-| 2026-06-03 | Phase 0 | Locked: $0 budget, local localhost UI, cross-game parlays, stats-first edge |
-| 2026-06-04 | Phase 2.6 | Wave 1 features — did not beat market; v1 kept |
-| 2026-06-04 | Phase 2.7 | Ablation + Platt — **v3 promoted** (log loss 0.6762), beats market |
-| 2026-06-04 | Totals v1 | O/U model + dashboard — gate not passed; commit 21d274f |
+| 2026-06-03 | 0 | README created; MLB first sport; Git linked |
+| 2026-06-03 | 0 | Locked: $0 budget, localhost UI, cross-game parlays |
+| 2026-06-04 | 2.6 | Wave 1 features — did not beat market; v1 kept |
+| 2026-06-04 | 2.7 | Ablation + Platt — **v3 promoted** (log loss 0.6762) |
+| 2026-06-04 | Totals | O/U model + dashboard — gate not passed |
+| 2026-06-04 | 5 | README synced: Phases 0–4 done; **Phase 5 active** before next sport |
 
 *Advisor updates this table when phases start, complete, or priorities change.*
 
@@ -278,3 +276,4 @@ When ready to build, advisor provides this to the coder:
 
 - **GitHub:** https://github.com/nickg1247-hue/Parlay-Builder-v1
 - **Advisor skill:** `.cursor/skills/parlay-builder-advisor/SKILL.md`
+- **Run locally:** `.\scripts\dev.ps1` → http://127.0.0.1:8000/mlb

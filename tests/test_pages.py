@@ -21,6 +21,7 @@ def test_mlb_page():
     text = response.text
     assert "MLB Daily Board" in text
     assert 'href="/"' in text
+    assert 'href="/mlb/lab"' in text
     assert "Run live" in text
     assert "Click Run live or Demo to load the board." in text
     assert "Model accuracy (30 days)" in text

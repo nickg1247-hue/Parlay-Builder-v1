@@ -13,7 +13,7 @@ For legs \(1..n\) from **different games** (cross-game only):
 | Decimal parlay payout | \(\prod_i \text{decimal}(\text{American odds}_i)\) |
 | **EV** | \((P_{\text{model,joint}} \times \text{decimal payout}) - 1\) |
 
-**Edge filter (default):** parlay EV ≥ `min_edge` (5%). Each game contributes at most one leg — the side with the largest positive single-game edge vs vig-free market.
+**Edge filter (default):** parlay EV ≥ `min_edge` (8%). Each game contributes at most one leg — the side with the largest positive single-game edge vs vig-free market.
 
 ## Assumptions
 
@@ -32,7 +32,7 @@ python scripts/rank_mlb_parlays.py
 |------|---------|
 | `--date YYYY-MM-DD` | Target slate date |
 | `--use-cache` | Historical odds from `mlb_odds_2025.csv` + slate from ingested games |
-| `--min-edge 0.05` | Minimum parlay EV (default 5%) |
+| `--min-edge 0.08` | Minimum parlay EV (default 8%) |
 | `--max-parlays 5` | Top N parlays to return |
 
 **Live odds:** set `ODDS_API_KEY` in `.env` ([The Odds API](https://the-odds-api.com) free tier). Without a key, use `--use-cache` on a date present in the free historical odds file.

@@ -21,6 +21,11 @@ const els = {
   runLive: document.getElementById("run-live-btn"),
   runDemo: document.getElementById("run-demo-btn"),
   ouCheckbox: document.getElementById("ou-checkbox"),
+  minEdgeInput: document.getElementById("min-edge-input"),
+  maxParlaysInput: document.getElementById("max-parlays-input"),
+  singlesThresholdLabel: document.getElementById("singles-threshold-label"),
+  parlaysThresholdLabel: document.getElementById("parlays-threshold-label"),
+  totalsThresholdLabel: document.getElementById("totals-threshold-label"),
   loadingMessage: document.getElementById("loading-message"),
   loadSavedBacktest: document.getElementById("load-saved-backtest"),
   runBacktest: document.getElementById("run-backtest-btn"),
@@ -32,6 +37,35 @@ const els = {
 
 function includeTotals() {
   return els.ouCheckbox && els.ouCheckbox.checked;
+}
+
+function minEdgeFraction() {
+  const pct = Number(els.minEdgeInput?.value ?? 8);
+  if (!Number.isFinite(pct) || pct < 0) return 0.08;
+  return pct / 100;
+}
+
+function maxParlaysCount() {
+  const n = Number(els.maxParlaysInput?.value ?? 5);
+  if (!Number.isFinite(n) || n < 1) return 5;
+  return Math.min(20, Math.round(n));
+}
+
+function edgePctLabel(fraction) {
+  return `${Math.round(fraction * 1000) / 10}%`;
+}
+
+function updateThresholdLabels(edgeFraction) {
+  const label = edgePctLabel(edgeFraction);
+  if (els.singlesThresholdLabel) {
+    els.singlesThresholdLabel.textContent = `(≥${label} edge)`;
+  }
+  if (els.parlaysThresholdLabel) {
+    els.parlaysThresholdLabel.textContent = `(cross-game, ≥${label} EV)`;
+  }
+  if (els.totalsThresholdLabel) {
+    els.totalsThresholdLabel.textContent = `(≥${label} edge, experimental)`;
+  }
 }
 
 function loadingHint() {
@@ -60,6 +94,8 @@ function buildApiUrl(refresh = false) {
     url.searchParams.set("use_cache", "true");
   }
   url.searchParams.set("skip_totals", includeTotals() ? "false" : "true");
+  url.searchParams.set("min_edge", String(minEdgeFraction()));
+  url.searchParams.set("max_parlays", String(maxParlaysCount()));
   if (refresh) url.searchParams.set("refresh", "true");
   return url.toString();
 }
@@ -109,7 +145,7 @@ function fmtRuns(value) {
   return Number(value).toFixed(1);
 }
 
-function renderSlate(slate) {
+function renderSlate(slate, edgeFraction = 0.08) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
@@ -131,10 +167,10 @@ function renderSlate(slate) {
       <td>${pick}</td>
       <td>${pct(game.model_prob_over)}</td>
       <td>${pct(game.market_prob_over)}</td>
-      <td class="${game.total_edge != null && game.total_edge >= 0.08 ? "edge-pos" : ""}">${tEdge}</td>
+      <td class="${game.total_edge != null && game.total_edge >= edgeFraction ? "edge-pos" : ""}">${tEdge}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
-      <td class="${game.edge_home != null && game.edge_home >= 0.08 ? "edge-pos" : ""}">
+      <td class="${game.edge_home != null && game.edge_home >= edgeFraction ? "edge-pos" : ""}">
         ${game.edge_home != null ? pct(game.edge_home) : "—"}
       </td>
     `;
@@ -142,10 +178,10 @@ function renderSlate(slate) {
   }
 }
 
-function renderSingles(singles) {
+function renderSingles(singles, edgeFraction = 0.08) {
   if (!singles.length) {
     els.singles.innerHTML =
-      '<p class="empty">No singles met the 8% edge threshold.</p>';
+      `<p class="empty">No singles met the ${edgePctLabel(edgeFraction)} edge threshold.</p>`;
     return;
   }
   els.singles.innerHTML = singles
@@ -159,14 +195,14 @@ function renderSingles(singles) {
     .join("");
 }
 
-function renderTotals(totals, note) {
+function renderTotals(totals, note, edgeFraction = 0.08) {
   if (els.totalsNote) {
     els.totalsNote.textContent =
       note || "Separate from moneyline model. Not betting advice.";
   }
   if (!totals.length) {
     els.totals.innerHTML =
-      '<p class="empty">No totals met the 8% edge threshold.</p>';
+      `<p class="empty">No totals met the ${edgePctLabel(edgeFraction)} edge threshold.</p>`;
     return;
   }
   els.totals.innerHTML = totals
@@ -180,10 +216,10 @@ function renderTotals(totals, note) {
     .join("");
 }
 
-function renderParlays(parlays) {
+function renderParlays(parlays, edgeFraction = 0.08) {
   if (!parlays.length) {
     els.parlays.innerHTML =
-      '<p class="empty">No parlays met the 8% EV threshold.</p>';
+      `<p class="empty">No parlays met the ${edgePctLabel(edgeFraction)} EV threshold.</p>`;
     return;
   }
   els.parlays.innerHTML = parlays
@@ -258,11 +294,15 @@ async function loadBoard(refresh = false) {
       els.error.textContent = data.error;
     }
 
+    const edgeFraction =
+      typeof data.edge_threshold === "number" ? data.edge_threshold : minEdgeFraction();
+    updateThresholdLabels(edgeFraction);
+
     renderSimpleSlate(data.slate || [], { display_note: data.display_note });
-    renderSlate(data.slate || []);
-    renderTotals(data.top_totals || [], data.totals_disclaimer);
-    renderSingles(data.top_singles || []);
-    renderParlays(data.top_parlays || []);
+    renderSlate(data.slate || [], edgeFraction);
+    renderTotals(data.top_totals || [], data.totals_disclaimer, edgeFraction);
+    renderSingles(data.top_singles || [], edgeFraction);
+    renderParlays(data.top_parlays || [], edgeFraction);
     renderFooter(data);
 
     els.loading.classList.add("hidden");

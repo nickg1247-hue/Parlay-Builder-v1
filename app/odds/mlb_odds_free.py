@@ -24,7 +24,13 @@ ODDS_DATASET_URL = (
 RAW_JSON_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_odds_dataset.json"
 ODDS_2025_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_odds_2025.csv"
 TOTALS_2025_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_totals_2025.csv"
+TOTALS_2024_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_totals_2024.csv"
 TARGET_SEASON = 2025
+LAB_TOTALS_SEASONS = (2024, 2025)
+
+
+def totals_odds_csv_path(season: int) -> Path:
+    return PROJECT_ROOT / "data" / "processed" / f"mlb_totals_{season}.csv"
 
 
 def download_raw_dataset(force: bool = False) -> Path:
@@ -124,14 +130,15 @@ def parse_2025_odds(raw_path: Path) -> pd.DataFrame:
     return df.sort_values(["date", "home_team", "away_team"]).reset_index(drop=True)
 
 
-def parse_2025_totals(raw_path: Path) -> pd.DataFrame:
-    """Parse O/U lines from the same free SBR JSON release as moneylines."""
+def parse_season_totals(raw_path: Path, season: int) -> pd.DataFrame:
+    """Parse O/U lines from the free SBR JSON release for a given season."""
     with raw_path.open(encoding="utf-8") as f:
         data = json.load(f)
 
     rows: list[dict[str, Any]] = []
+    prefix = str(season)
     for date_str, games in data.items():
-        if not date_str.startswith(str(TARGET_SEASON)):
+        if not date_str.startswith(prefix):
             continue
         for game in games:
             view = game.get("gameView", {})
@@ -166,6 +173,38 @@ def parse_2025_totals(raw_path: Path) -> pd.DataFrame:
     ).sort_values(["date", "home_team", "away_team"]).reset_index(drop=True)
 
 
+def parse_2025_totals(raw_path: Path) -> pd.DataFrame:
+    return parse_season_totals(raw_path, TARGET_SEASON)
+
+
+def load_or_build_season_totals_csv(
+    season: int,
+    *,
+    force_download: bool = False,
+    force_parse: bool = False,
+) -> pd.DataFrame:
+    if season not in LAB_TOTALS_SEASONS:
+        raise ValueError(f"Lab totals odds supported for seasons {LAB_TOTALS_SEASONS}")
+
+    out_path = totals_odds_csv_path(season)
+    if out_path.exists() and not force_download and not force_parse:
+        return pd.read_csv(out_path)
+
+    raw_path = download_raw_dataset(force=force_download)
+    df = parse_season_totals(raw_path, season)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_path, index=False)
+    logger.info("Wrote %s totals rows to %s", len(df), out_path)
+    return df
+
+
+def load_totals_odds_for_season(season: int) -> pd.DataFrame | None:
+    path = totals_odds_csv_path(season)
+    if not path.exists():
+        return None
+    return pd.read_csv(path)
+
+
 def load_or_build_2025_csv(
     force_download: bool = False, force_parse: bool = False
 ) -> pd.DataFrame:
@@ -183,12 +222,8 @@ def load_or_build_2025_csv(
 def load_or_build_2025_totals_csv(
     force_download: bool = False, force_parse: bool = False
 ) -> pd.DataFrame:
-    if TOTALS_2025_CSV.exists() and not force_download and not force_parse:
-        return pd.read_csv(TOTALS_2025_CSV)
-
-    raw_path = download_raw_dataset(force=force_download)
-    df = parse_2025_totals(raw_path)
-    TOTALS_2025_CSV.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(TOTALS_2025_CSV, index=False)
-    logger.info("Wrote %s totals rows to %s", len(df), TOTALS_2025_CSV)
-    return df
+    return load_or_build_season_totals_csv(
+        TARGET_SEASON,
+        force_download=force_download,
+        force_parse=force_parse,
+    )

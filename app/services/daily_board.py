@@ -37,7 +37,6 @@ from app.parlay.totals_slate import build_totals_slate
 logger = logging.getLogger(__name__)
 
 DAILY_BOARD_CACHE = PROJECT_ROOT / "data" / "processed" / "daily_board.json"
-SINGLE_EDGE_THRESHOLD = DEFAULT_MIN_EDGE
 DISCLAIMER = (
     "Experimental analytics — not betting advice. EV signals are not validated. "
     "Totals model is separate from moneyline."
@@ -85,7 +84,10 @@ def _top_totals(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, A
 
 
 def _slate_rows(
-    merged: pd.DataFrame, has_odds: bool, totals_by_game: dict[str, dict[str, Any]]
+    merged: pd.DataFrame,
+    has_odds: bool,
+    totals_by_game: dict[str, dict[str, Any]],
+    min_edge: float,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for row in merged.itertuples(index=False):
@@ -111,7 +113,7 @@ def _slate_rows(
                     ("away", row.away_team, edge_away, int(row.away_ml)),
                 ]
                 side, team, edge, am = max(options, key=lambda x: x[2])
-                if edge >= SINGLE_EDGE_THRESHOLD:
+                if edge >= min_edge:
                     plus_ev = True
                     best_pick = {
                         "side": side,
@@ -213,7 +215,10 @@ def _top_singles(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, 
 
 
 def _top_parlays_payload(
-    merged: pd.DataFrame, odds_source: str
+    merged: pd.DataFrame,
+    odds_source: str,
+    min_edge: float,
+    max_parlays: int,
 ) -> list[dict[str, Any]]:
     if odds_source == "none":
         return []
@@ -221,8 +226,8 @@ def _top_parlays_payload(
     legs = _candidate_legs(with_odds)
     parlays = rank_parlays(
         legs,
-        min_edge=DEFAULT_MIN_EDGE,
-        max_parlays=DEFAULT_MAX_PARLAYS,
+        min_edge=min_edge,
+        max_parlays=max_parlays,
     )
     return [
         {
@@ -256,6 +261,8 @@ def build_daily_board(
     use_cache: bool = False,
     refresh: bool = False,
     skip_totals: bool | None = None,
+    min_edge: float = DEFAULT_MIN_EDGE,
+    max_parlays: int = DEFAULT_MAX_PARLAYS,
 ) -> dict[str, Any]:
     game_date = game_date or date.today()
     # Live board defaults to fast path; pass skip_totals=false to include O/U model.
@@ -264,6 +271,7 @@ def build_daily_board(
     cache_key = (
         f"{game_date.isoformat()}_{'cache' if use_cache else 'live'}"
         f"_{'no_totals' if skip_totals else 'totals'}"
+        f"_edge{min_edge}_parlays{max_parlays}"
     )
 
     if not refresh and DAILY_BOARD_CACHE.exists():
@@ -334,9 +342,13 @@ def build_daily_board(
                 "No sportsbook O/U lines matched this slate. Model runs still shown."
             )
 
-    slate = _slate_rows(merged, has_odds, totals_by_game)
+    slate = _slate_rows(merged, has_odds, totals_by_game, min_edge)
     top_singles = _top_singles(slate) if has_odds else []
-    top_parlays = _top_parlays_payload(merged, odds_source) if has_odds else []
+    top_parlays = (
+        _top_parlays_payload(merged, odds_source, min_edge, max_parlays)
+        if has_odds
+        else []
+    )
     top_totals = _top_totals(slate) if totals_by_game else []
 
     payload = {
@@ -358,7 +370,8 @@ def build_daily_board(
             "Win % uses 50% model + 50% market when odds available; "
             "raw model when odds missing."
         ),
-        "edge_threshold": SINGLE_EDGE_THRESHOLD,
+        "edge_threshold": min_edge,
+        "max_parlays": max_parlays,
         "skip_totals": skip_totals,
         "status": _status_footer(),
     }

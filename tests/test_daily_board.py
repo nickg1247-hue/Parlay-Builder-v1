@@ -85,3 +85,16 @@ def test_api_daily_demo():
     assert "slate" in body
     assert "top_parlays" in body
     assert "status" in body
+    assert body["edge_threshold"] == 0.08
+    assert body["max_parlays"] == 5
+
+
+def test_api_daily_min_edge_and_max_parlays():
+    response = client.get(
+        "/api/daily?date=2025-08-15&use_cache=true&refresh=true"
+        "&min_edge=0.1&max_parlays=3"
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["edge_threshold"] == 0.1
+    assert body["max_parlays"] == 3

@@ -1,5 +1,30 @@
 # Local development
 
+## Morning checklist (MLB daily board)
+
+Use this as the default daily workflow during the season. Phase 6 stays blocked until Phase 5 sign-off and advisor review of forward CLV.
+
+| Step | When | Command / action |
+|------|------|------------------|
+| 1. Start server | Each session | `.\scripts\dev.ps1` (creates `.venv` if needed, installs deps, starts uvicorn on port 8000) |
+| 2. Refresh game data | Morning, or after yesterday’s games finish | `python scripts/ingest_mlb.py` — updates scores, pitchers, rolling features (~5–15 min first run; faster when parquet cache warm) |
+| 3. Open board | After server is up | http://127.0.0.1:8000/mlb — or `.\scripts\open_daily.ps1` to start server and open Home + MLB |
+| 4. Load slate | On `/mlb` | **Run live** (today + The Odds API) or **Demo** (fixed date `2025-08-15` + historical odds CSV). Nothing loads until you click one. |
+| 5. O/U toggle | Before Run | Check **O/U** to include totals model + sportsbook lines (slower on live). Unchecked = moneyline + parlays only. |
+| 6. Refresh odds cache | Live board stale or lines moved | Click **Refresh** on `/mlb` (or `?refresh=true`). Board JSON cache TTL is **5 minutes** (`data/processed/daily_board.json`). |
+| 7. Historical odds CSV | Weekly or when re-running market eval | `python scripts/load_mlb_odds_free.py` — only needed for demo mode, backtest, and `evaluate_mlb_market.py` (not live Odds API) |
+| 8. Market eval (Phase 3) | After ingest + train + odds CSV | `python scripts/evaluate_mlb_market.py` — uses production `v3_logistic_pruned_platt`; see `MARKET.md` |
+| 9. Backtest panel | Optional, bottom of `/mlb` | **Load saved** or **Run backtest** (30-day rolling report) |
+
+**Live vs demo**
+
+| Mode | API | Needs |
+|------|-----|--------|
+| **Live** | `/api/daily` | `ODDS_API_KEY` in `.env`; `skip_totals=true` by default (uncheck O/U on UI for same) |
+| **Demo** | `/api/daily?date=2025-08-15&use_cache=true` | Ingested games + `mlb_odds_2025.csv` (and `mlb_totals_2025.csv` if O/U checked) |
+
+**Edge / parlay tuning (optional):** `/api/daily?min_edge=0.08&max_parlays=5` — mirrored on `/mlb` toolbar. Default **8%** edge matches `DEFAULT_MIN_EDGE` in `app/models/constants.py`.
+
 ## Prerequisites
 
 - Python 3.11 or newer
@@ -104,7 +129,7 @@ python scripts/load_mlb_odds_free.py
 python scripts/evaluate_mlb_market.py
 ```
 
-Optional edge threshold: `python scripts/evaluate_mlb_market.py --edge-threshold 0.03`
+Default edge threshold is **8%** (same as daily board). Override: `python scripts/evaluate_mlb_market.py --edge-threshold 0.05`
 
 **Historical odds:** Free JSON release from [mlb-odds-scraper](https://github.com/ArnavSaraogi/mlb-odds-scraper/releases/tag/dataset) (SportsBookReview-derived, pre-built; not live sportsbook scraping). Cached to `data/processed/mlb_odds_2025.csv`.
 
@@ -130,7 +155,7 @@ Historical demo (no API key):
 python scripts/rank_mlb_parlays.py --date 2025-08-15 --use-cache
 ```
 
-Defaults: 2–4 legs, cross-game only, `min_edge=5%`, top 5 parlays. See `PARLAY.md` for formulas and assumptions.
+Defaults: 2–4 legs, cross-game only, `min_edge=8%`, top 5 parlays. See `PARLAY.md` for formulas and assumptions.
 
 ## Daily dashboard (Phase 5)
 

@@ -1,5 +1,26 @@
 # MLB market comparison (Phase 3)
 
+## Production model
+
+| Item | Value |
+|------|--------|
+| **Artifact** | `data/processed/mlb_baseline_model.joblib` |
+| **Version** | `v3_logistic_pruned_platt` |
+| **Inference** | `predict_home_win_proba()` — base logistic (train 2023) + Platt calibration (fit 2024) |
+| **Eval script** | `scripts/evaluate_mlb_market.py` loads the same artifact as the daily board |
+
+See `MODEL.md` for holdout log loss (0.6762 on 2025) and production gate.
+
+## Edge threshold (single default)
+
+| Setting | Value |
+|---------|--------|
+| **+EV flag** | **8%** (`DEFAULT_MIN_EDGE = 0.08`) |
+| **Used by** | `evaluate_mlb_market.py`, `/api/daily`, `/mlb` board (singles, parlays, totals) |
+| **Override** | `python scripts/evaluate_mlb_market.py --edge-threshold 0.05` or `/api/daily?min_edge=0.05` |
+
+One threshold everywhere avoids mixing 2% market-eval counts with 8% UI filters.
+
 ## Odds source
 
 | Item | Detail |
@@ -24,27 +45,9 @@
 
 Unmatched games: missing from SBR export, invalid odds, or team/date alignment gaps.
 
-## Summary metrics (edge threshold 2%)
+## Summary metrics (edge threshold 8%)
 
-| Metric | Value |
-|--------|-------|
-| Log loss — model | 0.6797 |
-| Log loss — market (vig-free) | 0.6770 |
-| Model beats market (log loss) | No (slightly worse) |
-| +EV picks flagged | 1,403 |
-| Paper-trade ROI (flat $1) | **5.92%** (83.02 units) |
-| +EV hit rate | 48.5% |
-| EV signal (ROI > 0) | Yes (weak) |
-
-## Advisor recommendation
-
-**Conditional — do not treat as strong edge yet.**
-
-- Paper ROI is modestly positive on flagged plays but **calibration vs market is not better** (log loss slightly worse than vig-free market implied).
-- Lines are median SBR `currentLine`, not confirmed closings; +EV count is high (~80% of matched games), suggesting miscalibration or line-type mismatch rather than a durable 6% edge.
-- **Suggested path:** Proceed to Phase 4 only for **infrastructure** (EV ranking plumbing) while planning better closing-line data (e.g. user-supplied Odds API key for forward CLV, or updated free snapshots). Re-run evaluation after odds quality improvements.
-
-## Scripts
+Regenerate after ingest + train + odds load:
 
 ```powershell
 python scripts/load_mlb_odds_free.py
@@ -52,3 +55,31 @@ python scripts/evaluate_mlb_market.py
 ```
 
 Outputs (gitignored): `data/processed/mlb_odds_2025.csv`, `data/processed/mlb_2025_market_eval.csv`, `data/processed/mlb_market_metrics.json`
+
+| Metric | Value (re-run to refresh) |
+|--------|---------------------------|
+| Log loss — model (`v3_logistic_pruned_platt`) | 0.6762 (holdout, from `MODEL.md`) |
+| Log loss — market (vig-free) | 0.6770 |
+| Model beats market (log loss) | Yes (slightly) |
+| +EV picks flagged (≥8%) | *run eval* |
+| Paper-trade ROI (flat $1) | *run eval* |
+| +EV hit rate | *run eval* |
+| EV signal (ROI > 0) | *run eval* |
+
+Prior 2% threshold runs flagged ~80% of matched games — too loose for production. The 8% filter aligns with the daily board and backtest report.
+
+## Advisor recommendation (Phase 5 exit)
+
+**Proceed with daily board workflow; treat +EV counts as experimental.**
+
+- Production calibration **beats v1 and matches/beats market log loss** on 2025 holdout with Platt (`v3_logistic_pruned_platt`).
+- Free SBR medians are not confirmed closings; forward CLV logging (Odds API live key) is required before Phase 6.
+- Use **8% edge** as the single production filter until advisor reviews forward CLV.
+- Phase 4 parlay ranker is infrastructure only — validate lines before any real wager.
+
+## Scripts
+
+```powershell
+python scripts/load_mlb_odds_free.py
+python scripts/evaluate_mlb_market.py
+```

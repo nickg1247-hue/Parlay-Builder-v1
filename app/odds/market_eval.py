@@ -10,7 +10,8 @@ import pandas as pd
 from sklearn.metrics import log_loss
 
 from app.config import PROJECT_ROOT
-from app.models.mlb_baseline import load_games, predict_home_win_proba
+from app.models.constants import DEFAULT_MIN_EDGE
+from app.models.mlb_baseline import load_games, load_model_artifact, predict_home_win_proba
 from app.odds.mlb_odds_free import ODDS_2025_CSV
 from app.odds.odds_math import american_payout_profit, market_probs_from_american
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
@@ -32,7 +33,9 @@ def _merge_games_odds(games: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFrame:
     return g.merge(o, on=["date", "home_team", "away_team"], how="inner")
 
 
-def run_market_evaluation(edge_threshold: float = 0.02) -> dict:
+def run_market_evaluation(edge_threshold: float = DEFAULT_MIN_EDGE) -> dict:
+    artifact = load_model_artifact()
+    model_version = artifact.get("model_version", "unknown")
     games = load_games()
     holdout = games[games["season"] == HOLDOUT_SEASON].copy()
     if not ODDS_2025_CSV.exists():
@@ -128,6 +131,7 @@ def run_market_evaluation(edge_threshold: float = 0.02) -> dict:
     matched[out_cols].to_csv(MARKET_EVAL_CSV, index=False)
 
     results = {
+        "model_version": model_version,
         "holdout_season": HOLDOUT_SEASON,
         "holdout_games": len(holdout),
         "matched_games": len(matched),
@@ -148,6 +152,7 @@ def run_market_evaluation(edge_threshold: float = 0.02) -> dict:
 
 def format_summary_table(results: dict) -> str:
     return (
+        f"Model: {results.get('model_version', 'unknown')}\n"
         f"2025 holdout games: {results['holdout_games']}\n"
         f"Matched with odds: {results['matched_games']} "
         f"({results['match_rate_pct']}%)\n"

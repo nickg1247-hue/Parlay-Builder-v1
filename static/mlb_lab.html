@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB Model Lab — Parlay Builder v1</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <p class="nav-back"><a href="/mlb">← Daily board</a> · <a href="/">Home</a></p>
+        <h1>MLB Model Lab</h1>
+        <p class="date-line">Walk-forward validation — Run tries feature sets until within 5% of goal.</p>
+      </div>
+    </header>
+
+    <div class="banner lab-banner" id="split-banner"></div>
+
+    <section class="lab-section">
+      <h2>Run experiment</h2>
+      <div class="lab-form">
+        <label class="lab-field">
+          Track
+          <select id="track-select">
+            <option value="moneyline">Moneyline</option>
+            <option value="totals">Totals (O/U)</option>
+          </select>
+        </label>
+        <label class="lab-field">
+          Experiment ID
+          <input type="text" id="experiment-id" value="exp-001" maxlength="64" />
+        </label>
+        <label class="lab-field">
+          Feature set
+          <select id="feature-set"></select>
+        </label>
+        <label class="lab-field">
+          Goal metric
+          <select id="goal-metric"></select>
+        </label>
+        <label class="lab-field">
+          Goal value
+          <input type="number" id="goal-value" step="0.001" value="0.68" />
+        </label>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn" id="run-btn">Run</button>
+        <button type="button" class="btn btn-secondary" id="stop-btn" disabled>Stop</button>
+        <button type="button" class="btn btn-secondary" id="confirm-btn" disabled>Confirm locked 2025</button>
+      </div>
+      <div class="loading hidden" id="run-loading">
+        <div class="spinner"></div>
+        <p id="run-message">Running experiment…</p>
+      </div>
+      <div class="error" id="error"></div>
+      <div class="warnings" id="preflight-warnings"></div>
+    </section>
+
+    <section class="lab-section hidden" id="result-section">
+      <h2>Validation summary (2024)</h2>
+      <p class="lab-meta" id="run-meta"></p>
+      <div class="accuracy-grid" id="validation-metrics"></div>
+
+      <h3 id="chart-title">Learning curve</h3>
+      <div class="lab-chart" id="learning-chart"></div>
+    </section>
+
+    <section class="lab-section hidden" id="confirm-section">
+      <h2>Locked test (2025)</h2>
+      <p class="lab-meta" id="gate-meta"></p>
+      <div class="accuracy-grid" id="confirm-metrics"></div>
+    </section>
+
+    <section class="lab-section">
+      <h2>Experiment history</h2>
+      <div class="table-wrap">
+        <table id="runs-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Track</th>
+              <th>Experiment</th>
+              <th>Features</th>
+              <th>Goal</th>
+              <th>ML log loss</th>
+              <th>Totals log loss</th>
+              <th>Within 5%</th>
+              <th>Goal met</th>
+              <th>Confirmed</th>
+              <th>Gate</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="/static/mlb_lab.js"></script>
+</body>
+</html>

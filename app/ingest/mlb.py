@@ -22,10 +22,13 @@ logger = logging.getLogger(__name__)
 
 MLB_SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 MLB_BOXSCORE_URL = "https://statsapi.mlb.com/api/v1/game/{game_pk}/boxscore"
+MLB_PITCHING_STATS_URL = "https://statsapi.mlb.com/api/v1/stats"
 SEASONS = (2023, 2024, 2025)
 PROCESSED_PARQUET = PROJECT_ROOT / "data" / "processed" / "mlb_games.parquet"
 PROCESSED_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_games.csv"
 PITCHER_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_pitcher_cache.parquet"
+PITCHING_STATS_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_pitching_stats_cache.parquet"
+PITCHING_STATS_RETRIES = 4
 BOXSCORE_WORKERS = 12
 BOXSCORE_RETRIES = 3
 
@@ -194,8 +197,74 @@ def _attach_starting_pitchers(games: list[RawGame]) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-def _load_pitching_stats(season: int) -> pd.DataFrame:
-    """Baseball Reference via pybaseball (FanGraphs often 403 without auth)."""
+def _cached_pitching_stats(season: int) -> pd.DataFrame | None:
+    if not PITCHING_STATS_CACHE.exists():
+        return None
+    cached = pd.read_parquet(PITCHING_STATS_CACHE)
+    season_rows = cached[cached["season"] == season]
+    if season_rows.empty:
+        return None
+    return season_rows[["pitcher_key", "era", "fip", "season"]].copy()
+
+
+def _save_pitching_stats_cache(frame: pd.DataFrame) -> None:
+    PITCHING_STATS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    if PITCHING_STATS_CACHE.exists():
+        existing = pd.read_parquet(PITCHING_STATS_CACHE)
+        existing = existing[existing["season"] != frame["season"].iloc[0]]
+        frame = pd.concat([existing, frame], ignore_index=True)
+    frame.to_parquet(PITCHING_STATS_CACHE, index=False)
+
+
+def _parse_mlb_era(value: object) -> float | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text in {"-.--", "-", "—"}:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _load_pitching_stats_mlb_api(season: int) -> pd.DataFrame:
+    """Season pitching ERA from MLB Stats API (replaces flaky pybaseball BREF scrape)."""
+    params = {
+        "stats": "season",
+        "group": "pitching",
+        "season": season,
+        "sportId": 1,
+        "playerPool": "ALL",
+        "limit": 5000,
+    }
+    with httpx.Client(timeout=60.0) as client:
+        response = client.get(MLB_PITCHING_STATS_URL, params=params)
+        response.raise_for_status()
+        payload = response.json()
+
+    splits = payload.get("stats", [{}])[0].get("splits", [])
+    rows: list[dict[str, Any]] = []
+    for split in splits:
+        name = split.get("player", {}).get("fullName")
+        era = _parse_mlb_era(split.get("stat", {}).get("era"))
+        if not name or era is None:
+            continue
+        rows.append(
+            {
+                "pitcher_key": str(name).lower().strip(),
+                "era": era,
+                "fip": pd.NA,
+                "season": season,
+            }
+        )
+    if not rows:
+        raise RuntimeError(f"MLB Stats API returned no pitching rows for {season}")
+    return pd.DataFrame(rows)
+
+
+def _load_pitching_stats_bref(season: int) -> pd.DataFrame:
+    """Baseball Reference via pybaseball — fallback when MLB API unavailable."""
     pyb.cache.enable()
     stats = pyb.pitching_stats_bref(season)
     stats = stats.rename(columns={"Name": "pitcher_name", "ERA": "era"})
@@ -203,6 +272,47 @@ def _load_pitching_stats(season: int) -> pd.DataFrame:
     stats["pitcher_key"] = stats["pitcher_name"].str.lower().str.strip()
     stats["season"] = season
     return stats[["pitcher_key", "era", "fip", "season"]]
+
+
+def _load_pitching_stats(season: int) -> pd.DataFrame:
+    cached = _cached_pitching_stats(season)
+    loaders = (
+        ("MLB Stats API", _load_pitching_stats_mlb_api),
+        ("pybaseball BREF", _load_pitching_stats_bref),
+    )
+    last_error: Exception | None = None
+    for source_name, loader in loaders:
+        for attempt in range(PITCHING_STATS_RETRIES):
+            try:
+                out = loader(season)
+                _save_pitching_stats_cache(out)
+                logger.info(
+                    "Loaded %s pitching rows for %s from %s",
+                    len(out),
+                    season,
+                    source_name,
+                )
+                return out
+            except Exception as exc:
+                last_error = exc
+                wait = 2.0 * (attempt + 1)
+                logger.warning(
+                    "%s pitching stats (%s) failed (attempt %s/%s): %s",
+                    source_name,
+                    season,
+                    attempt + 1,
+                    PITCHING_STATS_RETRIES,
+                    exc,
+                )
+                time.sleep(wait)
+
+    if cached is not None:
+        logger.warning("Using cached pitching stats for %s", season)
+        return cached
+
+    raise RuntimeError(
+        f"Could not load pitching stats for {season}"
+    ) from last_error
 
 
 def _attach_pitcher_rates(df: pd.DataFrame) -> pd.DataFrame:
@@ -318,7 +428,7 @@ def build_modeling_table() -> pd.DataFrame:
 
     logger.info("Fetching starting pitchers for %s games...", len(raw))
     df = _attach_starting_pitchers(raw)
-    logger.info("Loading pitcher ERA/FIP from pybaseball...")
+    logger.info("Loading pitcher ERA from MLB Stats API...")
     df = _attach_pitcher_rates(df)
     logger.info("Computing rolling features and rest days...")
     df = _compute_rolling_and_rest(df)
