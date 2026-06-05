@@ -41,6 +41,23 @@ DISCLAIMER = (
     "Experimental analytics — not betting advice. EV signals are not validated. "
     "Totals model is separate from moneyline."
 )
+CONFIDENCE_DISCLAIMER = (
+    "Confidence reflects model vs market edge, not a guarantee."
+)
+
+
+def confidence_label(edge: float | None) -> str:
+    """Map absolute model-vs-market edge to a display confidence tier."""
+    if edge is None:
+        return "—"
+    abs_edge = abs(float(edge))
+    if abs_edge < 0.04:
+        return "Low"
+    if abs_edge < 0.08:
+        return "Medium"
+    if abs_edge < 0.12:
+        return "High"
+    return "Extremely high"
 
 
 def _sanitize_json(obj: Any) -> Any:
@@ -95,6 +112,8 @@ def _slate_rows(
         model_home = float(row.model_prob_home)
         market_home = None
         edge_home = None
+        ml_edge_best = None
+        ml_confidence = confidence_label(None)
         plus_ev = False
         best_pick = None
 
@@ -108,6 +127,8 @@ def _slate_rows(
                 model_away = float(row.model_prob_away)
                 edge_home = model_home - market_home
                 edge_away = model_away - market_away
+                ml_edge_best = max(edge_home, edge_away)
+                ml_confidence = confidence_label(ml_edge_best)
                 options = [
                     ("home", row.home_team, edge_home, int(row.home_ml)),
                     ("away", row.away_team, edge_away, int(row.away_ml)),
@@ -130,6 +151,12 @@ def _slate_rows(
         if ou_line is not None and pd.isna(ou_line):
             ou_line = None
         exp_runs = totals.get("expected_total_runs")
+        total_edge = totals.get("total_edge")
+        if total_edge is not None and pd.isna(total_edge):
+            total_edge = None
+        totals_confidence = confidence_label(
+            abs(float(total_edge)) if total_edge is not None else None
+        )
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -140,6 +167,10 @@ def _slate_rows(
                 "display_prob_home": round(display_home, 4),
                 "market_prob_home": round(market_home, 4) if market_home else None,
                 "edge_home": round(edge_home, 4) if edge_home is not None else None,
+                "ml_edge_best": (
+                    round(ml_edge_best, 4) if ml_edge_best is not None else None
+                ),
+                "ml_confidence": ml_confidence,
                 "plus_ev_single": plus_ev,
                 "best_pick": best_pick,
                 "model_disagrees_heavy_favorite": disagree,
@@ -150,7 +181,8 @@ def _slate_rows(
                 "totals_pick": totals.get("pick"),
                 "model_prob_over": totals.get("model_prob_over"),
                 "market_prob_over": totals.get("market_prob_over"),
-                "total_edge": totals.get("total_edge"),
+                "total_edge": total_edge,
+                "totals_confidence": totals_confidence,
                 "plus_ev_total": totals.get("plus_ev_total", False),
             }
         )
@@ -370,6 +402,7 @@ def build_daily_board(
             "Win % uses 50% model + 50% market when odds available; "
             "raw model when odds missing."
         ),
+        "confidence_disclaimer": CONFIDENCE_DISCLAIMER,
         "edge_threshold": min_edge,
         "max_parlays": max_parlays,
         "skip_totals": skip_totals,

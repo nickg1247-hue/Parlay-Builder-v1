@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.parlay.ev_ranker import ParlayLeg, RankedParlay
-from app.services.daily_board import build_daily_board
+from app.services.daily_board import _slate_rows, build_daily_board, confidence_label
 
 client = TestClient(app)
 
@@ -24,6 +24,47 @@ MOCK_SLATE = pd.DataFrame(
         }
     ]
 )
+
+
+def test_confidence_label_tiers():
+    assert confidence_label(None) == "—"
+    assert confidence_label(0.02) == "Low"
+    assert confidence_label(-0.02) == "Low"
+    assert confidence_label(0.06) == "Medium"
+    assert confidence_label(0.10) == "High"
+    assert confidence_label(0.15) == "Extremely high"
+
+
+def test_slate_row_confidence_fields():
+    merged = MOCK_SLATE.copy()
+    totals_by_game = {
+        "1": {
+            "ou_line": 8.5,
+            "expected_total_runs": 8.2,
+            "pick": "Over",
+            "model_prob_over": 0.55,
+            "market_prob_over": 0.45,
+            "total_edge": 0.10,
+            "plus_ev_total": True,
+        }
+    }
+    rows = _slate_rows(merged, has_odds=True, totals_by_game=totals_by_game, min_edge=0.08)
+    row = rows[0]
+    assert row["ml_edge_best"] is not None
+    assert row["ml_confidence"] in ("Low", "Medium", "High", "Extremely high")
+    assert row["totals_confidence"] == "High"
+    assert row["total_edge"] == 0.10
+
+
+def test_slate_row_confidence_missing_odds():
+    merged = MOCK_SLATE.copy()
+    merged["home_ml"] = None
+    merged["away_ml"] = None
+    rows = _slate_rows(merged, has_odds=False, totals_by_game={}, min_edge=0.08)
+    row = rows[0]
+    assert row["ml_confidence"] == "—"
+    assert row["ml_edge_best"] is None
+    assert row["totals_confidence"] == "—"
 
 
 def test_build_daily_board_structure():
@@ -73,6 +114,9 @@ def test_build_daily_board_structure():
     assert board["disclaimer"]
     assert len(board["slate"]) == 1
     assert "model_prob_home" in board["slate"][0]
+    assert "ml_confidence" in board["slate"][0]
+    assert "totals_confidence" in board["slate"][0]
+    assert board["confidence_disclaimer"]
     assert board["odds_source"] == "historical_cache"
     assert isinstance(board["top_parlays"], list)
 

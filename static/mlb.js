@@ -16,6 +16,7 @@ const els = {
   parlays: document.getElementById("parlays-list"),
   totals: document.getElementById("totals-list"),
   totalsNote: document.getElementById("totals-note"),
+  confidenceNote: document.getElementById("confidence-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
   runLive: document.getElementById("run-live-btn"),
@@ -145,11 +146,26 @@ function fmtRuns(value) {
   return Number(value).toFixed(1);
 }
 
+function confidenceClass(label) {
+  switch (label) {
+    case "Low":
+      return "conf-low";
+    case "Medium":
+      return "conf-medium";
+    case "High":
+      return "conf-high";
+    case "Extremely high":
+      return "conf-extreme";
+    default:
+      return "";
+  }
+}
+
 function renderSlate(slate, edgeFraction = 0.08) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="10" class="empty">No games on slate</td></tr>';
+      '<tr><td colspan="12" class="empty">No games on slate</td></tr>';
     return;
   }
   for (const game of slate) {
@@ -160,6 +176,8 @@ function renderSlate(slate, edgeFraction = 0.08) {
     const pick = game.totals_pick || "—";
     const tEdge =
       game.total_edge != null ? `${(game.total_edge * 100).toFixed(1)}%` : "—";
+    const mlConf = game.ml_confidence || "—";
+    const totalsConf = game.totals_confidence || "—";
     tr.innerHTML = `
       <td>${game.matchup}</td>
       <td>${ou}</td>
@@ -168,11 +186,13 @@ function renderSlate(slate, edgeFraction = 0.08) {
       <td>${pct(game.model_prob_over)}</td>
       <td>${pct(game.market_prob_over)}</td>
       <td class="${game.total_edge != null && game.total_edge >= edgeFraction ? "edge-pos" : ""}">${tEdge}</td>
+      <td class="${confidenceClass(totalsConf)}">${totalsConf}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
       <td class="${game.edge_home != null && game.edge_home >= edgeFraction ? "edge-pos" : ""}">
         ${game.edge_home != null ? pct(game.edge_home) : "—"}
       </td>
+      <td class="${confidenceClass(mlConf)}">${mlConf}</td>
     `;
     els.slateBody.appendChild(tr);
   }
@@ -297,6 +317,10 @@ async function loadBoard(refresh = false) {
     const edgeFraction =
       typeof data.edge_threshold === "number" ? data.edge_threshold : minEdgeFraction();
     updateThresholdLabels(edgeFraction);
+
+    if (els.confidenceNote && data.confidence_disclaimer) {
+      els.confidenceNote.textContent = data.confidence_disclaimer;
+    }
 
     renderSimpleSlate(data.slate || [], { display_note: data.display_note });
     renderSlate(data.slate || [], edgeFraction);

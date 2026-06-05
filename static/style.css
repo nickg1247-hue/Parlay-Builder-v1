@@ -203,6 +203,24 @@ tr.plus-ev td {
   font-weight: 600;
 }
 
+.conf-low {
+  color: var(--muted);
+}
+
+.conf-medium {
+  color: #b8a04a;
+}
+
+.conf-high {
+  color: var(--positive);
+  font-weight: 600;
+}
+
+.conf-extreme {
+  color: #3dd68c;
+  font-weight: 700;
+}
+
 .empty {
   color: var(--muted);
   font-size: 0.875rem;
