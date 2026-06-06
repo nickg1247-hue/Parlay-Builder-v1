@@ -246,8 +246,12 @@ def _row_features(
         "away_pitcher_whip": away_prof["whip"],
         "home_pitcher_ip": home_prof["ip"],
         "away_pitcher_ip": away_prof["ip"],
-        "home_rest_days": _compute_rest_days(home_prior, game_date, rest_fill),
-        "away_rest_days": _compute_rest_days(away_prior, game_date, rest_fill),
+        "home_rest_days": _compute_rest_days(
+            home_prior, game_date, rest_fill, season
+        ),
+        "away_rest_days": _compute_rest_days(
+            away_prior, game_date, rest_fill, season
+        ),
         "h2h_avg_total_runs": h2h_avg,
     }
     feats.update(_team_runs_block(row.home_team, before, season, tracker, True))

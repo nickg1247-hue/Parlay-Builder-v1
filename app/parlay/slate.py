@@ -10,7 +10,11 @@ import httpx
 import pandas as pd
 
 from app.features.mlb_pregame import build_features_for_slate
-from app.models.mlb_baseline import load_games, predict_home_win_proba
+from app.models.mlb_baseline import (
+    artifact_scoring_params,
+    load_games,
+    predict_home_win_proba,
+)
 from app.odds.team_aliases import normalize_team_name
 
 logger = logging.getLogger(__name__)
@@ -37,6 +41,14 @@ def fetch_mlb_schedule_day(game_date: date) -> list[dict[str, Any]]:
 def _pitcher_name(team_blob: dict[str, Any]) -> str | None:
     pitcher = team_blob.get("probablePitcher") or {}
     return pitcher.get("fullName")
+
+
+def _scoring_params() -> tuple[dict, float]:
+    try:
+        return artifact_scoring_params()
+    except FileNotFoundError:
+        logger.warning("Model artifact missing — using default ERA/rest imputation for slate")
+        return {"default": 4.0}, 1.0
 
 
 def build_slate_dataframe(
@@ -75,7 +87,13 @@ def build_slate_dataframe(
     if not rows:
         return pd.DataFrame()
 
-    slate = build_features_for_slate(pd.DataFrame(rows), history_df=history)
+    era_medians, rest_fill = _scoring_params()
+    slate = build_features_for_slate(
+        pd.DataFrame(rows),
+        history_df=history,
+        era_medians=era_medians,
+        rest_fill=rest_fill,
+    )
     slate["model_prob_home"] = predict_home_win_proba(slate)
     slate["model_prob_away"] = 1.0 - slate["model_prob_home"]
     return slate
@@ -89,7 +107,13 @@ def build_slate_from_history(game_date: date) -> pd.DataFrame:
         return pd.DataFrame()
     hist = df[df["date"] < pd.Timestamp(game_date)].copy()
     day["date"] = game_date.isoformat()
-    featured = build_features_for_slate(day, history_df=hist)
+    era_medians, rest_fill = _scoring_params()
+    featured = build_features_for_slate(
+        day,
+        history_df=hist,
+        era_medians=era_medians,
+        rest_fill=rest_fill,
+    )
     featured["model_prob_home"] = predict_home_win_proba(featured)
     featured["model_prob_away"] = 1.0 - featured["model_prob_home"]
     return featured

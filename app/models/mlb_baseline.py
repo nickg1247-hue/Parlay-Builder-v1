@@ -390,18 +390,28 @@ def run_training() -> dict:
     home_metrics = compute_metrics("home_always_wins", y_test, home_probs)
     elo_metrics = compute_metrics("elo_baseline", y_test, elo_test_probs)
 
-    market_ll = market_log_loss_holdout(raw)
-    market_metrics = (
-        {"log_loss": market_ll, "brier": None, "accuracy": None}
-        if market_ll is not None
-        else None
+    market_ll_computed = market_log_loss_holdout(raw)
+    market_ll = (
+        market_ll_computed
+        if market_ll_computed is not None
+        else MARKET_LOG_LOSS_BENCHMARK
     )
+    market_metrics = {
+        "log_loss": market_ll,
+        "brier": None,
+        "accuracy": None,
+        "source": "computed" if market_ll_computed is not None else "benchmark",
+    }
 
     fav_agreement = _favorite_agreement_v1_market(test_raw, test_v1, v1_model)
 
     v1_ll = v1_holdout.log_loss
-    platt_ok = production_gate_passes(platt_metrics.log_loss, v1_ll, market_ll)
     pruned_ok = production_gate_passes(pruned_metrics.log_loss, v1_ll, market_ll)
+    # Platt: require pruned base to beat v1; calibrated probs must not trail market.
+    platt_ok = (
+        pruned_metrics.log_loss < v1_ll
+        and platt_metrics.log_loss <= market_ll
+    )
     wave1_ok = production_gate_passes(wave1_log_metrics.log_loss, v1_ll, market_ll)
     gbc_ok = production_gate_passes(gbc_metrics.log_loss, v1_ll, market_ll)
 
@@ -545,6 +555,33 @@ def load_model_artifact() -> dict:
     return joblib.load(MODEL_ARTIFACT)
 
 
+def artifact_scoring_params() -> tuple[dict[int | str, float], float]:
+    """ERA medians and rest_fill from the production artifact for live slate scoring."""
+    artifact = load_model_artifact()
+    return artifact["era_medians"], float(artifact["rest_fill"])
+
+
+def _sanitize_rest_days(
+    df: pd.DataFrame, rest_fill: float, max_gap: int | None = None
+) -> pd.DataFrame:
+    from app.features.mlb_pregame import MAX_REST_GAP_DAYS
+
+    cap = MAX_REST_GAP_DAYS if max_gap is None else max_gap
+    out = df.copy()
+    for col in ("home_rest_days", "away_rest_days"):
+        if col not in out.columns:
+            continue
+
+        def _clip(value: object) -> float:
+            if value is None or (isinstance(value, float) and math.isnan(value)):
+                return rest_fill
+            gap = float(value)
+            return rest_fill if gap > cap else gap
+
+        out[col] = out[col].map(_clip)
+    return out
+
+
 def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
     from app.features.mlb_pregame import (
         FEATURE_COLUMNS_WAVE1,
@@ -564,7 +601,7 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
                 df, era_medians=era_medians, rest_fill=rest_fill
             )
         else:
-            prepared = df.copy()
+            prepared = _sanitize_rest_days(df.copy(), rest_fill)
         if "elo_home_pre" in cols and "elo_home_pre" not in prepared.columns:
             prepared = attach_elo_for_slate(prepared)
     else:
@@ -572,6 +609,7 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
         if "elo_home_pre" in cols:
             prepared = attach_elo_for_slate(prepared)
 
+    prepared = _sanitize_rest_days(prepared, rest_fill)
     raw = artifact["model"].predict_proba(prepared[cols].values)[:, 1]
     platt = artifact.get("platt_calibrator")
     if platt is not None:

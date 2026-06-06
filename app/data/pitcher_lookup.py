@@ -153,7 +153,13 @@ def lookup_pitcher_profile(
         return {"era": fallback_era, "fip": None, "whip": default_whip, "ip": default_ip}
 
     table = get_pitcher_lookup_table()
-    match = table[(table["season"] == season) & (table["pitcher_key"] == key)]
+    match = pd.DataFrame()
+    for lookup_season in (season, season - 1, season - 2):
+        match = table[
+            (table["season"] == lookup_season) & (table["pitcher_key"] == key)
+        ]
+        if not match.empty:
+            break
     if match.empty:
         return {"era": fallback_era, "fip": None, "whip": default_whip, "ip": default_ip}
 

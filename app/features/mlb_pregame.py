@@ -51,6 +51,7 @@ NEUTRAL_RANK = 15.5
 DEFAULT_PARK_FACTOR = 1.0
 DEFAULT_WHIP = 1.30
 DEFAULT_IP = 150.0
+MAX_REST_GAP_DAYS = 14
 
 
 @dataclass
@@ -202,12 +203,27 @@ def _last_n_from_prior(prior: list[_GameRecord], n: int) -> tuple[float, float]:
 
 
 def _compute_rest_days(
-    prior: list[_GameRecord], game_date: pd.Timestamp, default: float
+    prior: list[_GameRecord],
+    game_date: pd.Timestamp,
+    rest_fill: float,
+    season: int,
+    max_gap: int = MAX_REST_GAP_DAYS,
 ) -> float:
+    """
+    Days since last game in the same season; use rest_fill when offseason/stale
+    history would produce an implausible gap (> max_gap days) or no prior games
+    exist in the current season.
+    """
     if not prior:
-        return default
-    last = max(prior, key=lambda g: g.date).date
-    return float((game_date - last).days)
+        return rest_fill
+    prior_in_season = [g for g in prior if g.season == season]
+    if not prior_in_season:
+        return rest_fill
+    last = max(prior_in_season, key=lambda g: g.date).date
+    gap = int((game_date - last).days)
+    if gap > max_gap:
+        return rest_fill
+    return float(gap)
 
 
 def _row_features(
@@ -254,8 +270,12 @@ def _row_features(
         "away_last10_win_pct": away_l10_wp,
         "home_last10_run_diff": home_l10_rd,
         "away_last10_run_diff": away_l10_rd,
-        "home_rest_days": _compute_rest_days(home_prior, game_date, rest_fill),
-        "away_rest_days": _compute_rest_days(away_prior, game_date, rest_fill),
+        "home_rest_days": _compute_rest_days(
+            home_prior, game_date, rest_fill, season
+        ),
+        "away_rest_days": _compute_rest_days(
+            away_prior, game_date, rest_fill, season
+        ),
         "park_factor_runs": park_map.get(row.home_team, DEFAULT_PARK_FACTOR),
     }
     feats.update(

@@ -25,6 +25,7 @@ from app.models.calibration import (
     model_disagrees_heavy_favorite,
 )
 from app.models.constants import DEFAULT_MIN_EDGE
+from app.models.mlb_baseline import load_games
 from app.parlay.ev_ranker import (
     DEFAULT_MAX_PARLAYS,
     attach_market_odds,
@@ -74,6 +75,27 @@ def _sanitize_json(obj: Any) -> Any:
 
 def _has_odds_api_key() -> bool:
     return bool(os.getenv("ODDS_API_KEY", "").strip())
+
+
+def _history_stale_warning(game_date: date, use_cache: bool) -> str | None:
+    """Warn when ingested history is too old for reliable live feature scoring."""
+    if use_cache:
+        return None
+    try:
+        hist = load_games()
+    except Exception:
+        return "Game history unavailable — run ingest before live board."
+    if hist.empty:
+        return "Game history empty — run ingest before live board."
+    max_date = pd.to_datetime(hist["date"]).max()
+    gap_days = (pd.Timestamp(game_date) - max_date).days
+    if gap_days > 7:
+        return (
+            f"Game history last updated {max_date.date().isoformat()} "
+            f"({gap_days} days before board date). Re-run ingest for current-season "
+            f"stats, rest days, and pitcher rates."
+        )
+    return None
 
 
 def _build_slate(game_date: date, use_cache: bool) -> pd.DataFrame:
@@ -316,6 +338,9 @@ def build_daily_board(
                 return cached
 
     warnings: list[str] = []
+    stale = _history_stale_warning(game_date, use_cache)
+    if stale:
+        warnings.append(stale)
     if not use_cache and not _has_odds_api_key():
         warnings.append(
             "ODDS_API_KEY not set. Add your free key to .env — see DEV.md. "

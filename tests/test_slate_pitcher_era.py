@@ -57,6 +57,10 @@ def test_live_slate_uses_different_pitcher_eras():
         patch("app.parlay.slate.fetch_mlb_schedule_day", return_value=fake_games),
         patch("app.parlay.slate.load_games", return_value=empty_history),
         patch(
+            "app.parlay.slate._scoring_params",
+            return_value=({"default": 4.0, 2026: 4.1}, 1.0),
+        ),
+        patch(
             "app.features.mlb_pregame.lookup_pitcher_profile",
             side_effect=fake_profile,
         ),

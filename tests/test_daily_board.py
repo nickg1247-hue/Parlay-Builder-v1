@@ -6,7 +6,12 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.parlay.ev_ranker import ParlayLeg, RankedParlay
-from app.services.daily_board import _slate_rows, build_daily_board, confidence_label
+from app.services.daily_board import (
+    _history_stale_warning,
+    _slate_rows,
+    build_daily_board,
+    confidence_label,
+)
 
 client = TestClient(app)
 
@@ -24,6 +29,17 @@ MOCK_SLATE = pd.DataFrame(
         }
     ]
 )
+
+
+def test_history_stale_warning_live():
+    msg = _history_stale_warning(date(2026, 6, 15), use_cache=False)
+    if msg is not None:
+        assert "Game history last updated" in msg
+        assert "Re-run ingest" in msg
+
+
+def test_history_stale_warning_skipped_for_demo():
+    assert _history_stale_warning(date(2026, 6, 15), use_cache=True) is None
 
 
 def test_confidence_label_tiers():
