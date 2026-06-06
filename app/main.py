@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from datetime import date as date_type
 from pathlib import Path
@@ -11,6 +13,16 @@ from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
+from app.services.forward_clv import summarize_clv
+from app.odds.odds_repository import get_today_snapshot
+from app.odds.live_odds import live_odds_enabled
+from app.services.morning_refresh import get_refresh_status
+from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
+from app.services.game_insights import build_game_insights
+from app.services.news_feed import get_news_headlines
+from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
+from app.services.schedule_nba import get_nba_game, get_nba_schedule
+from app.services.scores_today import get_scores_today
 from app.services.backtest_report import load_saved_backtest_report, run_backtest_report
 from app.services.model_lab import (
     confirm_locked_test,
@@ -48,9 +60,22 @@ class LabConfirmRequest(BaseModel):
     promote: bool = False
 
 
+logger = logging.getLogger(__name__)
+
+
+async def _hourly_odds_loop() -> None:
+    while True:
+        await asyncio.sleep(3600)
+        try:
+            run_hourly_odds_refresh()
+        except Exception as exc:
+            logger.warning("In-app hourly odds refresh error: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    hourly_task: asyncio.Task | None = None
     try:
         import pandas as pd
 
@@ -62,7 +87,16 @@ async def lifespan(app: FastAPI):
         get_runs_tracker_before(today)
     except Exception:
         pass
+    if hourly_refresh_enabled() and live_odds_enabled():
+        hourly_task = asyncio.create_task(_hourly_odds_loop())
+        logger.info("Odds hourly refresh scheduler started (3600s)")
     yield
+    if hourly_task is not None:
+        hourly_task.cancel()
+        try:
+            await hourly_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="Parlay Builder v1", lifespan=lifespan)
@@ -97,6 +131,94 @@ async def backtest_saved():
     return load_saved_backtest_report()
 
 
+@app.get("/api/clv/summary")
+async def clv_summary(days: int = Query(30, ge=1, le=365)):
+    return summarize_clv(days=days)
+
+
+@app.get("/api/status/refresh")
+async def refresh_status():
+    return get_refresh_status()
+
+
+@app.get("/api/news")
+async def news_headlines(refresh: bool = Query(False)):
+    """RSS sports headlines (15 min cache)."""
+    return get_news_headlines(force_refresh=refresh)
+
+
+@app.get("/api/odds/today")
+async def odds_today():
+    """Today's repository snapshot + quota counters (no API call)."""
+    return get_today_snapshot()
+
+
+@app.get("/api/schedule/mlb")
+async def mlb_schedule(
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return get_mlb_schedule(game_date)
+
+
+@app.get("/api/schedule/nba")
+async def nba_schedule(
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return get_nba_schedule(game_date)
+
+
+@app.get("/api/scores/today")
+async def scores_today(
+    sport: str = Query("mlb", pattern="^(mlb|nba|all)$"),
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return get_scores_today(sport=sport, game_date=game_date)
+
+
+@app.get("/api/games/mlb/{game_id}")
+async def mlb_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    detail = get_mlb_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
+
+
+@app.get("/api/games/mlb/{game_id}/insights")
+async def mlb_game_insights(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+    refresh: bool = Query(False),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    insights = build_game_insights(
+        game_id,
+        game_date=game_date,
+        use_cache=use_cache,
+        refresh=refresh,
+    )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return insights
+
+
 @app.get("/api/daily")
 async def daily_board(
     date_param: str | None = Query(None, alias="date"),
@@ -118,6 +240,13 @@ async def daily_board(
         le=20,
         description="Maximum ranked parlays to return.",
     ),
+    live_test: bool = Query(
+        False,
+        description=(
+            "Live board bypass: force odds refresh, full totals board, "
+            "and sync repository + daily_board for main-site game pages."
+        ),
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
@@ -129,15 +258,50 @@ async def daily_board(
         skip_totals=skip_totals,
         min_edge=min_edge,
         max_parlays=max_parlays,
+        live_test=live_test,
     )
 
 
 @app.get("/")
 async def home():
-    return FileResponse(STATIC_DIR / "home.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/mlb")
+async def mlb_slate():
+    return FileResponse(STATIC_DIR / "mlb_slate.html")
+
+
+@app.get("/nba")
+async def nba_slate():
+    return FileResponse(STATIC_DIR / "nba_slate.html")
+
+
+@app.get("/nba/game/{game_id}")
+async def nba_game_page(game_id: str):
+    return FileResponse(STATIC_DIR / "nba_game.html")
+
+
+@app.get("/api/games/nba/{game_id}")
+async def nba_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    detail = get_nba_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
+
+
+@app.get("/mlb/game/{game_id}")
+async def mlb_game_page(game_id: str):
+    return FileResponse(STATIC_DIR / "game.html")
+
+
+@app.get("/mlb/board")
 async def mlb_board():
     return FileResponse(STATIC_DIR / "mlb.html")
 

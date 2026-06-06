@@ -34,6 +34,7 @@ def build_totals_slate(
     use_cache: bool = False,
     moneyline_slate: pd.DataFrame | None = None,
     attach_market_odds: bool = True,
+    force_refresh: bool = False,
 ) -> pd.DataFrame:
     ml = moneyline_slate
     if ml is None:
@@ -63,7 +64,9 @@ def build_totals_slate(
     featured["expected_total_runs"] = predict_expected_total_runs(featured)
 
     if attach_market_odds:
-        merged = attach_totals_odds(featured, game_date, use_cache=use_cache)
+        merged = attach_totals_odds(
+            featured, game_date, use_cache=use_cache, force_refresh=force_refresh
+        )
     else:
         merged = featured.copy()
 

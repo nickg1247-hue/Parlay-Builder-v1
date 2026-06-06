@@ -21,7 +21,12 @@ from app.odds.odds_math import (
     parlay_ev,
 )
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
-from app.odds.the_odds_api import fetch_mlb_moneylines
+from app.odds.live_odds import live_odds_enabled
+from app.odds.odds_repository import (
+    games_to_ml_dataframe,
+    get_mlb_odds_for_date,
+    has_date,
+)
 from app.parlay.slate import build_slate_dataframe, build_slate_from_history
 
 logger = logging.getLogger(__name__)
@@ -109,20 +114,36 @@ def attach_market_odds(
     slate: pd.DataFrame,
     game_date: date,
     use_cache: bool = False,
+    force_refresh: bool = False,
 ) -> tuple[pd.DataFrame, str]:
     odds_df = pd.DataFrame()
     source = "none"
 
-    if not use_cache:
-        events = fetch_mlb_moneylines()
-        if events:
-            odds_df = _parse_odds_api_events(events)
-            source = "the_odds_api"
-
-    if odds_df.empty and (use_cache or ODDS_2025_CSV.exists()):
-        odds_df = _load_cached_odds(game_date)
-        if not odds_df.empty:
-            source = "historical_cache"
+    if use_cache:
+        if has_date(game_date):
+            games, repo_source = get_mlb_odds_for_date(game_date)
+            if games:
+                odds_df = games_to_ml_dataframe(games, repo_source, game_date)
+                source = odds_df.iloc[0]["odds_source"] if not odds_df.empty else "none"
+        if odds_df.empty and ODDS_2025_CSV.exists():
+            odds_df = _load_cached_odds(game_date)
+            if not odds_df.empty:
+                source = "historical_cache"
+    elif live_odds_enabled():
+        games, repo_source = get_mlb_odds_for_date(
+            game_date,
+            force_refresh=force_refresh,
+            include_totals=True,
+            include_spreads=True,
+        )
+        if games:
+            odds_df = games_to_ml_dataframe(games, repo_source, game_date)
+            source = odds_df.iloc[0]["odds_source"] if not odds_df.empty else "none"
+    elif has_date(game_date):
+        games, repo_source = get_mlb_odds_for_date(game_date)
+        if games:
+            odds_df = games_to_ml_dataframe(games, repo_source, game_date)
+            source = odds_df.iloc[0]["odds_source"] if not odds_df.empty else "none"
 
     if odds_df.empty:
         return slate, source

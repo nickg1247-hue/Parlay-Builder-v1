@@ -77,9 +77,14 @@ Prior 2% threshold runs flagged ~80% of matched games — too loose for producti
 - Use **8% edge** as the single production filter until advisor reviews forward CLV.
 - Phase 4 parlay ranker is infrastructure only — validate lines before any real wager.
 
+## Forward CLV (live picks)
+
+Morning **Run live** logs each +EV moneyline single to `forward_clv_log.jsonl`. Afternoon `python scripts/backfill_forward_clv.py` snapshots Odds API lines as a **closing proxy** (not official Pinnacle close). `clv_implied_prob = close_market_prob - market_prob_at_pick` on the picked side (positive = beat the close). If fetch runs after `commence_time`, `close_status: missed`. Review `/api/clv/summary` before Phase 6.
+
 ## Scripts
 
 ```powershell
 python scripts/load_mlb_odds_free.py
 python scripts/evaluate_mlb_market.py
+python scripts/backfill_forward_clv.py
 ```

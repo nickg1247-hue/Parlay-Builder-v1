@@ -1,64 +1,19 @@
-"""Attach O/U lines to slate from Odds API or historical cache."""
+"""Attach O/U lines to slate from odds repository or historical CSV."""
 
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
 import pandas as pd
 
 from app.odds.mlb_odds_free import TOTALS_2025_CSV
-from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
-from app.odds.the_odds_api import fetch_mlb_odds
-
-
-def _parse_totals_from_events(events: list[dict[str, Any]]) -> pd.DataFrame:
-    rows: list[dict[str, Any]] = []
-    for event in events:
-        home = normalize_team_name(event.get("home_team", ""))
-        away = normalize_team_name(event.get("away_team", ""))
-        commence = event.get("commence_time", "")[:10]
-        lines: list[float] = []
-        over_prices: list[int] = []
-        under_prices: list[int] = []
-        for book in event.get("bookmakers", []):
-            for market in book.get("markets", []):
-                if market.get("key") != "totals":
-                    continue
-                over_point = None
-                over_price = None
-                under_price = None
-                for outcome in market.get("outcomes", []):
-                    name = (outcome.get("name") or "").lower()
-                    if name == "over":
-                        over_point = outcome.get("point")
-                        over_price = outcome.get("price")
-                    elif name == "under":
-                        under_price = outcome.get("price")
-                if (
-                    over_point is not None
-                    and over_price is not None
-                    and under_price is not None
-                ):
-                    if is_valid_american_odds(over_price) and is_valid_american_odds(
-                        under_price
-                    ):
-                        lines.append(float(over_point))
-                        over_prices.append(int(over_price))
-                        under_prices.append(int(under_price))
-        if not lines:
-            continue
-        rows.append(
-            {
-                "date": commence,
-                "home_team": home,
-                "away_team": away,
-                "ou_line": float(pd.Series(lines).median()),
-                "over_odds": int(pd.Series(over_prices).median()),
-                "under_odds": int(pd.Series(under_prices).median()),
-            }
-        )
-    return pd.DataFrame(rows)
+from app.odds.live_odds import live_odds_enabled
+from app.odds.odds_repository import (
+    games_to_totals_dataframe,
+    get_mlb_odds_for_date,
+    has_date,
+)
+from app.odds.team_aliases import normalize_team_name
 
 
 def _load_cached_totals(game_date: date) -> pd.DataFrame:
@@ -73,15 +28,30 @@ def attach_totals_odds(
     slate: pd.DataFrame,
     game_date: date,
     use_cache: bool = False,
+    force_refresh: bool = False,
 ) -> pd.DataFrame:
     odds_df = pd.DataFrame()
-    if not use_cache:
-        events = fetch_mlb_odds(include_totals=True)
-        if events:
-            odds_df = _parse_totals_from_events(events)
 
-    if odds_df.empty and (use_cache or TOTALS_2025_CSV.exists()):
-        odds_df = _load_cached_totals(game_date)
+    if use_cache:
+        if has_date(game_date):
+            games, _ = get_mlb_odds_for_date(game_date)
+            if games:
+                odds_df = games_to_totals_dataframe(games, game_date)
+        if odds_df.empty and TOTALS_2025_CSV.exists():
+            odds_df = _load_cached_totals(game_date)
+    elif live_odds_enabled():
+        games, _ = get_mlb_odds_for_date(
+            game_date,
+            force_refresh=force_refresh,
+            include_totals=True,
+            include_spreads=False,
+        )
+        if games:
+            odds_df = games_to_totals_dataframe(games, game_date)
+    elif has_date(game_date):
+        games, _ = get_mlb_odds_for_date(game_date)
+        if games:
+            odds_df = games_to_totals_dataframe(games, game_date)
 
     if odds_df.empty:
         return slate

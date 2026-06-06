@@ -16,6 +16,7 @@ const els = {
   parlays: document.getElementById("parlays-list"),
   totals: document.getElementById("totals-list"),
   totalsNote: document.getElementById("totals-note"),
+  spreadNote: document.getElementById("spread-note"),
   confidenceNote: document.getElementById("confidence-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
@@ -76,9 +77,7 @@ function loadingHint() {
       : "Loading demo board (moneyline)…";
   }
   if (boardMode === "live") {
-    return includeTotals()
-      ? "Loading live board… First load with totals may take 2–3 minutes."
-      : "Loading live board (moneyline + parlays)…";
+    return "Pulling live odds and syncing main-site game pages… May take 2–3 minutes.";
   }
   return "Click Run live or Demo to load the board.";
 }
@@ -97,7 +96,12 @@ function buildApiUrl(refresh = false) {
   url.searchParams.set("skip_totals", includeTotals() ? "false" : "true");
   url.searchParams.set("min_edge", String(minEdgeFraction()));
   url.searchParams.set("max_parlays", String(maxParlaysCount()));
-  if (refresh) url.searchParams.set("refresh", "true");
+  if (refresh) {
+    url.searchParams.set("refresh", "true");
+    if (boardMode === "live") {
+      url.searchParams.set("live_test", "true");
+    }
+  }
   return url.toString();
 }
 
@@ -161,16 +165,37 @@ function confidenceClass(label) {
   }
 }
 
+function fmtSpreadLine(team, point, american) {
+  if (point == null || american == null) return "—";
+  const sign = point > 0 ? "+" : "";
+  const am = american > 0 ? `+${american}` : `${american}`;
+  return `${team} ${sign}${point} (${am})`;
+}
+
+function spreadCoverPct(game, side) {
+  if (side === "home") return game.model_prob_home_cover;
+  if (side === "away") return game.model_prob_away_cover;
+  return null;
+}
+
+function spreadMarketPct(game, side) {
+  if (side === "home") return game.market_prob_home_cover;
+  if (side === "away") return game.market_prob_away_cover;
+  return null;
+}
+
 function renderSlate(slate, edgeFraction = 0.08) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="12" class="empty">No games on slate</td></tr>';
+      '<tr><td colspan="17" class="empty">No games on slate</td></tr>';
     return;
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
-    if (game.plus_ev_single || game.plus_ev_total) tr.classList.add("plus-ev");
+    if (game.plus_ev_single || game.plus_ev_total || game.plus_ev_spread) {
+      tr.classList.add("plus-ev");
+    }
     const ou = game.ou_line != null ? game.ou_line : "—";
     const runs = fmtRuns(game.expected_total_runs);
     const pick = game.totals_pick || "—";
@@ -178,6 +203,37 @@ function renderSlate(slate, edgeFraction = 0.08) {
       game.total_edge != null ? `${(game.total_edge * 100).toFixed(1)}%` : "—";
     const mlConf = game.ml_confidence || "—";
     const totalsConf = game.totals_confidence || "—";
+    const spreadPick = game.spread_best_pick;
+    const runLine =
+      spreadPick != null
+        ? fmtSpreadLine(
+            spreadPick.team,
+            spreadPick.spread_point,
+            spreadPick.american_odds
+          )
+        : game.home_spread_point != null
+          ? fmtSpreadLine(
+              game.home_team,
+              game.home_spread_point,
+              game.home_spread_american
+            )
+          : "—";
+    const coverSide = spreadPick ? spreadPick.side : "home";
+    const modelCover =
+      spreadCoverPct(game, coverSide) != null
+        ? pct(spreadCoverPct(game, coverSide))
+        : "—";
+    const marketCover =
+      spreadMarketPct(game, coverSide) != null
+        ? pct(spreadMarketPct(game, coverSide))
+        : "—";
+    const spreadPickLabel = spreadPick
+      ? `${spreadPick.team} ${spreadPick.spread_point > 0 ? "+" : ""}${spreadPick.spread_point}`
+      : "—";
+    const spreadEdge =
+      spreadPick != null
+        ? `${(spreadPick.edge * 100).toFixed(1)}%`
+        : "—";
     tr.innerHTML = `
       <td>${game.matchup}</td>
       <td>${ou}</td>
@@ -193,6 +249,11 @@ function renderSlate(slate, edgeFraction = 0.08) {
         ${game.edge_home != null ? pct(game.edge_home) : "—"}
       </td>
       <td class="${confidenceClass(mlConf)}">${mlConf}</td>
+      <td>${runLine}</td>
+      <td>${modelCover}</td>
+      <td>${marketCover}</td>
+      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadPickLabel}</td>
+      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadEdge}</td>
     `;
     els.slateBody.appendChild(tr);
   }
@@ -261,6 +322,24 @@ function renderParlays(parlays, edgeFraction = 0.08) {
     .join("");
 }
 
+async function loadClvSummary() {
+  try {
+    const res = await fetch("/api/clv/summary?days=30");
+    if (!res.ok) return;
+    const s = await res.json();
+    if (!s.picks_logged) return;
+    const pct =
+      s.pct_positive_clv != null
+        ? `${(s.pct_positive_clv * 100).toFixed(0)}% positive CLV`
+        : "CLV pending";
+    const line = document.createElement("span");
+    line.textContent = `Forward CLV (30d): ${s.picks_logged} picks · ${pct}`;
+    els.footer.appendChild(line);
+  } catch (_err) {
+    /* optional */
+  }
+}
+
 function renderFooter(data) {
   const s = data.status || {};
   const oddsLabel =
@@ -268,14 +347,17 @@ function renderFooter(data) {
       ? "live (Odds API)"
       : data.odds_source === "historical_cache"
         ? "historical cache"
-        : "none";
+        : data.odds_source === "model_only"
+          ? "model only (free)"
+          : "none";
   els.footer.innerHTML = `
     <span>MLB games in DB: ${s.mlb_games_count ?? "—"}</span>
     <span>Market eval: ${s.market_eval_status ?? "—"}</span>
     <span>Parlays cached: ${s.parlay_count ?? "—"}</span>
     <span>Odds: ${oddsLabel}</span>
     <span>Mode: ${data.mode ?? "—"}</span>
-    <span>Totals model: ${s.totals_model_version ?? "—"}</span>
+    <span>Totals model: ${data.active_totals_model?.model_version ?? s.totals_model_version ?? "—"}</span>
+    <span>Active ML: ${data.active_moneyline_model?.run_id ?? "—"}</span>
   `;
   els.footer.classList.remove("hidden");
 }
@@ -304,11 +386,21 @@ async function loadBoard(refresh = false) {
       els.disclaimer.classList.add("hidden");
     }
 
-    els.boardDate.textContent = `Board date: ${data.date} · ${data.mode === "demo" ? "Demo" : "Live"}`;
+    const mlModel = data.active_moneyline_model;
+    const modelLabel = mlModel
+      ? ` · ML: ${mlModel.run_id} (${mlModel.model_version || "—"})`
+      : "";
+    els.boardDate.textContent = `Board date: ${data.date} · ${data.mode === "demo" ? "Demo" : "Live"}${modelLabel}`;
 
-    els.warnings.innerHTML = (data.warnings || [])
-      .map((w) => `<div class="warning-item">${w}</div>`)
-      .join("");
+    const syncNote =
+      data.board_live_test && data.synced_to_main
+        ? '<div class="warning-item sync-ok">Live test complete — odds repository and daily board updated. Main-site game pages will pick up new lines within ~60s.</div>'
+        : "";
+    els.warnings.innerHTML =
+      syncNote +
+      (data.warnings || [])
+        .map((w) => `<div class="warning-item">${w}</div>`)
+        .join("");
 
     if (data.error) {
       els.error.textContent = data.error;
@@ -321,6 +413,9 @@ async function loadBoard(refresh = false) {
     if (els.confidenceNote && data.confidence_disclaimer) {
       els.confidenceNote.textContent = data.confidence_disclaimer;
     }
+    if (els.spreadNote && data.spread_disclaimer) {
+      els.spreadNote.textContent = data.spread_disclaimer;
+    }
 
     renderSimpleSlate(data.slate || [], { display_note: data.display_note });
     renderSlate(data.slate || [], edgeFraction);
@@ -328,6 +423,7 @@ async function loadBoard(refresh = false) {
     renderSingles(data.top_singles || [], edgeFraction);
     renderParlays(data.top_parlays || [], edgeFraction);
     renderFooter(data);
+    loadClvSummary();
 
     els.loading.classList.add("hidden");
     els.content.classList.remove("hidden");
@@ -404,7 +500,7 @@ async function fetchBacktest(url, message) {
 
 els.runLive.addEventListener("click", () => {
   boardMode = "live";
-  loadBoard(false);
+  loadBoard(true);
 });
 
 els.runDemo.addEventListener("click", () => {

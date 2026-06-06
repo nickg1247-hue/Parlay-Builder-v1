@@ -290,6 +290,43 @@ def test_confirm_within_tolerance_without_goal_met():
     assert confirm_resp.status_code == 200
 
 
+def test_confirm_promote_gate_failure():
+    """Promote without passing gate returns 400."""
+    run_resp = client.post(
+        "/api/lab/run",
+        json={
+            "experiment_id": "promote-fail",
+            "track": "moneyline",
+            "feature_set": "v1_baseline",
+            "goal_metric": "log_loss_model",
+            "goal_value": 0.99,
+            "until_within_pct": 0,
+        },
+    )
+    if run_resp.status_code == 400:
+        pytest.skip("Games data not available")
+    run = run_resp.json()
+    if not (run.get("goal_met") or run.get("goal_within_tolerance")):
+        pytest.skip("Run not eligible for confirm in this environment")
+
+    confirm_resp = client.post(
+        "/api/lab/confirm-test",
+        json={"run_id": run["id"], "promote": False},
+    )
+    if confirm_resp.status_code != 200:
+        pytest.skip("Confirm unavailable in this environment")
+    confirmed = confirm_resp.json()
+    gate = confirmed["test_confirm"]["production_gate"]
+    if gate.get("active_gate_passed"):
+        pytest.skip("Gate passed — cannot test failure path")
+
+    promote_resp = client.post(
+        "/api/lab/confirm-test",
+        json={"run_id": run["id"], "promote": True},
+    )
+    assert promote_resp.status_code == 400
+
+
 def test_confirm_requires_goal_met():
     response = client.post(
         "/api/lab/confirm-test",

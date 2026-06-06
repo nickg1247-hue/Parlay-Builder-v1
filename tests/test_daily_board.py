@@ -133,6 +133,7 @@ def test_build_daily_board_structure():
     assert "ml_confidence" in board["slate"][0]
     assert "totals_confidence" in board["slate"][0]
     assert board["confidence_disclaimer"]
+    assert board["spread_disclaimer"]
     assert board["odds_source"] == "historical_cache"
     assert isinstance(board["top_parlays"], list)
 

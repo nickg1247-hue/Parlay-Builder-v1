@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Game — Parlay Builder</title>
+
+  <link rel="stylesheet" href="/static/style.css">
+
+  <link rel="stylesheet" href="/static/app.css">
+
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <header class="app-topbar">
+
+      <div class="app-nav-row">
+
+        <a class="app-brand" href="/">Parlay <span>Builder</span></a>
+
+        <nav class="app-nav-links" aria-label="Sections">
+
+          <a href="/mlb">← Slate</a>
+
+          <a href="/mlb/board">Board</a>
+
+        </nav>
+
+      </div>
+
+      <div class="sport-pills" aria-label="Sports">
+
+        <a class="sport-pill sport-pill-active" href="/mlb">MLB</a>
+
+        <a class="sport-pill" href="/nba">NBA</a>
+
+        <span class="sport-pill sport-pill-disabled">NFL</span>
+
+        <span class="sport-pill sport-pill-disabled">NHL</span>
+
+        <span class="sport-pill sport-pill-disabled">CFB</span>
+
+      </div>
+
+    </header>
+
+
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live MLB scores"></div>
+
+
+
+    <main class="app-main">
+
+      <div id="game-loading" class="empty-state">Loading game…</div>
+
+      <div id="game-error" class="error-state hidden"></div>
+
+      <div id="game-content" class="hidden">
+
+        <header class="matchup-header" id="matchup-header"></header>
+
+
+
+        <p class="app-section-title">
+          Matchup
+          <span id="lines-updated" class="lines-updated hidden"></span>
+          <a href="#" id="insights-refresh" class="insights-refresh-link hidden">Refresh odds</a>
+        </p>
+
+        <div class="warnings" id="insights-warnings"></div>
+
+        <div id="game-matchup-board" class="matchup-board"></div>
+
+
+
+        <section class="detail-section" id="parlays-section">
+
+          <h2>Parlays</h2>
+
+          <div id="parlays-body" class="parlays-body">Loading…</div>
+
+          <p class="detail-footnote"><a href="/mlb/board">Advanced board</a></p>
+
+        </section>
+
+
+
+        <section class="detail-section">
+
+          <h2>Player props</h2>
+
+          <p>Market lines — Phase E</p>
+
+        </section>
+
+
+
+        <p class="disclaimer-small">
+
+          Experimental analytics — not betting advice. EV signals are not validated.
+
+        </p>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+
+  <script src="/static/game.js"></script>
+
+</body>
+
+</html>
+
+

@@ -18,7 +18,9 @@ from app.db.database import get_connection
 from app.db.market_status import get_market_eval_status
 from app.db.mlb_status import get_mlb_data_status
 from app.db.parlay_status import get_parlay_status
+from app.odds.live_odds import live_odds_enabled
 from app.odds.odds_math import market_probs_from_american
+from app.odds.spread_math import market_probs_from_american_spread
 from app.odds.team_aliases import is_valid_american_odds
 from app.models.calibration import (
     blend_display_prob,
@@ -26,6 +28,8 @@ from app.models.calibration import (
 )
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.mlb_baseline import load_games
+from app.models.production_pipeline import get_active_model_info
+from app.services.forward_clv import log_live_picks
 from app.parlay.ev_ranker import (
     DEFAULT_MAX_PARLAYS,
     attach_market_odds,
@@ -38,6 +42,8 @@ from app.parlay.totals_slate import build_totals_slate
 logger = logging.getLogger(__name__)
 
 DAILY_BOARD_CACHE = PROJECT_ROOT / "data" / "processed" / "daily_board.json"
+BOARD_CACHE_TTL_SECONDS = 300
+MORNING_BOARD_MAX_AGE_SECONDS = 24 * 3600
 DISCLAIMER = (
     "Experimental analytics — not betting advice. EV signals are not validated. "
     "Totals model is separate from moneyline."
@@ -45,6 +51,89 @@ DISCLAIMER = (
 CONFIDENCE_DISCLAIMER = (
     "Confidence reflects model vs market edge, not a guarantee."
 )
+SPREAD_DISCLAIMER = (
+    "Run line model is experimental (margin GBR + Normal cover); not validated like moneyline v3."
+)
+
+
+def _spread_row_fields(row, min_edge: float) -> dict[str, Any]:
+    """Compute spread cover probs, edges, and optional +EV pick for one slate row."""
+    empty: dict[str, Any] = {
+        "home_spread_point": None,
+        "home_spread_american": None,
+        "away_spread_point": None,
+        "away_spread_american": None,
+        "model_prob_home_cover": None,
+        "model_prob_away_cover": None,
+        "market_prob_home_cover": None,
+        "market_prob_away_cover": None,
+        "spread_edge_home": None,
+        "spread_edge_away": None,
+        "plus_ev_spread": False,
+        "spread_best_pick": None,
+    }
+    hp = getattr(row, "home_spread_point", None)
+    hap = getattr(row, "home_spread_american", None)
+    ap = getattr(row, "away_spread_point", None)
+    aap = getattr(row, "away_spread_american", None)
+    if hp is None or ap is None or pd.isna(hp) or pd.isna(ap):
+        return empty
+    if not is_valid_american_odds(hap) or not is_valid_american_odds(aap):
+        return {
+            **empty,
+            "home_spread_point": float(hp),
+            "away_spread_point": float(ap),
+        }
+
+    market_home, market_away = market_probs_from_american_spread(
+        float(hp), int(hap), float(ap), int(aap)
+    )
+    model_home = getattr(row, "model_prob_home_cover", None)
+    model_away = getattr(row, "model_prob_away_cover", None)
+    edge_home = None
+    edge_away = None
+    if model_home is not None and not (isinstance(model_home, float) and math.isnan(model_home)):
+        edge_home = float(model_home) - market_home
+    if model_away is not None and not (isinstance(model_away, float) and math.isnan(model_away)):
+        edge_away = float(model_away) - market_away
+
+    spread_best = None
+    plus_ev = False
+    options: list[tuple[str, str, float, int, float]] = []
+    if edge_home is not None:
+        options.append(
+            ("home", row.home_team, edge_home, int(hap), float(hp))
+        )
+    if edge_away is not None:
+        options.append(
+            ("away", row.away_team, edge_away, int(aap), float(ap))
+        )
+    if options:
+        side, team, edge, am, point = max(options, key=lambda x: x[2])
+        if edge >= min_edge:
+            plus_ev = True
+            spread_best = {
+                "side": side,
+                "team": team,
+                "edge": round(edge, 4),
+                "american_odds": am,
+                "spread_point": point,
+            }
+
+    return {
+        "home_spread_point": float(hp),
+        "home_spread_american": int(hap),
+        "away_spread_point": float(ap),
+        "away_spread_american": int(aap),
+        "model_prob_home_cover": model_home,
+        "model_prob_away_cover": model_away,
+        "market_prob_home_cover": round(market_home, 4),
+        "market_prob_away_cover": round(market_away, 4),
+        "spread_edge_home": round(edge_home, 4) if edge_home is not None else None,
+        "spread_edge_away": round(edge_away, 4) if edge_away is not None else None,
+        "plus_ev_spread": plus_ev,
+        "spread_best_pick": spread_best,
+    }
 
 
 def confidence_label(edge: float | None) -> str:
@@ -179,6 +268,7 @@ def _slate_rows(
         totals_confidence = confidence_label(
             abs(float(total_edge)) if total_edge is not None else None
         )
+        spread = _spread_row_fields(row, min_edge)
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -206,6 +296,7 @@ def _slate_rows(
                 "total_edge": total_edge,
                 "totals_confidence": totals_confidence,
                 "plus_ev_total": totals.get("plus_ev_total", False),
+                **spread,
             }
         )
     return rows
@@ -216,6 +307,7 @@ def _totals_by_game(
     use_cache: bool,
     slate_df: pd.DataFrame,
     attach_market_odds: bool = True,
+    force_refresh: bool = False,
 ) -> dict[str, dict[str, Any]]:
     try:
         totals_df = build_totals_slate(
@@ -223,6 +315,7 @@ def _totals_by_game(
             use_cache=use_cache,
             moneyline_slate=slate_df,
             attach_market_odds=attach_market_odds,
+            force_refresh=force_refresh,
         )
     except (FileNotFoundError, KeyError, ValueError) as exc:
         logger.warning("Totals slate skipped: %s", exc)
@@ -297,6 +390,52 @@ def _top_parlays_payload(
     ]
 
 
+def _board_age_seconds(cached: dict[str, Any]) -> float:
+    generated = datetime.fromisoformat(
+        cached["generated_at"].replace("Z", "+00:00")
+    )
+    return (datetime.now(timezone.utc) - generated).total_seconds()
+
+
+def _try_load_cached_board(
+    game_date: date,
+    cache_key: str,
+    refresh: bool,
+    use_cache: bool,
+    min_edge: float,
+    max_parlays: int,
+) -> dict[str, Any] | None:
+    """Exact 5-min TTL match, or morning board fallback (24h, skip_totals=False on disk)."""
+    if refresh or not DAILY_BOARD_CACHE.exists():
+        return None
+    try:
+        cached = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Could not read daily board cache: %s", exc)
+        return None
+
+    if cached.get("cache_key") == cache_key:
+        if _board_age_seconds(cached) < BOARD_CACHE_TTL_SECONDS:
+            return cached
+
+    if use_cache:
+        return None
+    if cached.get("date") != game_date.isoformat():
+        return None
+    if cached.get("skip_totals") is not False:
+        return None
+    suffix = f"_edge{min_edge}_parlays{max_parlays}"
+    if not str(cached.get("cache_key", "")).endswith(suffix):
+        return None
+    if _board_age_seconds(cached) < MORNING_BOARD_MAX_AGE_SECONDS:
+        logger.info(
+            "Serving morning daily board for %s (skip_totals/cache_key fallback)",
+            game_date.isoformat(),
+        )
+        return cached
+    return None
+
+
 def _status_footer() -> dict[str, Any]:
     conn = get_connection()
     try:
@@ -317,10 +456,17 @@ def build_daily_board(
     skip_totals: bool | None = None,
     min_edge: float = DEFAULT_MIN_EDGE,
     max_parlays: int = DEFAULT_MAX_PARLAYS,
+    odds_force_refresh: bool | None = None,
+    live_test: bool = False,
 ) -> dict[str, Any]:
     game_date = game_date or date.today()
+    # Board "Run live" bypass: force API + full totals board for main-site game pages.
+    if live_test and not use_cache:
+        refresh = True
+        skip_totals = False
+        odds_force_refresh = True
     # Live board defaults to fast path; pass skip_totals=false to include O/U model.
-    if skip_totals is None:
+    elif skip_totals is None:
         skip_totals = not use_cache
     cache_key = (
         f"{game_date.isoformat()}_{'cache' if use_cache else 'live'}"
@@ -328,24 +474,28 @@ def build_daily_board(
         f"_edge{min_edge}_parlays{max_parlays}"
     )
 
-    if not refresh and DAILY_BOARD_CACHE.exists():
-        cached = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
-        if cached.get("cache_key") == cache_key:
-            age = datetime.now(timezone.utc) - datetime.fromisoformat(
-                cached["generated_at"].replace("Z", "+00:00")
-            )
-            if age.total_seconds() < 300:
-                return cached
+    cached_board = _try_load_cached_board(
+        game_date, cache_key, refresh, use_cache, min_edge, max_parlays
+    )
+    if cached_board is not None:
+        return cached_board
+
+    force_odds = refresh if odds_force_refresh is None else odds_force_refresh
 
     warnings: list[str] = []
     stale = _history_stale_warning(game_date, use_cache)
     if stale:
         warnings.append(stale)
-    if not use_cache and not _has_odds_api_key():
-        warnings.append(
-            "ODDS_API_KEY not set. Add your free key to .env — see DEV.md. "
-            "Showing model-only slate until odds are available."
-        )
+    if not use_cache and not live_odds_enabled():
+        if not _has_odds_api_key():
+            warnings.append(
+                "Free mode: no live sportsbook lines (ODDS_API_KEY not set). "
+                "Showing model picks only. See DEV.md to enable USE_LIVE_ODDS."
+            )
+        else:
+            warnings.append(
+                "Free mode: USE_LIVE_ODDS=false — model picks only, no sportsbook API calls."
+            )
 
     slate_df = _build_slate(game_date, use_cache)
     if slate_df.empty:
@@ -362,26 +512,38 @@ def build_daily_board(
             "top_singles": [],
             "top_parlays": [],
             "top_totals": [],
+            "active_moneyline_model": get_active_model_info("moneyline"),
+            "active_totals_model": get_active_model_info("totals"),
             "status": _status_footer(),
         }
         payload = _sanitize_json(payload)
         _write_cache(payload)
         return payload
 
-    merged, odds_source = attach_market_odds(slate_df, game_date, use_cache=use_cache)
-    if odds_source == "none":
+    merged, odds_source = attach_market_odds(
+        slate_df, game_date, use_cache=use_cache, force_refresh=force_odds
+    )
+    from app.odds.odds_repository import last_fetch_meta
+
+    meta = last_fetch_meta()
+    if meta.get("quota_warning"):
+        warnings.append(meta["quota_warning"])
+    if odds_source == "none" and not use_cache and not live_odds_enabled():
+        odds_source = "model_only"
+    elif odds_source == "none":
         warnings.append(
             "Odds unavailable — slate shows model probabilities only. "
-            "Check ODDS_API_KEY or use ?use_cache=true for historical demo."
+            "Use ?use_cache=true for historical demo or enable USE_LIVE_ODDS in .env."
         )
 
-    has_odds = odds_source != "none"
+    has_odds = odds_source not in ("none", "model_only")
     # Always score model runs; attach sportsbook O/U when skip_totals is false.
     totals_by_game = _totals_by_game(
         game_date,
         use_cache,
         slate_df,
         attach_market_odds=not skip_totals,
+        force_refresh=force_odds,
     )
     if skip_totals:
         warnings.append(
@@ -398,6 +560,13 @@ def build_daily_board(
             warnings.append(
                 "No sportsbook O/U lines matched this slate. Model runs still shown."
             )
+
+    try:
+        from app.models.mlb_spread import predict_spread_covers
+
+        merged = predict_spread_covers(merged)
+    except (FileNotFoundError, ValueError) as exc:
+        logger.warning("Spread cover predictions skipped: %s", exc)
 
     slate = _slate_rows(merged, has_odds, totals_by_game, min_edge)
     top_singles = _top_singles(slate) if has_odds else []
@@ -423,6 +592,7 @@ def build_daily_board(
         "top_parlays": top_parlays,
         "top_totals": top_totals,
         "totals_disclaimer": "Totals O/U model is experimental and separate from moneyline v3.",
+        "spread_disclaimer": SPREAD_DISCLAIMER,
         "display_note": (
             "Win % uses 50% model + 50% market when odds available; "
             "raw model when odds missing."
@@ -431,9 +601,26 @@ def build_daily_board(
         "edge_threshold": min_edge,
         "max_parlays": max_parlays,
         "skip_totals": skip_totals,
+        "active_moneyline_model": get_active_model_info("moneyline"),
+        "active_totals_model": get_active_model_info("totals"),
         "status": _status_footer(),
     }
+    if live_test and not use_cache:
+        repo_meta = last_fetch_meta()
+        payload["board_live_test"] = True
+        payload["synced_to_main"] = True
+        payload["repository_fetched_at"] = repo_meta.get("fetched_at")
     payload = _sanitize_json(payload)
+    if (
+        not use_cache
+        and payload.get("mode") == "live"
+        and payload.get("odds_source") == "the_odds_api"
+        and live_odds_enabled()
+    ):
+        try:
+            log_live_picks(payload)
+        except Exception as exc:
+            logger.warning("Forward CLV log skipped: %s", exc)
     _write_cache(payload)
     return payload
 

@@ -375,13 +375,17 @@ def run_training() -> dict:
         pruned_cols,
         metrics_name="logistic_wave1_pruned",
     )
-    platt_base, _ = train_logistic(
-        train_2023, cal_2024, pruned_cols, metrics_name="platt_base_2023"
+    from app.models.production_pipeline import build_moneyline_platt_artifact
+
+    platt_payload = build_moneyline_platt_artifact(
+        pruned_cols,
+        raw=raw,
+        wave1_pruned_columns=pruned_cols,
+        wave1_dropped_columns=dropped_cols,
     )
-    platt = PlattCalibrator()
-    raw_cal = platt_base.predict_proba(cal_2024[pruned_cols].values)[:, 1]
+    platt_base = platt_payload["model"]
+    platt = platt_payload["platt_calibrator"]
     raw_test = platt_base.predict_proba(test_w[pruned_cols].values)[:, 1]
-    platt.fit(raw_cal, cal_2024["home_win"].values)
     platt_probs = platt.transform(raw_test)
     platt_metrics = compute_metrics(
         "logistic_wave1_pruned_platt", test_w["home_win"].values, platt_probs
@@ -463,20 +467,30 @@ def run_training() -> dict:
         production_metrics = v1_holdout
         platt_cal = None
 
-    artifact_payload = {
-        "model": production_model,
-        "model_version": production_version,
-        "feature_columns": production_cols,
-        "era_medians": era_medians,
-        "rest_fill": rest_fill,
-        "neutral_last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
-        "neutral_last10_run_diff": NEUTRAL_LAST10_RUN_DIFF,
-        "platt_calibrator": platt_cal,
-        "wave1_pruned_columns": pruned_cols,
-        "wave1_dropped_columns": dropped_cols,
-    }
+    if production_version == "v3_logistic_pruned_platt":
+        artifact_payload = platt_payload
+    else:
+        artifact_payload = {
+            "model": production_model,
+            "model_version": production_version,
+            "feature_columns": production_cols,
+            "era_medians": era_medians,
+            "rest_fill": rest_fill,
+            "neutral_last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
+            "neutral_last10_run_diff": NEUTRAL_LAST10_RUN_DIFF,
+            "platt_calibrator": platt_cal,
+            "wave1_pruned_columns": pruned_cols,
+            "wave1_dropped_columns": dropped_cols,
+        }
     MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(artifact_payload, MODEL_ARTIFACT)
+    from app.models.production_pipeline import save_moneyline_promotion
+
+    save_moneyline_promotion(
+        "train_baseline",
+        artifact_payload,
+        feature_set="train_mlb_baseline",
+    )
 
     experimental = {
         **artifact_payload,
@@ -548,11 +562,16 @@ def run_training() -> dict:
 
 
 def load_model_artifact() -> dict:
-    if not MODEL_ARTIFACT.exists():
+    from app.models.production_pipeline import load_active_artifact
+
+    try:
+        return load_active_artifact("moneyline")
+    except FileNotFoundError:
+        if MODEL_ARTIFACT.exists():
+            return joblib.load(MODEL_ARTIFACT)
         raise FileNotFoundError(
             f"Model not found at {MODEL_ARTIFACT}. Run scripts/train_mlb_baseline.py first."
-        )
-    return joblib.load(MODEL_ARTIFACT)
+        ) from None
 
 
 def artifact_scoring_params() -> tuple[dict[int | str, float], float]:

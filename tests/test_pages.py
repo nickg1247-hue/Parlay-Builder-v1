@@ -9,23 +9,69 @@ def test_home_page():
     response = client.get("/")
     assert response.status_code == 200
     text = response.text
-    assert "Parlay Builder v1" in text
+    assert "Parlay Builder" in text
     assert 'href="/mlb"' in text
-    assert "Coming soon" in text
-    assert "<script" not in text.lower()
+    assert 'href="/nba"' in text
+    assert 'id="news-list"' in text
+    assert "/api/status/refresh" in text
+    assert "live-ticker" in text
 
 
-def test_mlb_page():
+def test_mlb_slate_page():
     response = client.get("/mlb")
     assert response.status_code == 200
     text = response.text
-    assert "MLB Daily Board" in text
+    assert "MLB" in text
     assert 'href="/"' in text
-    assert 'href="/mlb/lab"' in text
+    assert 'href="/mlb/board"' in text
+    assert "/api/scores/today" in text
+    assert "app.js" in text
+
+
+def test_mlb_board_page():
+    response = client.get("/mlb/board")
+    assert response.status_code == 200
+    text = response.text
+    assert "MLB Daily Board" in text
+    assert 'href="/mlb"' in text
     assert "Run live" in text
-    assert "Click Run live or Demo to load the board." in text
-    assert "Model accuracy (30 days)" in text
     assert "mlb.js" in text
+
+
+def test_game_page_loads():
+    response = client.get("/mlb/game/824269")
+    assert response.status_code == 200
+    text = response.text
+    assert "matchup-header" in text
+    assert "game-matchup-board" in text
+    assert "app.js" in text
+    assert "game.js" in text
+
+
+def test_game_js_uses_render_matchup_header():
+    from pathlib import Path
+
+    text = Path(__file__).resolve().parent.parent.joinpath("static/game.js").read_text(
+        encoding="utf-8"
+    )
+    assert "renderMatchupHeader" in text
+    assert "renderMatchupBoard" in text
+    assert "market_cards" in text
+
+
+def test_nba_slate_page():
+    response = client.get("/nba")
+    assert response.status_code == 200
+    text = response.text
+    assert "NBA" in text
+    assert "/api/scores/today" in text
+    assert 'href="/mlb"' in text
+
+
+def test_nba_game_page():
+    response = client.get("/nba/game/401766458")
+    assert response.status_code == 200
+    assert "nba_game.js" in response.text
 
 
 def test_backtest_saved_endpoint():

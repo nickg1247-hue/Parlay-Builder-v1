@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB — Parlay Builder</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">Parlay <span>Builder</span></a>
+        <nav class="app-nav-links" aria-label="Sections">
+          <a href="/">Home</a>
+          <a href="/mlb/board">Advanced board</a>
+          <a href="/mlb/lab">Lab</a>
+        </nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports">
+        <a class="sport-pill sport-pill-active" href="/mlb">MLB</a>
+        <a class="sport-pill" href="/nba">NBA</a>
+        <span class="sport-pill sport-pill-disabled">NFL</span>
+        <span class="sport-pill sport-pill-disabled">NHL</span>
+        <span class="sport-pill sport-pill-disabled">CFB</span>
+      </div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live MLB scores"></div>
+
+    <main class="app-main">
+      <div class="slate-header">
+        <h1>MLB</h1>
+        <span class="slate-date" id="slate-date"></span>
+      </div>
+      <p class="refresh-line" id="refresh-line"></p>
+      <p class="slate-subnav"><a href="/mlb/board">Advanced board</a> · model + EV table</p>
+
+      <div id="slate-loading" class="empty-state">Loading games…</div>
+      <div id="slate-error" class="error-state hidden"></div>
+      <div id="game-list" class="game-list hidden"></div>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    (async function () {
+      const loading = document.getElementById("slate-loading");
+      const errEl = document.getElementById("slate-error");
+      const list = document.getElementById("game-list");
+      const dateEl = document.getElementById("slate-date");
+      const refreshEl = document.getElementById("refresh-line");
+      const dateParam = qs("date");
+
+      initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+
+      const loadUrl = dateParam
+        ? `/api/schedule/mlb?date=${encodeURIComponent(dateParam)}`
+        : "/api/scores/today?sport=mlb";
+
+      async function loadSlate() {
+        const data = await fetchJSON(loadUrl);
+        return { date: data.date, games: data.games || [] };
+      }
+
+      try {
+        const [slate, status] = await Promise.all([
+          loadSlate(),
+          fetchJSON("/api/status/refresh").catch(() => null),
+        ]);
+
+        loading.classList.add("hidden");
+        dateEl.textContent = slate.date || "";
+        if (status) {
+          refreshEl.textContent = formatRefreshStatus(status);
+          refreshEl.classList.toggle("ok", status.ok);
+        }
+
+        if (!slate.games.length) {
+          loading.classList.remove("hidden");
+          loading.textContent = "No games scheduled for this date.";
+          return;
+        }
+
+        list.classList.remove("hidden");
+        renderGameList(list, slate.games);
+
+        if (!dateParam) {
+          setInterval(async () => {
+            try {
+              const live = await fetchJSON("/api/scores/today?sport=mlb");
+              updateGameCards(list, live.games);
+            } catch (_) { /* keep last good state */ }
+          }, 60000);
+        }
+      } catch (e) {
+        loading.classList.add("hidden");
+        errEl.classList.remove("hidden");
+        errEl.textContent = e.message || "Failed to load schedule";
+      }
+    })();
+  </script>
+</body>
+</html>

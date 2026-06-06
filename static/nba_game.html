@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Game — Parlay Builder</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">Parlay <span>Builder</span></a>
+        <nav class="app-nav-links" aria-label="Sections">
+          <a href="/nba">← Slate</a>
+          <a href="/mlb">MLB</a>
+        </nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports">
+        <a class="sport-pill" href="/mlb">MLB</a>
+        <a class="sport-pill sport-pill-active" href="/nba">NBA</a>
+        <span class="sport-pill sport-pill-disabled">NFL</span>
+        <span class="sport-pill sport-pill-disabled">NHL</span>
+        <span class="sport-pill sport-pill-disabled">CFB</span>
+      </div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div id="game-loading" class="empty-state">Loading game…</div>
+      <div id="game-error" class="error-state hidden"></div>
+      <div id="game-content" class="hidden">
+        <header class="matchup-header" id="matchup-header"></header>
+        <section class="detail-section">
+          <h2>Model &amp; markets</h2>
+          <p>NBA model picks and sportsbook lines are not available yet. MLB game pages include full model + market data.</p>
+          <p class="detail-footnote"><a href="/mlb">View MLB slate</a></p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script src="/static/nba_game.js"></script>
+</body>
+</html>

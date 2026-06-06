@@ -47,6 +47,7 @@ const els = {
   runBtn: document.getElementById("run-btn"),
   stopBtn: document.getElementById("stop-btn"),
   confirmBtn: document.getElementById("confirm-btn"),
+  promoteBtn: document.getElementById("promote-btn"),
   runLoading: document.getElementById("run-loading"),
   runMessage: document.getElementById("run-message"),
   error: document.getElementById("error"),
@@ -160,6 +161,12 @@ function renderRunResult(run) {
   const canConfirm =
     (run.goal_met || run.goal_within_tolerance) && !run.test_confirm;
   els.confirmBtn.disabled = !canConfirm;
+  const gate = run.test_confirm?.production_gate || {};
+  const canPromote =
+    run.test_confirm &&
+    gate.active_gate_passed &&
+    !run.test_confirm.promoted;
+  els.promoteBtn.disabled = !canPromote;
 
   const goalStatus = run.goal_met
     ? "met"
@@ -208,7 +215,14 @@ function renderConfirm(confirm) {
   const gate = confirm.production_gate || {};
   const track = confirm.track || gate.track || "moneyline";
   const active = gate.active_gate_passed;
-  els.gateMeta.textContent = `[${track}] ML gate=${gate.production_gate_passed} · Totals gate=${gate.totals_gate_passed} · Active=${active}`;
+  let gateText = `[${track}] ML gate=${gate.production_gate_passed} · Totals gate=${gate.totals_gate_passed} · Active=${active}`;
+  if (confirm.promoted) {
+    const manifest = confirm.active_manifest || {};
+    gateText += ` · Promoted ${manifest.run_id || ""} (${manifest.model_version || ""})`;
+  } else if (confirm.promotion_note) {
+    gateText += ` · ${confirm.promotion_note}`;
+  }
+  els.gateMeta.textContent = gateText;
   els.confirmMetrics.innerHTML =
     metricsBlock("Moneyline (2025)", confirm.moneyline || {}) +
     metricsBlock("Totals (2025)", confirm.totals || {});
@@ -325,16 +339,18 @@ async function runExperiment() {
   }
 }
 
-async function confirmTest() {
+async function confirmTest(promote = false) {
   if (!selectedRunId) return;
   els.error.textContent = "";
   els.runLoading.classList.remove("hidden");
-  els.runMessage.textContent = "One-shot locked 2025 evaluation…";
+  els.runMessage.textContent = promote
+    ? "Promoting to live production manifest…"
+    : "One-shot locked 2025 evaluation…";
   try {
     const res = await fetch("/api/lab/confirm-test", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ run_id: selectedRunId, promote: false }),
+      body: JSON.stringify({ run_id: selectedRunId, promote }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -342,8 +358,12 @@ async function confirmTest() {
     }
     renderRunResult(data);
     await loadRuns();
+    if (promote && data.test_confirm?.promoted) {
+      els.error.textContent = "";
+      els.runMessage.textContent = data.test_confirm.promotion_note || "Promoted to live.";
+    }
   } catch (err) {
-    els.error.textContent = `Confirm failed: ${err.message}`;
+    els.error.textContent = `${promote ? "Promote" : "Confirm"} failed: ${err.message}`;
   } finally {
     els.runLoading.classList.add("hidden");
   }
@@ -352,7 +372,8 @@ async function confirmTest() {
 els.trackSelect.addEventListener("change", renderTrackOptions);
 els.runBtn.addEventListener("click", runExperiment);
 els.stopBtn.addEventListener("click", () => activeController?.abort());
-els.confirmBtn.addEventListener("click", confirmTest);
+els.confirmBtn.addEventListener("click", () => confirmTest(false));
+els.promoteBtn.addEventListener("click", () => confirmTest(true));
 
 loadMeta();
 loadRuns();

@@ -42,6 +42,12 @@ from app.models.mlb_totals import (
     prob_over_poisson,
     totals_production_gate_passes,
 )
+from app.models.production_pipeline import (
+    build_moneyline_platt_artifact,
+    build_totals_artifact,
+    save_moneyline_promotion,
+    save_totals_promotion,
+)
 from sklearn.ensemble import GradientBoostingRegressor
 from app.odds.market_eval import _merge_games_odds
 from app.odds.mlb_odds_free import (
@@ -1054,6 +1060,40 @@ def run_until_within_goal(
     return best_run
 
 
+def _promote_lab_run(run: dict[str, Any]) -> dict[str, Any]:
+    """Persist lab run to active production manifest + joblib artifact."""
+    from app.data.mlb_games import load_games_with_totals
+
+    track = run.get("track", "moneyline")
+    feature_cols = run["feature_columns"]
+    feature_set = run["feature_set"]
+    run_id = run["id"]
+    gate = (run.get("test_confirm") or {}).get("production_gate", {})
+    active_gate = gate.get("active_gate_passed", False)
+    if not active_gate:
+        gate_name = "MODEL.md" if track == "moneyline" else "TOTALS.md"
+        raise ValueError(
+            f"{gate_name} gate failed on locked 2025 — cannot promote artifact"
+        )
+
+    if track == "moneyline":
+        artifact = build_moneyline_platt_artifact(
+            feature_cols,
+            raw=load_games(),
+            model_version=f"lab_{feature_set}_platt",
+            wave1_pruned_columns=feature_cols,
+        )
+        manifest = save_moneyline_promotion(run_id, artifact, feature_set=feature_set)
+    else:
+        artifact = build_totals_artifact(
+            feature_cols,
+            raw=load_games_with_totals(),
+            model_version=f"lab_{feature_set}",
+        )
+        manifest = save_totals_promotion(run_id, artifact, feature_set=feature_set)
+    return manifest
+
+
 def confirm_locked_test(
     run_id: str,
     *,
@@ -1067,6 +1107,14 @@ def confirm_locked_test(
             "Run is not at goal and not within tolerance — cannot confirm locked test"
         )
     if run.get("test_confirm") is not None:
+        if promote and not run["test_confirm"].get("promoted"):
+            manifest = _promote_lab_run(run)
+            run["test_confirm"]["promoted"] = True
+            run["test_confirm"]["promotion_note"] = (
+                f"Promoted to live ({manifest['path']})."
+            )
+            run["test_confirm"]["active_manifest"] = manifest
+            _save_run(run)
         return run
 
     raw = load_games()
@@ -1120,16 +1168,10 @@ def confirm_locked_test(
 
     promotion_note = None
     promoted = False
+    active_manifest = None
     if promote:
-        if not active_gate:
-            gate_name = "MODEL.md" if track == "moneyline" else "TOTALS.md"
-            raise ValueError(
-                f"{gate_name} gate failed on locked 2025 — cannot promote artifact"
-            )
-        promotion_note = (
-            "Promotion recorded in lab only; production artifact unchanged "
-            "(advisor sign-off required)."
-        )
+        active_manifest = _promote_lab_run(run)
+        promotion_note = f"Promoted to live ({active_manifest['path']})."
         promoted = True
 
     run["test_confirm"] = {
@@ -1152,6 +1194,7 @@ def confirm_locked_test(
         },
         "promoted": promoted,
         "promotion_note": promotion_note,
+        "active_manifest": active_manifest,
     }
     run["promotion_allowed"] = active_gate
     run["status"] = "confirmed"

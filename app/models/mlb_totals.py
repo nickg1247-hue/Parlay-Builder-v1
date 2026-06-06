@@ -216,18 +216,18 @@ def run_training() -> dict:
         model_ll or 999.0, market_ll
     ) if model_ll is not None else False
 
+    from app.models.production_pipeline import build_totals_artifact, save_totals_promotion
+
+    totals_payload = build_totals_artifact(
+        list(TOTALS_FEATURE_COLUMNS),
+        raw=raw,
+    )
     MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(
-        {
-            "model": reg,
-            "model_version": "v1_gbr_poisson",
-            "feature_columns": TOTALS_FEATURE_COLUMNS,
-            "era_medians": era_medians,
-            "rest_fill": rest_fill,
-            "league_avg_total": LEAGUE_AVG_TOTAL,
-            "pick_margin": pick_margin(),
-        },
-        MODEL_ARTIFACT,
+    joblib.dump(totals_payload, MODEL_ARTIFACT)
+    save_totals_promotion(
+        "train_totals",
+        totals_payload,
+        feature_set="train_mlb_totals",
     )
 
     results: dict[str, Any] = {
@@ -261,11 +261,16 @@ def run_training() -> dict:
 
 
 def load_totals_artifact() -> dict:
-    if not MODEL_ARTIFACT.exists():
+    from app.models.production_pipeline import load_active_artifact
+
+    try:
+        return load_active_artifact("totals")
+    except FileNotFoundError:
+        if MODEL_ARTIFACT.exists():
+            return joblib.load(MODEL_ARTIFACT)
         raise FileNotFoundError(
             f"Totals model not found at {MODEL_ARTIFACT}. Run scripts/train_mlb_totals.py"
-        )
-    return joblib.load(MODEL_ARTIFACT)
+        ) from None
 
 
 def predict_expected_total_runs(df: pd.DataFrame) -> np.ndarray:

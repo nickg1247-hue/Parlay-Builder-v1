@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parlay Builder</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">Parlay <span>Builder</span></a>
+        <nav class="app-nav-links" aria-label="Sections">
+          <a href="/mlb" class="active">MLB</a>
+          <a href="/mlb/board">Board</a>
+          <a href="/mlb/lab">Lab</a>
+        </nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports">
+        <a class="sport-pill sport-pill-active" href="/mlb">MLB</a>
+        <a class="sport-pill" href="/nba">NBA</a>
+        <span class="sport-pill sport-pill-disabled" title="Coming soon">NFL</span>
+        <span class="sport-pill sport-pill-disabled" title="Coming soon">NHL</span>
+        <span class="sport-pill sport-pill-disabled" title="Coming soon">CFB</span>
+      </div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live MLB scores"></div>
+
+    <main class="app-main">
+      <p class="refresh-line" id="refresh-line">Checking last update…</p>
+
+      <section class="home-hero">
+        <h1>Sports hub</h1>
+        <p>Model picks, markets, and parlays — experimental analytics, not betting advice.</p>
+      </section>
+
+      <p class="app-section-title">Today</p>
+      <div class="home-links">
+        <a class="home-link-card" href="/mlb">
+          <span>MLB game slate</span>
+          <span class="arrow">→</span>
+        </a>
+        <a class="home-link-card" href="/nba">
+          <span>NBA game slate</span>
+          <span class="arrow">→</span>
+        </a>
+        <a class="home-link-card" href="/mlb/board">
+          <span>Advanced analytics board</span>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <section style="margin-top: 1.5rem;">
+        <p class="app-section-title">News</p>
+        <div id="news-list" class="news-list">
+          <p class="news-loading">Loading headlines…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    initLiveTicker("live-ticker", { sport: "all" });
+    (async function () {
+      const el = document.getElementById("refresh-line");
+      try {
+        const status = await fetchJSON("/api/status/refresh");
+        el.textContent = formatRefreshStatus(status);
+        el.classList.toggle("ok", status.ok);
+      } catch (e) {
+        el.textContent = "Could not load refresh status";
+      }
+    })();
+    (async function () {
+      const list = document.getElementById("news-list");
+      function showEmpty(msg) {
+        list.replaceChildren();
+        const p = document.createElement("p");
+        p.className = "news-empty";
+        p.textContent = msg;
+        list.appendChild(p);
+      }
+      try {
+        const data = await fetchJSON("/api/news");
+        const items = data.items || [];
+        if (!items.length) {
+          showEmpty(data.error || "No headlines available right now.");
+          return;
+        }
+        list.replaceChildren();
+        items.forEach((item) => {
+          const link = document.createElement("a");
+          link.className = "news-item";
+          link.href = item.link;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          const title = document.createElement("span");
+          title.className = "news-title";
+          title.textContent = item.title;
+          const meta = document.createElement("span");
+          meta.className = "news-meta";
+          meta.textContent = item.source || "News";
+          link.append(title, meta);
+          list.appendChild(link);
+        });
+      } catch (e) {
+        showEmpty("Headlines unavailable");
+      }
+    })();
+  </script>
+</body>
+</html>
