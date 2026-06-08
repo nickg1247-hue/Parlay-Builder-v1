@@ -15,14 +15,26 @@
   --warn-bg: #3d2e00;
   --warn-text: #ffd400;
   --ev-bg: #0d2b1f;
+  --glass-bg: rgba(15, 20, 25, 0.52);
+  --glass-blur: 16px;
+  --app-gutter: clamp(1rem, 2.5vw, 2.25rem);
+  --app-content-max: 1600px;
+}
+
+html {
+  background-color: var(--bg);
+  min-height: 100%;
 }
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   min-height: 100vh;
   line-height: 1.5;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .page {

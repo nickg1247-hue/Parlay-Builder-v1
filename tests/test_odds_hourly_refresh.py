@@ -24,14 +24,26 @@ def test_hourly_refresh_skips_no_games(_sched):
 
 
 @patch.dict("os.environ", {"ODDS_API_KEY": "key", "USE_LIVE_ODDS": "true"}, clear=False)
+@patch("app.services.odds_hourly_refresh.repository_age_seconds", return_value=None)
 @patch("app.services.odds_hourly_refresh.get_mlb_schedule")
 @patch("app.services.odds_hourly_refresh.get_mlb_odds_for_date")
-def test_hourly_refresh_calls_force_refresh(mock_get, mock_sched):
+def test_hourly_refresh_calls_force_refresh(mock_get, mock_sched, _age):
     mock_sched.return_value = {"games": [{"game_id": "1"}]}
     mock_get.return_value = ([], "the_odds_api_live")
 
     assert ohr.run_hourly_odds_refresh() == 0
     mock_get.assert_called_once_with(date.today(), force_refresh=True)
+
+
+@patch.dict("os.environ", {"ODDS_API_KEY": "key", "USE_LIVE_ODDS": "true"}, clear=False)
+@patch("app.services.odds_hourly_refresh.repository_age_seconds", return_value=120.0)
+@patch("app.services.odds_hourly_refresh.get_mlb_schedule")
+@patch("app.services.odds_hourly_refresh.get_mlb_odds_for_date")
+def test_hourly_refresh_skips_when_recent(mock_get, mock_sched, _age):
+    mock_sched.return_value = {"games": [{"game_id": "1"}]}
+
+    assert ohr.run_hourly_odds_refresh() == 0
+    mock_get.assert_not_called()
 
 
 @patch.dict("os.environ", {"ODDS_API_KEY": "key", "USE_LIVE_ODDS": "true"}, clear=False)

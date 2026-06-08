@@ -48,8 +48,10 @@ def isolated_repo(tmp_path, monkeypatch):
     root = tmp_path / "odds_repository"
     monkeypatch.setenv("ODDS_REPOSITORY_DIR", str(root))
     repo.clear_repository(root)
+    repo.reset_fetch_locks_for_tests()
     yield root
     repo.clear_repository(root)
+    repo.reset_fetch_locks_for_tests()
 
 
 @patch.dict("os.environ", {"ODDS_API_KEY": "test-key", "USE_LIVE_ODDS": "true"}, clear=False)
@@ -111,7 +113,7 @@ def test_force_refresh_updates_file(mock_fetch, isolated_repo):
 
     repo.get_mlb_odds_for_date(game_date)
     first = repo.load_date(game_date)
-    repo.get_mlb_odds_for_date(game_date, force_refresh=True)
+    repo.get_mlb_odds_for_date(game_date, force_refresh=True, bypass_min_ttl=True)
     second = repo.load_date(game_date)
 
     assert first["fetched_at"] != second["fetched_at"]
@@ -161,10 +163,27 @@ def test_api_failure_returns_stale_repo(mock_fetch, isolated_repo):
         response=httpx.Response(500),
     )
 
-    games, src = repo.get_mlb_odds_for_date(game_date, force_refresh=True)
+    games, src = repo.get_mlb_odds_for_date(
+        game_date, force_refresh=True, bypass_min_ttl=True
+    )
     assert games is not None
     assert len(games) == 1
     assert src == "the_odds_api_live"
+
+
+@patch.dict("os.environ", {"ODDS_API_KEY": "test-key", "USE_LIVE_ODDS": "true"}, clear=False)
+@patch("app.odds.odds_repository.fetch_live_mlb_odds")
+def test_min_ttl_skips_redundant_force_refresh(mock_fetch, isolated_repo):
+    game_date = date.today()
+    mock_fetch.return_value = [_fake_event(game_date)]
+    repo.get_mlb_odds_for_date(game_date)
+    mock_fetch.reset_mock()
+
+    games, src = repo.get_mlb_odds_for_date(game_date, force_refresh=True)
+    assert games is not None
+    assert src == "the_odds_api_live"
+    mock_fetch.assert_not_called()
+    assert repo.last_fetch_meta().get("skip_reason") == "min_ttl"
 
 
 @patch.dict("os.environ", {"ODDS_API_KEY": "test-key", "USE_LIVE_ODDS": "true"}, clear=False)
@@ -214,26 +233,27 @@ def test_build_daily_board_refresh_forces_odds_update(mock_slate, mock_fetch, is
     repo.get_mlb_odds_for_date(game_date)
     mock_fetch.reset_mock()
 
-    with patch.object(db, "DAILY_BOARD_CACHE") as mock_cache:
-        mock_cache.exists.return_value = False
-        with patch("app.services.daily_board._write_cache"):
-            with patch("app.services.daily_board._totals_by_game", return_value={}):
-                with patch("app.services.daily_board._status_footer", return_value={}):
-                    with patch(
-                        "app.services.daily_board.get_active_model_info",
-                        return_value={},
-                    ):
+    with patch.object(repo, "_repository_fresh_enough", return_value=False):
+        with patch.object(db, "DAILY_BOARD_CACHE") as mock_cache:
+            mock_cache.exists.return_value = False
+            with patch("app.services.daily_board._write_cache"):
+                with patch("app.services.daily_board._totals_by_game", return_value={}):
+                    with patch("app.services.daily_board._status_footer", return_value={}):
                         with patch(
-                            "app.services.daily_board._slate_rows", return_value=[]
+                            "app.services.daily_board.get_active_model_info",
+                            return_value={},
                         ):
                             with patch(
-                                "app.services.daily_board.rank_parlays",
-                                return_value=[],
+                                "app.services.daily_board._slate_rows", return_value=[]
                             ):
-                                db.build_daily_board(
-                                    game_date=game_date,
-                                    refresh=True,
-                                    skip_totals=True,
-                                )
+                                with patch(
+                                    "app.services.daily_board.rank_parlays",
+                                    return_value=[],
+                                ):
+                                    db.build_daily_board(
+                                        game_date=game_date,
+                                        refresh=True,
+                                        skip_totals=True,
+                                    )
 
     mock_fetch.assert_called_once()

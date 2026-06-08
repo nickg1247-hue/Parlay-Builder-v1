@@ -454,8 +454,9 @@ def build_game_insights(
     board = _load_board(game_date, use_cache=use_cache, refresh=refresh)
     board_row = _slate_row(board, game_id)
     model = _build_model(board_row)
+    # Board rebuild (when refresh=true) already refreshes the repository once.
     lines = _sportsbook_lines(
-        detail["game"], game_date, use_cache, force_refresh=refresh
+        detail["game"], game_date, use_cache, force_refresh=False
     )
     market_cards = _build_market_cards(lines)
     highlights = _build_highlights(model)

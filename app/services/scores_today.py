@@ -20,23 +20,34 @@ def _tag_sport(games: list[dict[str, Any]], sport: str) -> list[dict[str, Any]]:
     return tagged
 
 
-def get_scores_today(sport: str = "mlb", game_date: date | None = None) -> dict[str, Any]:
+def get_scores_today(
+    sport: str = "mlb",
+    game_date: date | None = None,
+    *,
+    auto_resolve: bool = False,
+) -> dict[str, Any]:
     sport = sport.lower()
     if sport not in SUPPORTED_SPORTS:
         raise ValueError(f"Unsupported sport: {sport}")
 
-    game_date = game_date or date.today()
-
     if sport == "mlb":
-        payload = get_mlb_scores_today(game_date=game_date)
+        effective_date = game_date or date.today()
+        payload = get_mlb_scores_today(game_date=effective_date)
         payload["games"] = _tag_sport(payload.get("games") or [], "mlb")
         return payload
 
     if sport == "nba":
-        return get_nba_scores_today(game_date=game_date)
+        return get_nba_scores_today(
+            game_date=game_date,
+            auto_resolve=auto_resolve and game_date is None,
+        )
 
-    mlb = get_mlb_scores_today(game_date=game_date)
-    nba = get_nba_scores_today(game_date=game_date)
+    mlb_date = game_date or date.today()
+    mlb = get_mlb_scores_today(game_date=mlb_date)
+    nba = get_nba_scores_today(
+        game_date=game_date,
+        auto_resolve=auto_resolve and game_date is None,
+    )
     games = _tag_sport(mlb.get("games") or [], "mlb") + _tag_sport(
         nba.get("games") or [], "nba"
     )
@@ -44,7 +55,11 @@ def get_scores_today(sport: str = "mlb", game_date: date | None = None) -> dict[
 
     return {
         "sport": "all",
-        "date": game_date.isoformat(),
+        "date": nba.get("date") or mlb_date.isoformat(),
+        "requested_date": (game_date or date.today()).isoformat(),
+        "resolved_date": nba.get("resolved_date") or mlb_date.isoformat(),
+        "days_ahead": nba.get("days_ahead", 0),
+        "auto_advanced": nba.get("auto_advanced", False),
         "games": games,
         "games_count": len(games),
         "sports": {

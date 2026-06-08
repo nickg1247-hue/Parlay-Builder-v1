@@ -115,6 +115,7 @@ def attach_market_odds(
     game_date: date,
     use_cache: bool = False,
     force_refresh: bool = False,
+    bypass_min_ttl: bool = False,
 ) -> tuple[pd.DataFrame, str]:
     odds_df = pd.DataFrame()
     source = "none"
@@ -135,6 +136,7 @@ def attach_market_odds(
             force_refresh=force_refresh,
             include_totals=True,
             include_spreads=True,
+            bypass_min_ttl=bypass_min_ttl,
         )
         if games:
             odds_df = games_to_ml_dataframe(games, repo_source, game_date)

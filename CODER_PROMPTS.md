@@ -455,3 +455,129 @@ When done, report: approach chosen for cache alignment, TTL values, and stress t
 ```
 
 **End of prompt.**
+
+---
+
+## UX polish — Background depth & visual polish
+
+**Start copying below this line.**
+
+```
+Implement visual polish: richer backgrounds, glass header, game-page team wash, home hero stats, and light motion — without changing backend model/odds logic.
+
+GOAL
+Replace the flat black body with subtle depth (spotlight + grain), add sticky header blur, team-color ambient wash on game pages, home hero stat chips, section dividers, improved empty states, and gentle card entrance motion. Site should feel more alive while staying readable on mobile.
+
+READ FIRST
+- static/style.css (CSS variables: --bg, --surface, --accent, --positive)
+- static/app.css (app-shell, topbar, ticker, game cards, home-hero, empty states)
+- static/index.html, static/mlb_slate.html, static/game.html
+- static/app.js (gameCardColorStyle, teamPrimaryColor, loadTeamColors, renderEmptyState, renderMatchupHeader)
+- static/game.js
+- static/mlb_team_colors.json
+- app/services/home_summary.py + GET /api/home/today (fields for hero chips)
+- GET /api/status/refresh, GET /api/scores/today?sport=all
+
+OUT OF SCOPE
+- Light/dark theme toggle
+- Full-bleed stadium photos or heavy background images
+- Animated/moving backgrounds (no parallax blobs that drift)
+- New backend endpoints unless hero chips need one trivial field already on /api/home/today
+- Player props, new sports, model changes
+- Git commit unless user asks
+
+LOCKED DECISIONS
+- Global background: radial spotlight (#0f1419 base + faint center glow using --accent at ~6% opacity) + fine grain overlay at ~3–4% opacity
+- Game pages only: diagonal corner wash using away/home team colors at ~5% opacity (reuse mlb_team_colors.json + existing gameCardColorStyle helpers)
+- Sticky chrome (app-topbar + live-ticker): semi-transparent surface + backdrop-filter blur (~12px); solid fallback when blur unsupported
+- Motion: respect prefers-reduced-motion — disable fades/slides when set
+- Keep max-width 720px app-shell; backgrounds are full-viewport, content unchanged
+- MLB slate may use a very faint stitch/diamond CSS pattern at ≤3% opacity; Board/Lab pages stay flatter (no sport pattern)
+
+ACCEPTANCE CRITERIA
+
+1) Global background (style.css + app.css)
+- body (or a new .app-bg layer behind .app-shell) uses:
+  - Base color var(--bg)
+  - Radial gradient centered on viewport: soft blue glow (accent-based), darker vignette at edges
+  - Subtle noise/grain via CSS (repeating SVG filter or tiny data-URI) — visible only on close inspection, not distracting
+- Cards/ticker/text contrast unchanged; WCAG-friendly on primary text
+- No horizontal scroll introduced on mobile
+
+2) Sticky header glass
+- .app-topbar and .live-ticker use background: color-mix or rgba from --surface with ~85% opacity
+- backdrop-filter: blur(12px) and -webkit-backdrop-filter where supported
+- @supports not (backdrop-filter: blur(1px)) fallback: solid var(--surface)
+- Border-bottom on topbar/ticker still visible
+
+3) Game-page team-color wash (game.html / game.js / app.css)
+- body or .app-shell gets class e.g. game-page-bg when on game detail
+- After matchup loads, apply CSS custom properties --game-away-color and --game-home-color from teamPrimaryColor / gameCardColorStyle
+- Pseudo-elements or fixed layers: away color top-left, home color bottom-right, ~5% opacity, large blur
+- Wash does NOT apply on home, /mlb slate, /mlb/board, /mlb/lab, /nba pages
+
+4) Home hero stat chips (index.html + app.js + app.css)
+- Below home-hero tagline, render a row of compact chips using data already fetched on home:
+  - Game count (MLB + NBA from scores or summary)
+  - Model leans / +EV count (from /api/home/today: plus_ev_singles, games_on_slate, etc.)
+  - Last refresh relative time (from /api/status/refresh ran_at or formatRefreshStatus)
+- Chips are pills: small, muted border, accent dot or icon optional
+- Graceful fallback: "—" or hide chip when data missing
+- No extra API round-trip if existing Promise.all can supply fields
+
+5) Section dividers
+- Between major home sections (Today at a glance, Best bets, Watched, News): thin horizontal rule using linear-gradient (transparent → border → transparent)
+- Class e.g. .app-section-divider; reuse on mlb_slate between refresh line and game list if it fits
+
+6) Empty states (app.js renderEmptyState + app.css)
+- Replace plain text-only empty states for: no games today, scores unavailable, best bets empty, news empty
+- Add simple inline SVG icons (calendar, scoreboard, chart, newspaper) — monochrome, muted, ~24px
+- Keep existing copy; icon + message + optional action link unchanged in behavior
+
+7) Card entrance motion (app.css + minimal app.js if needed)
+- .game-card and .glance-card: on first paint, subtle fade + translateY(6px) → 0 over ~300ms
+- Stagger optional (nth-child delay ≤50ms each) — cap total so long lists don't cascade forever
+- prefers-reduced-motion: reduce: animation: none
+
+8) Sport pill icons (optional if quick)
+- Small inline SVG or emoji-free text marks next to MLB / NBA pills on pages that have sport-pills
+- Disabled pills unchanged
+
+9) Tests
+- tests/test_pages.py: assert home still has today-glance, best-bets; game.html still loads
+- If new body classes or critical CSS classes added, one assertion for game-page-bg class on game route HTML or document structure
+- Full pytest -q green (no new slow integration tests)
+
+10) Docs
+- DEV.md: one short "Visual layer" note — background approach, reduced-motion, no new assets folder required unless grain SVG added under static/
+
+APPROACH (suggested order)
+1. style.css / app.css — body background layers + grain + section dividers
+2. app.css — glass topbar/ticker
+3. game.html body class + game.js set team color CSS vars after insights/matchup load
+4. index.html + app.js — renderHomeHeroChips() fed from existing home bootstrap data
+5. renderEmptyState icon map + CSS
+6. Card animation CSS
+7. Tests + DEV.md blurb
+
+VERIFY
+.\scripts\dev.ps1  (or uvicorn app.main:app)
+Manual:
+- / — see spotlight/grain, hero chips, section dividers, card fade-in
+- /mlb — glass header over scrolling content; faint pattern optional
+- /mlb/game/{id} — team-color corner wash matches away/home
+- Resize mobile (~390px) — no overflow, text readable
+- prefers-reduced-motion in DevTools — animations off
+pytest tests/test_pages.py -q
+pytest -q
+
+DO NOT
+- Git commit unless user asks
+- Change ticker marquee logic, API contracts, or model thresholds
+- Add large image assets or external font CDNs
+- Put team-color wash on every page site-wide
+
+When done, report: CSS approach for grain (pure CSS vs static file), sample hero chip row HTML, which pages got sport pattern, and before/after screenshot description.
+```
+
+**End of prompt.**

@@ -7,7 +7,12 @@ import os
 from datetime import date
 
 from app.odds.live_odds import live_odds_enabled
-from app.odds.odds_repository import get_mlb_odds_for_date, last_fetch_meta
+from app.odds.odds_repository import (
+    get_mlb_odds_for_date,
+    last_fetch_meta,
+    min_refresh_seconds,
+    repository_age_seconds,
+)
 from app.services.schedule_mlb import get_mlb_schedule
 
 logger = logging.getLogger(__name__)
@@ -33,6 +38,16 @@ def run_hourly_odds_refresh(game_date: date | None = None) -> int:
     games = schedule.get("games") or []
     if not games:
         logger.info("Hourly odds refresh skipped: no games on %s", game_date.isoformat())
+        return 0
+
+    age = repository_age_seconds(game_date)
+    hourly_min = max(min_refresh_seconds(), 3300)
+    if age is not None and age < hourly_min:
+        logger.info(
+            "Hourly odds refresh skipped: last fetch %.0fs ago (min %ss)",
+            age,
+            hourly_min,
+        )
         return 0
 
     try:

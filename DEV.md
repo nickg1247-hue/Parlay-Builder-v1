@@ -1,5 +1,24 @@
 # Local development
 
+## Visual layer
+
+App pages use a **pure CSS** depth stack — no image assets folder required.
+
+| Layer | Implementation |
+|-------|----------------|
+| Base | `var(--bg)` (`#0f1419`) on `body` |
+| Spotlight | `body::before` — radial accent glow (~6% opacity) + edge vignette |
+| Grain | `body::after` — inline SVG `feTurbulence` data-URI tiled at ~3.5% opacity |
+| Glass chrome | `.app-topbar`, `.live-ticker` — 85% surface + `backdrop-filter: blur(12px)`; solid `--surface` fallback via `@supports` |
+| Game wash | `body.game-page-bg` only — `.game-page-wash` corner blurs from `--game-away-color` / `--game-home-color` (set in JS after matchup load) |
+| MLB slate pattern | `body.slate-mlb` — faint diamond stitch on `.app-main` at ≤3% opacity; board/lab stay flat |
+
+**Motion:** `.game-card`, `.glance-card`, and home link cards use a 300ms fade/slide on paint. `prefers-reduced-motion: reduce` disables these animations. Ticker marquee logic is unchanged.
+
+**Hero chips:** Home `#hero-chips` row is filled from the existing `/api/home/today`, `/api/scores/today?sport=all`, and `/api/status/refresh` bootstrap — no extra API call.
+
+---
+
 ## News headlines (Phase D)
 
 Home page (`/`) shows up to **10** sports headlines from ESPN RSS. Links open ESPN in a new tab — no in-app articles.
@@ -26,6 +45,26 @@ Home page (`/`) shows up to **10** sports headlines from ESPN RSS. Links open ES
 ```
 
 **Manual refresh:** `curl http://127.0.0.1:8000/api/news?refresh=true`
+
+---
+
+## NBA slate (Phase S0)
+
+`/nba` shows today's NBA schedule and live scores from the **ESPN scoreboard API** (no API key). Game pages at `/nba/game/{game_id}` reuse the same payload (logos, records, series context, live scores).
+
+| Endpoint | Behavior |
+|----------|----------|
+| `GET /api/schedule/nba` | No `date` → auto look-ahead; `?date=` → exact date only |
+| `GET /api/scores/today?sport=nba` | Same auto look-ahead when `date` omitted |
+| `GET /api/games/nba/{game_id}` | No `date` → resolved slate first, then today..+3 |
+
+**Auto look-ahead:** If the requested day has **zero** games, the backend tries **+1, +2, +3** days (max 3). Disabled when `?date=` is set. Response includes `resolved_date`, `requested_date`, `days_ahead`, and `auto_advanced`.
+
+**Slate:** `/nba` — schedule, live scores, link to **Advanced board** at `/nba/board`.
+
+**Verify:** open `/nba` on an off-day (e.g. Finals gap) — banner + next game day; `pytest tests/test_schedule_nba.py tests/test_scores_nba.py -q`
+
+**Game detail:** Slate cards link to `/nba/game/{id}?date={resolved_date}` so detail lookup hits the same ESPN day as the slate. Stale empty schedule cache is bypassed on game fetch.
 
 ---
 
@@ -236,14 +275,22 @@ Tracking file: `data/processed/odds_repository/quota.json`
 |------|---------|
 | Max calls per **UTC calendar hour** | 20 (`ODDS_API_MAX_PER_HOUR`) |
 | Max calls per **UTC calendar day** | 500 (`ODDS_API_MAX_PER_DAY`) |
+| Min seconds between live pulls (same date) | 300 (`ODDS_REPO_MIN_REFRESH_SECONDS`) |
 | Successful HTTP only | Failed 4xx/5xx releases reserved slot (no credit counted) |
 | Limit hit | No HTTP; stale `YYYY-MM-DD.json` served; warning in API/UI |
+
+`force_refresh=true` (board Refresh, game insights refresh, hourly job) **does not** call HTTP if the on-disk snapshot is newer than the min TTL. **Exception:** `/mlb/board` **Run live** (`live_test=true`) bypasses min TTL so operators can force a pull.
+
+Concurrent requests for the same date share one in-flight HTTP call (single-flight lock).
 
 ```mermaid
 flowchart LR
   A[Request odds] --> B{Repo file exists?}
   B -->|yes, no force| C[Read disk — 0 credits]
-  B -->|no or force_refresh| D{Quota OK?}
+  B -->|force_refresh| T{Snapshot age < min TTL?}
+  T -->|yes, not live_test| C
+  T -->|no or bypass| D{Quota OK?}
+  B -->|no file| D
   D -->|no| E[Stale repo + warning]
   D -->|yes| F[HTTP once]
   F -->|success| G[Save repo + increment quota]
@@ -257,7 +304,7 @@ flowchart LR
 | Task Scheduler / cron | `scripts/refresh_odds_hourly.ps1` |
 | In-app loop (3600s) | `ODDS_HOURLY_REFRESH=true` + `USE_LIVE_ODDS=true` |
 
-Hourly job calls `get_mlb_odds_for_date(today, force_refresh=True)` — still quota-gated. If denied, exits 0 with log (not a crash).
+Hourly job calls `get_mlb_odds_for_date(today, force_refresh=True)` only when the last snapshot is **≥55 minutes** old — still quota-gated. If denied, exits 0 with log (not a crash).
 
 **Game page:** polls `GET /api/odds/today` every 60s (no `refresh=true`). When `fetched_at` or `board_generated_at` changes (e.g. after a board live test), reloads insights from disk — market lines + model picks, 0 extra API credits.
 
@@ -277,8 +324,9 @@ Requires `USE_LIVE_ODDS=true` and `ODDS_API_KEY` for a real HTTP pull; if quota 
 
 ### Credit math (with quota)
 
-- **~1 credit** per allowed live fetch (today refresh, hourly, morning, manual `?refresh=true`)
-- **0 credits** for game page views, `/api/odds/today` poll, or reads when quota denies HTTP
+- **~1 credit** per allowed live fetch (morning, Run live, or manual refresh after min TTL)
+- **0 credits** for game page views, `/api/odds/today` poll, insights load without `refresh=true`, or redundant `force_refresh` inside min TTL
+- Game insights `?refresh=true` triggers **one** repository pull (board rebuild); it no longer double-fetches markets
 - Hard cap: **20/hour UTC**, **500/day UTC** regardless of upgrade tier
 
 ---
@@ -424,7 +472,127 @@ Open in your browser:
 pytest
 ```
 
-## MLB data ingest (Phase 1)
+## NBA data ingest (Phase 1)
+
+**Sources**
+
+- **Game results and scores:** [NBA Stats API](https://stats.nba.com/stats/leaguegamefinder) (`stats.nba.com`) via [`nba_api`](https://github.com/swar/nba_api) (browser-style session to the public endpoint). **No API key.**
+- **Does NOT use** `ODDS_API_KEY`, The Odds API, or ESPN scoreboard (ESPN is live slate only in `scores_nba.py`).
+
+**Columns:** `game_id`, `date`, `season` (end-year: 2024 = 2023-24), `game_type` (`regular` / `playoff`), `home_team`, `away_team`, `home_score`, `away_score`, `home_win`, `home_rest_days`, `away_rest_days`, `home_b2b`, `away_b2b`.
+
+**Run ingest** (from project root; needs network; first run may take several minutes). `stats.nba.com` can be slow or rate-limit bare clients — the ingest sends browser-style headers and retries with backoff. Increase patience on first run if requests time out.
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python scripts/ingest_nba.py
+```
+
+**Outputs** (gitignored — run ingest per machine)
+
+- `data/processed/nba_games.parquet` and `nba_games.csv`
+- SQLite table `nba_games` in `data/parlay_builder.db`
+
+**Validate**
+
+```powershell
+python scripts/validate_nba_data.py
+```
+
+Checks row count, date range, per-season regular/playoff counts, duplicate `game_id` (must be 0), and nulls on required columns.
+
+**Rest days:** `home_rest_days` / `away_rest_days` use days since the team's previous game **in the same season**; gaps over 14 days or season openers use `rest_fill` (median in-season gap from ingested data, default 2.0). **B2B** flags when a team played on the previous calendar day.
+
+---
+
+## NBA baseline model (Phase 2)
+
+**Train** (requires Phase 1 parquet or SQLite):
+
+```powershell
+python scripts/train_nba_baseline.py
+```
+
+**Split:** seasons **2024 + 2025** (2023-24, 2024-25) train · **2026** (2025-26) holdout — time-based, no shuffle.
+
+**Features:** rest days, B2B, last-10 / season win %, pre-game Elo (`app/features/nba_pregame.py`).
+
+**Naive baselines:** constant home win rate (train), Elo, rolling last-10 home win %.
+
+**Production gate:** holdout log loss **strictly below** best naive **and** at or below a constant market proxy (train home-win rate — no Odds API).
+
+**Latest holdout (2025-26, 1,307 games):**
+
+| Model | Log loss | Brier | Accuracy |
+|-------|----------|-------|----------|
+| logistic_regression_v1 | 0.6143 | 0.2126 | 0.673 |
+| elo_baseline | 0.6257 | 0.2164 | 0.660 |
+| naive_home_win_rate | 0.6873 | 0.2471 | 0.555 |
+| market_proxy (constant) | 0.6873 | — | — |
+
+Gate: **passes** (beats Elo naive and market proxy).
+
+**Forward CLV (live picks)**
+
+| Step | Command |
+|------|---------|
+| Log +EV singles | `GET /api/nba/daily?refresh=true` (requires `USE_LIVE_ODDS=true`) |
+| Backfill close | `python scripts/backfill_forward_clv.py --sport nba` |
+| Summary | `GET /api/clv/summary?sport=nba&days=30` |
+
+Log: `data/processed/forward_clv_nba_log.jsonl` · `betting_ready: false` until advisor CLV review. See `MARKET_NBA.md`.
+
+**Artifacts**
+
+| File | Purpose |
+|------|---------|
+| `data/processed/nba_baseline_model.joblib` | Logistic pipeline + metadata |
+| `data/processed/nba_baseline_metrics.json` | Holdout metrics + gate result |
+| `data/processed/active_nba_model.json` | Active NBA moneyline manifest |
+
+**Verify:** `pytest tests/test_nba_baseline.py -q`
+
+---
+
+## NBA market comparison (Phase 3)
+
+Compare model vs vig-free moneylines on **2025-26 holdout**; +EV singles at **8%** (`DEFAULT_MIN_EDGE`).
+
+```powershell
+python scripts/load_nba_odds_free.py path\to\nba_odds.csv   # optional
+python scripts/evaluate_nba_market.py
+```
+
+Odds priority: free CSV → live `nba_odds_repository/` snapshots. No bulk historical Odds API. Live `basketball_nba` uses shared quota (today/future only).
+
+Output: `data/processed/nba_market_eval.json`. **Not betting-ready** until forward CLV — see `MARKET_NBA.md`.
+
+---
+
+## NBA daily board (Phase 6)
+
+**URL:** http://127.0.0.1:8000/nba/board · Slate link: `/nba` → **Advanced board**
+
+Moneyline-only board (no O/U, no parlays). Default min edge **8%**. All responses include `betting_ready: false`.
+
+| Mode | API | Odds source |
+|------|-----|-------------|
+| **Demo** | `GET /api/nba/daily?date=2026-04-10&use_cache=true&min_edge=0.08` | `nba_odds_2026.csv` + `nba_odds_repository/` only — **never** calls The Odds API |
+| **Run live** | `GET /api/nba/daily?refresh=true&min_edge=0.08` | Quota-gated live `basketball_nba` when `USE_LIVE_ODDS=true` + `ODDS_API_KEY` |
+
+**Demo date:** `2026-04-10` (15-game 2025-26 slate in ingest). Documented in `static/nba_board.js`. Model columns always; market columns when CSV or repository has that date.
+
+**Forward CLV:** Run live logs +EV singles to `forward_clv_nba_log.jsonl`. Afternoon: `python scripts/backfill_forward_clv.py --sport nba`. Report: `GET /api/clv/summary?sport=nba&days=30`.
+
+**Verify**
+
+```powershell
+pytest tests/test_pages.py tests/test_nba_daily_board.py -q
+.\scripts\dev.ps1
+# Open http://127.0.0.1:8000/nba/board → Demo (no API) · Run live only if USE_LIVE_ODDS=true
+```
+
+---
 
 **Sources**
 

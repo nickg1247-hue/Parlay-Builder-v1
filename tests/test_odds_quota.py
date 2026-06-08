@@ -190,9 +190,9 @@ def test_denied_returns_stale_repo(mock_fetch, isolated_repo):
 @patch("app.odds.odds_repository.fetch_live_mlb_odds", return_value=[FAKE_EVENT])
 def test_concurrent_acquire_respects_hour_limit(mock_fetch, isolated_repo, monkeypatch):
     monkeypatch.setenv("ODDS_API_MAX_PER_HOUR", "2")
-    now = datetime(2026, 6, 6, 10, 0, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     repo.set_clock_for_tests(lambda: now)
-    game_date = date(2026, 6, 6)
+    game_date = date.today()
     results: list[bool] = []
 
     def worker():

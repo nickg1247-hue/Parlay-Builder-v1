@@ -12,6 +12,9 @@ def test_home_page():
     assert "Parlay Builder" in text
     assert 'href="/mlb"' in text
     assert 'href="/nba"' in text
+    assert 'id="today-glance"' in text
+    assert 'id="best-bets"' in text
+    assert 'id="hero-chips"' in text
     assert 'id="news-list"' in text
     assert "/api/status/refresh" in text
     assert "live-ticker" in text
@@ -46,6 +49,8 @@ def test_game_page_loads():
     assert "game-matchup-board" in text
     assert "app.js" in text
     assert "game.js" in text
+    assert "game-page-bg" in text
+    assert "game-page-wash" in text
 
 
 def test_game_js_uses_render_matchup_header():
@@ -66,6 +71,18 @@ def test_nba_slate_page():
     assert "NBA" in text
     assert "/api/scores/today" in text
     assert 'href="/mlb"' in text
+    assert 'href="/nba/board"' in text
+
+
+def test_nba_board_page():
+    response = client.get("/nba/board")
+    assert response.status_code == 200
+    text = response.text
+    assert "NBA Daily Board" in text
+    assert 'href="/nba"' in text
+    assert 'id="run-live-btn"' in text
+    assert 'id="run-demo-btn"' in text
+    assert "nba_board.js" in text
 
 
 def test_nba_game_page():

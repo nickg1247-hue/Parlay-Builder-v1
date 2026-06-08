@@ -51,6 +51,7 @@
 
 
   initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+  initHeadlineTicker("headline-ticker");
 
   let scorePollerStarted = false;
 
@@ -59,6 +60,10 @@
   let lastOddsFetchedAt = null;
 
   let lastBoardGeneratedAt = null;
+
+  let lastManualInsightsRefreshAt = 0;
+
+  const INSIGHTS_REFRESH_COOLDOWN_MS = 300000;
 
 
 
@@ -410,6 +415,38 @@
 
           e.preventDefault();
 
+          const now = Date.now();
+
+          if (now - lastManualInsightsRefreshAt < INSIGHTS_REFRESH_COOLDOWN_MS) {
+
+            const waitSec = Math.ceil(
+
+              (INSIGHTS_REFRESH_COOLDOWN_MS - (now - lastManualInsightsRefreshAt)) / 1000
+
+            );
+
+            if (warningsEl) {
+
+              const msg = `Lines were refreshed recently — wait ${waitSec}s before pulling again.`;
+
+              if (!warningsEl.textContent.includes(msg)) {
+
+                warningsEl.textContent = warningsEl.textContent
+
+                  ? `${warningsEl.textContent} ${msg}`
+
+                  : msg;
+
+              }
+
+            }
+
+            return;
+
+          }
+
+          lastManualInsightsRefreshAt = now;
+
           loadInsights(true);
 
         };
@@ -544,15 +581,17 @@
 
 
 
-  loadInsights(false).catch((e) => {
+  loadTeamColors()
+    .then(() => loadInsights(false))
+    .catch((e) => {
 
-    loading.classList.add("hidden");
+      loading.classList.add("hidden");
 
-    errEl.classList.remove("hidden");
+      errEl.classList.remove("hidden");
 
-    errEl.textContent = e.message || "Game not found";
+      errEl.textContent = e.message || "Game not found";
 
-  });
+    });
 
 })();
 

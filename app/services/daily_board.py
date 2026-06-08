@@ -521,7 +521,11 @@ def build_daily_board(
         return payload
 
     merged, odds_source = attach_market_odds(
-        slate_df, game_date, use_cache=use_cache, force_refresh=force_odds
+        slate_df,
+        game_date,
+        use_cache=use_cache,
+        force_refresh=force_odds,
+        bypass_min_ttl=bool(live_test and not use_cache),
     )
     from app.odds.odds_repository import last_fetch_meta
 

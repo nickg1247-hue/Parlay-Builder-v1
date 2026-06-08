@@ -9,8 +9,11 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-function teamLogoUrl(teamId, sport = "mlb") {
+function teamLogoUrl(teamId, sport = "mlb", abbr) {
   if (sport === "nba") {
+    if (abbr) {
+      return `https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/${String(abbr).toLowerCase()}.png`;
+    }
     return "";
   }
   return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
@@ -20,9 +23,14 @@ function gameSport(game) {
   return game?.sport || "mlb";
 }
 
-function gameDetailHref(game) {
+function gameDetailHref(game, options = {}) {
   const sport = gameSport(game);
-  return `/${sport}/game/${game.game_id}`;
+  const base = `/${sport}/game/${game.game_id}`;
+  const slateDate = options.gameDate || game.slate_date;
+  if (sport === "nba" && slateDate) {
+    return `${base}?date=${encodeURIComponent(slateDate)}`;
+  }
+  return base;
 }
 
 function logoForGame(game, side) {
@@ -30,7 +38,29 @@ function logoForGame(game, side) {
   const direct = isAway ? game.away_logo_url : game.home_logo_url;
   if (direct) return direct;
   const teamId = isAway ? game.away_team_id : game.home_team_id;
-  return teamLogoUrl(teamId, gameSport(game));
+  const abbr = isAway ? game.away_team_abbr : game.home_team_abbr;
+  return teamLogoUrl(teamId, gameSport(game), abbr);
+}
+
+function teamRecordHtml(record) {
+  if (!record) return "";
+  return `<span class="team-record">${record}</span>`;
+}
+
+function renderSlateAdvanceBanner(el, slate) {
+  if (!el) return;
+  if (!slate?.auto_advanced || !(slate.days_ahead > 0)) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.remove("hidden");
+  const resolved = slate.resolved_date || slate.date || "";
+  const ahead =
+    slate.days_ahead === 1
+      ? "tomorrow"
+      : `${slate.days_ahead} days ahead`;
+  el.innerHTML = `<p class="slate-advance-banner">No games on the requested day — showing the next slate (${resolved}, ${ahead}).</p>`;
 }
 
 function formatLocalTime(isoUtc) {
@@ -63,6 +93,19 @@ function formatRefreshStatus(status) {
     return `Updated ${when}${games}`;
   }
   return `Refresh failed ${when}`;
+}
+
+function formatRelativeShort(isoUtc) {
+  if (!isoUtc) return "—";
+  const d = new Date(isoUtc);
+  if (Number.isNaN(d.getTime())) return "—";
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return formatLocalTimeShort(isoUtc);
 }
 
 function isGameLive(status) {
@@ -114,6 +157,10 @@ function sortGamesByStart(games) {
   });
 }
 
+// ~0.32 px/frame ≈ 19 px/s at 60fps — ~10s for ~3 game cards to cross the viewport.
+const TICKER_SCROLL_PX_PER_FRAME = 0.32;
+const TICKER_RESUME_DEBOUNCE_MS = 500;
+
 function tickerItemHtml(game) {
   const away = game.away_score != null ? game.away_score : "";
   const home = game.home_score != null ? game.home_score : "";
@@ -125,8 +172,10 @@ function tickerItemHtml(game) {
   const shortAway = game.away_team.split(" ").pop();
   const shortHome = game.home_team.split(" ").pop();
   const sport = gameSport(game).toUpperCase();
+  const colorStyle = gameCardColorStyle(game, _teamColors);
+  const liveClass = isGameLive(game.status) ? " ticker-item-live" : "";
   return `
-    <a class="ticker-item" href="${gameDetailHref(game)}">
+    <a class="ticker-item${liveClass}" href="${gameDetailHref(game)}" style="${colorStyle}">
       <span class="ticker-sport">${sport}</span>
       <span class="ticker-teams">${shortAway} @ ${shortHome}</span>
       ${score}
@@ -135,14 +184,505 @@ function tickerItemHtml(game) {
   `;
 }
 
+function stopTickerMarquee(el) {
+  if (!el) return;
+  if (el._tickerRafId) {
+    cancelAnimationFrame(el._tickerRafId);
+    el._tickerRafId = null;
+  }
+  if (el._tickerResumeTimer) {
+    clearTimeout(el._tickerResumeTimer);
+    el._tickerResumeTimer = null;
+  }
+  if (el._tickerCleanup) {
+    el._tickerCleanup();
+    el._tickerCleanup = null;
+  }
+}
+
+function buildTickerLoopTrack(viewport, track, sorted) {
+  const singleHtml = sorted.map(tickerItemHtml).join("");
+  track.innerHTML = singleHtml;
+  const loopWidth = track.scrollWidth;
+  if (!loopWidth) return 0;
+
+  let copies = sorted.length === 1 ? 3 : 2;
+  track.innerHTML = singleHtml.repeat(copies);
+
+  const viewportWidth = Math.max(viewport.clientWidth, 1);
+  // Ensure total track is wider than viewport so marquee has room to move.
+  while (track.scrollWidth < viewportWidth + loopWidth && copies < 24) {
+    copies += 1;
+    track.innerHTML = singleHtml.repeat(copies);
+  }
+
+  track.dataset.loopWidth = String(loopWidth);
+  track.style.transform = "translate3d(0, 0, 0)";
+  return loopWidth;
+}
+
+function initTickerMarquee(el) {
+  stopTickerMarquee(el);
+  el.classList.remove("ticker-paused");
+
+  const viewport = el.querySelector(".ticker-viewport");
+  const track = el.querySelector(".ticker-track");
+  if (!viewport || !track) return;
+
+  const loopWidth = parseFloat(track.dataset.loopWidth) || 0;
+  if (!loopWidth) return;
+
+  let paused = false;
+  let hovering = false;
+  let pointerDown = false;
+  let wheelTimer = null;
+  let offset = 0;
+
+  function setPausedState(next) {
+    paused = next;
+    el.classList.toggle("ticker-paused", paused);
+  }
+
+  function pauseNow() {
+    setPausedState(true);
+    if (el._tickerResumeTimer) {
+      clearTimeout(el._tickerResumeTimer);
+      el._tickerResumeTimer = null;
+    }
+  }
+
+  function shouldStayPaused() {
+    return hovering || pointerDown;
+  }
+
+  function armResume() {
+    if (el._tickerResumeTimer) clearTimeout(el._tickerResumeTimer);
+    el._tickerResumeTimer = setTimeout(() => {
+      if (!shouldStayPaused()) setPausedState(false);
+      el._tickerResumeTimer = null;
+    }, TICKER_RESUME_DEBOUNCE_MS);
+  }
+
+  const onEnter = () => {
+    hovering = true;
+    pauseNow();
+  };
+  const onLeave = () => {
+    hovering = false;
+    armResume();
+  };
+  const onDown = () => {
+    pointerDown = true;
+    pauseNow();
+  };
+  const onUp = () => {
+    pointerDown = false;
+    if (!shouldStayPaused()) armResume();
+  };
+  const onWheel = () => {
+    pauseNow();
+    if (wheelTimer) clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
+      wheelTimer = null;
+      if (!shouldStayPaused()) armResume();
+    }, TICKER_RESUME_DEBOUNCE_MS);
+  };
+
+  viewport.addEventListener("pointerenter", onEnter);
+  viewport.addEventListener("pointerleave", onLeave);
+  viewport.addEventListener("touchstart", onDown, { passive: true });
+  viewport.addEventListener("touchend", onUp);
+  viewport.addEventListener("touchcancel", onUp);
+  viewport.addEventListener("pointerdown", onDown);
+  viewport.addEventListener("pointerup", onUp);
+  viewport.addEventListener("pointercancel", onUp);
+  viewport.addEventListener("wheel", onWheel, { passive: true });
+
+  el._tickerCleanup = () => {
+    viewport.removeEventListener("pointerenter", onEnter);
+    viewport.removeEventListener("pointerleave", onLeave);
+    viewport.removeEventListener("touchstart", onDown);
+    viewport.removeEventListener("touchend", onUp);
+    viewport.removeEventListener("touchcancel", onUp);
+    viewport.removeEventListener("pointerdown", onDown);
+    viewport.removeEventListener("pointerup", onUp);
+    viewport.removeEventListener("pointercancel", onUp);
+    viewport.removeEventListener("wheel", onWheel);
+    if (wheelTimer) clearTimeout(wheelTimer);
+    track.style.transform = "";
+  };
+
+  function tick() {
+    el._tickerRafId = requestAnimationFrame(tick);
+    if (document.visibilityState === "hidden") return;
+    if (paused) return;
+
+    offset += TICKER_SCROLL_PX_PER_FRAME;
+    if (offset >= loopWidth) offset -= loopWidth;
+    track.style.transform = `translate3d(${-offset}px, 0, 0)`;
+  }
+
+  el._tickerRafId = requestAnimationFrame(tick);
+}
+
 function renderLiveTicker(el, games) {
   if (!el) return;
+  stopTickerMarquee(el);
+
   const sorted = sortGamesByStart(games);
   if (!sorted.length) {
     el.innerHTML = '<span class="ticker-empty">No games today</span>';
     return;
   }
-  el.innerHTML = `<div class="ticker-track">${sorted.map(tickerItemHtml).join("")}</div>`;
+
+  el.innerHTML = `
+    <div class="ticker-viewport">
+      <div class="ticker-track"></div>
+    </div>`;
+
+  const viewport = el.querySelector(".ticker-viewport");
+  const track = el.querySelector(".ticker-track");
+  const loopWidth = buildTickerLoopTrack(viewport, track, sorted);
+
+  let layoutTries = 0;
+  function startMarquee() {
+    const lw = parseFloat(track.dataset.loopWidth) || loopWidth;
+    if (!lw && layoutTries < 30) {
+      layoutTries += 1;
+      buildTickerLoopTrack(viewport, track, sorted);
+      requestAnimationFrame(startMarquee);
+      return;
+    }
+    if (lw) initTickerMarquee(el);
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(startMarquee));
+}
+
+let _teamColors = null;
+
+async function loadTeamColors() {
+  if (_teamColors) return _teamColors;
+  try {
+    _teamColors = await fetchJSON("/static/mlb_team_colors.json");
+  } catch {
+    _teamColors = {};
+  }
+  return _teamColors;
+}
+
+function teamPrimaryColor(teamName, colors) {
+  if (!teamName) return "#2f3336";
+  const map = colors || _teamColors || {};
+  return map[teamName] || "#2f3336";
+}
+
+function gameCardColorStyle(game, colors) {
+  const away =
+    game.away_color ||
+    game.away_team_color ||
+    teamPrimaryColor(game.away_team, colors);
+  const home =
+    game.home_color ||
+    game.home_team_color ||
+    teamPrimaryColor(game.home_team, colors);
+  return `--away-color: ${away}; --home-color: ${home};`;
+}
+
+const WATCH_STORAGE_KEY = "pb_watched_games";
+
+function getWatchedGameIds() {
+  try {
+    const raw = localStorage.getItem(WATCH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function isWatched(gameId) {
+  return getWatchedGameIds().includes(String(gameId));
+}
+
+function toggleWatch(gameId) {
+  const id = String(gameId);
+  const set = new Set(getWatchedGameIds());
+  if (set.has(id)) set.delete(id);
+  else set.add(id);
+  localStorage.setItem(WATCH_STORAGE_KEY, JSON.stringify([...set]));
+  return set.has(id);
+}
+
+function oddsSnapshotKey(date) {
+  return `pb_odds_snap_${date || "today"}`;
+}
+
+function enrichOddsGamesWithIds(games, slateGames) {
+  if (!slateGames?.length) return games;
+  return (games || []).map((g) => {
+    const match = slateGames.find(
+      (s) => s.home_team === g.home_team && s.away_team === g.away_team
+    );
+    return match ? { ...g, game_id: match.game_id } : g;
+  });
+}
+
+function recordOddsSnapshot(snap, slateGames) {
+  if (!snap?.games?.length) return;
+  const games = enrichOddsGamesWithIds(snap.games, slateGames);
+  const prev = JSON.parse(sessionStorage.getItem(oddsSnapshotKey(snap.date)) || "null");
+  if (prev?.fetched_at === snap.fetched_at) return;
+  if (prev) {
+    sessionStorage.setItem(`${oddsSnapshotKey(snap.date)}_prev`, JSON.stringify(prev));
+  }
+  sessionStorage.setItem(
+    oddsSnapshotKey(snap.date),
+    JSON.stringify({ fetched_at: snap.fetched_at, games })
+  );
+}
+
+function findOddsGameInSnapshot(games, gameId, teams) {
+  if (!games?.length) return null;
+  const byId = games.find((g) => g.game_id != null && String(g.game_id) === String(gameId));
+  if (byId) return byId;
+  if (!teams?.home_team || !teams?.away_team) return null;
+  return (
+    games.find((g) => g.home_team === teams.home_team && g.away_team === teams.away_team) || null
+  );
+}
+
+function lineMovementForGame(gameId, gameDate, teams) {
+  const cur = JSON.parse(sessionStorage.getItem(oddsSnapshotKey(gameDate)) || "null");
+  const prev = JSON.parse(sessionStorage.getItem(`${oddsSnapshotKey(gameDate)}_prev`) || "null");
+  if (!cur?.games || !prev?.games) return null;
+  const current = findOddsGameInSnapshot(cur.games, gameId, teams);
+  const previous = findOddsGameInSnapshot(prev.games, gameId, teams);
+  if (!current || !previous) return null;
+  const move = (c, p) => {
+    if (c == null || p == null || c === p) return null;
+    return c > p ? "up" : "down";
+  };
+  return {
+    away_ml: move(current.away_ml, previous.away_ml),
+    home_ml: move(current.home_ml, previous.home_ml),
+    ou_line: move(current.ou_line, previous.ou_line),
+  };
+}
+
+function modelLeanLabel(boardRow) {
+  if (!boardRow) return null;
+  if (boardRow.best_pick?.team) {
+    return { text: `Model: ${boardRow.best_pick.team}`, tier: boardRow.ml_confidence };
+  }
+  if (boardRow.totals_pick) {
+    return { text: `O/U: ${boardRow.totals_pick}`, tier: boardRow.totals_confidence };
+  }
+  if (boardRow.model_prob_home != null) {
+    const home = Number(boardRow.model_prob_home) >= 0.5;
+    return {
+      text: `Lean: ${home ? boardRow.home_team : boardRow.away_team}`,
+      tier: boardRow.ml_confidence,
+    };
+  }
+  return null;
+}
+
+function confidenceChipClass(tier) {
+  const t = (tier || "").toLowerCase();
+  if (t === "low") return "chip-low";
+  if (t === "medium") return "chip-medium";
+  if (t === "high" || t === "extremely high") return "chip-high";
+  return "";
+}
+
+function matchupPreviewText(boardRow, lineMove) {
+  if (!boardRow) return "";
+  const parts = [];
+  if (boardRow.expected_total_runs != null) {
+    parts.push(`Est. ${Number(boardRow.expected_total_runs).toFixed(1)} runs`);
+  }
+  if (boardRow.ou_line != null) {
+    let line = `Line ${boardRow.ou_line}`;
+    if (lineMove?.ou_line === "up") line += " ▲";
+    if (lineMove?.ou_line === "down") line += " ▼";
+    parts.push(line);
+  }
+  if (boardRow.ml_confidence && boardRow.ml_confidence !== "—") {
+    parts.push(`${boardRow.ml_confidence} ML`);
+  }
+  return parts.join(" · ");
+}
+
+function lineMoveBadge(side, lineMove) {
+  if (!lineMove) return "";
+  const key = side === "away" ? "away_ml" : "home_ml";
+  if (lineMove[key] === "up") return '<span class="line-move up" title="Line moved up">▲</span>';
+  if (lineMove[key] === "down") return '<span class="line-move down" title="Line moved down">▼</span>';
+  return "";
+}
+
+function renderSkeletonGameList(listEl, count = 6) {
+  if (!listEl) return;
+  listEl.classList.remove("hidden");
+  listEl.innerHTML = Array.from({ length: count })
+    .map(
+      () => `
+    <div class="game-card skeleton-card" aria-hidden="true">
+      <div class="skeleton-band"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row short"></div>
+    </div>`
+    )
+    .join("");
+}
+
+const EMPTY_STATE_ICONS = {
+  "no-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nba-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-odds":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 10h3v4H7zM14 10h3v4h-3zM7 5V3M17 5V3"/></svg>',
+  "no-board":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6"/></svg>',
+  "no-scores":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 10h3v4H7zM14 10h3v4h-3z"/></svg>',
+  "no-bets":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6"/></svg>',
+  news:
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M7 9h10M7 13h6"/></svg>',
+};
+
+function emptyStateIcon(kind) {
+  return EMPTY_STATE_ICONS[kind] || EMPTY_STATE_ICONS["no-games"];
+}
+
+function renderEmptyState(el, kind, extraHtml = "") {
+  if (!el) return;
+  const copy = {
+    "no-games": {
+      title: "No games on the slate",
+      body: "Check back later or try the advanced board for historical demo dates.",
+      cta: '<a href="/mlb/board">Open board</a>',
+    },
+    "no-nba-games": {
+      title: "No games on the slate",
+      body: "No NBA games in the next few days. Check back during the season or Finals.",
+      cta: '<a href="/nba">Refresh slate</a>',
+    },
+    "no-odds": {
+      title: "Lines not loaded yet",
+      body: "Run live on the board to pull sportsbook numbers, or enable USE_LIVE_ODDS in .env.",
+      cta: '<a href="/mlb/board">Run live test</a>',
+    },
+    "no-board": {
+      title: "Model picks warming up",
+      body: "Run morning refresh to pre-build today's slate and picks.",
+      cta: '<a href="/mlb/board">Load board</a>',
+    },
+  }[kind] || {
+    title: "Nothing here yet",
+    body: extraHtml || "Try again in a moment.",
+    cta: '<a href="/">Home</a>',
+  };
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="empty-state-card">
+      ${emptyStateIcon(kind)}
+      <h3>${copy.title}</h3>
+      <p>${copy.body}</p>
+      <p class="empty-cta">${copy.cta}</p>
+    </div>`;
+}
+
+function renderHomeHeroChips(el, { summary, scoreCounts, status }) {
+  if (!el) return;
+  const mlb = scoreCounts?.mlb ?? "—";
+  const nba = scoreCounts?.nba ?? "—";
+  const gamesChip = `<span class="hero-chip"><span class="hero-chip-dot" aria-hidden="true"></span>${mlb} MLB · ${nba} NBA</span>`;
+
+  let modelChip;
+  if (summary?.board_available) {
+    const ev = summary.plus_ev_singles ?? 0;
+    const slate = summary.games_on_slate ?? 0;
+    modelChip = `<span class="hero-chip"><span class="hero-chip-dot hero-chip-dot-ev" aria-hidden="true"></span>${ev} +EV · ${slate} on board</span>`;
+  } else {
+    modelChip = `<span class="hero-chip hero-chip-muted"><span class="hero-chip-dot" aria-hidden="true"></span>Model board warming up</span>`;
+  }
+
+  let refreshChip;
+  if (status?.ran_at) {
+    const rel = formatRelativeShort(status.ran_at);
+    refreshChip = `<span class="hero-chip"><span class="hero-chip-dot hero-chip-dot-ok" aria-hidden="true"></span>Refresh ${rel}</span>`;
+  } else {
+    refreshChip = `<span class="hero-chip hero-chip-muted"><span class="hero-chip-dot" aria-hidden="true"></span>No refresh yet</span>`;
+  }
+
+  el.innerHTML = gamesChip + modelChip + refreshChip;
+}
+
+function applyGamePageWash(game) {
+  if (!game) return;
+  document.body.classList.add("game-page-bg");
+  const away =
+    game.away_color ||
+    game.away_team_color ||
+    teamPrimaryColor(game.away_team, _teamColors);
+  const home =
+    game.home_color ||
+    game.home_team_color ||
+    teamPrimaryColor(game.home_team, _teamColors);
+  document.documentElement.style.setProperty("--game-away-color", away);
+  document.documentElement.style.setProperty("--game-home-color", home);
+  const wash = document.querySelector(".game-page-wash");
+  if (wash) {
+    wash.style.setProperty("--game-away-color", away);
+    wash.style.setProperty("--game-home-color", home);
+  }
+}
+
+function initHeadlineTicker(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  let items = [];
+  let idx = 0;
+
+  async function load() {
+    try {
+      const data = await fetchJSON("/api/news");
+      items = data.items || [];
+      if (!items.length) {
+        el.classList.add("hidden");
+        return;
+      }
+      el.classList.remove("hidden");
+      show();
+    } catch {
+      el.classList.add("hidden");
+    }
+  }
+
+  function show() {
+    if (!items.length) return;
+    const item = items[idx % items.length];
+    idx += 1;
+    const link = document.createElement("a");
+    link.className = "headline-ticker-link";
+    link.href = item.link;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    const label = document.createElement("span");
+    label.className = "headline-ticker-label";
+    label.textContent = "Around the league";
+    const text = document.createElement("span");
+    text.className = "headline-ticker-text";
+    text.textContent = item.title;
+    link.append(label, text);
+    el.replaceChildren(link);
+  }
+
+  load();
+  setInterval(show, 12000);
 }
 
 function initLiveTicker(elementId, options = {}) {
@@ -164,7 +704,8 @@ function initLiveTicker(elementId, options = {}) {
       const data = await fetchJSON(url);
       renderLiveTicker(el, data.games);
     } catch {
-      if (!el.querySelector(".ticker-track")) {
+      stopTickerMarquee(el);
+      if (!el.querySelector(".ticker-viewport")) {
         el.innerHTML = '<span class="ticker-empty">Scores unavailable</span>';
       }
     }
@@ -172,57 +713,190 @@ function initLiveTicker(elementId, options = {}) {
 
   refresh();
   timer = setInterval(refresh, intervalMs);
-  return () => clearInterval(timer);
+  return () => {
+    clearInterval(timer);
+    stopTickerMarquee(el);
+  };
 }
 
-function gameCardHtml(game) {
+function gameCardHtml(game, options = {}) {
   const showScores = shouldShowScores(game);
+  const boardRow = options.boardRow || null;
+  const lineMove = options.lineMove || null;
+  const colors = options.colors || _teamColors;
+  const lean = modelLeanLabel(boardRow);
+  const preview = matchupPreviewText(boardRow, lineMove);
+  const watched = options.showWatch !== false && isWatched(game.game_id);
+  const leanHtml = lean
+    ? `<span class="model-lean-chip ${confidenceChipClass(lean.tier)}">${lean.text}</span>`
+    : "";
+  const seriesHtml = game.series_summary
+    ? `<p class="game-card-series">${game.series_summary}</p>`
+    : "";
   return `
+    <div class="game-card-color-band" aria-hidden="true"></div>
+    <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
     <div class="game-card-top">
       <span>${isGameLive(game.status) && game.period_label ? game.period_label : formatLocalTimeShort(game.start_time_utc)}</span>
-      <span class="status-badge ${statusBadgeClass(game.status)}">${gameStatusText(game)}</span>
+      <span class="status-badge ${statusBadgeClass(game.status)}${isGameLive(game.status) ? " badge-pulse" : ""}">${gameStatusText(game)}</span>
     </div>
+    ${seriesHtml}
+    ${leanHtml}
     <div class="game-card-matchup">
       <div class="team-side away">
         <img class="team-logo" src="${logoForGame(game, "away")}" alt="" width="40" height="40" loading="lazy">
-        <span class="team-name">${game.away_team}</span>
+        <div class="team-name-block">
+          <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
+          ${teamRecordHtml(game.away_record)}
+        </div>
         ${showScores ? `<span class="team-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       <span class="game-card-at">@</span>
       <div class="team-side home">
         <img class="team-logo" src="${logoForGame(game, "home")}" alt="" width="40" height="40" loading="lazy">
-        <span class="team-name">${game.home_team}</span>
+        <div class="team-name-block">
+          <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
+          ${teamRecordHtml(game.home_record)}
+        </div>
         ${showScores ? `<span class="team-score">${game.home_score ?? 0}</span>` : ""}
       </div>
     </div>
+    ${preview ? `<p class="game-card-preview">${preview}</p>` : ""}
   `;
 }
 
-function renderGameList(listEl, games) {
+function attachWatchHandlers(listEl) {
   if (!listEl) return;
+  listEl.querySelectorAll(".watch-btn").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.dataset.watchId;
+      const on = toggleWatch(id);
+      btn.classList.toggle("watched", on);
+    };
+  });
+}
+
+function renderGameList(listEl, games, options = {}) {
+  if (!listEl) return;
+  listEl._renderOptions = options;
   listEl.innerHTML = "";
+  const boardMap = options.boardMap || {};
+  const gameDate = options.gameDate || null;
   sortGamesByStart(games).forEach((game) => {
     const card = document.createElement("a");
-    card.className = "game-card";
-    card.href = gameDetailHref(game);
+    card.className = "game-card" + (isGameLive(game.status) ? " game-card-live" : "");
+    card.href = gameDetailHref(game, options);
     card.dataset.gameId = game.game_id;
-    card.innerHTML = gameCardHtml(game);
+    card.style.cssText = gameCardColorStyle(game, options.colors);
+    const boardRow = boardMap[String(game.game_id)];
+    const lineMove = gameDate
+      ? lineMovementForGame(game.game_id, gameDate, {
+          home_team: game.home_team,
+          away_team: game.away_team,
+        })
+      : null;
+    card.innerHTML = gameCardHtml(game, { ...options, boardRow, lineMove });
     listEl.appendChild(card);
   });
+  attachWatchHandlers(listEl);
 }
 
 function updateGameCards(listEl, games) {
   if (!listEl) return;
+  const opts = listEl._renderOptions || {};
   const byId = Object.fromEntries((games || []).map((g) => [String(g.game_id), g]));
   listEl.querySelectorAll(".game-card").forEach((card) => {
     const game = byId[card.dataset.gameId];
-    if (game) card.innerHTML = gameCardHtml(game);
+    if (!game) return;
+    const boardRow = (opts.boardMap || {})[String(game.game_id)];
+    const lineMove = opts.gameDate
+      ? lineMovementForGame(game.game_id, opts.gameDate, {
+          home_team: game.home_team,
+          away_team: game.away_team,
+        })
+      : null;
+    card.classList.toggle("game-card-live", isGameLive(game.status));
+    card.style.cssText = gameCardColorStyle(game, opts.colors);
+    card.innerHTML = gameCardHtml(game, { ...opts, boardRow, lineMove });
   });
+  attachWatchHandlers(listEl);
+}
+
+function renderTodayGlance(el, summary, scoreCounts) {
+  if (!el) return;
+  const mlb = scoreCounts?.mlb ?? "—";
+  const nba = scoreCounts?.nba ?? "—";
+  if (!summary?.board_available) {
+    el.innerHTML = `
+      <div class="glance-card glance-muted">
+        <span><strong>${mlb}</strong> MLB · <strong>${nba}</strong> NBA today</span>
+        <span>${summary?.message || "Board not loaded"}</span>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="glance-card">
+      <div class="glance-stat"><span class="glance-num">${summary.games_on_slate}</span><span class="glance-lbl">MLB games</span></div>
+      <div class="glance-stat"><span class="glance-num">${mlb}</span><span class="glance-lbl">Live slate</span></div>
+      <div class="glance-stat"><span class="glance-num">${summary.plus_ev_singles}</span><span class="glance-lbl">+EV singles</span></div>
+      <div class="glance-stat"><span class="glance-num">${summary.games_with_odds}</span><span class="glance-lbl">w/ lines</span></div>
+    </div>`;
+}
+
+function renderBestBets(el, topSingles) {
+  if (!el) return;
+  const picks = topSingles || [];
+  if (!picks.length) {
+    el.innerHTML = `
+      <div class="best-bets-empty-card">
+        ${emptyStateIcon("no-bets")}
+        <p>No +EV singles at today's edge threshold. <a href="/mlb/board">Tune on board</a></p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = picks
+    .map((p) => {
+      const edge = p.edge != null ? `${(p.edge * 100).toFixed(1)}%` : "—";
+      const odds = p.american_odds > 0 ? `+${p.american_odds}` : p.american_odds;
+      return `
+      <a class="best-bet-card" href="/mlb">
+        <span class="best-bet-team">${p.team}</span>
+        <span class="best-bet-meta">${p.matchup || ""}</span>
+        <span class="best-bet-edge">EV ${edge} · ${odds}</span>
+      </a>`;
+    })
+    .join("");
+}
+
+function renderWatchedGamesSection(el, games, options = {}) {
+  if (!el) return;
+  const ids = new Set(getWatchedGameIds());
+  const watched = (games || []).filter((g) => ids.has(String(g.game_id)));
+  if (!watched.length) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.remove("hidden");
+  el.innerHTML = '<p class="app-section-title">Your games</p><div class="game-list game-list-compact" id="watched-games-list"></div>';
+  const inner = el.querySelector("#watched-games-list");
+  renderGameList(inner, watched, options);
 }
 
 function renderMatchupHeader(el, game) {
   if (!el || !game) return;
+  applyGamePageWash(game);
   el.innerHTML = matchupHeaderHtml(game);
+  const btn = el.querySelector(".watch-btn");
+  if (btn) {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const on = toggleWatch(btn.dataset.watchId);
+      btn.classList.toggle("watched", on);
+    };
+  }
 }
 
 function matchupHeaderHtml(game) {
@@ -230,11 +904,20 @@ function matchupHeaderHtml(game) {
   const centerText = isGameLive(game.status) && game.period_label
     ? game.period_label
     : formatLocalTime(game.start_time_utc);
+  const watched = isWatched(game.game_id);
+  const seriesHtml = game.series_summary
+    ? `<p class="matchup-series">${game.series_summary}</p>`
+    : "";
   return `
+    <div class="matchup-header-wrap" style="${gameCardColorStyle(game)}">
+    <div class="game-card-color-band matchup-band" aria-hidden="true"></div>
+    <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
+    ${seriesHtml}
     <div class="matchup-grid">
       <div class="matchup-team">
         <img class="team-logo" src="${logoForGame(game, "away")}" alt="${game.away_team}" width="56" height="56">
         <h2>${game.away_team}</h2>
+        ${teamRecordHtml(game.away_record)}
         ${showScores ? `<span class="matchup-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       <div class="matchup-center">
@@ -244,8 +927,10 @@ function matchupHeaderHtml(game) {
       <div class="matchup-team">
         <img class="team-logo" src="${logoForGame(game, "home")}" alt="${game.home_team}" width="56" height="56">
         <h2>${game.home_team}</h2>
+        ${teamRecordHtml(game.home_record)}
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}
       </div>
+    </div>
     </div>
   `;
 }

@@ -34,10 +34,13 @@ def test_live_test_forces_refresh_and_full_totals(
     mock_build_slate.return_value = pd.DataFrame(
         {
             "game_id": ["1"],
+            "date": [GAME_DATE.isoformat()],
             "home_team": ["A"],
             "away_team": ["B"],
             "home_ml": [-130],
             "away_ml": [110],
+            "model_prob_home": [0.55],
+            "model_prob_away": [0.45],
         }
     )
     mock_attach.return_value = (mock_build_slate.return_value, "the_odds_api")

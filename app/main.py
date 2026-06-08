@@ -13,12 +13,14 @@ from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
-from app.services.forward_clv import summarize_clv
+from app.services.forward_clv import summarize_clv as summarize_mlb_clv
+from app.services.nba_daily_board import build_nba_daily_board
 from app.odds.odds_repository import get_today_snapshot
 from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
 from app.services.game_insights import build_game_insights
+from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
 from app.services.schedule_nba import get_nba_game, get_nba_schedule
@@ -132,8 +134,38 @@ async def backtest_saved():
 
 
 @app.get("/api/clv/summary")
-async def clv_summary(days: int = Query(30, ge=1, le=365)):
-    return summarize_clv(days=days)
+async def clv_summary(
+    days: int = Query(30, ge=1, le=365),
+    sport: str = Query("mlb", pattern="^(mlb|nba)$"),
+):
+    if sport == "nba":
+        from app.services.nba_forward_clv import summarize_clv as summarize_nba_clv
+
+        return summarize_nba_clv(days=days)
+    return summarize_mlb_clv(days=days)
+
+
+@app.get("/api/nba/daily")
+async def nba_daily(
+    date_param: str | None = Query(None, alias="date"),
+    min_edge: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
+    refresh: bool = Query(False, description="Force refresh live NBA odds from API"),
+    use_cache: bool = Query(
+        False,
+        description="Demo mode — load odds from CSV/repository only (no Odds API)",
+    ),
+    log_clv: bool = Query(True, description="Append +EV singles to forward CLV log"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_nba_daily_board(
+        game_date=game_date,
+        min_edge=min_edge,
+        force_refresh=refresh and not use_cache,
+        use_cache=use_cache,
+        log_clv=log_clv,
+    )
 
 
 @app.get("/api/status/refresh")
@@ -145,6 +177,17 @@ async def refresh_status():
 async def news_headlines(refresh: bool = Query(False)):
     """RSS sports headlines (15 min cache)."""
     return get_news_headlines(force_refresh=refresh)
+
+
+@app.get("/api/home/today")
+async def home_today(
+    date_param: str | None = Query(None, alias="date"),
+):
+    """Today at a glance + best bets from cached daily board (no rebuild)."""
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return get_home_today_summary(game_date)
 
 
 @app.get("/api/odds/today")
@@ -167,10 +210,10 @@ async def mlb_schedule(
 async def nba_schedule(
     date_param: str | None = Query(None, alias="date"),
 ):
-    game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
-    )
-    return get_nba_schedule(game_date)
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_nba_schedule(game_date, auto_resolve=False)
+    return get_nba_schedule(None, auto_resolve=True)
 
 
 @app.get("/api/scores/today")
@@ -178,10 +221,9 @@ async def scores_today(
     sport: str = Query("mlb", pattern="^(mlb|nba|all)$"),
     date_param: str | None = Query(None, alias="date"),
 ):
-    game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
-    )
-    return get_scores_today(sport=sport, game_date=game_date)
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    auto_resolve = date_param is None and sport in ("nba", "all")
+    return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
 
 
 @app.get("/api/games/mlb/{game_id}")
@@ -287,9 +329,7 @@ async def nba_game_detail(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
 ):
-    game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
-    )
+    game_date = date_type.fromisoformat(date_param) if date_param else None
     detail = get_nba_game(game_id, game_date)
     if detail is None:
         raise HTTPException(status_code=404, detail="Game not found")
@@ -299,6 +339,11 @@ async def nba_game_detail(
 @app.get("/mlb/game/{game_id}")
 async def mlb_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "game.html")
+
+
+@app.get("/nba/board")
+async def nba_board():
+    return FileResponse(STATIC_DIR / "nba.html")
 
 
 @app.get("/mlb/board")

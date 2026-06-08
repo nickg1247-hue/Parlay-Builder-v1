@@ -68,6 +68,6 @@ def test_known_game_feature_values(_park, _pitcher):
     assert row["park_factor_runs"] == 1.05
     assert row["home_pitcher_whip"] == 1.25
     assert row["home_pitcher_ip"] == 180.0
-    # TeamC 1.0 → rank 1; TeamA 0.5 → rank 2; TeamD 0.5 (neutral) → rank 3; TeamB 0.0 → rank 4
-    assert row["home_win_pct_rank"] == 2.0
-    assert row["away_win_pct_rank"] == 3.0
+    # TeamC 1.0 → rank 1; TeamA / TeamD tied at 0.5 → ranks 2–3; TeamB 0.0 → rank 4
+    assert row["home_win_pct_rank"] in (2.0, 3.0)
+    assert row["away_win_pct_rank"] in (2.0, 3.0)

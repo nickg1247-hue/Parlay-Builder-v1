@@ -54,9 +54,11 @@
     }
   }
 
-  loadGame().catch((e) => {
-    loading.classList.add("hidden");
-    errEl.classList.remove("hidden");
-    errEl.textContent = e.message || "Game not found";
-  });
+  loadTeamColors()
+    .then(() => loadGame())
+    .catch((e) => {
+      loading.classList.add("hidden");
+      errEl.classList.remove("hidden");
+      errEl.textContent = e.message || "Game not found";
+    });
 })();

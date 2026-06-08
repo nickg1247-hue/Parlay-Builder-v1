@@ -23,8 +23,57 @@ logger = logging.getLogger(__name__)
 DEFAULT_REPO_DIR = PROJECT_ROOT / "data" / "processed" / "odds_repository"
 
 _lock = threading.Lock()
+_date_fetch_locks: dict[str, threading.Lock] = {}
+_locks_guard = threading.Lock()
 _last_fetch_meta: dict[str, Any] = {}
 _clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
+
+
+def min_refresh_seconds() -> int:
+    """Minimum seconds between live HTTP refreshes for the same date (default 5 min)."""
+    return max(60, int(os.getenv("ODDS_REPO_MIN_REFRESH_SECONDS", "300")))
+
+
+def reset_fetch_locks_for_tests() -> None:
+    """Clear per-date fetch locks (tests only)."""
+    global _date_fetch_locks
+    with _locks_guard:
+        _date_fetch_locks = {}
+
+
+def _lock_for_date(iso_date: str) -> threading.Lock:
+    with _locks_guard:
+        if iso_date not in _date_fetch_locks:
+            _date_fetch_locks[iso_date] = threading.Lock()
+        return _date_fetch_locks[iso_date]
+
+
+def _payload_age_seconds(payload: dict[str, Any] | None) -> float | None:
+    if not payload:
+        return None
+    fetched = payload.get("fetched_at")
+    if not fetched:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(fetched).replace("Z", "+00:00"))
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        return (_clock() - ts).total_seconds()
+    except (TypeError, ValueError):
+        return None
+
+
+def repository_age_seconds(game_date: date) -> float | None:
+    """Seconds since repository snapshot was written, or None if missing."""
+    return _payload_age_seconds(load_date(game_date))
+
+
+def _repository_fresh_enough(game_date: date, min_seconds: int | None = None) -> bool:
+    age = repository_age_seconds(game_date)
+    if age is None:
+        return False
+    limit = min_seconds if min_seconds is not None else min_refresh_seconds()
+    return age < limit
 
 
 def set_clock_for_tests(fn: Callable[[], datetime] | None) -> None:
@@ -544,16 +593,53 @@ def get_mlb_odds_for_date(
     force_refresh: bool = False,
     include_totals: bool = True,
     include_spreads: bool = True,
+    bypass_min_ttl: bool = False,
 ) -> tuple[list[dict[str, Any]] | None, str]:
     """
     Return normalized games for a date from repository or quota-gated API.
+
+    Live HTTP is skipped when the on-disk snapshot is newer than
+    ODDS_REPO_MIN_REFRESH_SECONDS unless bypass_min_ttl=True (board Run live).
+    Concurrent callers for the same date share one in-flight HTTP request.
     """
+    iso = game_date.isoformat()
+
+    def _serve_repo() -> tuple[list[dict[str, Any]] | None, str]:
+        payload = load_date(game_date)
+        if payload is None:
+            return None, "none"
+        return payload.get("games", []), payload.get("source", "repository")
+
     _set_fetch_meta()
 
     if has_date(game_date) and not force_refresh:
-        payload = load_date(game_date)
-        if payload is not None:
-            return payload.get("games", []), payload.get("source", "repository")
+        return _serve_repo()
+
+    if (
+        force_refresh
+        and has_date(game_date)
+        and not bypass_min_ttl
+        and _repository_fresh_enough(game_date)
+    ):
+        age = _payload_age_seconds(load_date(game_date))
+        logger.info(
+            "Odds API skipped for %s: repository fresh (%.0fs < %ss min TTL)",
+            iso,
+            age or 0,
+            min_refresh_seconds(),
+        )
+        wait = max(0, int(min_refresh_seconds() - (age or 0)))
+        _set_fetch_meta(
+            skipped_http=True,
+            skip_reason="min_ttl",
+            seconds_since_fetch=age,
+            min_refresh_seconds=min_refresh_seconds(),
+            quota_warning=(
+                f"Using cached lines (saved {int(age or 0)}s ago). "
+                f"Next live pull allowed in {wait}s."
+            ),
+        )
+        return _serve_repo()
 
     if not live_odds_enabled():
         return None, "none"
@@ -566,56 +652,79 @@ def get_mlb_odds_for_date(
         else "initial_fetch"
     )
 
-    api_result = fetch_from_api_if_allowed(
-        game_date,
-        include_totals=include_totals,
-        include_spreads=include_spreads,
-    )
+    with _lock_for_date(iso):
+        if has_date(game_date) and not force_refresh:
+            return _serve_repo()
+        if (
+            force_refresh
+            and has_date(game_date)
+            and not bypass_min_ttl
+            and _repository_fresh_enough(game_date)
+        ):
+            age = _payload_age_seconds(load_date(game_date))
+            wait = max(0, int(min_refresh_seconds() - (age or 0)))
+            _set_fetch_meta(
+                skipped_http=True,
+                skip_reason="min_ttl",
+                seconds_since_fetch=age,
+                min_refresh_seconds=min_refresh_seconds(),
+                quota_warning=(
+                    f"Using cached lines (saved {int(age or 0)}s ago). "
+                    f"Next live pull allowed in {wait}s."
+                ),
+            )
+            return _serve_repo()
 
-    if api_result.denied:
-        warning = _quota_warning_message(api_result.denied_reason)
-        _set_fetch_meta(
-            quota_denied=True,
-            denied_reason=api_result.denied_reason,
-            quota_warning=warning,
+        api_result = fetch_from_api_if_allowed(
+            game_date,
+            include_totals=include_totals,
+            include_spreads=include_spreads,
         )
-        if has_date(game_date):
-            games, source = _stale_from_repo(game_date)
-            logger.warning(
-                "Odds API denied for %s (%s) — using stale repository",
-                game_date.isoformat(),
-                api_result.denied_reason,
-            )
-            return games, source
-        return None, "none"
 
-    if api_result.error or api_result.events is None:
-        if has_date(game_date):
-            logger.warning(
-                "Odds API failed for %s (%s) — using stale repository",
-                game_date.isoformat(),
-                api_result.error,
+        if api_result.denied:
+            warning = _quota_warning_message(api_result.denied_reason)
+            _set_fetch_meta(
+                quota_denied=True,
+                denied_reason=api_result.denied_reason,
+                quota_warning=warning,
             )
-            return _stale_from_repo(game_date)
-        return None, "none"
+            if has_date(game_date):
+                games, source = _stale_from_repo(game_date)
+                logger.warning(
+                    "Odds API denied for %s (%s) — using stale repository",
+                    iso,
+                    api_result.denied_reason,
+                )
+                return games, source
+            return None, "none"
 
-    games = normalize_events(api_result.events)
-    fetched_at = _clock().isoformat()
-    payload = {
-        "date": game_date.isoformat(),
-        "fetched_at": fetched_at,
-        "source": api_result.source,
-        "games": games,
-    }
-    save_date(game_date, payload, api_fetch=True)
-    logger.info(
-        "Odds API call: date=%s reason=%s source=%s games=%d",
-        game_date.isoformat(),
-        reason,
-        api_result.source,
-        len(games),
-    )
-    return games, api_result.source or "the_odds_api"
+        if api_result.error or api_result.events is None:
+            if has_date(game_date):
+                logger.warning(
+                    "Odds API failed for %s (%s) — using stale repository",
+                    iso,
+                    api_result.error,
+                )
+                return _stale_from_repo(game_date)
+            return None, "none"
+
+        games = normalize_events(api_result.events)
+        fetched_at = _clock().isoformat()
+        payload = {
+            "date": iso,
+            "fetched_at": fetched_at,
+            "source": api_result.source,
+            "games": games,
+        }
+        save_date(game_date, payload, api_fetch=True)
+        logger.info(
+            "Odds API call: date=%s reason=%s source=%s games=%d",
+            iso,
+            reason,
+            api_result.source,
+            len(games),
+        )
+        return games, api_result.source or "the_odds_api"
 
 
 def _daily_board_generated_at(game_date: date) -> str | None:
@@ -635,12 +744,15 @@ def get_today_snapshot() -> dict[str, Any]:
     """Repository snapshot for today + quota summary (no API)."""
     today = date.today()
     payload = load_date(today) or {}
+    age = _payload_age_seconds(payload)
     quota = get_quota_summary()
     if quota.get("last_denied_reason"):
         quota = {**quota, "denied": True}
     return {
         "date": today.isoformat(),
         "fetched_at": payload.get("fetched_at"),
+        "seconds_since_fetch": round(age) if age is not None else None,
+        "min_refresh_seconds": min_refresh_seconds(),
         "board_generated_at": _daily_board_generated_at(today),
         "source": payload.get("source"),
         "games": payload.get("games", []),
