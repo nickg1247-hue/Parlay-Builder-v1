@@ -101,7 +101,7 @@ async def lifespan(app: FastAPI):
             pass
 
 
-app = FastAPI(title="Parlay Builder v1", lifespan=lifespan)
+app = FastAPI(title="NTG Sports", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -334,6 +334,29 @@ async def nba_game_detail(
     if detail is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return detail
+
+
+@app.get("/api/games/nba/{game_id}/insights")
+async def nba_game_insights(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+    refresh: bool = Query(False),
+):
+    from app.services.nba_game_insights import build_nba_game_insights
+
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    insights = build_nba_game_insights(
+        game_id,
+        game_date=game_date,
+        use_cache=use_cache,
+        refresh=refresh,
+    )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return insights
 
 
 @app.get("/mlb/game/{game_id}")

@@ -956,3 +956,105 @@ function imgLogo(teamId, alt) {
   img.height = 40;
   return img;
 }
+
+const NTG_SPLASH_LETTERS = {
+  n: "/static/assets/ntg-letter-n.png",
+  t: "/static/assets/ntg-letter-t.png",
+  g: "/static/assets/ntg-letter-g.png",
+};
+const NTG_SPLASH_MAX_MS = 5000;
+
+function buildNTGSplashElement(reducedMotion) {
+  const root = document.createElement("div");
+  root.id = "ntg-splash";
+  root.className = "ntg-splash" + (reducedMotion ? " ntg-splash--reduced" : "");
+  root.setAttribute("role", "presentation");
+  root.setAttribute("aria-hidden", "true");
+
+  root.innerHTML = `
+    <div class="ntg-splash__stage">
+      <svg class="ntg-splash__arcs" viewBox="0 0 420 300" aria-hidden="true">
+        <defs>
+          <linearGradient id="ntg-arc-grad-top" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1d9bf0" stop-opacity="0.2"/>
+            <stop offset="40%" stop-color="#4aa8ff"/>
+            <stop offset="100%" stop-color="#ffffff"/>
+          </linearGradient>
+          <linearGradient id="ntg-arc-grad-bottom" x1="100%" y1="0%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#1d9bf0" stop-opacity="0.2"/>
+            <stop offset="45%" stop-color="#2b7fd4"/>
+            <stop offset="100%" stop-color="#ffffff"/>
+          </linearGradient>
+        </defs>
+        <path class="ntg-splash__arc ntg-splash__arc--top" pathLength="1"
+          d="M 28 210 C 60 40, 200 8, 392 72"/>
+        <path class="ntg-splash__arc ntg-splash__arc--bottom" pathLength="1"
+          d="M 392 228 C 340 290, 120 292, 28 248"/>
+      </svg>
+      <div class="ntg-splash__logo-wrap">
+        <div class="ntg-splash__wordmark" role="img" aria-label="NTG Sports">
+          <img class="ntg-splash__letter-img ntg-splash__letter-img--n" src="${NTG_SPLASH_LETTERS.n}" alt="" />
+          <img class="ntg-splash__letter-img ntg-splash__letter-img--t" src="${NTG_SPLASH_LETTERS.t}" alt="" />
+          <img class="ntg-splash__letter-img ntg-splash__letter-img--g" src="${NTG_SPLASH_LETTERS.g}" alt="" />
+        </div>
+        <p class="ntg-splash__sports" aria-hidden="true"><span class="ntg-splash__sports-line"></span>SPORTS<span class="ntg-splash__sports-line"></span></p>
+      </div>
+      <div class="ntg-splash__glow"></div>
+    </div>
+  `;
+  return root;
+}
+
+function clearNTGSplashState() {
+  document.documentElement.classList.remove("ntg-splash-pending", "ntg-splash-active");
+}
+
+/**
+ * Cinematic NTG Sports intro — plays on every full page load.
+ * Returns a promise that resolves when the splash finishes.
+ */
+function initNTGSplash() {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.documentElement.classList.add("ntg-splash-pending");
+
+  const splash = buildNTGSplashElement(reduced);
+  document.body.appendChild(splash);
+  document.documentElement.classList.add("ntg-splash-active");
+
+  const holdMs = reduced ? 900 : 3000;
+  const exitMs = reduced ? 350 : 650;
+  let finished = false;
+
+  return new Promise((resolve) => {
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      splash.classList.add("ntg-splash--out");
+      clearNTGSplashState();
+      window.setTimeout(() => {
+        splash.remove();
+        resolve();
+      }, exitMs);
+    };
+    window.setTimeout(finish, holdMs);
+    window.setTimeout(finish, NTG_SPLASH_MAX_MS);
+  });
+}
+
+function shouldPlayNTGSplash() {
+  return document.body?.dataset?.ntgSplash === "1";
+}
+
+function bootNTGSplash() {
+  if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
+    initNTGSplash().catch(() => clearNTGSplashState());
+  } else {
+    clearNTGSplashState();
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootNTGSplash);
+} else {
+  bootNTGSplash();
+}

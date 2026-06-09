@@ -15,6 +15,7 @@ const els = {
   slateBody: document.querySelector("#slate-table tbody"),
   singles: document.getElementById("singles-list"),
   confidenceNote: document.getElementById("confidence-note"),
+  spreadNote: document.getElementById("spread-note"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
   runLive: document.getElementById("run-live-btn"),
@@ -67,6 +68,25 @@ function fmtAmerican(odds) {
   return odds > 0 ? `+${odds}` : `${odds}`;
 }
 
+function fmtSpreadLine(team, point, american) {
+  if (point == null) return "—";
+  const pt = point > 0 ? `+${point}` : `${point}`;
+  const odds = american != null ? ` (${fmtAmerican(american)})` : "";
+  return `${team} ${pt}${odds}`;
+}
+
+function spreadCoverPct(game, side) {
+  if (side === "home") return game.model_prob_home_cover;
+  if (side === "away") return game.model_prob_away_cover;
+  return null;
+}
+
+function spreadMarketPct(game, side) {
+  if (side === "home") return game.market_prob_home_cover;
+  if (side === "away") return game.market_prob_away_cover;
+  return null;
+}
+
 function buildApiUrl(refresh = false) {
   const url = new URL("/api/nba/daily", window.location.origin);
   if (boardMode === "demo") {
@@ -95,16 +115,20 @@ function confidenceClass(label) {
   }
 }
 
-function renderSlate(slate, edgeFraction = 0.08) {
+function renderSlate(slate, edgeFraction = 0.08, spreadEnabled = false) {
   els.slateBody.innerHTML = "";
+  document.querySelectorAll(".spread-col").forEach((el) => {
+    el.classList.toggle("hidden", !spreadEnabled);
+  });
+  const colSpan = spreadEnabled ? 12 : 7;
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="7" class="empty">No games on slate</td></tr>';
+      `<tr><td colspan="${colSpan}" class="empty">No games on slate</td></tr>`;
     return;
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
-    if (game.plus_ev_single) {
+    if (game.plus_ev_single || game.plus_ev_spread) {
       tr.classList.add("plus-ev");
     }
     const edge = game.ml_edge_best ?? game.edge_home;
@@ -115,6 +139,35 @@ function renderSlate(slate, edgeFraction = 0.08) {
       bestPick = `${bp.team} ${fmtAmerican(bp.american_odds)}`;
     }
     const evFlag = game.plus_ev_single ? "Yes" : "—";
+    const spreadPick = game.spread_best_pick;
+    const runLine =
+      spreadPick != null
+        ? fmtSpreadLine(spreadPick.team, spreadPick.spread_point, spreadPick.american_odds)
+        : game.home_spread_point != null
+          ? fmtSpreadLine(game.home_team, game.home_spread_point, game.home_spread_american)
+          : "—";
+    const coverSide = spreadPick ? spreadPick.side : "home";
+    const modelCover =
+      spreadCoverPct(game, coverSide) != null
+        ? pct(spreadCoverPct(game, coverSide))
+        : "—";
+    const marketCover =
+      spreadMarketPct(game, coverSide) != null
+        ? pct(spreadMarketPct(game, coverSide))
+        : "—";
+    const spreadPickLabel = spreadPick
+      ? `${spreadPick.team} ${spreadPick.spread_point > 0 ? "+" : ""}${spreadPick.spread_point}`
+      : "—";
+    const spreadEdge =
+      spreadPick != null ? `${(spreadPick.edge * 100).toFixed(1)}%` : "—";
+    const spreadCells = spreadEnabled
+      ? `
+      <td>${runLine}</td>
+      <td>${modelCover}</td>
+      <td>${marketCover}</td>
+      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadPickLabel}</td>
+      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadEdge}</td>`
+      : "";
     tr.innerHTML = `
       <td>${game.matchup}</td>
       <td>${pct(game.model_prob_home)}</td>
@@ -123,6 +176,7 @@ function renderSlate(slate, edgeFraction = 0.08) {
       <td class="${confidenceClass(mlConf)}">${mlConf}</td>
       <td>${evFlag}</td>
       <td>${bestPick}</td>
+      ${spreadCells}
     `;
     els.slateBody.appendChild(tr);
   }
@@ -180,6 +234,7 @@ function renderFooter(data) {
     <span>Mode: ${data.mode ?? "—"}</span>
     <span>betting_ready: ${data.betting_ready === true ? "true" : "false"}</span>
     <span>ML model: ${data.active_moneyline_model?.model_version ?? data.active_moneyline_model?.run_id ?? "—"}</span>
+    <span>Spread model: ${data.active_margin_model?.model_version ?? "—"} · production_ready: ${data.board_spread_enabled === true ? "true" : "false"}</span>
   `;
   els.footer.classList.remove("hidden");
 }
@@ -231,7 +286,14 @@ async function loadBoard(refresh = false) {
       typeof data.edge_threshold === "number" ? data.edge_threshold : minEdgeFraction();
     updateThresholdLabels(edgeFraction);
 
-    renderSlate(data.slate || [], edgeFraction);
+    if (els.spreadNote && data.spread_disclaimer) {
+      els.spreadNote.textContent = data.spread_disclaimer;
+      els.spreadNote.classList.remove("hidden");
+    } else if (els.spreadNote) {
+      els.spreadNote.classList.add("hidden");
+    }
+
+    renderSlate(data.slate || [], edgeFraction, data.board_spread_enabled === true);
     renderSingles(topSinglesFromSlate(data.slate || []), edgeFraction);
     renderFooter(data);
 

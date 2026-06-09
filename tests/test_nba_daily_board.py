@@ -164,3 +164,56 @@ def test_build_board_demo_mode_field():
     assert result["disclaimer"]
     assert result["betting_ready"] is False
     mock_attach.assert_called_once()
+
+
+@patch("app.models.nba_margin.is_margin_production_ready")
+@patch("app.models.nba_margin.predict_spread_covers")
+@patch("app.services.nba_daily_board.get_nba_schedule")
+@patch("app.services.nba_daily_board.predict_home_win_proba")
+@patch("app.services.nba_daily_board._attach_cached_odds")
+def test_board_spread_fields_when_enabled(
+    mock_attach,
+    mock_predict,
+    mock_sched,
+    mock_spread_covers,
+    mock_prod_ready,
+    sample_nba_schedule,
+):
+    mock_prod_ready.return_value = True
+    mock_sched.return_value = sample_nba_schedule
+    mock_predict.return_value = pd.Series([0.55, 0.48])
+    merged = pd.DataFrame(
+        [
+            {
+                "game_id": "401766458",
+                "date": "2026-04-10",
+                "season": 2026,
+                "home_team": "Boston Celtics",
+                "away_team": "New York Knicks",
+                "model_prob_home": 0.55,
+                "model_prob_away": 0.45,
+                "home_ml": -130,
+                "away_ml": 110,
+                "home_spread_point": -5.5,
+                "home_spread_american": -110,
+                "away_spread_point": 5.5,
+                "away_spread_american": -110,
+            }
+        ]
+    )
+    spread_merged = merged.copy()
+    spread_merged["model_margin"] = [3.2]
+    spread_merged["model_prob_home_cover"] = [0.52]
+    spread_merged["model_prob_away_cover"] = [0.48]
+    mock_attach.return_value = (merged, "historical_cache")
+    mock_spread_covers.return_value = spread_merged
+
+    result = ndb.build_nba_daily_board(
+        date(2026, 4, 10), use_cache=True, log_clv=False
+    )
+
+    assert result["board_spread_enabled"] is True
+    row = result["slate"][0]
+    assert row["home_spread_point"] == -5.5
+    assert row["model_prob_home_cover"] == 0.52
+    assert row["market_prob_home_cover"] is not None

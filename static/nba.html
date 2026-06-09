@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NBA Daily Board — Parlay Builder v1</title>
+  <title>NBA Daily Board — NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -41,7 +41,7 @@
         <div class="table-wrap">
           <table id="slate-table">
             <thead>
-              <tr>
+              <tr id="slate-header-row">
                 <th>Matchup</th>
                 <th>Model P(home)</th>
                 <th>Market P(home)</th>
@@ -49,12 +49,18 @@
                 <th>Confidence</th>
                 <th>+EV</th>
                 <th>Best pick</th>
+                <th class="spread-col hidden">Spread line</th>
+                <th class="spread-col hidden">Model cover</th>
+                <th class="spread-col hidden">Mkt cover</th>
+                <th class="spread-col hidden">Spread pick</th>
+                <th class="spread-col hidden">Spread edge</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <p class="simple-note" id="confidence-note">Confidence reflects model vs market edge, not a guarantee.</p>
+        <p class="simple-note hidden" id="spread-note"></p>
       </section>
 
       <section>

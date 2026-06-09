@@ -19,7 +19,12 @@ from sklearn.preprocessing import StandardScaler
 
 from app.config import PROJECT_ROOT
 from app.db.database import get_connection
-from app.features.nba_pregame import FEATURE_COLUMNS, build_features_for_history
+from app.features.nba_pregame import (
+    FEATURE_COLUMNS,
+    FEATURE_COLUMNS_V1,
+    FEATURE_COLUMNS_WAVE2,
+    build_features_for_history,
+)
 
 MODEL_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "nba_baseline_model.joblib"
 METRICS_JSON = PROJECT_ROOT / "data" / "processed" / "nba_baseline_metrics.json"
@@ -30,9 +35,13 @@ PARQUET_PATH = PROJECT_ROOT / "data" / "processed" / "nba_games.parquet"
 TRAIN_SEASONS = (2024, 2025)
 HOLDOUT_SEASON = 2026
 
+FEATURE_SET_V1 = "nba_v1"
+FEATURE_SET_V2 = "v2_score_rolling"
+
 NEUTRAL_LAST10_WIN_PCT = 0.5
 NEUTRAL_SEASON_WIN_PCT = 0.5
 DEFAULT_REST_FILL = 2.0
+DEFAULT_PTS_FILL = 110.0
 
 ELO_START = 1500.0
 ELO_K = 20.0
@@ -210,6 +219,20 @@ def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def load_active_manifest() -> dict[str, Any] | None:
+    if not ACTIVE_NBA_MANIFEST.exists():
+        return None
+    return json.loads(ACTIVE_NBA_MANIFEST.read_text(encoding="utf-8"))
+
+
+def feature_columns_for_set(feature_set: str | None) -> list[str]:
+    if feature_set == FEATURE_SET_V2:
+        return list(FEATURE_COLUMNS_WAVE2)
+    if feature_set in (FEATURE_SET_V1, "v1_logistic"):
+        return list(FEATURE_COLUMNS_V1)
+    return list(FEATURE_COLUMNS)
+
+
 def save_nba_promotion(
     run_id: str,
     artifact: dict[str, Any],
@@ -238,7 +261,9 @@ def load_model_artifact() -> dict[str, Any]:
         manifest = json.loads(ACTIVE_NBA_MANIFEST.read_text(encoding="utf-8"))
         path = PROJECT_ROOT / manifest["path"]
         if path.exists():
-            return joblib.load(path)
+            artifact = joblib.load(path)
+            artifact.setdefault("feature_set", manifest.get("feature_set"))
+            return artifact
     if MODEL_ARTIFACT.exists():
         return joblib.load(MODEL_ARTIFACT)
     raise FileNotFoundError(
@@ -250,15 +275,24 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
     from app.features.nba_pregame import build_features_for_slate
 
     artifact = load_model_artifact()
-    cols = artifact.get("feature_columns", FEATURE_COLUMNS)
+    manifest = load_active_manifest()
+    feature_set = (manifest or {}).get("feature_set") or artifact.get("feature_set")
+    cols = feature_columns_for_set(feature_set)
+    if artifact.get("feature_columns"):
+        cols = list(artifact["feature_columns"])
     rest_fill = float(artifact.get("rest_fill", DEFAULT_REST_FILL))
+    pts_fill = float(artifact.get("pts_fill", DEFAULT_PTS_FILL))
     if "home_last10_win_pct" not in df.columns:
-        prepared = build_features_for_slate(df, rest_fill=rest_fill)
+        prepared = build_features_for_slate(df, rest_fill=rest_fill, pts_fill=pts_fill)
     else:
         prepared = df.copy()
         if "elo_home_pre" not in prepared.columns:
             prepared = attach_elo_for_slate(prepared)
     return artifact["model"].predict_proba(prepared[cols].values)[:, 1]
+
+
+def _metrics_dict(m: HoldoutMetrics) -> dict[str, float]:
+    return {"log_loss": m.log_loss, "brier": m.brier, "accuracy": m.accuracy}
 
 
 def run_training() -> dict[str, Any]:
@@ -271,6 +305,11 @@ def run_training() -> dict[str, Any]:
     )
     if math.isnan(rest_fill):
         rest_fill = DEFAULT_REST_FILL
+    pts_fill = float(
+        pd.concat([train["home_score"], train["away_score"]]).median()
+    )
+    if math.isnan(pts_fill):
+        pts_fill = DEFAULT_PTS_FILL
 
     y_test = test["home_win"].values
     train_raw, test_raw = time_split(raw)
@@ -283,7 +322,12 @@ def run_training() -> dict[str, Any]:
     home_rate_probs = predict_home_rate_constant(train_raw, test_raw)
     rolling_probs = predict_rolling_naive(test)
 
-    model, model_metrics = train_logistic(train, test, FEATURE_COLUMNS)
+    v1_model, v1_metrics = train_logistic(
+        train, test, FEATURE_COLUMNS_V1, "logistic_regression_v1"
+    )
+    v2_model, v2_metrics = train_logistic(
+        train, test, FEATURE_COLUMNS_WAVE2, "logistic_regression_v2_score"
+    )
 
     home_rate_metrics = compute_metrics(
         "naive_home_win_rate", y_test, home_rate_probs
@@ -293,41 +337,79 @@ def run_training() -> dict[str, Any]:
 
     market_proxy_ll = constant_market_proxy_log_loss(y_test, home_rate)
     naive_ll = min(home_rate_metrics.log_loss, elo_metrics.log_loss)
-    gate_passes = production_gate_passes(
-        model_metrics.log_loss, naive_ll, market_proxy_ll
+    v1_gate_passes = production_gate_passes(
+        v1_metrics.log_loss, naive_ll, market_proxy_ll
+    )
+    v2_gate_passes = production_gate_passes(
+        v2_metrics.log_loss, naive_ll, market_proxy_ll
     )
 
+    promote_v2 = (
+        v2_metrics.log_loss < v1_metrics.log_loss and v2_gate_passes
+    )
+
+    if promote_v2:
+        production_model = "v2_score_rolling"
+        production_feature_set = FEATURE_SET_V2
+        promoted_cols = FEATURE_COLUMNS_WAVE2
+        promoted_artifact_model = v2_model
+        promoted_metrics = v2_metrics
+        gate_passes = v2_gate_passes
+    else:
+        production_model = "v1_logistic"
+        production_feature_set = FEATURE_SET_V1
+        promoted_cols = FEATURE_COLUMNS_V1
+        promoted_artifact_model = v1_model
+        promoted_metrics = v1_metrics
+        gate_passes = v1_gate_passes
+
     artifact = {
-        "model": model,
-        "model_version": "v1_logistic",
-        "feature_columns": list(FEATURE_COLUMNS),
+        "model": promoted_artifact_model,
+        "model_version": production_model,
+        "feature_set": production_feature_set,
+        "feature_columns": list(promoted_cols),
         "rest_fill": rest_fill,
+        "pts_fill": pts_fill,
         "train_seasons": list(TRAIN_SEASONS),
         "holdout_season": HOLDOUT_SEASON,
         "train_home_win_rate": home_rate,
     }
     MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-    save_nba_promotion("train_nba_baseline", artifact, feature_set="nba_v1")
+    save_nba_promotion(
+        "train_nba_baseline", artifact, feature_set=production_feature_set
+    )
 
     results: dict[str, Any] = {
         "train_seasons": list(TRAIN_SEASONS),
         "holdout_season": HOLDOUT_SEASON,
         "train_rows": len(train),
         "holdout_rows": len(test),
-        "production_model": "v1_logistic",
+        "feature_set": FEATURE_SET_V2,
+        "production_model": production_model,
+        "promoted_v2": promote_v2,
         "imputation": {
             "last10_win_pct": NEUTRAL_LAST10_WIN_PCT,
             "season_win_pct": NEUTRAL_SEASON_WIN_PCT,
             "rest_days": rest_fill,
+            "pts_per_game": pts_fill,
+            "margin_avg": 0.0,
+        },
+        "v1_comparison": {
+            "feature_set": FEATURE_SET_V1,
+            "holdout": _metrics_dict(v1_metrics),
+            "production_gate_passes": v1_gate_passes,
+        },
+        "v2_comparison": {
+            "feature_set": FEATURE_SET_V2,
+            "holdout": _metrics_dict(v2_metrics),
+            "production_gate_passes": v2_gate_passes,
+            "beats_v1_log_loss": v2_metrics.log_loss < v1_metrics.log_loss,
         },
         "metrics": {
-            m.name: {
-                "log_loss": m.log_loss,
-                "brier": m.brier,
-                "accuracy": m.accuracy,
-            }
+            m.name: _metrics_dict(m)
             for m in (
-                model_metrics,
+                v1_metrics,
+                v2_metrics,
                 home_rate_metrics,
                 elo_metrics,
                 rolling_metrics,
@@ -343,7 +425,9 @@ def run_training() -> dict[str, Any]:
             "best_naive_log_loss": naive_ll,
             "market_proxy_log_loss": market_proxy_ll,
             "passes": gate_passes,
+            "active_model": production_model,
         },
+        "active_holdout": _metrics_dict(promoted_metrics),
     }
     METRICS_JSON.write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results

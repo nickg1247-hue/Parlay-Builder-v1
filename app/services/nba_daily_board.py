@@ -31,6 +31,11 @@ NBA_DISCLAIMER = (
     "NBA moneyline model — not betting advice. betting_ready=false until forward CLV validates edge."
 )
 
+SPREAD_DISCLAIMER = (
+    "NBA spread model is experimental (margin GBR + Normal cover); not betting-ready. "
+    "See SPREAD_NBA.md."
+)
+
 
 def _nba_season_end_year(game_date: date) -> int:
     """End-year season label (2026 = 2025-26); season starts in October."""
@@ -63,8 +68,14 @@ def _attach_nba_odds(
     merged = slate_df.copy()
     merged["home_ml"] = np.nan
     merged["away_ml"] = np.nan
+    merged["home_spread_point"] = np.nan
+    merged["home_spread_american"] = np.nan
+    merged["away_spread_point"] = np.nan
+    merged["away_spread_american"] = np.nan
 
-    odds_games, source = get_nba_odds_for_date(game_date, force_refresh=force_refresh)
+    odds_games, source = get_nba_odds_for_date(
+        game_date, force_refresh=force_refresh, include_spreads=True
+    )
     if not odds_games:
         return merged, "none"
 
@@ -85,6 +96,15 @@ def _attach_nba_odds(
         if match:
             merged.at[idx, "home_ml"] = match.get("home_ml")
             merged.at[idx, "away_ml"] = match.get("away_ml")
+            for col in (
+                "home_spread_point",
+                "home_spread_american",
+                "away_spread_point",
+                "away_spread_american",
+            ):
+                val = match.get(col)
+                if val is not None:
+                    merged.at[idx, col] = val
 
     return merged, source
 
@@ -97,6 +117,10 @@ def _attach_cached_odds(
     merged = slate_df.copy()
     merged["home_ml"] = np.nan
     merged["away_ml"] = np.nan
+    merged["home_spread_point"] = np.nan
+    merged["home_spread_american"] = np.nan
+    merged["away_spread_point"] = np.nan
+    merged["away_spread_american"] = np.nan
 
     odds_df, source = load_odds_for_date(game_date)
     if odds_df.empty:
@@ -119,11 +143,34 @@ def _attach_cached_odds(
         if match is not None:
             merged.at[idx, "home_ml"] = match["home_ml"]
             merged.at[idx, "away_ml"] = match["away_ml"]
+            for col in (
+                "home_spread_point",
+                "home_spread_american",
+                "away_spread_point",
+                "away_spread_american",
+            ):
+                if col in match.index and pd.notna(match[col]):
+                    merged.at[idx, col] = match[col]
 
     return merged, source
 
 
-def _slate_rows(merged: pd.DataFrame, has_odds: bool, min_edge: float) -> list[dict[str, Any]]:
+def _active_margin_model_info() -> dict[str, Any]:
+    from app.models.nba_margin import load_margin_manifest
+
+    manifest = load_margin_manifest()
+    return manifest or {}
+
+
+def _slate_rows(
+    merged: pd.DataFrame,
+    has_odds: bool,
+    min_edge: float,
+    *,
+    spread_enabled: bool = False,
+) -> list[dict[str, Any]]:
+    from app.services.daily_board import _spread_row_fields
+
     rows: list[dict[str, Any]] = []
     for row in merged.itertuples(index=False):
         matchup = f"{row.away_team} @ {row.home_team}"
@@ -157,6 +204,7 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool, min_edge: float) -> list[d
                         "american_odds": am,
                     }
 
+        spread = _spread_row_fields(row, min_edge) if spread_enabled else {}
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -170,6 +218,7 @@ def _slate_rows(merged: pd.DataFrame, has_odds: bool, min_edge: float) -> list[d
                 "ml_confidence": confidence_label(ml_edge_best),
                 "plus_ev_single": plus_ev,
                 "best_pick": best_pick,
+                **spread,
             }
         )
     return rows
@@ -249,6 +298,14 @@ def build_nba_daily_board(
 
     slate_df["model_prob_away"] = 1.0 - slate_df["model_prob_home"]
 
+    spread_enabled = False
+    try:
+        from app.models.nba_margin import is_margin_production_ready
+
+        spread_enabled = is_margin_production_ready()
+    except ImportError:
+        spread_enabled = False
+
     if use_cache:
         merged, odds_source = _attach_cached_odds(slate_df, game_date)
     else:
@@ -264,9 +321,22 @@ def build_nba_daily_board(
     if quota_warning:
         warnings.append(quota_warning)
 
+    if spread_enabled:
+        try:
+            from app.models.nba_margin import predict_spread_covers
+
+            merged = predict_spread_covers(merged)
+        except (FileNotFoundError, ValueError) as exc:
+            logger.warning("NBA spread cover predictions skipped: %s", exc)
+            spread_enabled = False
+
     has_odds = odds_source not in ("none",) and merged["home_ml"].notna().any()
     base["odds_source"] = odds_source
     base["games_with_odds"] = int(merged["home_ml"].notna().sum()) if has_odds else 0
+    base["board_spread_enabled"] = spread_enabled
+    base["active_margin_model"] = _active_margin_model_info() if spread_enabled else {}
+    if spread_enabled:
+        base["spread_disclaimer"] = SPREAD_DISCLAIMER
 
     if odds_source == "none":
         if use_cache:
@@ -285,7 +355,7 @@ def build_nba_daily_board(
         else:
             warnings.append("Odds unavailable — slate shows model probabilities only.")
 
-    slate = _slate_rows(merged, has_odds, min_edge)
+    slate = _slate_rows(merged, has_odds, min_edge, spread_enabled=spread_enabled)
     base["slate"] = slate
     base["plus_ev_count"] = sum(1 for g in slate if g.get("plus_ev_single"))
     base["warnings"] = warnings

@@ -9,7 +9,7 @@ def test_home_page():
     response = client.get("/")
     assert response.status_code == 200
     text = response.text
-    assert "Parlay Builder" in text
+    assert "NTG Sports" in text
     assert 'href="/mlb"' in text
     assert 'href="/nba"' in text
     assert 'id="today-glance"' in text
@@ -89,6 +89,7 @@ def test_nba_game_page():
     response = client.get("/nba/game/401766458")
     assert response.status_code == 200
     assert "nba_game.js" in response.text
+    assert "game-matchup-board" in response.text
 
 
 def test_backtest_saved_endpoint():

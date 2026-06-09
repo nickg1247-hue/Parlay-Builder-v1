@@ -79,7 +79,10 @@ def _mini_games() -> pd.DataFrame:
 
 def test_feature_columns_schema():
     assert "elo_home_pre" in nfp.FEATURE_COLUMNS
-    assert len(nfp.FEATURE_COLUMNS) == 10
+    assert len(nfp.FEATURE_COLUMNS_V1) == 10
+    assert len(nfp.FEATURE_COLUMNS) == 22
+    assert "home_last10_pts_for" in nfp.FEATURE_COLUMNS
+    assert "matchup_pace_proxy" in nfp.FEATURE_COLUMNS
 
 
 def test_build_features_no_leakage_last10():
@@ -132,6 +135,9 @@ def test_run_training_mini(mock_load, mock_save, tmp_path, monkeypatch):
     results = nb.run_training()
     mock_save.assert_called_once()
     assert "logistic_regression_v1" in results["metrics"]
+    assert "logistic_regression_v2_score" in results["metrics"]
+    assert "v1_comparison" in results
+    assert "v2_comparison" in results
     assert "phase_gate" in results
 
 

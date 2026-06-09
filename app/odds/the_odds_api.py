@@ -108,14 +108,18 @@ def fetch_live_mlb_odds(
 def fetch_live_nba_odds(
     api_key: str | None = None,
     regions: str = "us",
+    include_spreads: bool = False,
 ) -> list[dict[str, Any]] | None:
-    """Live NBA moneylines only — one request ≈ 1 credit. No historical endpoint."""
+    """Live NBA odds — one request ≈ 1 credit (h2h or h2h+spreads). No historical endpoint."""
     if not live_odds_enabled() and api_key is None:
         return None
     key = _api_key(api_key)
     if not key:
         return None
-    return _fetch_live_odds(key, MARKET_H2H, regions, sport=SPORT_NBA)
+    markets = (
+        f"{MARKET_H2H},{MARKET_SPREADS}" if include_spreads else MARKET_H2H
+    )
+    return _fetch_live_odds(key, markets, regions, sport=SPORT_NBA)
 
 
 def fetch_historical_mlb_odds(

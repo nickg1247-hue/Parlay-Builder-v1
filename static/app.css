@@ -1470,3 +1470,245 @@ body.slate-mlb .app-main > * {
     text-align: center;
   }
 }
+
+/* --- NTG Sports intro splash --- */
+
+html.ntg-splash-pending {
+  overflow: hidden;
+}
+
+html.ntg-splash-pending .app-shell {
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.ntg-splash-active {
+  overflow: hidden;
+}
+
+.ntg-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.ntg-splash--out {
+  animation: ntg-splash-exit 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+.ntg-splash__stage {
+  position: relative;
+  width: min(88vw, 380px);
+  aspect-ratio: 4 / 2.85;
+}
+
+.ntg-splash__arcs {
+  position: absolute;
+  inset: -8% -6%;
+  width: 112%;
+  height: 116%;
+  pointer-events: none;
+}
+
+.ntg-splash__arc {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.ntg-splash__arc--top {
+  stroke: url(#ntg-arc-grad-top);
+  animation: ntg-arc-draw 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.08s forwards;
+}
+
+.ntg-splash__arc--bottom {
+  stroke: url(#ntg-arc-grad-bottom);
+  animation: ntg-arc-draw 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+}
+
+.ntg-splash__logo-wrap {
+  position: absolute;
+  inset: 10% 0 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  z-index: 2;
+}
+
+.ntg-splash__wordmark {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: min(28vw, 118px);
+  filter: drop-shadow(0 8px 24px rgba(29, 120, 255, 0.15));
+}
+
+.ntg-splash__letter-img {
+  height: 100%;
+  width: auto;
+  display: block;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.ntg-splash__letter-img--n {
+  margin-right: -1.15rem;
+  animation: ntg-letter-n 0.85s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
+}
+
+.ntg-splash__letter-img--t {
+  position: relative;
+  z-index: 3;
+  margin: 0 -0.65rem;
+  animation: ntg-letter-t 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+}
+
+.ntg-splash__letter-img--g {
+  margin-left: -1.05rem;
+  animation: ntg-letter-g 0.85s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
+}
+
+.ntg-splash__sports {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.38em;
+  text-indent: 0.38em;
+  color: #f0f3f5;
+  opacity: 0;
+  animation: ntg-sports-in 0.55s ease-out 1.85s forwards;
+}
+
+.ntg-splash__sports-line {
+  flex: 1;
+  max-width: 2.75rem;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #2b8cff 35%, #2b8cff 65%, transparent);
+  opacity: 0.9;
+}
+
+.ntg-splash__glow {
+  position: absolute;
+  inset: 15% 10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(29, 120, 255, 0.35),
+    transparent 68%
+  );
+  opacity: 0;
+  animation: ntg-glow-pulse 1s ease-in-out 2.5s 1;
+  pointer-events: none;
+}
+
+.ntg-splash--reduced .ntg-splash__arc,
+.ntg-splash--reduced .ntg-splash__glow {
+  animation: none;
+  opacity: 0;
+}
+
+.ntg-splash--reduced .ntg-splash__letter-img,
+.ntg-splash--reduced .ntg-splash__sports {
+  animation: ntg-logo-simple 0.55s ease-out 0.15s forwards;
+}
+
+@keyframes ntg-arc-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ntg-letter-n {
+  from {
+    opacity: 0;
+    transform: translateX(-140%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes ntg-letter-g {
+  from {
+    opacity: 0;
+    transform: translateX(140%) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes ntg-letter-t {
+  from {
+    opacity: 0;
+    transform: translateY(-60%) scale(0.4);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(5%) scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ntg-sports-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    letter-spacing: 0.55em;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0.38em;
+  }
+}
+
+@keyframes ntg-logo-simple {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ntg-glow-pulse {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ntg-splash-exit {
+  to {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ntg-splash--out {
+    animation-duration: 0.35s;
+  }
+}

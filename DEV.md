@@ -515,7 +515,9 @@ python scripts/train_nba_baseline.py
 
 **Split:** seasons **2024 + 2025** (2023-24, 2024-25) train · **2026** (2025-26) holdout — time-based, no shuffle.
 
-**Features:** rest days, B2B, last-10 / season win %, pre-game Elo (`app/features/nba_pregame.py`).
+**Features (v1):** rest days, B2B, last-10 / season win %, pre-game Elo (`app/features/nba_pregame.py`).
+
+**Features wave 2 (`v2_score_rolling`):** v1 columns plus rolling / season points for & against, last-10 margin avg, `rest_diff`, `matchup_pace_proxy`. Neutral fills: train-season (2024+2025) median pts/game for scoring columns with no prior games; margin avg → `0.0`. Same leakage rules as win % — only games strictly before game date.
 
 **Naive baselines:** constant home win rate (train), Elo, rolling last-10 home win %.
 
@@ -551,6 +553,31 @@ Log: `data/processed/forward_clv_nba_log.jsonl` · `betting_ready: false` until 
 | `data/processed/active_nba_model.json` | Active NBA moneyline manifest |
 
 **Verify:** `pytest tests/test_nba_baseline.py -q`
+
+---
+
+## NBA spread model (Phase NBA-F2)
+
+Margin regression on wave-2 features → point-spread cover probs via Normal CDF. See `SPREAD_NBA.md`.
+
+**Train** (requires Phase 1 parquet + wave-2 features):
+
+```powershell
+python scripts/train_nba_margin.py
+```
+
+**Gate:** holdout MAE &lt; 15 · proxy cover log loss &lt; 0.693 · margin-derived ML log loss ≤ v2 logistic + 0.005. When gate passes, `production_ready: true` enables spread columns on `/nba/board`.
+
+**Live odds:** `nba_odds_repository` requests `h2h,spreads` in one credit (same as MLB). Demo CSV has ML only — spread cols show `—` until live/repository snapshot includes spreads.
+
+**Artifacts:** `nba_margin_model.joblib`, `nba_margin_metrics.json`, `active_nba_margin_model.json`
+
+**Verify:**
+
+```powershell
+pytest tests/test_nba_margin.py tests/test_nba_odds_repository.py tests/test_nba_daily_board.py -q
+python scripts/train_nba_margin.py
+```
 
 ---
 

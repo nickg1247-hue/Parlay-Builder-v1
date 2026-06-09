@@ -27,3 +27,9 @@ def test_model_prob_home_cover_at_minus_15():
     # margin mean 2, std 1 → P(margin > 1.5) for home -1.5
     p = model_prob_home_cover(2.0, 1.0, -1.5)
     assert 0.4 < p < 0.7
+
+
+def test_model_prob_home_cover_nba_minus_55():
+    # NBA proxy: home -5.5 needs margin > 5.5; mean 8, std 12
+    p = model_prob_home_cover(8.0, 12.0, -5.5)
+    assert 0.45 < p < 0.75
