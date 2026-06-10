@@ -4,11 +4,19 @@ from contextlib import asynccontextmanager
 from datetime import date as date_type
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from app.auth.admin_auth import (
+    AdminAuthMiddleware,
+    auth_enabled,
+    clear_session_cookie,
+    is_authenticated,
+    set_session_cookie,
+    verify_credentials,
+)
 from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
@@ -102,7 +110,47 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="NTG Sports", lifespan=lifespan)
+app.add_middleware(AdminAuthMiddleware)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.get("/login")
+async def login_page():
+    return FileResponse(STATIC_DIR / "login.html")
+
+
+@app.post("/api/auth/login")
+async def auth_login(body: LoginRequest):
+    if not auth_enabled():
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Admin auth is not configured on this server"},
+        )
+    if not verify_credentials(body.username, body.password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    response = JSONResponse({"ok": True})
+    set_session_cookie(response)
+    return response
+
+
+@app.post("/api/auth/logout")
+async def auth_logout():
+    response = JSONResponse({"ok": True})
+    clear_session_cookie(response)
+    return response
+
+
+@app.get("/api/auth/status")
+async def auth_status(request: Request):
+    return {
+        "auth_enabled": auth_enabled(),
+        "authenticated": is_authenticated(request),
+    }
 
 
 @app.get("/health")

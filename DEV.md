@@ -153,6 +153,33 @@ After `morning_refresh`, `market_cards.source` should be `the_odds_api` (or `rep
 
 ---
 
+## Admin login (boards & lab)
+
+Advanced analytics stay public on the **slate** pages (`/mlb`, `/nba`) and game pages. **Boards** and the **model lab** require sign-in when `ADMIN_PASSWORD` is set in `.env`.
+
+| Public | Protected (when auth enabled) |
+|--------|-------------------------------|
+| `/`, `/mlb`, `/nba`, game pages | `/mlb/board`, `/nba/board`, `/mlb/lab` |
+| Scores, news, home summary | `/api/daily`, `/api/nba/daily`, `/api/backtest`, `/api/clv/summary`, `/api/lab/*` |
+
+**Local dev:** leave `ADMIN_PASSWORD` empty — auth is off and boards load without login.
+
+**Production (ntgsports.com):** set credentials in `/root/parlay-builder/.env`, then restart the service:
+
+```env
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_strong_password
+# optional: ADMIN_SESSION_SECRET=long_random_string
+```
+
+```bash
+sudo systemctl restart parlay-builder
+```
+
+Sign in at `/login`. Session cookie lasts 7 days (`HttpOnly`, `SameSite=Lax`; `Secure` when `APP_ENV=production`).
+
+---
+
 ## Game insights (Phase C)
 
 **Endpoint:** `GET /api/games/mlb/{game_id}/insights?date=&use_cache=&refresh=`
@@ -543,6 +570,8 @@ Gate: **passes** (beats Elo naive and market proxy).
 | Summary | `GET /api/clv/summary?sport=nba&days=30` |
 
 Log: `data/processed/forward_clv_nba_log.jsonl` · `betting_ready: false` until advisor CLV review. See `MARKET_NBA.md`.
+
+**Rolling backtest:** `python scripts/backtest_nba_recent.py --start 2026-03-25 --end 2026-04-10` (or `--days 14`) → `data/processed/nba_backtest_report.json`
 
 **Artifacts**
 

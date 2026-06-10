@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .login-wrap {
+      max-width: 400px;
+      margin: 4rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .login-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      backdrop-filter: blur(var(--glass-blur));
+    }
+    .login-card h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.35rem;
+    }
+    .login-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+    .login-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+    }
+    .login-field label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .login-field input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 0.6rem 0.75rem;
+    }
+    .login-field input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    .login-error {
+      color: #f4212e;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      min-height: 1.2em;
+    }
+    .login-submit {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.65rem 1rem;
+    }
+    .login-submit:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .login-back {
+      display: inline-block;
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .login-back:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>NTG Sports</h1>
+      <p>Sign in to access boards and the model lab.</p>
+      <form id="login-form" autocomplete="on">
+        <div class="login-field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required>
+        </div>
+        <div class="login-field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div id="login-error" class="login-error" role="alert"></div>
+        <button type="submit" class="login-submit" id="login-btn">Sign in</button>
+      </form>
+      <a class="login-back" href="/">← Back to home</a>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next") || "/mlb/board";
+      const form = document.getElementById("login-form");
+      const errorEl = document.getElementById("login-error");
+      const btn = document.getElementById("login-btn");
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        errorEl.textContent = "";
+        btn.disabled = true;
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: document.getElementById("username").value,
+              password: document.getElementById("password").value,
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(function () { return {}; });
+            errorEl.textContent = body.detail || "Sign in failed";
+            return;
+          }
+          window.location.href = next;
+        } catch (err) {
+          errorEl.textContent = "Network error — try again";
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
