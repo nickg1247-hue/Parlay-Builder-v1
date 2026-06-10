@@ -75,11 +75,11 @@ logger = logging.getLogger(__name__)
 
 async def _hourly_odds_loop() -> None:
     while True:
-        await asyncio.sleep(3600)
         try:
             run_hourly_odds_refresh()
         except Exception as exc:
             logger.warning("In-app hourly odds refresh error: %s", exc)
+        await asyncio.sleep(3600)
 
 
 @asynccontextmanager

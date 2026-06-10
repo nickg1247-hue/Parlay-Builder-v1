@@ -176,7 +176,7 @@ ADMIN_PASSWORD=your_strong_password
 sudo systemctl restart parlay-builder
 ```
 
-Sign in at `/login`. Session cookie lasts 7 days (`HttpOnly`, `SameSite=Lax`; `Secure` when `APP_ENV=production`).
+Sign in at `/login`. Session cookie lasts 7 days (`HttpOnly`, `SameSite=Lax`). Cookies are `Secure` when `APP_ENV=production` unless you set `ADMIN_COOKIE_SECURE=false` (required on HTTP-only VPS before HTTPS).
 
 ---
 
@@ -397,10 +397,13 @@ Or via PowerShell wrapper (appends to log):
 |------|---------|
 | `data/processed/daily_board.json` | Cached board (`refresh=true`, includes O/U) |
 | `data/processed/mlb_schedule_YYYY-MM-DD.json` | MLB schedule cache for UI |
-| `data/processed/last_morning_refresh.json` | Last run status (time, ok, games, odds source) |
+| `data/processed/last_morning_refresh.json` | Last morning board build status |
+| `data/processed/last_odds_hourly_refresh.json` | Last hourly odds job (in-app or cron) |
 | `data/processed/morning_refresh.log` | Appended stdout/stderr from `.ps1` runs |
 
-**Status API:** `GET /api/status/refresh` — returns `last_morning_refresh.json` or a default when missing.
+**Status API:** `GET /api/status/refresh` — merges morning status with odds repository `fetched_at`. Home/slate badge shows **Odds updated** when live lines refreshed within 2h even if a morning board build failed. Set `MORNING_SKIP_TOTALS=true` (default) on VPS without the totals model.
+
+**Hourly odds:** With `ODDS_HOURLY_REFRESH=true`, the app refreshes today's repository on startup and every 3600s (quota-gated). Cron alternative: `python scripts/refresh_odds_hourly.py` at `0 * * * *`.
 
 **Odds API:** Only when `USE_LIVE_ODDS=true` and `ODDS_API_KEY` set. Each morning refresh then uses **~1 credit**. Otherwise morning refresh builds a **model-only** board (`odds_source: model_only`) — no API calls.
 

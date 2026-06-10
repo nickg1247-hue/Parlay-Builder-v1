@@ -41,18 +41,40 @@ _DEFAULT_STATUS: dict[str, Any] = {
 }
 
 
+def _morning_skip_totals() -> bool:
+    raw = os.getenv("MORNING_SKIP_TOTALS", "true").strip().lower()
+    return raw not in ("0", "false", "no")
+
+
 def get_refresh_status() -> dict[str, Any]:
-    """Return last morning refresh status or a sensible default."""
-    if not LAST_MORNING_REFRESH.exists():
-        return dict(_DEFAULT_STATUS)
-    try:
-        return json.loads(LAST_MORNING_REFRESH.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        logger.warning("Could not read %s: %s", LAST_MORNING_REFRESH, exc)
-        return {
-            **_DEFAULT_STATUS,
-            "error": f"Status file unreadable: {exc}",
-        }
+    """Return morning refresh status plus live odds repository snapshot."""
+    if LAST_MORNING_REFRESH.exists():
+        try:
+            status = json.loads(LAST_MORNING_REFRESH.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Could not read %s: %s", LAST_MORNING_REFRESH, exc)
+            status = {
+                **_DEFAULT_STATUS,
+                "error": f"Status file unreadable: {exc}",
+            }
+    else:
+        status = dict(_DEFAULT_STATUS)
+
+    from app.odds.odds_repository import get_today_snapshot
+    from app.services.odds_hourly_refresh import (
+        hourly_refresh_enabled,
+        load_hourly_refresh_status,
+    )
+
+    snap = get_today_snapshot()
+    status["odds_fetched_at"] = snap.get("fetched_at")
+    status["odds_seconds_since_fetch"] = snap.get("seconds_since_fetch")
+    status["odds_repo_source"] = snap.get("source")
+    status["hourly_refresh_enabled"] = hourly_refresh_enabled()
+    hourly = load_hourly_refresh_status()
+    if hourly is not None:
+        status["hourly_last"] = hourly
+    return status
 
 
 def _write_status(
@@ -85,7 +107,7 @@ def _build_board_with_retry(game_date: date) -> dict[str, Any]:
                 game_date=game_date,
                 use_cache=False,
                 refresh=True,
-                skip_totals=False,
+                skip_totals=_morning_skip_totals(),
                 min_edge=DEFAULT_MIN_EDGE,
                 max_parlays=DEFAULT_MAX_PARLAYS,
                 odds_force_refresh=False,

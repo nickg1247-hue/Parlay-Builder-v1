@@ -35,6 +35,19 @@ def admin_username() -> str:
     return os.getenv("ADMIN_USERNAME", "admin").strip() or "admin"
 
 
+def _admin_password() -> str:
+    return os.getenv("ADMIN_PASSWORD", "").strip()
+
+
+def _cookie_secure() -> bool:
+    raw = os.getenv("ADMIN_COOKIE_SECURE", "").strip().lower()
+    if raw in ("1", "true", "yes"):
+        return True
+    if raw in ("0", "false", "no"):
+        return False
+    return os.getenv("APP_ENV", "development").lower() == "production"
+
+
 def _session_secret() -> bytes:
     explicit = os.getenv("ADMIN_SESSION_SECRET", "").strip()
     if explicit:
@@ -47,7 +60,7 @@ def verify_credentials(username: str, password: str) -> bool:
     if not auth_enabled():
         return True
     user_ok = secrets.compare_digest(username, admin_username())
-    pass_ok = secrets.compare_digest(password, os.getenv("ADMIN_PASSWORD", ""))
+    pass_ok = secrets.compare_digest(password, _admin_password())
     return user_ok and pass_ok
 
 
@@ -89,7 +102,7 @@ def is_authenticated(request: Request) -> bool:
 
 
 def set_session_cookie(response: Response) -> None:
-    secure = os.getenv("APP_ENV", "development").lower() == "production"
+    secure = _cookie_secure()
     response.set_cookie(
         key=COOKIE_NAME,
         value=create_session_token(),
@@ -102,7 +115,7 @@ def set_session_cookie(response: Response) -> None:
 
 
 def clear_session_cookie(response: Response) -> None:
-    secure = os.getenv("APP_ENV", "development").lower() == "production"
+    secure = _cookie_secure()
     response.delete_cookie(key=COOKIE_NAME, path="/", secure=secure)
 
 

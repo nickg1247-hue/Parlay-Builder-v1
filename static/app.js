@@ -84,15 +84,35 @@ function formatLocalTimeShort(isoUtc) {
 }
 
 function formatRefreshStatus(status) {
-  if (!status || !status.ran_at) {
-    return status?.error || "Not refreshed yet";
-  }
-  const when = formatLocalTime(status.ran_at);
-  if (status.ok) {
-    const games = status.games_on_slate != null ? ` · ${status.games_on_slate} games` : "";
+  if (!status) return "Not refreshed yet";
+
+  const oddsWhen = status.odds_fetched_at
+    ? formatLocalTime(status.odds_fetched_at)
+    : null;
+  const oddsFresh =
+    status.odds_seconds_since_fetch != null &&
+    status.odds_seconds_since_fetch < 7200;
+
+  if (status.ok && status.ran_at) {
+    const when = formatLocalTime(status.ran_at);
+    const games =
+      status.games_on_slate != null ? ` · ${status.games_on_slate} games` : "";
     return `Updated ${when}${games}`;
   }
-  return `Refresh failed ${when}`;
+
+  if (oddsFresh && oddsWhen) {
+    return `Odds updated ${oddsWhen}`;
+  }
+
+  if (status.ran_at && !status.ok) {
+    return `Board refresh failed ${formatLocalTime(status.ran_at)}`;
+  }
+
+  if (oddsWhen) {
+    return `Odds updated ${oddsWhen}`;
+  }
+
+  return status.error || "Not refreshed yet";
 }
 
 function formatRelativeShort(isoUtc) {

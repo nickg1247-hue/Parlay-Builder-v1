@@ -71,7 +71,7 @@ def test_run_morning_refresh_success(isolated_refresh_paths, monkeypatch, tmp_pa
         game_date=date(2026, 6, 6),
         use_cache=False,
         refresh=True,
-        skip_totals=False,
+        skip_totals=True,
         min_edge=0.08,
         max_parlays=5,
         odds_force_refresh=False,
@@ -110,10 +110,19 @@ def test_run_morning_refresh_failure_preserves_board(isolated_refresh_paths):
 
 
 def test_get_refresh_status_default_when_missing(isolated_refresh_paths):
-    status = mr.get_refresh_status()
+    with patch(
+        "app.odds.odds_repository.get_today_snapshot",
+        return_value={
+            "fetched_at": None,
+            "seconds_since_fetch": None,
+            "source": None,
+        },
+    ):
+        status = mr.get_refresh_status()
     assert status["ok"] is False
     assert status["ran_at"] is None
     assert status["error"] == "No morning refresh has run yet"
+    assert "odds_fetched_at" in status
 
 
 def test_api_status_refresh_returns_json(isolated_refresh_paths):
