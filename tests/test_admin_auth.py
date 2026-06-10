@@ -25,8 +25,25 @@ def _login(username="testadmin", password="test-secret"):
 
 def test_board_public_when_auth_disabled(monkeypatch):
     monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.delenv("REQUIRE_ADMIN_AUTH", raising=False)
+    monkeypatch.delenv("ADMIN_AUTH_DISABLED", raising=False)
     response = client.get("/mlb/board")
     assert response.status_code == 200
+
+
+def test_production_locks_board_without_password(monkeypatch):
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    monkeypatch.setenv("APP_ENV", "production")
+    response = client.get("/mlb/board", follow_redirects=False)
+    assert response.status_code == 302
+    assert "/login" in response.headers["location"]
+
+
+def test_static_board_html_blocked_when_auth_enabled(auth_env):
+    response = client.get("/static/mlb.html", follow_redirects=False)
+    assert response.status_code == 302
+    assert "/login" in response.headers["location"]
 
 
 def test_board_redirects_to_login_when_auth_enabled(auth_env):

@@ -1,3 +1,5 @@
+import app.config  # noqa: F401 — load .env before auth middleware reads env vars
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -12,6 +14,7 @@ from pydantic import BaseModel, Field
 from app.auth.admin_auth import (
     AdminAuthMiddleware,
     auth_enabled,
+    auth_misconfigured,
     clear_session_cookie,
     is_authenticated,
     set_session_cookie,
@@ -100,6 +103,14 @@ async def lifespan(app: FastAPI):
     if hourly_refresh_enabled() and live_odds_enabled():
         hourly_task = asyncio.create_task(_hourly_odds_loop())
         logger.info("Odds hourly refresh scheduler started (3600s)")
+    if auth_enabled():
+        if auth_misconfigured():
+            logger.error(
+                "Admin auth is ON but ADMIN_PASSWORD is not set — "
+                "boards/lab are locked until you add ADMIN_PASSWORD to .env"
+            )
+        else:
+            logger.info("Admin auth enabled for boards and model lab")
     yield
     if hourly_task is not None:
         hourly_task.cancel()
@@ -131,6 +142,13 @@ async def auth_login(body: LoginRequest):
             status_code=503,
             content={"detail": "Admin auth is not configured on this server"},
         )
+    if auth_misconfigured():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "ADMIN_PASSWORD is not set on the server — add it to .env and restart",
+            },
+        )
     if not verify_credentials(body.username, body.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     response = JSONResponse({"ok": True})
@@ -149,6 +167,7 @@ async def auth_logout():
 async def auth_status(request: Request):
     return {
         "auth_enabled": auth_enabled(),
+        "auth_misconfigured": auth_misconfigured(),
         "authenticated": is_authenticated(request),
     }
 

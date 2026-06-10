@@ -18,6 +18,14 @@ COOKIE_NAME = "ntg_admin"
 SESSION_MAX_AGE_SECONDS = 7 * 24 * 3600
 
 PROTECTED_PAGE_PATHS = frozenset({"/mlb/board", "/mlb/lab", "/nba/board"})
+PROTECTED_STATIC_PATHS = frozenset({
+    "/static/mlb.html",
+    "/static/mlb_lab.html",
+    "/static/nba.html",
+    "/static/mlb.js",
+    "/static/mlb_lab.js",
+    "/static/nba_board.js",
+})
 PROTECTED_API_PREFIXES = (
     "/api/daily",
     "/api/nba/daily",
@@ -27,8 +35,29 @@ PROTECTED_API_PREFIXES = (
 )
 
 
+def auth_explicitly_disabled() -> bool:
+    return os.getenv("ADMIN_AUTH_DISABLED", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def auth_enabled() -> bool:
-    return bool(os.getenv("ADMIN_PASSWORD", "").strip())
+    """Auth off only in local dev when ADMIN_PASSWORD is unset and not production."""
+    if auth_explicitly_disabled():
+        return False
+    if _admin_password():
+        return True
+    if os.getenv("REQUIRE_ADMIN_AUTH", "").strip().lower() in ("1", "true", "yes", "on"):
+        return True
+    return os.getenv("APP_ENV", "development").lower() == "production"
+
+
+def auth_misconfigured() -> bool:
+    """Production lock engaged but no password to sign in with."""
+    return auth_enabled() and not _admin_password()
 
 
 def admin_username() -> str:
@@ -128,7 +157,7 @@ def safe_next_path(path: str | None) -> str:
 
 
 def is_protected_path(path: str) -> bool:
-    if path in PROTECTED_PAGE_PATHS:
+    if path in PROTECTED_PAGE_PATHS or path in PROTECTED_STATIC_PATHS:
         return True
     return any(path.startswith(prefix) for prefix in PROTECTED_API_PREFIXES)
 

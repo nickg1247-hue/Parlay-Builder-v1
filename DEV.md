@@ -162,15 +162,19 @@ Advanced analytics stay public on the **slate** pages (`/mlb`, `/nba`) and game 
 | `/`, `/mlb`, `/nba`, game pages | `/mlb/board`, `/nba/board`, `/mlb/lab` |
 | Scores, news, home summary | `/api/daily`, `/api/nba/daily`, `/api/backtest`, `/api/clv/summary`, `/api/lab/*` |
 
-**Local dev:** leave `ADMIN_PASSWORD` empty — auth is off and boards load without login.
+**Local dev:** leave `ADMIN_PASSWORD` empty and `APP_ENV=development` — auth is off.
 
-**Production (ntgsports.com):** set credentials in `/root/parlay-builder/.env`, then restart the service:
+**Production (ntgsports.com):** boards lock when `APP_ENV=production` even before a password is set. You **must** set `ADMIN_PASSWORD` or nobody can sign in. Direct URLs like `/static/mlb.html` are blocked too.
 
 ```env
+APP_ENV=production
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_strong_password
+ADMIN_COOKIE_SECURE=false
 # optional: ADMIN_SESSION_SECRET=long_random_string
 ```
+
+Verify: `curl -s https://ntgsports.com/api/auth/status` → `"auth_enabled": true`. Visiting `/mlb/board` should redirect to `/login`.
 
 ```bash
 sudo systemctl restart parlay-builder
