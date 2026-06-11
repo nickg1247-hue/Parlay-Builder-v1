@@ -81,3 +81,16 @@ Singles and parlays: **8%** minimum edge/EV (`DEFAULT_MIN_EDGE = 0.08`).
 | L10 / L30 / season rolling | Chronological; day-of-game excluded |
 | Rest days | Train median |
 | Park factor | Static `app/data/park_factors.csv` |
+
+## Tier 1 features (Lab only — not production v3)
+
+**Evaluate via Model Lab** (`wave1_pruned_pitcher_l5`, `wave1_pruned_bullpen`, `wave1_pruned_l5_bullpen`) before any promote. Production artifact unchanged until holdout gate passes.
+
+| Column | Definition |
+|--------|------------|
+| `home_pitcher_era_l5` / `away_pitcher_era_l5` | IP-weighted ERA over last ≤5 **starts** strictly before game date; same season first, prior season if &lt;5; fallback = season ERA from `lookup_pitcher_profile` |
+| `home_pitcher_whip_l5` / `away_pitcher_whip_l5` | IP-weighted WHIP over same window; fallback = season WHIP |
+| `home_bullpen_era_14d` / `away_bullpen_era_14d` | Relief ER/IP × 9 over prior **14 calendar days** (max **20** relief appearances); fallback = 2023–24 train median |
+| `home_bullpen_ip_3d` / `away_bullpen_ip_3d` | Relief innings in prior **3 calendar days**; fallback = 2023–24 train median |
+
+**Data:** `data/processed/mlb_pitcher_game_log.parquet` — all pitching lines from MLB Stats API boxscores (`scripts/ingest_mlb.py`). No same-day leakage.

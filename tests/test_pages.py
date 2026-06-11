@@ -1,8 +1,26 @@
 from fastapi.testclient import TestClient
+import pytest
 
 from app.main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture
+def auth_env(monkeypatch):
+    monkeypatch.setenv("ADMIN_USERNAME", "testadmin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "test-secret")
+    monkeypatch.setenv("ADMIN_SESSION_SECRET", "unit-test-session-secret")
+    client.cookies.clear()
+    yield
+    client.cookies.clear()
+
+
+def _login():
+    return client.post(
+        "/api/auth/login",
+        json={"username": "testadmin", "password": "test-secret"},
+    )
 
 
 def test_home_page():
@@ -12,6 +30,7 @@ def test_home_page():
     assert "NTG Sports" in text
     assert 'href="/mlb"' in text
     assert 'href="/nba"' in text
+    assert 'href="/mlb/board"' not in text
     assert 'id="today-glance"' in text
     assert 'id="best-bets"' in text
     assert 'id="hero-chips"' in text
@@ -26,17 +45,18 @@ def test_mlb_slate_page():
     text = response.text
     assert "MLB" in text
     assert 'href="/"' in text
-    assert 'href="/mlb/board"' in text
+    assert 'href="/mlb/board"' not in text
     assert "/api/scores/today" in text
     assert "app.js" in text
 
 
-def test_mlb_board_page():
+def test_mlb_board_page(auth_env):
+    _login()
     response = client.get("/mlb/board")
     assert response.status_code == 200
     text = response.text
     assert "MLB Daily Board" in text
-    assert 'href="/mlb"' in text
+    assert 'href="/sandbox"' in text
     assert "Run live" in text
     assert "mlb.js" in text
 
@@ -71,18 +91,31 @@ def test_nba_slate_page():
     assert "NBA" in text
     assert "/api/scores/today" in text
     assert 'href="/mlb"' in text
-    assert 'href="/nba/board"' in text
+    assert 'href="/nba/board"' not in text
 
 
-def test_nba_board_page():
+def test_nba_board_page(auth_env):
+    _login()
     response = client.get("/nba/board")
     assert response.status_code == 200
     text = response.text
     assert "NBA Daily Board" in text
-    assert 'href="/nba"' in text
+    assert 'href="/sandbox"' in text
     assert 'id="run-live-btn"' in text
     assert 'id="run-demo-btn"' in text
     assert "nba_board.js" in text
+
+
+def test_sandbox_hub_page(auth_env):
+    _login()
+    response = client.get("/sandbox")
+    assert response.status_code == 200
+    text = response.text
+    assert "Sandbox" in text
+    assert 'href="/mlb/board"' in text
+    assert 'href="/mlb/lab"' in text
+    assert 'href="/nba/board"' in text
+    assert 'href="/nba/board/factors"' in text
 
 
 def test_nba_game_page():
@@ -92,7 +125,8 @@ def test_nba_game_page():
     assert "game-matchup-board" in response.text
 
 
-def test_backtest_saved_endpoint():
+def test_backtest_saved_endpoint(auth_env):
+    _login()
     response = client.get("/api/backtest/saved")
     assert response.status_code == 200
     body = response.json()

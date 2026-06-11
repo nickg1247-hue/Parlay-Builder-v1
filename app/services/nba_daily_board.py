@@ -13,11 +13,12 @@ import pandas as pd
 
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.nba_baseline import ACTIVE_NBA_MANIFEST, load_model_artifact, predict_home_win_proba
+from app.models.nba_custom import load_custom_weights, predict_custom_home_proba
 from app.odds.live_odds import live_odds_enabled
 from app.odds.nba_odds_free import load_odds_for_date
 from app.odds.nba_odds_repository import get_nba_odds_for_date
 from app.odds.nba_team_aliases import normalize_nba_team_name
-from app.odds.odds_math import market_probs_from_american
+from app.odds.odds_math import market_probs_from_american, market_probs_from_american_totals
 from app.odds.team_aliases import is_valid_american_odds
 from app.services.daily_board import confidence_label
 from app.services.nba_forward_clv import log_live_picks
@@ -28,12 +29,18 @@ logger = logging.getLogger(__name__)
 LIVE_ODDS_SOURCES = frozenset({"the_odds_api", "the_odds_api_live"})
 
 NBA_DISCLAIMER = (
-    "NBA moneyline model — not betting advice. betting_ready=false until forward CLV validates edge."
+    "NBA weighted factor model — not betting advice. "
+    "15 user-defined factors; optional overrides for injuries/lineups."
 )
 
 SPREAD_DISCLAIMER = (
     "NBA spread model is experimental (margin GBR + Normal cover); not betting-ready. "
     "See SPREAD_NBA.md."
+)
+
+TOTALS_DISCLAIMER = (
+    "NBA O/U model is experimental (GBR + Normal over prob); separate gate from moneyline. "
+    "See TOTALS_NBA.md."
 )
 
 
@@ -72,9 +79,15 @@ def _attach_nba_odds(
     merged["home_spread_american"] = np.nan
     merged["away_spread_point"] = np.nan
     merged["away_spread_american"] = np.nan
+    merged["ou_line"] = np.nan
+    merged["over_odds"] = np.nan
+    merged["under_odds"] = np.nan
 
     odds_games, source = get_nba_odds_for_date(
-        game_date, force_refresh=force_refresh, include_spreads=True
+        game_date,
+        force_refresh=force_refresh,
+        include_spreads=True,
+        include_totals=True,
     )
     if not odds_games:
         return merged, "none"
@@ -101,6 +114,9 @@ def _attach_nba_odds(
                 "home_spread_american",
                 "away_spread_point",
                 "away_spread_american",
+                "ou_line",
+                "over_odds",
+                "under_odds",
             ):
                 val = match.get(col)
                 if val is not None:
@@ -121,6 +137,9 @@ def _attach_cached_odds(
     merged["home_spread_american"] = np.nan
     merged["away_spread_point"] = np.nan
     merged["away_spread_american"] = np.nan
+    merged["ou_line"] = np.nan
+    merged["over_odds"] = np.nan
+    merged["under_odds"] = np.nan
 
     odds_df, source = load_odds_for_date(game_date)
     if odds_df.empty:
@@ -148,6 +167,9 @@ def _attach_cached_odds(
                 "home_spread_american",
                 "away_spread_point",
                 "away_spread_american",
+                "ou_line",
+                "over_odds",
+                "under_odds",
             ):
                 if col in match.index and pd.notna(match[col]):
                     merged.at[idx, col] = match[col]
@@ -162,14 +184,102 @@ def _active_margin_model_info() -> dict[str, Any]:
     return manifest or {}
 
 
+def _active_totals_model_info() -> dict[str, Any]:
+    from app.models.nba_totals import load_totals_manifest
+
+    return load_totals_manifest() or {}
+
+
+def _totals_row_fields(row, min_edge: float) -> dict[str, Any]:
+    exp = getattr(row, "expected_total_pts", None)
+    exp_out = (
+        round(float(exp), 1)
+        if exp is not None and not (isinstance(exp, float) and np.isnan(exp))
+        else None
+    )
+    empty: dict[str, Any] = {
+        "ou_line": None,
+        "over_odds": None,
+        "under_odds": None,
+        "expected_total_pts": exp_out,
+        "model_prob_over": getattr(row, "model_prob_over", None),
+        "market_prob_over": None,
+        "total_edge": None,
+        "totals_pick": None,
+        "totals_confidence": confidence_label(None),
+        "plus_ev_total": False,
+    }
+    line = getattr(row, "ou_line", None)
+    over_am = getattr(row, "over_odds", None)
+    under_am = getattr(row, "under_odds", None)
+    if line is None or pd.isna(line):
+        return empty
+    if not is_valid_american_odds(over_am) or not is_valid_american_odds(under_am):
+        empty["ou_line"] = float(line)
+        return empty
+
+    market_over, _ = market_probs_from_american_totals(int(over_am), int(under_am))
+    model_over = getattr(row, "model_prob_over", None)
+    edge = None
+    if model_over is not None and not (isinstance(model_over, float) and np.isnan(model_over)):
+        edge = float(model_over) - market_over
+
+    totals_pick = None
+    plus_ev = False
+    if edge is not None:
+        if edge >= min_edge:
+            totals_pick = f"Over {float(line):g}"
+            plus_ev = True
+        elif edge <= -min_edge:
+            totals_pick = f"Under {float(line):g}"
+            plus_ev = True
+
+    return {
+        "ou_line": float(line),
+        "over_odds": int(over_am),
+        "under_odds": int(under_am),
+        "expected_total_pts": (
+            round(float(row.expected_total_pts), 1)
+            if getattr(row, "expected_total_pts", None) is not None
+            and not pd.isna(getattr(row, "expected_total_pts", None))
+            else None
+        ),
+        "model_prob_over": model_over,
+        "market_prob_over": round(market_over, 4),
+        "total_edge": round(edge, 4) if edge is not None else None,
+        "totals_pick": totals_pick,
+        "totals_confidence": confidence_label(abs(edge) if edge is not None else None),
+        "plus_ev_total": plus_ev,
+    }
+
+
+def _top_totals(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
+    picks = [
+        {
+            "matchup": g["matchup"],
+            "pick": g["totals_pick"],
+            "ou_line": g["ou_line"],
+            "expected_total_pts": g.get("expected_total_pts"),
+            "edge": g["total_edge"],
+        }
+        for g in slate
+        if g.get("plus_ev_total") and g.get("totals_pick") and g.get("total_edge") is not None
+    ]
+    picks.sort(key=lambda p: p["edge"], reverse=True)
+    return picks[:limit]
+
+
 def _slate_rows(
     merged: pd.DataFrame,
     has_odds: bool,
     min_edge: float,
     *,
     spread_enabled: bool = False,
+    totals_enabled: bool = False,
+    eval_mode: bool = False,
 ) -> list[dict[str, Any]]:
     from app.services.daily_board import _spread_row_fields
+    from app.services.nba_eval_slate import eval_row_fields
 
     rows: list[dict[str, Any]] = []
     for row in merged.itertuples(index=False):
@@ -205,22 +315,54 @@ def _slate_rows(
                     }
 
         spread = _spread_row_fields(row, min_edge) if spread_enabled else {}
-        rows.append(
-            {
-                "game_id": str(row.game_id),
-                "matchup": matchup,
-                "away_team": row.away_team,
-                "home_team": row.home_team,
-                "model_prob_home": round(model_home, 4),
-                "market_prob_home": round(market_home, 4) if market_home else None,
-                "edge_home": round(edge_home, 4) if edge_home is not None else None,
-                "ml_edge_best": round(ml_edge_best, 4) if ml_edge_best is not None else None,
-                "ml_confidence": confidence_label(ml_edge_best),
-                "plus_ev_single": plus_ev,
-                "best_pick": best_pick,
-                **spread,
-            }
-        )
+        if spread_enabled:
+            mm = getattr(row, "model_margin", None)
+            if mm is not None and not (isinstance(mm, float) and np.isnan(mm)):
+                spread["model_margin"] = round(float(mm), 1)
+        totals = _totals_row_fields(row, min_edge) if totals_enabled else {}
+        pick_side = "home" if model_home >= 0.5 else "away"
+        model_pick = row.home_team if pick_side == "home" else row.away_team
+        row_dict: dict[str, Any] = {
+            "game_id": str(row.game_id),
+            "matchup": matchup,
+            "away_team": row.away_team,
+            "home_team": row.home_team,
+            "model_prob_home": round(model_home, 4),
+            "model_prob_away": round(1.0 - model_home, 4),
+            "ml_prob_home": (
+                round(float(row.ml_prob_home), 4)
+                if hasattr(row, "ml_prob_home") and pd.notna(getattr(row, "ml_prob_home", None))
+                else None
+            ),
+            "model_pick": model_pick,
+            "model_pick_side": pick_side,
+            "market_prob_home": round(market_home, 4) if market_home else None,
+            "edge_home": round(edge_home, 4) if edge_home is not None else None,
+            "ml_edge_best": round(ml_edge_best, 4) if ml_edge_best is not None else None,
+            "ml_confidence": confidence_label(ml_edge_best),
+            "plus_ev_single": plus_ev,
+            "best_pick": best_pick,
+            **spread,
+            **totals,
+        }
+        if has_odds and pd.notna(getattr(row, "home_ml", None)):
+            row_dict["home_ml"] = int(row.home_ml)
+            row_dict["away_ml"] = int(row.away_ml)
+            for col in (
+                "home_spread_point",
+                "home_spread_american",
+                "away_spread_point",
+                "away_spread_american",
+                "ou_line",
+                "over_odds",
+                "under_odds",
+            ):
+                val = getattr(row, col, None)
+                if val is not None and not (isinstance(val, float) and np.isnan(val)):
+                    row_dict[col] = float(val) if col == "ou_line" or "point" in col else int(val)
+        if eval_mode:
+            row_dict.update(eval_row_fields(row))
+        rows.append(row_dict)
     return rows
 
 
@@ -231,6 +373,7 @@ def build_nba_daily_board(
     force_refresh: bool = False,
     use_cache: bool = False,
     log_clv: bool = True,
+    skip_totals: bool | None = None,
 ) -> dict[str, Any]:
     """Build NBA slate with model probs and odds; logs forward CLV on live +EV singles."""
     game_date = game_date or date.today()
@@ -264,9 +407,12 @@ def build_nba_daily_board(
         "edge_threshold": min_edge,
         "betting_ready": False,
         "active_moneyline_model": _active_nba_model_info(),
+        "active_custom_model": load_custom_weights(),
+        "prediction_model": "custom_weighted",
         "slate": [],
         "plus_ev_count": 0,
         "clv_logged_count": 0,
+        "board_eval_mode": False,
     }
 
     if not games:
@@ -289,22 +435,25 @@ def build_nba_daily_board(
     )
 
     try:
-        slate_df["model_prob_home"] = predict_home_win_proba(slate_df)
+        slate_df["model_prob_home"] = predict_custom_home_proba(slate_df, game_date)
+        try:
+            slate_df["ml_prob_home"] = predict_home_win_proba(slate_df)
+        except (FileNotFoundError, OSError, KeyError):
+            slate_df["ml_prob_home"] = np.nan
     except FileNotFoundError as exc:
-        base["error"] = str(exc)
-        base["message"] = "NBA model not trained — run scripts/train_nba_baseline.py"
-        base["warnings"] = warnings
-        return base
+        try:
+            slate_df["model_prob_home"] = predict_home_win_proba(slate_df)
+            slate_df["ml_prob_home"] = slate_df["model_prob_home"]
+        except FileNotFoundError:
+            base["error"] = str(exc)
+            base["message"] = (
+                "NBA model not trained — run scripts/bootstrap_nba.py "
+                "(or scripts/ingest_nba.py then scripts/train_nba_baseline.py)"
+            )
+            base["warnings"] = warnings
+            return base
 
     slate_df["model_prob_away"] = 1.0 - slate_df["model_prob_home"]
-
-    spread_enabled = False
-    try:
-        from app.models.nba_margin import is_margin_production_ready
-
-        spread_enabled = is_margin_production_ready()
-    except ImportError:
-        spread_enabled = False
 
     if use_cache:
         merged, odds_source = _attach_cached_odds(slate_df, game_date)
@@ -312,6 +461,10 @@ def build_nba_daily_board(
         merged, odds_source = _attach_nba_odds(
             slate_df, game_date, force_refresh=force_refresh
         )
+        if odds_source == "none":
+            cached_merged, cached_source = _attach_cached_odds(slate_df, game_date)
+            if cached_source != "none":
+                merged, odds_source = cached_merged, cached_source
 
     from app.odds.odds_repository import last_fetch_meta
 
@@ -321,31 +474,117 @@ def build_nba_daily_board(
     if quota_warning:
         warnings.append(quota_warning)
 
-    if spread_enabled:
+    spread_enabled = False
+    spread_production_ready = False
+    try:
+        from app.models.nba_margin import (
+            is_margin_production_ready,
+            predict_spread_covers,
+        )
+
+        merged = predict_spread_covers(merged)
+        spread_enabled = True
+        spread_production_ready = is_margin_production_ready()
+    except FileNotFoundError:
+        warnings.append(
+            "Spread model missing — run scripts/train_nba_margin.py for point-diff columns."
+        )
+    except (ImportError, ValueError) as exc:
+        logger.warning("NBA spread predictions skipped: %s", exc)
+
+    if skip_totals is None:
+        skip_totals = False
+
+    totals_enabled = False
+    totals_production_ready = False
+    if not skip_totals:
+        try:
+            from app.models.nba_totals import enrich_totals_columns, is_totals_production_ready
+
+            merged = enrich_totals_columns(merged)
+            totals_enabled = True
+            totals_production_ready = is_totals_production_ready()
+        except FileNotFoundError:
+            warnings.append(
+                "Totals model missing — run scripts/train_nba_totals.py for O/U columns."
+            )
+        except (ImportError, ValueError) as exc:
+            logger.warning("NBA totals predictions skipped: %s", exc)
+    else:
+        warnings.append(
+            "O/U skipped (skip_totals=true) — pass skip_totals=false for total-points model."
+        )
+
+    demo_synthetic = False
+    if use_cache and not (
+        odds_source not in ("none",) and merged["home_ml"].notna().any()
+    ):
+        from app.odds.nba_demo_odds import apply_demo_benchmark_odds
+
+        merged = apply_demo_benchmark_odds(merged)
+        demo_synthetic = True
+        odds_source = "demo_benchmark"
         try:
             from app.models.nba_margin import predict_spread_covers
 
-            merged = predict_spread_covers(merged)
-        except (FileNotFoundError, ValueError) as exc:
-            logger.warning("NBA spread cover predictions skipped: %s", exc)
-            spread_enabled = False
+            if spread_enabled:
+                merged = predict_spread_covers(merged)
+        except (FileNotFoundError, ImportError, ValueError):
+            pass
+        try:
+            from app.models.nba_totals import enrich_totals_columns
+
+            if totals_enabled:
+                merged = enrich_totals_columns(merged)
+        except (FileNotFoundError, ImportError, ValueError):
+            pass
+
+    if demo_synthetic:
+        from app.services.nba_eval_slate import attach_actual_results
+
+        merged = attach_actual_results(merged, game_date)
+        base["board_eval_mode"] = bool(
+            merged["actual_home_win"].notna().any()
+            if "actual_home_win" in merged.columns
+            else False
+        )
 
     has_odds = odds_source not in ("none",) and merged["home_ml"].notna().any()
     base["odds_source"] = odds_source
+    base["demo_synthetic_odds"] = demo_synthetic
     base["games_with_odds"] = int(merged["home_ml"].notna().sum()) if has_odds else 0
     base["board_spread_enabled"] = spread_enabled
+    base["board_spread_production_ready"] = spread_production_ready
+    base["board_totals_enabled"] = totals_enabled
+    base["board_totals_production_ready"] = totals_production_ready
+    base["skip_totals"] = bool(skip_totals)
     base["active_margin_model"] = _active_margin_model_info() if spread_enabled else {}
+    base["active_totals_model"] = _active_totals_model_info() if totals_enabled else {}
     if spread_enabled:
         base["spread_disclaimer"] = SPREAD_DISCLAIMER
+        if not spread_production_ready and not use_cache:
+            warnings.append(
+                "Spread model shown for research — holdout gate not passed (see SPREAD_NBA.md)."
+            )
+    if totals_enabled:
+        base["totals_disclaimer"] = TOTALS_DISCLAIMER
+        if not totals_production_ready and not use_cache:
+            warnings.append(
+                "O/U model shown for research — holdout gate not passed (see TOTALS_NBA.md)."
+            )
 
-    if odds_source == "none":
+    if demo_synthetic:
+        base["message"] = (
+            "Demo board — benchmark market (54% home / -5.5 / 224.5 total), "
+            "not model-derived. Compare Model vs Market vs Actual (holdout games)."
+        )
+    elif odds_source == "none":
         if use_cache:
             warnings.append(
-                "Demo mode — no cached odds for this date; model columns only."
+                "No cached odds for this date — run scripts/bootstrap_nba.py and use Demo on 2026-04-10."
             )
             base["message"] = (
-                "Model-only demo — import nba_odds_2026.csv or capture live odds "
-                "to see market columns."
+                "Model-only demo — train models with scripts/bootstrap_nba.py."
             )
         elif not live_odds_enabled():
             base["message"] = (
@@ -355,9 +594,17 @@ def build_nba_daily_board(
         else:
             warnings.append("Odds unavailable — slate shows model probabilities only.")
 
-    slate = _slate_rows(merged, has_odds, min_edge, spread_enabled=spread_enabled)
+    slate = _slate_rows(
+        merged,
+        has_odds,
+        min_edge,
+        spread_enabled=spread_enabled,
+        totals_enabled=totals_enabled,
+        eval_mode=bool(base.get("board_eval_mode")),
+    )
     base["slate"] = slate
     base["plus_ev_count"] = sum(1 for g in slate if g.get("plus_ev_single"))
+    base["top_totals"] = _top_totals(slate) if totals_enabled else []
     base["warnings"] = warnings
 
     if (

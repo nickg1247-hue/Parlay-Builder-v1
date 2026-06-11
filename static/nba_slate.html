@@ -15,7 +15,6 @@
         <nav class="app-nav-links" aria-label="Sections">
           <a href="/">Home</a>
           <a href="/mlb">MLB</a>
-          <a href="/nba/board">Advanced board</a>
         </nav>
       </div>
       <div class="sport-pills" aria-label="Sports">
@@ -23,7 +22,7 @@
         <a class="sport-pill sport-pill-active" href="/nba">NBA</a>
         <span class="sport-pill sport-pill-disabled">NFL</span>
         <span class="sport-pill sport-pill-disabled">NHL</span>
-        <span class="sport-pill sport-pill-disabled">CFB</span>
+        <a class="sport-pill" href="/cfb">CFB</a>
       </div>
     </header>
 
@@ -34,7 +33,7 @@
         <h1>NBA</h1>
         <span class="slate-date" id="slate-date"></span>
       </div>
-      <p class="slate-note">Schedule and live scores · <a href="/nba/board">Advanced board</a> — model vs market moneyline</p>
+      <p class="slate-note">Schedule and live scores</p>
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
 
       <div id="slate-loading" class="hidden"></div>
@@ -71,9 +70,10 @@
       try {
         const slate = await fetchJSON(loadUrl);
         const games = mapGames(slate);
+        const slateDate = slate.resolved_date || slate.date || "";
 
         loading.classList.add("hidden");
-        dateEl.textContent = slate.resolved_date || slate.date || "";
+        dateEl.textContent = slateDate;
         renderSlateAdvanceBanner(advanceEl, slate);
 
         if (!games.length) {
@@ -82,8 +82,12 @@
           return;
         }
 
-        const slateDate = slate.resolved_date || slate.date || "";
-        renderGameList(list, games, { gameDate: slateDate });
+        const renderOpts = {
+          boardMap: {},
+          gameDate: slateDate,
+          useCache: !!dateParam,
+        };
+        renderGameList(list, games, renderOpts);
 
         if (!dateParam) {
           setInterval(async () => {

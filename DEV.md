@@ -68,6 +68,60 @@ Home page (`/`) shows up to **10** sports headlines from ESPN RSS. Links open ES
 
 ---
 
+## CFB slate (Phase C1)
+
+`/cfb` shows FBS games for a Saturday (or next slate day) from the **ESPN scoreboard API** with `groups=80` (FBS only). Historical training data comes from **CollegeFootballData.com (CFBD)**.
+
+| Endpoint | Behavior |
+|----------|----------|
+| `GET /api/schedule/cfb` | No `date` → auto look-ahead (+7 days); `?date=` → exact date; `?refresh=true` → bypass saved snapshot |
+| `GET /api/scores/today?sport=cfb` | Same auto look-ahead when `date` omitted; live mode refreshes today from ESPN |
+| `GET /api/cfb/predictions?date=` | Model leans per `game_id` (requires trained models) |
+| `GET /api/games/cfb/{game_id}` | Schedule payload for one game |
+
+**Date picker (`/cfb`):** Choose any date. **Past dates** load from `cfb_games.parquet` ingest (no ESPN). **Today/future** use ESPN once, then save to `data/processed/cfb_schedule_{date}.json` for reuse. Badge shows source: `Saved ingest`, `Saved snapshot`, or `ESPN API`. Use **Refresh** or `?refresh=true` to re-fetch.
+
+**Auto look-ahead:** If the requested day has **zero** games, the backend tries **+1..+7** days (CFB is weekly). Disabled when `?date=` is set.
+
+**Data sources:**
+
+| Purpose | URL / key |
+|---------|-----------|
+| Live slate | `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=YYYYMMDD&groups=80` |
+| Historical ingest | `https://api.collegefootballdata.com` — `GET /games?year=&seasonType=regular&division=fbs` |
+| API key | `CFBD_API_KEY` in `.env` (Bearer token header) |
+
+**Odds sport key (document only, Phase 3+):** `americanfootball_ncaaf`
+
+**API usage (chunky, not chatty):** Bootstrap ingest makes **4 CFBD requests total** — one `GET /games?year=&seasonType=regular&division=fbs` per season (2022–2025). No per-game or per-team loops. Live slate uses ESPN (no CFBD credits). Future CFB features should prefer the same pattern (season or week filters, not 130+ team calls).
+
+**Bootstrap:**
+
+```powershell
+# Set CFBD_API_KEY in .env first
+python scripts/bootstrap_cfb.py
+```
+
+Writes `data/processed/cfb_games.parquet`, trains `cfb_baseline_model.joblib`.
+
+**Team logos:** ESPN FBS team list (paginated, `groups=80`) is cached to `data/processed/cfb_team_logos.json` with lookup keys matching CFBD school names (`shortDisplayName`, location, aliases). Refresh anytime:
+
+```powershell
+python scripts/fetch_cfb_team_logos.py
+```
+
+Bootstrap runs this automatically after ingest.
+
+**Verify:** `/cfb?date=20241130` — full rivalry Saturday with logos, records, model lean chips.
+
+```powershell
+pytest tests/test_schedule_cfb.py tests/test_cfb_ingest.py tests/test_cfb_baseline.py -q
+```
+
+See `CFB_MODEL.md` for holdout gate and feature list.
+
+---
+
 ## Free mode (default) — no Odds API credits
 
 By default the site uses **free data only**:
@@ -444,7 +498,7 @@ Use this as the default daily workflow during the season. Phase 6 stays blocked 
 | Step | When | Command / action |
 |------|------|------------------|
 | 1. Start server | Each session | `.\scripts\dev.ps1` (creates `.venv` if needed, installs deps, starts uvicorn on port 8000) |
-| 2. Refresh game data | Morning, or after yesterday’s games finish | `python scripts/ingest_mlb.py` — updates scores, pitchers, rolling features (~5–15 min first run; faster when parquet cache warm) |
+| 2. Refresh game data | Morning, or after yesterday’s games finish | `python scripts/ingest_mlb.py` — updates scores, pitchers, rolling features (~5–15 min first run; faster when parquet cache warm). **First run after Tier 1:** also builds `mlb_pitcher_game_log.parquet` (one boxscore per completed game for all pitching lines — relievers included). Re-runs are idempotent (skip cached `game_id`s). Starter cache may still fetch separately on a cold cache, so expect a one-time extra pass until both parquets are warm. |
 | 3. Open board | After server is up | http://127.0.0.1:8000/mlb — or `.\scripts\open_daily.ps1` to start server and open Home + MLB |
 | 4. Load slate | On `/mlb` | **Run live** (today + The Odds API) or **Demo** (fixed date `2025-08-15` + historical odds CSV). Nothing loads until you click one. |
 | 5. O/U toggle | Before Run | Check **O/U** to include totals model + sportsbook lines (slower on live). Unchecked = moneyline + parlays only. |
@@ -544,7 +598,8 @@ Checks row count, date range, per-season regular/playoff counts, duplicate `game
 **Train** (requires Phase 1 parquet or SQLite):
 
 ```powershell
-python scripts/train_nba_baseline.py
+python scripts/bootstrap_nba.py
+# or: python scripts/ingest_nba.py  then  python scripts/train_nba_baseline.py
 ```
 
 **Split:** seasons **2024 + 2025** (2023-24, 2024-25) train · **2026** (2025-26) holdout — time-based, no shuffle.
@@ -613,6 +668,33 @@ python scripts/train_nba_margin.py
 ```powershell
 pytest tests/test_nba_margin.py tests/test_nba_odds_repository.py tests/test_nba_daily_board.py -q
 python scripts/train_nba_margin.py
+```
+
+---
+
+## NBA totals model (O/U points)
+
+GBR expected total + **Normal CDF** over probability (see `TOTALS_NBA.md` for Poisson vs Normal rationale). Separate production gate from moneyline and spread.
+
+**Train:**
+
+```powershell
+python scripts/train_nba_totals.py
+```
+
+**Gate:** holdout O/U log loss ≤ market · total-points MAE ≤ league-average (220) baseline. When gate passes, `board_totals_enabled` on `/nba/board` and game insights.
+
+**Live odds:** same Odds API request as ML/spread (`h2h,spreads,totals`). Optional CSV columns: `ou_line`, `over_odds`, `under_odds`.
+
+**Board API:** `/api/nba/daily?skip_totals=false` includes O/U columns when gate passes (demo defaults `skip_totals=true`).
+
+**Artifacts:** `nba_totals_model.joblib`, `nba_totals_metrics.json`, `active_nba_totals_model.json`
+
+**Verify:**
+
+```powershell
+pytest tests/test_nba_totals.py tests/test_nba_game_insights.py -q
+python scripts/train_nba_totals.py
 ```
 
 ---

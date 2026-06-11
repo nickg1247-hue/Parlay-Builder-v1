@@ -15,7 +15,9 @@ from sklearn.metrics import log_loss
 from app.config import PROJECT_ROOT
 from app.features.feature_selection import drop_redundant_features
 from app.features.mlb_pregame import (
+    BULLPEN_COLUMNS,
     FEATURE_COLUMNS_WAVE1,
+    PITCHER_L5_COLUMNS,
     build_features,
     build_features_for_history,
 )
@@ -212,10 +214,21 @@ def get_run(run_id: str) -> dict[str, Any] | None:
 
 def feature_set_registry(train_wave: pd.DataFrame) -> dict[str, list[str]]:
     pruned, _, _ = drop_redundant_features(train_wave, FEATURE_COLUMNS_WAVE1)
+    tier1 = list(FEATURE_COLUMNS_WAVE1) + PITCHER_L5_COLUMNS + BULLPEN_COLUMNS
+    pruned_l5, _, _ = drop_redundant_features(
+        train_wave, list(pruned) + PITCHER_L5_COLUMNS
+    )
+    pruned_bullpen, _, _ = drop_redundant_features(
+        train_wave, list(pruned) + BULLPEN_COLUMNS
+    )
+    pruned_l5_bullpen, _, _ = drop_redundant_features(train_wave, tier1)
     return {
         "v1_baseline": list(FEATURE_COLUMNS),
         "wave1_full": list(FEATURE_COLUMNS_WAVE1),
         "wave1_pruned": list(pruned),
+        "wave1_pruned_pitcher_l5": list(pruned_l5),
+        "wave1_pruned_bullpen": list(pruned_bullpen),
+        "wave1_pruned_l5_bullpen": list(pruned_l5_bullpen),
         "v1_plus_team_season": list(FEATURE_COLUMNS) + TEAM_SEASON,
         "v1_plus_team_last30": list(FEATURE_COLUMNS) + TEAM_LAST30,
         "v1_plus_pitcher_whip_ip": list(FEATURE_COLUMNS) + PITCHER_EXTRA,

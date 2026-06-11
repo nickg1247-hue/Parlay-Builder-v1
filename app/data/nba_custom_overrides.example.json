@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to data/processed/nba_custom_overrides.json and edit per slate. Values 0–1 (1 = full strength / no injury impact).",
+  "by_date": {
+    "2026-04-10": {
+      "401766458": {
+        "starting_lineup_strength": { "home": 0.92, "away": 0.88 },
+        "player_availability_injuries": { "home": 0.95, "away": 0.72 },
+        "bench_production": { "home": 0.55, "away": 0.48 },
+        "coaching_adjustments": { "home": 0.58, "away": 0.52 },
+        "travel_situation": { "home": 1.0, "away": 0.82 }
+      }
+    }
+  }
+}

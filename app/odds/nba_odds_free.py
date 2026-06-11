@@ -25,7 +25,7 @@ ODDS_2026_CSV = PROJECT_ROOT / "data" / "processed" / "nba_odds_2026.csv"
 
 
 def load_csv_odds(path: Path | None = None) -> pd.DataFrame:
-    """Load normalized moneyline CSV: date, home_team, away_team, home_ml, away_ml."""
+    """Load normalized odds CSV: date, home_team, away_team, home_ml, away_ml (+ optional O/U/spread)."""
     csv_path = path or ODDS_2026_CSV
     if not csv_path.exists():
         return pd.DataFrame()
@@ -43,6 +43,16 @@ def load_csv_odds(path: Path | None = None) -> pd.DataFrame:
         axis=1,
     )
     df = df[valid].copy()
+    if {"ou_line", "over_odds", "under_odds"}.issubset(df.columns):
+        ou_valid = df.apply(
+            lambda r: pd.isna(r.ou_line)
+            or (
+                is_valid_american_odds(r.over_odds)
+                and is_valid_american_odds(r.under_odds)
+            ),
+            axis=1,
+        )
+        df = df[ou_valid].copy()
     return df.drop_duplicates(
         subset=["date", "home_team", "away_team"], keep="first"
     ).reset_index(drop=True)

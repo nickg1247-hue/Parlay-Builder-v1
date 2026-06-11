@@ -16,6 +16,12 @@ function teamLogoUrl(teamId, sport = "mlb", abbr) {
     }
     return "";
   }
+  if (sport === "cfb") {
+    if (teamId) {
+      return `https://a.espncdn.com/i/teamlogos/ncaa/500/${teamId}.png`;
+    }
+    return "";
+  }
   return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
 }
 
@@ -27,10 +33,15 @@ function gameDetailHref(game, options = {}) {
   const sport = gameSport(game);
   const base = `/${sport}/game/${game.game_id}`;
   const slateDate = options.gameDate || game.slate_date;
-  if (sport === "nba" && slateDate) {
-    return `${base}?date=${encodeURIComponent(slateDate)}`;
+  const params = new URLSearchParams();
+  if ((sport === "nba" || sport === "cfb") && slateDate) {
+    params.set("date", slateDate);
   }
-  return base;
+  if (options.useCache) {
+    params.set("use_cache", "true");
+  }
+  const q = params.toString();
+  return q ? `${base}?${q}` : base;
 }
 
 function logoForGame(game, side) {
@@ -489,22 +500,37 @@ function lineMovementForGame(gameId, gameDate, teams) {
   };
 }
 
-function modelLeanLabel(boardRow) {
-  if (!boardRow) return null;
-  if (boardRow.best_pick?.team) {
-    return { text: `Model: ${boardRow.best_pick.team}`, tier: boardRow.ml_confidence };
+function modelLeanLabel(boardRow, options = {}) {
+  const chips = modelLeanChips(boardRow, options);
+  return chips.length ? chips[0] : null;
+}
+
+function modelLeanChips(boardRow, options = {}) {
+  if (!boardRow) return [];
+  const sport = options.sport;
+  if (boardRow.best_pick?.team && sport !== "cfb") {
+    return [{ text: `Model: ${boardRow.best_pick.team}`, tier: boardRow.ml_confidence }];
+  }
+  const chips = [];
+  if (boardRow.model_pick) {
+    chips.push({
+      text: `ML: ${boardRow.model_pick}`,
+      tier: boardRow.ml_confidence,
+    });
+  } else if (boardRow.model_prob_home != null) {
+    const home = Number(boardRow.model_prob_home) >= 0.5;
+    chips.push({
+      text: `ML: ${home ? boardRow.home_team : boardRow.away_team}`,
+      tier: boardRow.ml_confidence,
+    });
+  }
+  if (boardRow.spread_pick) {
+    chips.push({ text: `Spread: ${boardRow.spread_pick}`, tier: boardRow.spread_confidence });
   }
   if (boardRow.totals_pick) {
-    return { text: `O/U: ${boardRow.totals_pick}`, tier: boardRow.totals_confidence };
+    chips.push({ text: `O/U: ${boardRow.totals_pick}`, tier: boardRow.totals_confidence });
   }
-  if (boardRow.model_prob_home != null) {
-    const home = Number(boardRow.model_prob_home) >= 0.5;
-    return {
-      text: `Lean: ${home ? boardRow.home_team : boardRow.away_team}`,
-      tier: boardRow.ml_confidence,
-    };
-  }
-  return null;
+  return chips;
 }
 
 function confidenceChipClass(tier) {
@@ -518,8 +544,15 @@ function confidenceChipClass(tier) {
 function matchupPreviewText(boardRow, lineMove) {
   if (!boardRow) return "";
   const parts = [];
-  if (boardRow.expected_total_runs != null) {
+  if (boardRow.expected_total_pts != null) {
+    parts.push(`Est. ${Number(boardRow.expected_total_pts).toFixed(1)} pts`);
+  } else if (boardRow.expected_total_runs != null) {
     parts.push(`Est. ${Number(boardRow.expected_total_runs).toFixed(1)} runs`);
+  }
+  if (boardRow.model_margin != null) {
+    const mm = Number(boardRow.model_margin);
+    const side = mm >= 0 ? "H" : "A";
+    parts.push(`Margin ${side} ${Math.abs(mm).toFixed(1)}`);
   }
   if (boardRow.ou_line != null) {
     let line = `Line ${boardRow.ou_line}`;
@@ -561,6 +594,8 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-nba-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-cfb-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-odds":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 10h3v4H7zM14 10h3v4h-3zM7 5V3M17 5V3"/></svg>',
   "no-board":
@@ -582,23 +617,28 @@ function renderEmptyState(el, kind, extraHtml = "") {
   const copy = {
     "no-games": {
       title: "No games on the slate",
-      body: "Check back later or try the advanced board for historical demo dates.",
-      cta: '<a href="/mlb/board">Open board</a>',
+      body: "Check back later or pick another date.",
+      cta: '<a href="/mlb">MLB slate</a>',
     },
     "no-nba-games": {
       title: "No games on the slate",
       body: "No NBA games in the next few days. Check back during the season or Finals.",
       cta: '<a href="/nba">Refresh slate</a>',
     },
+    "no-cfb-games": {
+      title: "No games on the slate",
+      body: "No FBS games in the next week. Try a Saturday during the season.",
+      cta: '<a href="/cfb">Refresh slate</a>',
+    },
     "no-odds": {
       title: "Lines not loaded yet",
-      body: "Run live on the board to pull sportsbook numbers, or enable USE_LIVE_ODDS in .env.",
-      cta: '<a href="/mlb/board">Run live test</a>',
+      body: "Lines may appear after the morning refresh or when live odds are enabled.",
+      cta: '<a href="/mlb">Back to slate</a>',
     },
     "no-board": {
       title: "Model picks warming up",
       body: "Run morning refresh to pre-build today's slate and picks.",
-      cta: '<a href="/mlb/board">Load board</a>',
+      cta: '<a href="/">Home</a>',
     },
   }[kind] || {
     title: "Nothing here yet",
@@ -627,7 +667,7 @@ function renderHomeHeroChips(el, { summary, scoreCounts, status }) {
     const slate = summary.games_on_slate ?? 0;
     modelChip = `<span class="hero-chip"><span class="hero-chip-dot hero-chip-dot-ev" aria-hidden="true"></span>${ev} +EV · ${slate} on board</span>`;
   } else {
-    modelChip = `<span class="hero-chip hero-chip-muted"><span class="hero-chip-dot" aria-hidden="true"></span>Model board warming up</span>`;
+    modelChip = `<span class="hero-chip hero-chip-muted"><span class="hero-chip-dot" aria-hidden="true"></span>Picks warming up</span>`;
   }
 
   let refreshChip;
@@ -744,12 +784,20 @@ function gameCardHtml(game, options = {}) {
   const boardRow = options.boardRow || null;
   const lineMove = options.lineMove || null;
   const colors = options.colors || _teamColors;
-  const lean = modelLeanLabel(boardRow);
+  const lean = modelLeanLabel(boardRow, { sport: gameSport(game) });
+  const leanChips = modelLeanChips(boardRow, { sport: gameSport(game) });
   const preview = matchupPreviewText(boardRow, lineMove);
   const watched = options.showWatch !== false && isWatched(game.game_id);
-  const leanHtml = lean
-    ? `<span class="model-lean-chip ${confidenceChipClass(lean.tier)}">${lean.text}</span>`
-    : "";
+  const leanHtml = leanChips.length
+    ? leanChips
+        .map(
+          (chip) =>
+            `<span class="model-lean-chip ${confidenceChipClass(chip.tier)}">${chip.text}</span>`
+        )
+        .join("")
+    : lean
+      ? `<span class="model-lean-chip ${confidenceChipClass(lean.tier)}">${lean.text}</span>`
+      : "";
   const seriesHtml = game.series_summary
     ? `<p class="game-card-series">${game.series_summary}</p>`
     : "";
@@ -852,7 +900,7 @@ function renderTodayGlance(el, summary, scoreCounts) {
     el.innerHTML = `
       <div class="glance-card glance-muted">
         <span><strong>${mlb}</strong> MLB · <strong>${nba}</strong> NBA today</span>
-        <span>${summary?.message || "Board not loaded"}</span>
+        <span>${summary?.message || "Summary not loaded yet"}</span>
       </div>`;
     return;
   }
@@ -872,7 +920,7 @@ function renderBestBets(el, topSingles) {
     el.innerHTML = `
       <div class="best-bets-empty-card">
         ${emptyStateIcon("no-bets")}
-        <p>No +EV singles at today's edge threshold. <a href="/mlb/board">Tune on board</a></p>
+        <p>No +EV singles at today's edge threshold.</p>
       </div>`;
     return;
   }
@@ -1065,7 +1113,24 @@ function shouldPlayNTGSplash() {
   return document.body?.dataset?.ntgSplash === "1";
 }
 
+function initSandboxNav() {
+  const path = window.location.pathname || "";
+  document.querySelectorAll(".app-nav-links").forEach((nav) => {
+    if (nav.querySelector("[data-nav-sandbox]")) return;
+    const link = document.createElement("a");
+    link.href = "/sandbox";
+    link.dataset.navSandbox = "1";
+    link.textContent = "Sandbox";
+    link.classList.add("nav-sandbox");
+    if (path === "/sandbox") {
+      link.classList.add("active");
+    }
+    nav.appendChild(link);
+  });
+}
+
 function bootNTGSplash() {
+  initSandboxNav();
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
     initNTGSplash().catch(() => clearNTGSplashState());
   } else {

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sandbox — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Sections">
+          <a href="/">Home</a>
+          <a href="/mlb">MLB</a>
+          <a href="/nba">NBA</a>
+          <a href="/sandbox" class="active" data-nav-sandbox="1">Sandbox</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-main sandbox-main">
+      <section class="sandbox-intro">
+        <h1>Sandbox</h1>
+        <p class="sandbox-lead">Advanced boards, model lab, and factor tuning. Experimental tools — not on the public site.</p>
+        <p class="sandbox-auth-note hidden" id="sandbox-auth-note"></p>
+      </section>
+
+      <p class="app-section-title">MLB</p>
+      <div class="sandbox-hub">
+        <a class="sandbox-card" href="/mlb/board">
+          <span class="sandbox-card-title">Advanced board</span>
+          <span class="sandbox-card-desc">Model vs market, +EV singles, spreads &amp; totals</span>
+          <span class="arrow">→</span>
+        </a>
+        <a class="sandbox-card" href="/mlb/lab">
+          <span class="sandbox-card-title">Model lab</span>
+          <span class="sandbox-card-desc">Walk-forward experiments and feature-set search</span>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <p class="app-section-title">NBA</p>
+      <div class="sandbox-hub">
+        <a class="sandbox-card" href="/nba/board">
+          <span class="sandbox-card-title">Advanced board</span>
+          <span class="sandbox-card-desc">Weighted factor model vs market lines</span>
+          <span class="arrow">→</span>
+        </a>
+        <a class="sandbox-card" href="/nba/board/factors">
+          <span class="sandbox-card-title">Factor weights</span>
+          <span class="sandbox-card-desc">Global ▲/▼ tuning for all 16 prediction factors</span>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <p class="sandbox-actions">
+        <button type="button" class="btn btn-secondary" id="sandbox-logout">Log out</button>
+      </p>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+    (async function () {
+      try {
+        const res = await fetch("/api/auth/status");
+        const data = await res.json();
+        const note = document.getElementById("sandbox-auth-note");
+        if (note && data.auth_enabled && !data.auth_misconfigured) {
+          note.textContent = "This area requires sign-in.";
+          note.classList.remove("hidden");
+        }
+      } catch (_) { /* ignore */ }
+    })();
+
+    document.getElementById("sandbox-logout")?.addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login?next=/sandbox";
+    });
+  </script>
+</body>
+</html>

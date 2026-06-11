@@ -27,7 +27,21 @@ SEASONS = (2023, 2024, 2025, 2026)
 PROCESSED_PARQUET = PROJECT_ROOT / "data" / "processed" / "mlb_games.parquet"
 PROCESSED_CSV = PROJECT_ROOT / "data" / "processed" / "mlb_games.csv"
 PITCHER_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_pitcher_cache.parquet"
+PITCHER_GAME_LOG = PROJECT_ROOT / "data" / "processed" / "mlb_pitcher_game_log.parquet"
 PITCHING_STATS_CACHE = PROJECT_ROOT / "data" / "processed" / "mlb_pitching_stats_cache.parquet"
+PITCHER_GAME_LOG_COLUMNS = [
+    "game_id",
+    "date",
+    "season",
+    "team",
+    "pitcher_name",
+    "pitcher_key",
+    "ip",
+    "er",
+    "hits",
+    "walks",
+    "is_starter",
+]
 PITCHING_STATS_RETRIES = 4
 BOXSCORE_WORKERS = 12
 BOXSCORE_RETRIES = 3
@@ -112,22 +126,164 @@ def _starter_from_boxscore(team_side: dict[str, Any]) -> str | None:
     return None
 
 
-def _fetch_starting_pitchers(game_pk: str) -> tuple[str | None, str | None]:
+def _parse_ip(ip_val: object) -> float:
+    """Convert MLB innings string (e.g. 5.2 = 5⅔ IP) to float."""
+    if ip_val is None:
+        return 0.0
+    if isinstance(ip_val, (int, float)):
+        whole = int(ip_val)
+        frac = round(float(ip_val) - whole, 2)
+    else:
+        text = str(ip_val).strip()
+        if not text or text in ("0", "0.0"):
+            return 0.0
+        if "." in text:
+            whole_s, frac_s = text.split(".", 1)
+            whole = int(whole_s or 0)
+            frac = int(frac_s[0]) if frac_s else 0
+        else:
+            whole = int(text)
+            frac = 0
+    if frac == 1:
+        return whole + 1 / 3
+    if frac == 2:
+        return whole + 2 / 3
+    return float(whole)
+
+
+def _fetch_boxscore(game_pk: str) -> dict[str, Any] | None:
     url = MLB_BOXSCORE_URL.format(game_pk=game_pk)
     for attempt in range(BOXSCORE_RETRIES):
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.get(url)
                 response.raise_for_status()
-                data = response.json()
-            home = _starter_from_boxscore(data["teams"]["home"])
-            away = _starter_from_boxscore(data["teams"]["away"])
-            return home, away
+                return response.json()
         except Exception:
             if attempt == BOXSCORE_RETRIES - 1:
-                return None, None
+                return None
             time.sleep(0.5 * (attempt + 1))
-    return None, None
+    return None
+
+
+def _fetch_starting_pitchers(game_pk: str) -> tuple[str | None, str | None]:
+    data = _fetch_boxscore(game_pk)
+    if not data:
+        return None, None
+    home = _starter_from_boxscore(data["teams"]["home"])
+    away = _starter_from_boxscore(data["teams"]["away"])
+    return home, away
+
+
+def _parse_team_pitching_lines(
+    team_side: dict[str, Any],
+    *,
+    game_id: str,
+    game_date: str,
+    team_name: str,
+) -> list[dict[str, Any]]:
+    season = int(game_date[:4])
+    players = team_side.get("players", {})
+    rows: list[dict[str, Any]] = []
+    for pid in team_side.get("pitchers", []):
+        key = f"ID{pid}" if not str(pid).startswith("ID") else str(pid)
+        player = players.get(key, players.get(str(pid), {}))
+        pitching = player.get("stats", {}).get("pitching", {})
+        ip = _parse_ip(pitching.get("inningsPitched", "0"))
+        if ip <= 0:
+            continue
+        name = player.get("person", {}).get("fullName")
+        if not name:
+            continue
+        rows.append(
+            {
+                "game_id": game_id,
+                "date": game_date,
+                "season": season,
+                "team": team_name,
+                "pitcher_name": name,
+                "pitcher_key": str(name).lower().strip(),
+                "ip": ip,
+                "er": int(pitching.get("earnedRuns", 0) or 0),
+                "hits": int(pitching.get("hits", 0) or 0),
+                "walks": int(pitching.get("baseOnBalls", 0) or 0),
+                "is_starter": bool(pitching.get("gamesStarted", 0) >= 1),
+            }
+        )
+    return rows
+
+
+def _pitching_lines_from_boxscore(
+    boxscore: dict[str, Any],
+    game: RawGame,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    rows.extend(
+        _parse_team_pitching_lines(
+            boxscore["teams"]["home"],
+            game_id=game.game_id,
+            game_date=game.date,
+            team_name=game.home_team,
+        )
+    )
+    rows.extend(
+        _parse_team_pitching_lines(
+            boxscore["teams"]["away"],
+            game_id=game.game_id,
+            game_date=game.date,
+            team_name=game.away_team,
+        )
+    )
+    return rows
+
+
+def _load_pitcher_game_log() -> pd.DataFrame:
+    if not PITCHER_GAME_LOG.exists():
+        return pd.DataFrame(columns=PITCHER_GAME_LOG_COLUMNS)
+    return pd.read_parquet(PITCHER_GAME_LOG)
+
+
+def _merge_and_save_pitcher_game_log(new_rows: list[dict[str, Any]]) -> None:
+    if not new_rows:
+        return
+    PITCHER_GAME_LOG.parent.mkdir(parents=True, exist_ok=True)
+    existing = _load_pitcher_game_log()
+    new_df = pd.DataFrame(new_rows)
+    combined = pd.concat([existing, new_df], ignore_index=True)
+    combined = combined.drop_duplicates(
+        subset=["game_id", "pitcher_key", "team"], keep="last"
+    )
+    combined.to_parquet(PITCHER_GAME_LOG, index=False)
+
+
+def _ensure_pitcher_game_log(games: list[RawGame]) -> None:
+    """Fetch boxscores for games missing from pitcher game log (idempotent)."""
+    existing = _load_pitcher_game_log()
+    logged_ids = (
+        set(existing["game_id"].astype(str)) if not existing.empty else set()
+    )
+    missing = [g for g in games if g.game_id not in logged_ids]
+    if not missing:
+        logger.info("Pitcher game log complete (%s games)", len(logged_ids))
+        return
+
+    logger.info(
+        "Fetching boxscores for pitcher game log (%s new games)...", len(missing)
+    )
+    pitching_rows: list[dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=BOXSCORE_WORKERS) as pool:
+        futures = {pool.submit(_fetch_boxscore, g.game_id): g for g in missing}
+        done = 0
+        for future in as_completed(futures):
+            game = futures[future]
+            boxscore = future.result()
+            if boxscore:
+                pitching_rows.extend(_pitching_lines_from_boxscore(boxscore, game))
+            done += 1
+            if done % 250 == 0 or done == len(missing):
+                logger.info("Pitcher log boxscores: %s / %s", done, len(missing))
+    _merge_and_save_pitcher_game_log(pitching_rows)
+    logger.info("Wrote pitcher game log to %s", PITCHER_GAME_LOG)
 
 
 def _load_pitcher_cache(game_ids: set[str]) -> dict[str, tuple[str | None, str | None]]:
@@ -426,6 +582,8 @@ def build_modeling_table() -> pd.DataFrame:
     if not raw:
         raise RuntimeError("No completed games returned from MLB Stats API")
 
+    logger.info("Building pitcher game log for %s games...", len(raw))
+    _ensure_pitcher_game_log(raw)
     logger.info("Fetching starting pitchers for %s games...", len(raw))
     df = _attach_starting_pitchers(raw)
     logger.info("Loading pitcher ERA from MLB Stats API...")
@@ -471,9 +629,11 @@ def run_ingest() -> pd.DataFrame:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     df = build_modeling_table()
     write_outputs(df)
+    log_df = _load_pitcher_game_log()
     logger.info(
-        "Wrote %s rows to %s and SQLite mlb_games",
+        "Wrote %s rows to %s and SQLite mlb_games (%s pitcher log lines)",
         len(df),
         PROCESSED_PARQUET,
+        len(log_df),
     )
     return df

@@ -53,7 +53,7 @@ def test_board_redirects_to_login_when_auth_enabled(auth_env):
 
 
 def test_lab_and_nba_board_protected(auth_env):
-    for path in ("/mlb/lab", "/nba/board"):
+    for path in ("/sandbox", "/mlb/board", "/mlb/lab", "/nba/board", "/nba/board/factors"):
         response = client.get(path, follow_redirects=False)
         assert response.status_code == 302
         assert "/login" in response.headers["location"]
@@ -63,6 +63,10 @@ def test_login_grants_board_access(auth_env):
     login_resp = _login()
     assert login_resp.status_code == 200
     assert "ntg_admin" in login_resp.cookies
+
+    sandbox = client.get("/sandbox")
+    assert sandbox.status_code == 200
+    assert "Sandbox" in sandbox.text
 
     board = client.get("/mlb/board")
     assert board.status_code == 200

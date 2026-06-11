@@ -570,6 +570,76 @@ body.slate-mlb .app-main > * {
   gap: 0.75rem;
 }
 
+.sandbox-main {
+  max-width: 36rem;
+}
+
+.sandbox-intro h1 {
+  margin-bottom: 0.35rem;
+}
+
+.sandbox-lead {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.sandbox-auth-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sandbox-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+}
+
+.sandbox-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.15rem 0.75rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.sandbox-card:hover {
+  border-color: var(--accent);
+}
+
+.sandbox-card-title {
+  font-weight: 600;
+  grid-column: 1;
+}
+
+.sandbox-card-desc {
+  grid-column: 1;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sandbox-card .arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sandbox-actions {
+  margin-top: 0.5rem;
+}
+
+.nav-sandbox {
+  font-weight: 600;
+}
+
 .home-link-card {
   display: flex;
   align-items: center;
@@ -1049,6 +1119,40 @@ body.slate-mlb .app-main > * {
 .slate-date {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+.slate-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.slate-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.slate-date-field input[type="date"] {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.slate-source-badge {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  align-self: center;
 }
 
 .slate-subnav {
@@ -1711,4 +1815,57 @@ html.ntg-splash-active {
   .ntg-splash--out {
     animation-duration: 0.35s;
   }
+}
+
+.prediction-detail {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.prediction-detail .sub {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.prediction-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0.75rem;
+}
+
+.prediction-drivers {
+  margin: 0 0 0.75rem 1.1rem;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.feature-table-wrap summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.feature-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  border-collapse: collapse;
+}
+
+.feature-table th,
+.feature-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.feature-table th {
+  font-weight: 500;
+  color: var(--muted);
+  width: 55%;
 }

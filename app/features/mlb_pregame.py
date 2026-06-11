@@ -11,6 +11,11 @@ from pathlib import Path
 import pandas as pd
 
 from app.config import PROJECT_ROOT
+from app.data.pitcher_form import (
+    get_pitcher_game_log,
+    pitcher_l5_rates,
+    team_bullpen_features,
+)
 from app.data.pitcher_lookup import lookup_pitcher_profile
 from app.models.mlb_baseline import (
     FEATURE_COLUMNS,
@@ -42,8 +47,24 @@ WAVE1_EXTRA_COLUMNS = [
     "away_pitcher_ip",
 ]
 
+PITCHER_L5_COLUMNS = [
+    "home_pitcher_era_l5",
+    "away_pitcher_era_l5",
+    "home_pitcher_whip_l5",
+    "away_pitcher_whip_l5",
+]
+BULLPEN_COLUMNS = [
+    "home_bullpen_era_14d",
+    "away_bullpen_era_14d",
+    "home_bullpen_ip_3d",
+    "away_bullpen_ip_3d",
+]
+
 FEATURE_COLUMNS_WAVE1 = FEATURE_COLUMNS + WAVE1_EXTRA_COLUMNS
 FEATURE_COLUMNS_WAVE1_ELO = FEATURE_COLUMNS_WAVE1 + ["elo_home_pre", "elo_away_pre"]
+FEATURE_COLUMNS_WAVE1_TIER1 = (
+    FEATURE_COLUMNS_WAVE1 + PITCHER_L5_COLUMNS + BULLPEN_COLUMNS
+)
 
 NEUTRAL_WIN_PCT = 0.5
 NEUTRAL_RUN_DIFF = 0.0
@@ -226,6 +247,21 @@ def _compute_rest_days(
     return float(gap)
 
 
+def _pitcher_l5_block(
+    pitcher_name: str | None,
+    before: pd.Timestamp,
+    season: int,
+    profile: dict[str, float],
+    pitcher_log: pd.DataFrame,
+    prefix: str,
+) -> dict[str, float]:
+    l5 = pitcher_l5_rates(pitcher_name, before, season, pitcher_log)
+    return {
+        f"{prefix}_pitcher_era_l5": l5["era"] if l5 else profile["era"],
+        f"{prefix}_pitcher_whip_l5": l5["whip"] if l5 else profile["whip"],
+    }
+
+
 def _row_features(
     row,
     tracker: _TeamTracker,
@@ -235,6 +271,7 @@ def _row_features(
     rest_fill: float,
     default_whip: float,
     default_ip: float,
+    pitcher_log: pd.DataFrame | None = None,
 ) -> dict[str, float | str | None]:
     game_date = pd.to_datetime(row.date)
     season = int(getattr(row, "season", game_date.year))
@@ -284,6 +321,16 @@ def _row_features(
     feats.update(
         _team_feature_block(row.away_team, before, season, tracker, all_teams, False)
     )
+
+    log = pitcher_log if pitcher_log is not None else pd.DataFrame()
+    feats.update(_pitcher_l5_block(home_sp, before, season, home_prof, log, "home"))
+    feats.update(_pitcher_l5_block(away_sp, before, season, away_prof, log, "away"))
+    home_bp = team_bullpen_features(row.home_team, before, log)
+    away_bp = team_bullpen_features(row.away_team, before, log)
+    feats["home_bullpen_era_14d"] = home_bp["era_14d"]
+    feats["away_bullpen_era_14d"] = away_bp["era_14d"]
+    feats["home_bullpen_ip_3d"] = home_bp["ip_3d"]
+    feats["away_bullpen_ip_3d"] = away_bp["ip_3d"]
     return feats
 
 
@@ -313,11 +360,20 @@ def build_features(
     park_map = _load_park_factors()
     all_teams = set(df["home_team"]) | set(df["away_team"])
     state = tracker if tracker is not None else _TeamTracker()
+    pitcher_log = get_pitcher_game_log()
     feature_rows: list[dict] = []
 
     for row in df.itertuples(index=False):
         feats = _row_features(
-            row, state, all_teams, park_map, era_medians, rest_fill, default_whip, default_ip
+            row,
+            state,
+            all_teams,
+            park_map,
+            era_medians,
+            rest_fill,
+            default_whip,
+            default_ip,
+            pitcher_log=pitcher_log,
         )
         if hasattr(row, "home_win") and pd.notna(getattr(row, "home_win", None)):
             feats["home_win"] = int(row.home_win)
@@ -366,6 +422,7 @@ def build_features_for_slate(
 
     park_map = _load_park_factors()
     all_teams = set(slate["home_team"]) | set(slate["away_team"])
+    pitcher_log = get_pitcher_game_log()
     rows = [
         _row_features(
             row,
@@ -376,6 +433,7 @@ def build_features_for_slate(
             rest_fill,
             DEFAULT_WHIP,
             DEFAULT_IP,
+            pitcher_log=pitcher_log,
         )
         for row in slate.sort_values(["date", "game_id"]).itertuples(index=False)
     ]

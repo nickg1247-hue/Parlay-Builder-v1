@@ -60,8 +60,12 @@ def save_date(game_date: date, payload: dict[str, Any]) -> None:
     repository_path(game_date).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def normalize_nba_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Parse The Odds API events into normalized NBA game rows (h2h + optional spreads)."""
+def normalize_nba_events(
+    events: list[dict[str, Any]],
+    *,
+    require_h2h: bool = True,
+) -> list[dict[str, Any]]:
+    """Parse The Odds API events into normalized NBA rows (h2h + optional spreads/totals)."""
     games: list[dict[str, Any]] = []
     for event in events:
         home = normalize_nba_team_name(event.get("home_team", ""))
@@ -74,6 +78,9 @@ def normalize_nba_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         home_spread_prices: list[int] = []
         away_spread_points: list[float] = []
         away_spread_prices: list[int] = []
+        total_lines: list[float] = []
+        over_prices: list[int] = []
+        under_prices: list[int] = []
 
         for book in event.get("bookmakers", []):
             for market in book.get("markets", []):
@@ -111,15 +118,39 @@ def normalize_nba_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     if ap is not None and apr is not None:
                         away_spread_points.append(ap)
                         away_spread_prices.append(apr)
+                elif key == "totals":
+                    over_point = over_price = under_price = None
+                    for outcome in market.get("outcomes", []):
+                        name = (outcome.get("name") or "").lower()
+                        if name == "over":
+                            over_point = outcome.get("point")
+                            over_price = outcome.get("price")
+                        elif name == "under":
+                            under_price = outcome.get("price")
+                    if (
+                        over_point is not None
+                        and over_price is not None
+                        and under_price is not None
+                        and is_valid_american_odds(over_price)
+                        and is_valid_american_odds(under_price)
+                    ):
+                        total_lines.append(float(over_point))
+                        over_prices.append(int(over_price))
+                        under_prices.append(int(under_price))
 
-        if not home_prices and not home_spread_points:
+        if require_h2h and not home_prices:
             continue
-        if not home_prices:
+        if not home_prices and not total_lines and not home_spread_points:
             continue
 
-        home_ml = int(pd.Series(home_prices).median())
-        away_ml = int(pd.Series(away_prices).median())
-        if not is_valid_american_odds(home_ml) or not is_valid_american_odds(away_ml):
+        home_ml = _median_int(home_prices) if home_prices else None
+        away_ml = _median_int(away_prices) if away_prices else None
+        if require_h2h and (
+            home_ml is None
+            or away_ml is None
+            or not is_valid_american_odds(home_ml)
+            or not is_valid_american_odds(away_ml)
+        ):
             continue
 
         row: dict[str, Any] = {
@@ -133,6 +164,9 @@ def normalize_nba_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "home_spread_american": _median_int(home_spread_prices),
             "away_spread_point": _median_float(away_spread_points),
             "away_spread_american": _median_int(away_spread_prices),
+            "ou_line": _median_float(total_lines),
+            "over_odds": _median_int(over_prices),
+            "under_odds": _median_int(under_prices),
         }
         games.append(row)
     return games
@@ -142,6 +176,7 @@ def fetch_nba_from_api_if_allowed(
     game_date: date,
     *,
     include_spreads: bool = True,
+    include_totals: bool = True,
 ) -> ApiFetchResult:
     """
     Quota-gated live NBA fetch only.
@@ -158,7 +193,10 @@ def fetch_nba_from_api_if_allowed(
         return ApiFetchResult(denied=True, denied_reason=deny_reason)
 
     try:
-        events = fetch_live_nba_odds(include_spreads=include_spreads)
+        events = fetch_live_nba_odds(
+            include_spreads=include_spreads,
+            include_totals=include_totals,
+        )
         normalized = normalize_nba_events(events or [])
         return ApiFetchResult(events=normalized, source="the_odds_api_live")
     except Exception as exc:
@@ -172,6 +210,7 @@ def get_nba_odds_for_date(
     *,
     force_refresh: bool = False,
     include_spreads: bool = True,
+    include_totals: bool = True,
 ) -> tuple[list[dict[str, Any]] | None, str]:
     """Read repository snapshot; optional live fetch for today/future only."""
     if has_date(game_date) and not force_refresh:
@@ -183,7 +222,9 @@ def get_nba_odds_for_date(
         return None, "none"
 
     api_result = fetch_nba_from_api_if_allowed(
-        game_date, include_spreads=include_spreads
+        game_date,
+        include_spreads=include_spreads,
+        include_totals=include_totals,
     )
     if api_result.denied or api_result.error or api_result.events is None:
         if has_date(game_date):
@@ -237,6 +278,9 @@ def repository_odds_dataframe(
                     "home_spread_american": game.get("home_spread_american"),
                     "away_spread_point": game.get("away_spread_point"),
                     "away_spread_american": game.get("away_spread_american"),
+                    "ou_line": game.get("ou_line"),
+                    "over_odds": game.get("over_odds"),
+                    "under_odds": game.get("under_odds"),
                     "odds_source": payload.get("source", "repository"),
                 }
             )

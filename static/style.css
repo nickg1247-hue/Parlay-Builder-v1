@@ -534,8 +534,113 @@ tr.plus-ev td {
   text-align: right;
 }
 
+.factor-list {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  max-width: 42rem;
+}
+
+.factor-row {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.factor-rank {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.factor-label {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.factor-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.factor-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.factor-btn:hover {
+  border-color: var(--accent);
+}
+
+.factor-pct {
+  min-width: 3rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.factor-footer {
+  max-width: 42rem;
+}
+
+.factor-total {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.factor-total-bad strong {
+  color: #e57373;
+}
+
+.factor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.factor-banner {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.factor-status {
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.factor-status.error-text {
+  color: #e57373;
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
   }
+}
+
+.auth-actions {
+  font-weight: 400;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factor Weights — NBA Board</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <p class="nav-back"><a href="/sandbox">← Sandbox</a> · <a href="/nba/board">NBA board</a></p>
+        <h1>Factor weights</h1>
+        <p class="date-line">Adjust how much each factor influences every game on the board.</p>
+      </div>
+    </header>
+
+    <div class="banner factor-banner">
+      Use ▲ and ▼ to shift weight between factors. Total must equal 100%. Changes apply to all matchups.
+    </div>
+
+    <div class="error" id="error"></div>
+    <p class="factor-status" id="status"></p>
+
+    <main class="content" id="content">
+      <ol class="factor-list" id="factor-list"></ol>
+
+      <div class="factor-footer">
+        <p class="factor-total">Total: <strong id="factor-total">100%</strong></p>
+        <div class="factor-actions">
+          <button type="button" class="btn" id="save-btn">Save weights</button>
+          <button type="button" class="btn btn-secondary" id="reset-btn">Reset defaults</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/static/nba_factors.js"></script>
+</body>
+</html>

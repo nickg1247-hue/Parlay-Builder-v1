@@ -87,7 +87,7 @@
   <div class="login-wrap">
     <div class="login-card">
       <h1>NTG Sports</h1>
-      <p>Sign in to access boards and the model lab.</p>
+      <p>Sign in to access Sandbox — advanced boards, model lab, and factor tuning.</p>
       <form id="login-form" autocomplete="on">
         <div class="login-field">
           <label for="username">Username</label>
@@ -106,7 +106,7 @@
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
-      const next = params.get("next") || "/mlb/board";
+      const next = params.get("next") || "/sandbox";
       const form = document.getElementById("login-form");
       const errorEl = document.getElementById("login-error");
       const btn = document.getElementById("login-btn");

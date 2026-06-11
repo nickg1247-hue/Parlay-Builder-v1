@@ -25,6 +25,12 @@ from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
+from app.services.nba_custom_weights import (
+    default_weights_payload,
+    load_custom_weights_config,
+    save_custom_weights_config,
+    weights_payload,
+)
 from app.services.nba_daily_board import build_nba_daily_board
 from app.odds.odds_repository import get_today_snapshot
 from app.odds.live_odds import live_odds_enabled
@@ -33,6 +39,12 @@ from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_
 from app.services.game_insights import build_game_insights
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
+from app.services.cfb_slate_predictions import predict_slate
+from app.services.cfb_backtest_report import (
+    load_saved_cfb_backtest_report,
+    run_cfb_walk_forward_backtest,
+)
+from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
 from app.services.schedule_nba import get_nba_game, get_nba_schedule
 from app.services.scores_today import get_scores_today
@@ -130,6 +142,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class SaveCustomWeightsRequest(BaseModel):
+    factors: dict[str, float] = Field(..., min_length=1)
+
+
 @app.get("/login")
 async def login_page():
     return FileResponse(STATIC_DIR / "login.html")
@@ -222,6 +238,10 @@ async def nba_daily(
         description="Demo mode — load odds from CSV/repository only (no Odds API)",
     ),
     log_clv: bool = Query(True, description="Append +EV singles to forward CLV log"),
+    skip_totals: bool | None = Query(
+        None,
+        description="Skip O/U model columns (default: true in demo/use_cache mode)",
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
@@ -232,7 +252,30 @@ async def nba_daily(
         force_refresh=refresh and not use_cache,
         use_cache=use_cache,
         log_clv=log_clv,
+        skip_totals=skip_totals,
     )
+
+
+@app.get("/api/nba/custom-weights")
+async def nba_custom_weights_get():
+    """Global factor weights for the weighted NBA model (applies to all games)."""
+    return weights_payload()
+
+
+@app.put("/api/nba/custom-weights")
+async def nba_custom_weights_put(body: SaveCustomWeightsRequest):
+    try:
+        cfg = load_custom_weights_config()
+        cfg["factors"] = body.factors
+        saved = save_custom_weights_config(cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"ok": True, **weights_payload(), "model_id": saved.get("model_id")}
+
+
+@app.post("/api/nba/custom-weights/reset")
+async def nba_custom_weights_reset():
+    return {"ok": True, **default_weights_payload()}
 
 
 @app.get("/api/status/refresh")
@@ -283,13 +326,49 @@ async def nba_schedule(
     return get_nba_schedule(None, auto_resolve=True)
 
 
-@app.get("/api/scores/today")
-async def scores_today(
-    sport: str = Query("mlb", pattern="^(mlb|nba|all)$"),
+@app.get("/api/schedule/cfb")
+async def cfb_schedule(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Bypass saved cache; re-fetch ingest or ESPN"),
+):
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_cfb_schedule(game_date, auto_resolve=False, force_live=refresh)
+    return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
+
+
+@app.get("/api/cfb/predictions")
+async def cfb_predictions(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    auto_resolve = date_param is None and sport in ("nba", "all")
+    return predict_slate(game_date)
+
+
+@app.get("/api/cfb/backtest")
+async def cfb_backtest(
+    refresh: bool = Query(False, description="Re-run walk-forward backtest"),
+):
+    if refresh:
+        return run_cfb_walk_forward_backtest(write_cache=True)
+    saved = load_saved_cfb_backtest_report()
+    if saved.get("status") not in (None, "missing", "error"):
+        return saved
+    return run_cfb_walk_forward_backtest(write_cache=True)
+
+
+@app.get("/api/cfb/backtest/saved")
+async def cfb_backtest_saved():
+    return load_saved_cfb_backtest_report()
+
+
+@app.get("/api/scores/today")
+async def scores_today(
+    sport: str = Query("mlb", pattern="^(mlb|nba|cfb|all)$"),
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    auto_resolve = date_param is None and sport in ("nba", "cfb", "all")
     return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
 
 
@@ -386,6 +465,39 @@ async def nba_slate():
     return FileResponse(STATIC_DIR / "nba_slate.html")
 
 
+@app.get("/cfb")
+async def cfb_slate():
+    return FileResponse(STATIC_DIR / "cfb_slate.html")
+
+
+@app.get("/cfb/board")
+async def cfb_board():
+    return JSONResponse(
+        {"status": "coming_soon", "message": "CFB advanced board — Phase 3"},
+        status_code=200,
+    )
+
+
+@app.get("/cfb/game/{game_id}")
+async def cfb_game_page(game_id: str):
+    return JSONResponse(
+        {"status": "coming_soon", "game_id": game_id, "message": "CFB game hub — Phase 3"},
+        status_code=200,
+    )
+
+
+@app.get("/api/games/cfb/{game_id}")
+async def cfb_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    detail = get_cfb_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
+
+
 @app.get("/nba/game/{game_id}")
 async def nba_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "nba_game.html")
@@ -431,9 +543,19 @@ async def mlb_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "game.html")
 
 
+@app.get("/sandbox")
+async def sandbox_page():
+    return FileResponse(STATIC_DIR / "sandbox.html")
+
+
 @app.get("/nba/board")
 async def nba_board():
     return FileResponse(STATIC_DIR / "nba.html")
+
+
+@app.get("/nba/board/factors")
+async def nba_board_factors():
+    return FileResponse(STATIC_DIR / "nba_factors.html")
 
 
 @app.get("/mlb/board")

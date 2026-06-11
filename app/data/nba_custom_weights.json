@@ -1,0 +1,23 @@
+{
+  "model_id": "custom_weighted_v1",
+  "description": "User-defined weighted factor model for NBA moneyline",
+  "score_scale": 4.0,
+  "factors": {
+    "team_offensive_rating": 0.15,
+    "team_defensive_rating": 0.15,
+    "starting_lineup_strength": 0.12,
+    "player_availability_injuries": 0.12,
+    "recent_form_last10": 0.08,
+    "home_court_advantage": 0.07,
+    "bench_production": 0.06,
+    "matchup_advantages": 0.05,
+    "rest_fatigue": 0.04,
+    "pace_of_play_matchup": 0.03,
+    "rebounding_edge": 0.03,
+    "turnover_differential": 0.03,
+    "three_point_shooting_efficiency": 0.03,
+    "free_throw_rate": 0.02,
+    "travel_situation": 0.01,
+    "coaching_adjustments": 0.01
+  }
+}

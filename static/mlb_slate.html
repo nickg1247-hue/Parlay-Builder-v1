@@ -14,8 +14,7 @@
         <a class="app-brand" href="/">NTG <span>Sports</span></a>
         <nav class="app-nav-links" aria-label="Sections">
           <a href="/">Home</a>
-          <a href="/mlb/board">Advanced board</a>
-          <a href="/mlb/lab">Lab</a>
+          <a href="/mlb">MLB</a>
         </nav>
       </div>
       <div class="sport-pills" aria-label="Sports">
@@ -27,7 +26,7 @@
         </a>
         <span class="sport-pill sport-pill-disabled">NFL</span>
         <span class="sport-pill sport-pill-disabled">NHL</span>
-        <span class="sport-pill sport-pill-disabled">CFB</span>
+        <a class="sport-pill" href="/cfb">CFB</a>
       </div>
     </header>
 
@@ -40,7 +39,6 @@
         <span class="slate-date" id="slate-date"></span>
       </div>
       <p class="refresh-line" id="refresh-line"></p>
-      <p class="slate-subnav"><a href="/mlb/board">Advanced board</a> · model + EV table</p>
 
       <div id="watched-section" class="hidden"></div>
 
@@ -102,7 +100,7 @@
         }
 
         if (!summary.board_available && !dateParam) {
-          refreshEl.textContent = (refreshEl.textContent || "") + " · Model picks: run morning refresh or board Run live";
+          refreshEl.textContent = (refreshEl.textContent || "") + " · Model picks: run morning refresh";
         }
 
         renderGameList(list, slate.games, renderOpts);
