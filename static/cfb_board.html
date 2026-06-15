@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFB Daily Board — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <p class="nav-back"><a href="/sandbox">← Sandbox</a> · <a href="/cfb">Slate</a></p>
+        <h1>CFB Daily Board</h1>
+        <p class="date-line" id="board-date">Click Run live or Demo to load the board.</p>
+      </div>
+    </header>
+
+    <div class="toolbar" id="board-toolbar">
+      <button type="button" class="btn" id="run-live-btn">Run live</button>
+      <button type="button" class="btn btn-secondary" id="run-demo-btn">Demo</button>
+      <label class="toolbar-field">
+        Min edge %
+        <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
+      </label>
+      <button type="button" class="btn btn-secondary hidden" id="refresh-btn">Refresh</button>
+    </div>
+
+    <div class="banner hidden" id="disclaimer"></div>
+    <div class="warnings" id="warnings"></div>
+    <div class="error" id="error"></div>
+
+    <div class="loading" id="loading">
+      <div class="spinner hidden" id="loading-spinner"></div>
+      <p id="loading-message">Click Run live or Demo to load the board.</p>
+    </div>
+
+    <main class="content hidden" id="content">
+      <section>
+        <h2>Today&rsquo;s slate</h2>
+        <div class="table-wrap">
+          <table id="slate-table">
+            <thead>
+              <tr id="slate-header-row">
+                <th>Matchup</th>
+                <th>Model P(home)</th>
+                <th>Market P(home)</th>
+                <th>Edge</th>
+                <th>Confidence</th>
+                <th>+EV</th>
+                <th>Best pick</th>
+                <th>Spread</th>
+                <th>Spread pick</th>
+                <th>O/U</th>
+                <th>Totals pick</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="simple-note" id="confidence-note">Confidence reflects model vs market edge, not a guarantee.</p>
+      </section>
+
+      <section>
+        <h2>+EV singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
+        <div id="singles-list" class="card-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer hidden" id="status-footer"></footer>
+  </div>
+  <script src="/static/cfb_board.js"></script>
+</body>
+</html>

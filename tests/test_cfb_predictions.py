@@ -22,7 +22,8 @@ MOCK_GAME = {
 }
 
 
-@patch("app.services.cfb_slate_predictions.resolve_ou_lines_for_slate")
+@patch("app.services.cfb_slate_predictions.resolve_lines_for_slate")
+@patch("app.services.cfb_slate_predictions.attach_cfb_odds")
 @patch("app.services.cfb_slate_predictions.predict_home_win_proba")
 @patch("app.services.cfb_slate_predictions.predict_spread_covers")
 @patch("app.services.cfb_slate_predictions.enrich_totals_columns")
@@ -32,16 +33,26 @@ def test_predictions_include_spread_and_totals(
     mock_enrich,
     mock_spread,
     mock_ml,
-    mock_ou,
+    mock_attach_odds,
+    mock_lines,
 ):
     import pandas as pd
+    import numpy as np
 
     mock_schedule.return_value = {
         "date": "2024-11-30",
         "resolved_date": "2024-11-30",
         "games": [MOCK_GAME],
     }
-    mock_ou.return_value = ({"401635000": 51.5}, {"401635000": 51.5})
+
+    def _attach(df, _day, **kwargs):
+        out = df.copy()
+        out["home_ml"] = np.nan
+        out["away_ml"] = np.nan
+        return out, "none"
+
+    mock_attach_odds.side_effect = _attach
+    mock_lines.return_value = ({"401635000": 51.5}, {}, {"401635000": 51.5})
     mock_ml.return_value = [0.72]
     mock_spread.return_value = pd.DataFrame(
         [
@@ -72,6 +83,7 @@ def test_predictions_include_spread_and_totals(
     assert row["model_pick"] == "Georgia"
     assert row["model_pick_side"] == "home"
     assert row["spread_pick"] is not None
+    assert row["spread_line_source"] == "proxy"
     assert row["totals_pick"] == "Over 51.5"
     assert row["ou_line"] == 51.5
     assert row["ou_line_source"] == "book"

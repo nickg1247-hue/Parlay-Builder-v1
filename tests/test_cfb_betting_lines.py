@@ -40,18 +40,49 @@ def test_resolve_season_week_nov_30_2024():
     assert resolved == ("regular", 14)
 
 
-def test_resolve_ou_lines_merges_book_and_matchup(monkeypatch):
+def test_resolve_lines_for_slate_merges_book_and_matchup(monkeypatch):
     from app.odds import cfb_betting_lines as mod
 
     df = pd.DataFrame(
         [
-            {"game_id": "1", "date": "2024-11-30", "season": 2024, "home_team": "A", "away_team": "B"},
-            {"game_id": "2", "date": "2024-11-30", "season": 2024, "home_team": "C", "away_team": "D"},
+            {"game_id": "espn-1", "date": "2024-11-30", "season": 2024, "home_team": "Georgia", "away_team": "Georgia Tech"},
+            {"game_id": "espn-2", "date": "2024-11-30", "season": 2024, "home_team": "Alabama", "away_team": "Auburn"},
         ]
     )
-    monkeypatch.setattr(mod, "get_book_ou_lines_for_date", lambda _d, ids: {"1": 47.5})
-    monkeypatch.setattr(mod, "attach_matchup_ou_lines", lambda _df: {"1": 55.0, "2": 41.5})
-    merged, book = mod.resolve_ou_lines_for_slate(df, date(2024, 11, 30))
-    assert book == {"1": 47.5}
-    assert merged["1"] == 47.5
-    assert merged["2"] == 41.5
+    cfbd_games = [
+        {
+            "cfbd_game_id": "401628472",
+            "game_date": "2024-11-30",
+            "home_team": "Georgia",
+            "away_team": "Georgia Tech",
+            "ou_line": 47.5,
+            "home_spread_point": -10.5,
+        }
+    ]
+    monkeypatch.setattr(mod, "get_cfbd_book_games_for_date", lambda _d, **kw: cfbd_games)
+    monkeypatch.setattr(mod, "attach_matchup_ou_lines", lambda _df: {"espn-1": 55.0, "espn-2": 41.5})
+    merged, spread, book = mod.resolve_lines_for_slate(df, date(2024, 11, 30))
+    assert book == {"espn-1": 47.5}
+    assert spread == {"espn-1": -10.5}
+    assert merged["espn-1"] == 47.5
+    assert merged["espn-2"] == 41.5
+
+
+def test_parse_cfbd_line_game_extracts_spread():
+    from app.odds.cfb_betting_lines import _parse_cfbd_line_game
+
+    game = {
+        "id": 401628472,
+        "homeTeam": "Pitt",
+        "awayTeam": "West Virginia",
+        "startDate": "2024-11-30T17:00:00.000Z",
+        "lines": [
+            {"provider": "DraftKings", "spread": -3.5, "overUnder": 49.5},
+            {"provider": "FanDuel", "spread": -4.0, "overUnder": 50.0},
+        ],
+    }
+    parsed = _parse_cfbd_line_game(game)
+    assert parsed is not None
+    assert parsed["home_team"] == "Pitt"
+    assert parsed["ou_line"] == 50.5
+    assert parsed["home_spread_point"] == -3.75

@@ -47,6 +47,11 @@ def _tiny_games_df() -> pd.DataFrame:
                     "away_rest_days": 7.0,
                     "home_b2b": 0,
                     "away_b2b": 0,
+                    "neutral_site": 0,
+                    "conference_game": 0,
+                    "home_conference": "",
+                    "away_conference": "",
+                    "week": 2,
                 }
             )
             gid += 1

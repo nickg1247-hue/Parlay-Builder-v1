@@ -257,6 +257,12 @@ def _slate_rows(
         display_home = blend_display_prob(model_home, market_home)
         disagree = model_disagrees_heavy_favorite(model_home, market_home)
 
+        model_pick_side = "home" if model_home >= 0.5 else "away"
+        model_pick_team = (
+            row.home_team if model_pick_side == "home" else row.away_team
+        )
+        model_pick_prob = model_home if model_pick_side == "home" else 1.0 - model_home
+
         totals = totals_by_game.get(str(row.game_id), {})
         ou_line = totals.get("ou_line")
         if ou_line is not None and pd.isna(ou_line):
@@ -285,6 +291,15 @@ def _slate_rows(
                 "ml_confidence": ml_confidence,
                 "plus_ev_single": plus_ev,
                 "best_pick": best_pick,
+                "model_pick_side": model_pick_side,
+                "model_pick_team": model_pick_team,
+                "model_pick_prob": round(model_pick_prob, 4),
+                "ev_pick_side": best_pick["side"] if best_pick else None,
+                "ev_pick_team": best_pick["team"] if best_pick else None,
+                "ev_pick_edge": best_pick["edge"] if best_pick else None,
+                "ml_picks_disagree": bool(
+                    best_pick and best_pick["side"] != model_pick_side
+                ),
                 "model_disagrees_heavy_favorite": disagree,
                 "ou_line": ou_line,
                 "expected_total_runs": (

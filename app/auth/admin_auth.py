@@ -20,16 +20,19 @@ SESSION_MAX_AGE_SECONDS = 7 * 24 * 3600
 PROTECTED_PAGE_PATHS = frozenset({
     "/sandbox",
     "/mlb/board",
+    "/mlb/board/demo",
     "/mlb/lab",
     "/nba/board",
     "/nba/board/factors",
 })
 PROTECTED_STATIC_PATHS = frozenset({
     "/static/mlb.html",
+    "/static/mlb_board_demo.html",
     "/static/mlb_lab.html",
     "/static/nba.html",
     "/static/nba_factors.html",
     "/static/mlb.js",
+    "/static/mlb_board_demo.js",
     "/static/mlb_lab.js",
     "/static/nba_board.js",
     "/static/nba_factors.js",

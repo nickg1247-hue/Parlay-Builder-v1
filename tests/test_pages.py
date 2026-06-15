@@ -61,6 +61,34 @@ def test_mlb_board_page(auth_env):
     assert "mlb.js" in text
 
 
+def test_mlb_board_demo_page(auth_env):
+    _login()
+    response = client.get("/mlb/board/demo")
+    assert response.status_code == 200
+    text = response.text
+    assert "MLB pick preview" in text
+    assert "Model winner vs +EV pick" in text
+    assert "mlb_board_demo.js" in text
+    assert 'href="/sandbox"' in text
+
+
+def test_slate_includes_model_and_ev_pick_fields(auth_env):
+    _login()
+    response = client.get(
+        "/api/daily?date=2025-08-15&use_cache=true&skip_totals=false"
+    )
+    assert response.status_code == 200
+    body = response.json()
+    if not body.get("slate"):
+        pytest.skip("No demo slate games in test environment")
+    row = body["slate"][0]
+    assert "model_pick_team" in row
+    assert "model_pick_prob" in row
+    assert "ev_pick_team" in row
+    assert "ml_picks_disagree" in row
+    assert row["model_pick_side"] in ("home", "away")
+
+
 def test_game_page_loads():
     response = client.get("/mlb/game/824269")
     assert response.status_code == 200
@@ -113,6 +141,7 @@ def test_sandbox_hub_page(auth_env):
     text = response.text
     assert "Sandbox" in text
     assert 'href="/mlb/board"' in text
+    assert 'href="/mlb/board/demo"' in text
     assert 'href="/mlb/lab"' in text
     assert 'href="/nba/board"' in text
     assert 'href="/nba/board/factors"' in text

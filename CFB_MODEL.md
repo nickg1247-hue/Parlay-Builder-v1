@@ -88,4 +88,4 @@ Output: `data/processed/cfb_backtest_report.json`
 
 **Current data:** 4 seasons ingested (2022–2025). Re-run `python scripts/bootstrap_cfb.py` to pull **2021** for a 5-season backtest.
 
-Spread/totals folds use proxy lines (-7, train-median O/U) — not sportsbook closes. Market proof requires Phase 3 odds.
+Spread/totals folds use proxy lines (-7, train-median O/U) — not sportsbook closes. Market proof: see **`MARKET_CFB.md`** (Phase C3 — CFBD lines + Odds API live repository).

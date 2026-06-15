@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB Pick Preview (Demo) — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <p class="nav-back"><a href="/sandbox">← Sandbox</a> · <a href="/mlb/board">Advanced board</a></p>
+        <h1>MLB pick preview <span class="sub">demo</span></h1>
+        <p class="date-line" id="board-date">Loading demo slate…</p>
+      </div>
+    </header>
+
+    <div class="banner demo-preview-banner" id="demo-banner">
+      Preview only — shows <strong>model winner</strong> vs <strong>+EV pick</strong> side by side.
+      Not on the public MLB slate yet.
+    </div>
+
+    <div class="warnings" id="warnings"></div>
+    <div class="error" id="error"></div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p id="loading-message">Loading demo board (2025-08-15)…</p>
+    </div>
+
+    <main class="content hidden" id="content">
+      <section class="pick-preview-section">
+        <h2>Model winner vs +EV pick</h2>
+        <p class="simple-note" id="pick-preview-note">
+          <strong>Model winner</strong> = who the model thinks is more likely to win (P &gt; 50%).
+          <strong>+EV pick</strong> = side with the best edge vs market, only shown when edge ≥ threshold.
+        </p>
+        <div class="pick-stats" id="pick-stats"></div>
+        <div class="table-wrap">
+          <table id="pick-table">
+            <thead>
+              <tr>
+                <th>Matchup</th>
+                <th>Model winner</th>
+                <th>Model P(win)</th>
+                <th>+EV pick</th>
+                <th>Edge</th>
+                <th>Agree?</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Full slate (demo)</h2>
+        <div class="table-wrap">
+          <table id="slate-table">
+            <thead>
+              <tr>
+                <th>Matchup</th>
+                <th>Model P(home)</th>
+                <th>Market P(home)</th>
+                <th>ML edge</th>
+                <th>O/U</th>
+                <th>Model runs</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Top singles <span class="sub" id="singles-label">(+EV only)</span></h2>
+        <div id="singles-list" class="card-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer hidden" id="status-footer"></footer>
+  </div>
+  <script src="/static/mlb_board_demo.js"></script>
+</body>
+</html>

@@ -39,6 +39,7 @@ from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_
 from app.services.game_insights import build_game_insights
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
+from app.services.cfb_daily_board import build_cfb_daily_board
 from app.services.cfb_slate_predictions import predict_slate
 from app.services.cfb_backtest_report import (
     load_saved_cfb_backtest_report,
@@ -337,6 +338,27 @@ async def cfb_schedule(
     return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
 
 
+@app.get("/api/cfb/daily")
+async def cfb_daily(
+    date_param: str | None = Query(None, alias="date"),
+    min_edge: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
+    refresh: bool = Query(False, description="Force refresh live CFB odds from API"),
+    use_cache: bool = Query(
+        False,
+        description="Demo mode — fixed holdout date with CFBD cached lines",
+    ),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_cfb_daily_board(
+        game_date=game_date,
+        min_edge=min_edge,
+        use_cache=use_cache,
+        force_refresh=refresh and not use_cache,
+    )
+
+
 @app.get("/api/cfb/predictions")
 async def cfb_predictions(
     date_param: str | None = Query(None, alias="date"),
@@ -472,18 +494,33 @@ async def cfb_slate():
 
 @app.get("/cfb/board")
 async def cfb_board():
-    return JSONResponse(
-        {"status": "coming_soon", "message": "CFB advanced board — Phase 3"},
-        status_code=200,
-    )
+    return FileResponse(STATIC_DIR / "cfb_board.html")
 
 
 @app.get("/cfb/game/{game_id}")
 async def cfb_game_page(game_id: str):
-    return JSONResponse(
-        {"status": "coming_soon", "game_id": game_id, "message": "CFB game hub — Phase 3"},
-        status_code=200,
+    return FileResponse(STATIC_DIR / "cfb_game.html")
+
+
+@app.get("/api/games/cfb/{game_id}/insights")
+async def cfb_game_insights(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+    refresh: bool = Query(False),
+):
+    from app.services.cfb_game_insights import build_cfb_game_insights
+
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    insights = build_cfb_game_insights(
+        game_id,
+        game_date=game_date,
+        use_cache=use_cache,
+        refresh=refresh,
     )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return insights
 
 
 @app.get("/api/games/cfb/{game_id}")
@@ -561,6 +598,11 @@ async def nba_board_factors():
 @app.get("/mlb/board")
 async def mlb_board():
     return FileResponse(STATIC_DIR / "mlb.html")
+
+
+@app.get("/mlb/board/demo")
+async def mlb_board_demo():
+    return FileResponse(STATIC_DIR / "mlb_board_demo.html")
 
 
 @app.get("/mlb/lab")

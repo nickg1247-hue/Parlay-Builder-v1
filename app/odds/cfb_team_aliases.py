@@ -6,6 +6,7 @@ from __future__ import annotations
 _CFB_ALIASES: dict[str, str] = {
     "ole miss": "Ole Miss",
     "mississippi": "Ole Miss",
+    "mississippi rebels": "Ole Miss",
     "louisiana monroe": "UL Monroe",
     "ul monroe": "UL Monroe",
     "louisiana": "Louisiana",
@@ -100,6 +101,16 @@ _CFB_ALIASES: dict[str, str] = {
     "air force falcons": "Air Force",
     "notre dame": "Notre Dame",
     "notre dame fighting irish": "Notre Dame",
+    "georgia bulldogs": "Georgia",
+    "georgia": "Georgia",
+    "georgia tech yellow jackets": "Georgia Tech",
+    "georgia tech": "Georgia Tech",
+    "alabama crimson tide": "Alabama",
+    "alabama": "Alabama",
+    "auburn tigers": "Auburn",
+    "auburn": "Auburn",
+    "clemson tigers": "Clemson",
+    "clemson": "Clemson",
 }
 
 

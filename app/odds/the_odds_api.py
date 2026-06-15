@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 SPORT_MLB = "baseball_mlb"
 SPORT_NBA = "basketball_nba"
+SPORT_CFB = "americanfootball_ncaaf"
 MARKET_H2H = "h2h"
 MARKET_TOTALS = "totals"
 MARKET_SPREADS = "spreads"
@@ -123,6 +124,26 @@ def fetch_live_nba_odds(
     if include_totals:
         markets.append(MARKET_TOTALS)
     return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_NBA)
+
+
+def fetch_live_cfb_odds(
+    api_key: str | None = None,
+    regions: str = "us",
+    include_spreads: bool = True,
+    include_totals: bool = True,
+) -> list[dict[str, Any]] | None:
+    """Live CFB odds — one request ≈ 1 credit (h2h, spreads, totals). No historical endpoint."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    markets = [MARKET_H2H]
+    if include_spreads:
+        markets.append(MARKET_SPREADS)
+    if include_totals:
+        markets.append(MARKET_TOTALS)
+    return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_CFB)
 
 
 def fetch_historical_mlb_odds(

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFB Game — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="game-page-bg">
+  <div class="game-page-wash" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Sections">
+          <a href="/cfb">← Slate</a>
+          <a href="/cfb/board">Board</a>
+        </nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports">
+        <a class="sport-pill" href="/mlb">MLB</a>
+        <a class="sport-pill" href="/nba">NBA</a>
+        <span class="sport-pill sport-pill-disabled">NFL</span>
+        <span class="sport-pill sport-pill-disabled">NHL</span>
+        <a class="sport-pill sport-pill-active" href="/cfb">CFB</a>
+      </div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div id="game-loading" class="empty-state">Loading game…</div>
+      <div id="game-error" class="error-state hidden"></div>
+      <div id="game-content" class="hidden">
+        <header class="matchup-header" id="matchup-header"></header>
+
+        <p class="app-section-title">
+          Matchup
+          <span id="model-badge" class="lines-updated hidden"></span>
+        </p>
+
+        <div class="warnings" id="insights-warnings"></div>
+        <div id="game-matchup-board" class="matchup-board"></div>
+
+        <details class="feature-table-wrap" open>
+          <summary class="app-section-title">Model features (v2 snapshot)</summary>
+          <div id="feature-snapshot"></div>
+        </details>
+
+        <p class="disclaimer-small" id="game-disclaimer">
+          Experimental analytics — not betting advice. betting_ready=false until forward CLV validates edge.
+        </p>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script src="/static/cfb_game.js"></script>
+</body>
+</html>

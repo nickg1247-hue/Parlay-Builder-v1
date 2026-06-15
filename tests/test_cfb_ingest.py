@@ -20,6 +20,10 @@ SAMPLE_GAMES = [
         "homePoints": 34,
         "awayPoints": 3,
         "completed": True,
+        "neutralSite": True,
+        "conferenceGame": False,
+        "homeConference": "SEC",
+        "awayConference": "ACC",
     },
     {
         "id": 401403855,
@@ -74,6 +78,10 @@ def test_parse_cfbd_row_completed_game():
     assert parsed.home_score == 34
     assert parsed.away_score == 3
     assert parsed.date == "2024-08-31"
+    assert parsed.neutral_site == 1
+    assert parsed.home_conference == "SEC"
+    assert parsed.away_conference == "ACC"
+    assert parsed.conference_game == 0
 
 
 def test_parse_cfbd_row_skips_incomplete():
@@ -104,7 +112,7 @@ def test_build_modeling_table_has_required_columns(mock_fetch):
     from app.ingest.cfb import ParsedGame
 
     mock_fetch.return_value = [
-        ParsedGame("1", "2024-08-31", 2024, "regular", "Georgia", "Clemson", 34, 3),
+        ParsedGame("1", "2024-08-31", 2024, "regular", "Georgia", "Clemson", 34, 3, 1, 0, "SEC", "ACC"),
         ParsedGame("2", "2024-09-07", 2024, "regular", "Alabama", "USC", 21, 17),
         ParsedGame("3", "2024-09-14", 2024, "regular", "Ohio State", "Michigan", 28, 14),
     ]

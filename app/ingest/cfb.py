@@ -40,6 +40,11 @@ class ParsedGame:
     away_team: str
     home_score: int
     away_score: int
+    neutral_site: int = 0
+    conference_game: int = 0
+    home_conference: str = ""
+    away_conference: str = ""
+    week: int = 0
 
 
 def _require_api_key() -> str:
@@ -131,6 +136,15 @@ def _parse_cfbd_row(row: dict[str, Any], season: int) -> ParsedGame | None:
     game_date = _parse_game_date(str(row.get("startDate") or ""))
     if not game_date:
         return None
+    neutral = 1 if row.get("neutralSite") else 0
+    conf_game = 1 if row.get("conferenceGame") else 0
+    home_conf = str(row.get("homeConference") or "").strip()
+    away_conf = str(row.get("awayConference") or "").strip()
+    week_raw = row.get("week")
+    try:
+        week = int(week_raw) if week_raw is not None else 0
+    except (TypeError, ValueError):
+        week = 0
     return ParsedGame(
         game_id=game_id,
         date=game_date,
@@ -140,6 +154,11 @@ def _parse_cfbd_row(row: dict[str, Any], season: int) -> ParsedGame | None:
         away_team=away_team,
         home_score=home_score,
         away_score=away_score,
+        neutral_site=neutral,
+        conference_game=conf_game,
+        home_conference=home_conf,
+        away_conference=away_conf,
+        week=week,
     )
 
 
@@ -192,6 +211,11 @@ def _games_to_frame(games: list[ParsedGame]) -> pd.DataFrame:
             "home_score": g.home_score,
             "away_score": g.away_score,
             "home_win": int(g.home_score > g.away_score),
+            "neutral_site": int(g.neutral_site),
+            "conference_game": int(g.conference_game),
+            "home_conference": g.home_conference,
+            "away_conference": g.away_conference,
+            "week": int(g.week),
         }
         for g in games
     ]

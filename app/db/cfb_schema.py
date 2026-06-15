@@ -12,9 +12,14 @@ CFB_GAMES_COLUMNS = [
     "away_rest_days",
     "home_b2b",
     "away_b2b",
+    "neutral_site",
+    "conference_game",
+    "home_conference",
+    "away_conference",
+    "week",
 ]
 
-CREATE_CFB_GAMES_SQL = """
+_CREATE_CFB_GAMES_BASE = """
 CREATE TABLE IF NOT EXISTS cfb_games (
     game_id TEXT PRIMARY KEY,
     date TEXT NOT NULL,
@@ -28,13 +33,32 @@ CREATE TABLE IF NOT EXISTS cfb_games (
     home_rest_days REAL NOT NULL,
     away_rest_days REAL NOT NULL,
     home_b2b INTEGER NOT NULL,
-    away_b2b INTEGER NOT NULL
+    away_b2b INTEGER NOT NULL,
+    neutral_site INTEGER NOT NULL DEFAULT 0,
+    conference_game INTEGER NOT NULL DEFAULT 0,
+    home_conference TEXT NOT NULL DEFAULT '',
+    away_conference TEXT NOT NULL DEFAULT '',
+    week INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_cfb_games_date ON cfb_games(date);
 CREATE INDEX IF NOT EXISTS idx_cfb_games_season ON cfb_games(season);
 """
 
+_CFB_MIGRATION_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("neutral_site", "INTEGER NOT NULL DEFAULT 0"),
+    ("conference_game", "INTEGER NOT NULL DEFAULT 0"),
+    ("home_conference", "TEXT NOT NULL DEFAULT ''"),
+    ("away_conference", "TEXT NOT NULL DEFAULT ''"),
+    ("week", "INTEGER NOT NULL DEFAULT 0"),
+)
+
+CREATE_CFB_GAMES_SQL = _CREATE_CFB_GAMES_BASE
+
 
 def ensure_cfb_games_table(conn) -> None:
-    conn.executescript(CREATE_CFB_GAMES_SQL)
+    conn.executescript(_CREATE_CFB_GAMES_BASE)
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(cfb_games)")}
+    for col, ddl in _CFB_MIGRATION_COLUMNS:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE cfb_games ADD COLUMN {col} {ddl}")
     conn.commit()

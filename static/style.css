@@ -625,6 +625,83 @@ tr.plus-ev td {
   color: #e57373;
 }
 
+.demo-preview-banner {
+  background: #1a2a3d;
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.pick-preview-section {
+  margin-bottom: 2rem;
+}
+
+.pick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.pick-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  min-width: 7rem;
+  text-align: center;
+}
+
+.pick-stat-value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pick-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.pick-disagree-row {
+  background: #2a2218;
+}
+
+.pick-agree-row {
+  background: #0d2218;
+}
+
+.model-winner-cell {
+  font-weight: 600;
+}
+
+.ev-pick-cell {
+  font-weight: 600;
+  color: var(--positive);
+}
+
+.muted-label {
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.agree-badge {
+  color: var(--positive);
+  font-weight: 600;
+}
+
+.disagree-badge {
+  color: #f4212e;
+  font-weight: 600;
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;

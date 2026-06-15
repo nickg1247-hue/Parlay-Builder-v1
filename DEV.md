@@ -91,9 +91,29 @@ Home page (`/`) shows up to **10** sports headlines from ESPN RSS. Links open ES
 | Historical ingest | `https://api.collegefootballdata.com` — `GET /games?year=&seasonType=regular&division=fbs` |
 | API key | `CFBD_API_KEY` in `.env` (Bearer token header) |
 
-**Odds sport key (document only, Phase 3+):** `americanfootball_ncaaf`
+**Odds sport key:** `americanfootball_ncaaf` — wired in Phase C3 via `app/odds/cfb_odds_repository.py` and `fetch_live_cfb_odds()` in `app/odds/the_odds_api.py`. Requires `USE_LIVE_ODDS=true` + `ODDS_API_KEY`.
 
-**API usage (chunky, not chatty):** Bootstrap ingest makes **4 CFBD requests total** — one `GET /games?year=&seasonType=regular&division=fbs` per season (2022–2025). No per-game or per-team loops. Live slate uses ESPN (no CFBD credits). Future CFB features should prefer the same pattern (season or week filters, not 130+ team calls).
+**Game crosswalk (Phase C3):** ESPN slate IDs ≠ CFBD IDs. Lines attach by normalized `(date, home_team, away_team)` — `app/odds/cfb_game_match.py`. CFBD week lines cached in `data/processed/cfb_lines_cache/`; live Odds API snapshots in `data/processed/cfb_odds_repository/`.
+
+**Market eval:** `python scripts/evaluate_cfb_market.py` → `data/processed/cfb_market_metrics.json`. See `MARKET_CFB.md`.
+
+**Bulk CFBD lines cache (market eval):** populate holdout lines before first eval:
+
+```powershell
+python scripts/fetch_cfb_holdout_lines.py --season 2025
+python scripts/evaluate_cfb_market.py
+```
+
+Uses **16 week-level CFBD `/lines` calls** (not per-game). Cache: `data/processed/cfb_lines_cache/YYYY-MM-DD.json`.
+
+**SP+ ratings (cfb_v3):** CFBD `/ratings/sp` does **not** vary by `week` (audit: `python scripts/audit_cfb_sp_leakage.py`). When weekly files are flat, production uses a **preseason snapshot** (fetch without `week`) for **week-1 games only**; weeks 2+ zero SP+ features. When weeks differ, use pregame week **W−1**. Cache: `cfb_sp_plus_cache/{season}_week_{N}.json`, `{season}_preseason.json`, `{season}_meta.json`.
+
+```powershell
+python -c "from app.ingest.cfb_sp_plus import ensure_sp_plus_cache; ensure_sp_plus_cache(force=True)"
+python scripts/audit_cfb_sp_leakage.py
+```
+
+**API usage (chunky, not chatty):** Bootstrap ingest makes **5 CFBD requests total** — one `GET /games?year=&seasonType=regular&division=fbs` per season (2021–2025). SP+ adds ~15 week calls per season when training v3. No per-game or per-team loops. Live slate uses ESPN (no CFBD credits). Future CFB features should prefer the same pattern (season or week filters, not 130+ team calls).
 
 **Bootstrap:**
 
