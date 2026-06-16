@@ -1,0 +1,928 @@
+{
+  "game_id": "823775",
+  "date": "2026-06-16",
+  "matchup": "Cleveland Guardians @ Milwaukee Brewers",
+  "home_team": "Milwaukee Brewers",
+  "away_team": "Cleveland Guardians",
+  "props": [
+    {
+      "player": "Angel Martinez",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 475,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "David Fry",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 400,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Rhys Hoskins",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 320,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Brice Turang",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 370,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Christian Yelich",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Garrett Mitchell",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 475,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jackson Chourio",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 330,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "William Contreras",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "William Contreras",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -251,
+      "under_odds": 185,
+      "score": 76.8,
+      "recommended_side": "over",
+      "recommended_odds": -251,
+      "hit_rate_over": 0.8,
+      "hit_rate_under": 0.2,
+      "recent_avg": 1.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the over (1.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jake Bauers",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 74.4,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.2,
+      "hit_rate_under": 0.8,
+      "recent_avg": 0.2,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the under (0.2 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "David Fry",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -137,
+      "under_odds": 103,
+      "score": 73.6,
+      "recommended_side": "under",
+      "recommended_odds": 103,
+      "hit_rate_over": 0.2,
+      "hit_rate_under": 0.8,
+      "recent_avg": 0.3,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the under (0.3 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Christian Yelich",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -223,
+      "under_odds": 166,
+      "score": 70.0,
+      "recommended_side": "over",
+      "recommended_odds": -223,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 1.5,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (1.5 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Angel Martinez",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 1.5,
+      "over_odds": 119,
+      "under_odds": -159,
+      "score": 69.2,
+      "recommended_side": "under",
+      "recommended_odds": -159,
+      "hit_rate_over": 0.3,
+      "hit_rate_under": 0.7,
+      "recent_avg": 0.6,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the under (0.6 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Stuart Fairchild",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -131,
+      "under_odds": -101,
+      "score": 68.0,
+      "recommended_side": "under",
+      "recommended_odds": -101,
+      "hit_rate_over": 0.25,
+      "hit_rate_under": 0.75,
+      "recent_avg": 0.38,
+      "sample_games": 8,
+      "factors": [
+        "Last 8 games: 75% on the under (0.4 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Christian Yelich",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 1.5,
+      "over_odds": 139,
+      "under_odds": -185,
+      "score": 67.6,
+      "recommended_side": "over",
+      "recommended_odds": 139,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 2.2,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (2.2 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Brice Turang",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -235,
+      "under_odds": 174,
+      "score": 66.0,
+      "recommended_side": "over",
+      "recommended_odds": -235,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 1.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (1.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Austin Hedges",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -117,
+      "under_odds": -113,
+      "score": 65.2,
+      "recommended_side": "over",
+      "recommended_odds": -117,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 0.9,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (0.9 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Sal Frelick",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -167,
+      "under_odds": 125,
+      "score": 64.4,
+      "recommended_side": "over",
+      "recommended_odds": -167,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 0.8,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (0.8 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Slade Cecconi",
+      "market_type": "pitcher_strikeouts",
+      "market_label": "Strikeouts",
+      "line": 4.5,
+      "over_odds": 106,
+      "under_odds": -135,
+      "score": 62.4,
+      "recommended_side": "under",
+      "recommended_odds": -135,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 4.2,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (4.2 avg vs 4.5 line)"
+      ]
+    },
+    {
+      "player": "Angel Martinez",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -247,
+      "under_odds": 183,
+      "score": 62.0,
+      "recommended_side": "under",
+      "recommended_odds": 183,
+      "hit_rate_over": 0.3,
+      "hit_rate_under": 0.7,
+      "recent_avg": 0.5,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the under (0.5 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "William Contreras",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 1.5,
+      "over_odds": 129,
+      "under_odds": -170,
+      "score": 54.4,
+      "recommended_side": "over",
+      "recommended_odds": 129,
+      "hit_rate_over": 0.6,
+      "hit_rate_under": 0.4,
+      "recent_avg": 1.8,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the over (1.8 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "David Hamilton",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -121,
+      "under_odds": -110,
+      "score": 52.8,
+      "recommended_side": "over",
+      "recommended_odds": -121,
+      "hit_rate_over": 0.6,
+      "hit_rate_under": 0.4,
+      "recent_avg": 0.6,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the over (0.6 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jackson Chourio",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 1.5,
+      "over_odds": 184,
+      "under_odds": -250,
+      "score": 52.8,
+      "recommended_side": "under",
+      "recommended_odds": -250,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 1.4,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (1.4 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Brayan Rocchio",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -158,
+      "under_odds": 120,
+      "score": 52.0,
+      "recommended_side": "under",
+      "recommended_odds": 120,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 0.5,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (0.5 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Rhys Hoskins",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -151,
+      "under_odds": 114,
+      "score": 49.6,
+      "recommended_side": "under",
+      "recommended_odds": 114,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 0.8,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (0.8 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Steven Kwan",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -181,
+      "under_odds": 135,
+      "score": 49.6,
+      "recommended_side": "under",
+      "recommended_odds": 135,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 0.8,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (0.8 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jackson Chourio",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 1.5,
+      "over_odds": -102,
+      "under_odds": -130,
+      "score": 46.4,
+      "recommended_side": "under",
+      "recommended_odds": -130,
+      "hit_rate_over": 0.4,
+      "hit_rate_under": 0.6,
+      "recent_avg": 2.2,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 60% on the under (2.2 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Brice Turang",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 1.5,
+      "over_odds": 118,
+      "under_odds": -157,
+      "score": 45.2,
+      "recommended_side": "over",
+      "recommended_odds": 118,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 1.9,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (1.9 avg vs 1.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Garrett Mitchell",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -130,
+      "under_odds": -102,
+      "score": 45.2,
+      "recommended_side": "over",
+      "recommended_odds": -130,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 0.9,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (0.9 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Travis Bazzana",
+      "market_type": "batter_total_bases",
+      "market_label": "Total bases",
+      "line": 0.5,
+      "over_odds": -170,
+      "under_odds": 130,
+      "score": 45.2,
+      "recommended_side": "over",
+      "recommended_odds": -170,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 0.9,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (0.9 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Jake Bauers",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -143,
+      "under_odds": 108,
+      "score": 43.6,
+      "recommended_side": "over",
+      "recommended_odds": -143,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 0.7,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (0.7 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Gabriel Arias",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -111,
+      "under_odds": -119,
+      "score": 42.8,
+      "recommended_side": "over",
+      "recommended_odds": -111,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 0.6,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (0.6 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Travis Bazzana",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -165,
+      "under_odds": 124,
+      "score": 42.8,
+      "recommended_side": "over",
+      "recommended_odds": -165,
+      "hit_rate_over": 0.5,
+      "hit_rate_under": 0.5,
+      "recent_avg": 0.6,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 50% on the over (0.6 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)",
+        "Form signal is mixed \u2014 not a strong lean"
+      ]
+    },
+    {
+      "player": "Cooper Pratt",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -151,
+      "under_odds": 114,
+      "score": null,
+      "recommended_side": null,
+      "hit_rate_over": null,
+      "hit_rate_under": null,
+      "recent_avg": null,
+      "sample_games": 0,
+      "factors": [
+        "Only 0 recent games logged"
+      ]
+    },
+    {
+      "player": "Robert Gasser",
+      "market_type": "pitcher_strikeouts",
+      "market_label": "Strikeouts",
+      "line": 4.5,
+      "over_odds": -160,
+      "under_odds": 120,
+      "score": null,
+      "recommended_side": null,
+      "hit_rate_over": null,
+      "hit_rate_under": null,
+      "recent_avg": null,
+      "sample_games": 4,
+      "factors": [
+        "Only 4 recent games logged"
+      ]
+    },
+    {
+      "player": "Robert Gasser",
+      "market_type": "pitcher_strikeouts",
+      "market_label": "Strikeouts",
+      "line": 5.5,
+      "over_odds": 126,
+      "under_odds": -163,
+      "score": null,
+      "recommended_side": null,
+      "hit_rate_over": null,
+      "hit_rate_under": null,
+      "recent_avg": null,
+      "sample_games": 4,
+      "factors": [
+        "Only 4 recent games logged"
+      ]
+    }
+  ],
+  "top_picks": [
+    {
+      "player": "Angel Martinez",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 475,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "David Fry",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 400,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Rhys Hoskins",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 320,
+      "under_odds": null,
+      "score": 96.0,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.0,
+      "hit_rate_under": 1.0,
+      "recent_avg": 0.0,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 100% on the under (0.0 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Brice Turang",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 370,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Christian Yelich",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Garrett Mitchell",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 475,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jackson Chourio",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 330,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "William Contreras",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 85.2,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.1,
+      "hit_rate_under": 0.9,
+      "recent_avg": 0.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 90% on the under (0.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "William Contreras",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -251,
+      "under_odds": 185,
+      "score": 76.8,
+      "recommended_side": "over",
+      "recommended_odds": -251,
+      "hit_rate_over": 0.8,
+      "hit_rate_under": 0.2,
+      "recent_avg": 1.1,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the over (1.1 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Jake Bauers",
+      "market_type": "batter_home_runs",
+      "market_label": "Home runs",
+      "line": 0.5,
+      "over_odds": 500,
+      "under_odds": null,
+      "score": 74.4,
+      "recommended_side": "under",
+      "recommended_odds": null,
+      "hit_rate_over": 0.2,
+      "hit_rate_under": 0.8,
+      "recent_avg": 0.2,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the under (0.2 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "David Fry",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -137,
+      "under_odds": 103,
+      "score": 73.6,
+      "recommended_side": "under",
+      "recommended_odds": 103,
+      "hit_rate_over": 0.2,
+      "hit_rate_under": 0.8,
+      "recent_avg": 0.3,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 80% on the under (0.3 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    },
+    {
+      "player": "Christian Yelich",
+      "market_type": "batter_hits",
+      "market_label": "Hits",
+      "line": 0.5,
+      "over_odds": -223,
+      "under_odds": 166,
+      "score": 70.0,
+      "recommended_side": "over",
+      "recommended_odds": -223,
+      "hit_rate_over": 0.7,
+      "hit_rate_under": 0.3,
+      "recent_avg": 1.5,
+      "sample_games": 10,
+      "factors": [
+        "Last 10 games: 70% on the over (1.5 avg vs 0.5 line)",
+        "Opposing starter ERA 3.18 (tough matchup)"
+      ]
+    }
+  ],
+  "fetched_at": "2026-06-16T07:55:03.594849+00:00",
+  "source": "the_odds_api_live",
+  "status": "ok",
+  "message": null,
+  "markets_requested": "batter_hits,batter_total_bases,batter_runs_scored,batter_home_runs,pitcher_strikeouts",
+  "event_id": "4b5e3f0ce8c202d711c9b02b84f156cc"
+}

@@ -509,7 +509,7 @@ function modelLeanChips(boardRow, options = {}) {
   if (!boardRow) return [];
   const chips = [];
   let modelTeam = boardRow.model_pick_team;
-  const modelConf = boardRow.model_confidence || boardRow.ml_confidence;
+  const modelConf = boardRow.model_confidence;
   if (!modelTeam && boardRow.model_prob_home != null) {
     const home = Number(boardRow.model_prob_home) >= 0.5;
     modelTeam = home ? boardRow.home_team : boardRow.away_team;
@@ -517,12 +517,12 @@ function modelLeanChips(boardRow, options = {}) {
   if (!modelTeam && boardRow.model_pick) {
     modelTeam = boardRow.model_pick;
   }
-  if (modelTeam) {
+  if (modelTeam && modelConf) {
     chips.push({ text: `Model: ${modelTeam}`, tier: modelConf });
   }
   const evTeam = boardRow.ev_pick_team ?? boardRow.best_pick?.team;
   if (evTeam && options.sport !== "cfb") {
-    chips.push({ text: `+EV: ${evTeam}`, tier: boardRow.ml_confidence });
+    chips.push({ text: `+EV: ${evTeam}`, tier: boardRow.ml_confidence, chipKind: "ev" });
   }
   if (boardRow.spread_pick) {
     chips.push({ text: `Spread: ${boardRow.spread_pick}`, tier: boardRow.spread_confidence });
@@ -535,10 +535,32 @@ function modelLeanChips(boardRow, options = {}) {
 
 function confidenceChipClass(tier) {
   const t = (tier || "").toLowerCase();
+  if (t === "lean only" || t.startsWith("blocked")) return "chip-lean";
   if (t === "low") return "chip-low";
-  if (t === "medium") return "chip-medium";
-  if (t === "high" || t === "extremely high") return "chip-high";
+  if (t === "moderate" || t === "medium") return "chip-medium";
+  if (t === "high" || t === "very high" || t === "extremely high") return "chip-high";
   return "";
+}
+
+function propSlipCorrelationWarnings(legs) {
+  const warnings = [];
+  const byGame = {};
+  for (const leg of legs) {
+    const gid = leg.game_id || "unknown";
+    byGame[gid] = byGame[gid] || [];
+    byGame[gid].push(leg);
+  }
+  for (const [gid, gameLegs] of Object.entries(byGame)) {
+    if (gameLegs.length < 2) continue;
+    const players = new Set(gameLegs.map((l) => l.player));
+    for (const player of players) {
+      const same = gameLegs.filter((l) => l.player === player);
+      if (same.length < 2) continue;
+      const markets = same.map((l) => l.market_type).join(", ");
+      warnings.push(`Same-game: ${player} has multiple legs (${markets}) — books may block or price differently.`);
+    }
+  }
+  return warnings;
 }
 
 function matchupPreviewText(boardRow, lineMove) {
@@ -913,6 +935,63 @@ function renderTodayGlance(el, summary, scoreCounts) {
     </div>`;
 }
 
+function propHitRateTier(rate) {
+  if (rate == null || Number.isNaN(rate)) return null;
+  if (rate >= 0.9) return "high";
+  if (rate >= 0.75) return "medium";
+  if (rate <= 0.6) return "red";
+  return null;
+}
+
+function hitRateTier(rate) {
+  if (rate == null || Number.isNaN(rate)) return null;
+  if (rate >= 0.62) return "high";
+  if (rate >= 0.55) return "medium";
+  if (rate >= 0.45) return "low";
+  return null;
+}
+
+function hitRateChip(label, rate) {
+  const tier = hitRateTier(rate);
+  const pct = rate != null ? `${Math.round(rate * 100)}%` : "—";
+  const cls = tier ? `hit-rate-chip hit-rate-${tier}` : "hit-rate-chip";
+  return `<span class="${cls}"><span class="hit-rate-lbl">${label}</span> ${pct}</span>`;
+}
+
+function propHitRateChip(label, rate) {
+  const tier = propHitRateTier(rate);
+  const pct = rate != null ? `${Math.round(rate * 100)}%` : "—";
+  const cls = tier ? `hit-rate-chip hit-rate-${tier}` : "hit-rate-chip";
+  return `<span class="${cls}"><span class="hit-rate-lbl">${label}</span> ${pct}</span>`;
+}
+
+function propHitRatesHtml(prop, side) {
+  const overKey = side === "over";
+  const l5 = overKey ? prop.hit_rate_over_l5 : prop.hit_rate_under_l5;
+  const l10 = overKey ? prop.hit_rate_over_l10 : prop.hit_rate_under_l10;
+  const season = overKey ? prop.hit_rate_over_season : prop.hit_rate_under_season;
+  return `<span class="hit-rate-row">${propHitRateChip("L5", l5)}${propHitRateChip("L10", l10)}${propHitRateChip("Season", season)}</span>`;
+}
+
+function teamWinRatesHtml(pick) {
+  return `<span class="hit-rate-row">${hitRateChip("L5", pick.win_rate_l5)}${hitRateChip("L10", pick.win_rate_l10)}${hitRateChip("Season", pick.win_rate_season)}</span>`;
+}
+
+function lineStrengthHtml(item) {
+  const level = item?.line_strength;
+  if (!level) return "";
+  const label = item.line_strength_label || level;
+  const insight = item.line_insight || "";
+  const safeInsight = String(insight).replace(/"/g, "&quot;");
+  return `<span class="line-strength line-strength-${level}" title="${safeInsight}">${label}</span>`;
+}
+
+window.hitRateChip = hitRateChip;
+window.propHitRateChip = propHitRateChip;
+window.propHitRatesHtml = propHitRatesHtml;
+window.teamWinRatesHtml = teamWinRatesHtml;
+window.lineStrengthHtml = lineStrengthHtml;
+
 function renderBestBets(el, topSingles) {
   if (!el) return;
   const picks = topSingles || [];
@@ -928,15 +1007,128 @@ function renderBestBets(el, topSingles) {
     .map((p) => {
       const edge = p.edge != null ? `${(p.edge * 100).toFixed(1)}%` : "—";
       const odds = p.american_odds > 0 ? `+${p.american_odds}` : p.american_odds;
+      const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
+      const form = teamWinRatesHtml(p);
+      const strength = lineStrengthHtml(p);
+      const insight = p.line_insight
+        ? `<span class="best-bet-insight">${p.line_insight}</span>`
+        : "";
       return `
-      <a class="best-bet-card" href="/mlb">
+      <a class="best-bet-card" href="${gameHref}">
         <span class="best-bet-team">${p.team}</span>
         <span class="best-bet-meta">${p.matchup || ""}</span>
         <span class="best-bet-edge">EV ${edge} · ${odds}</span>
+        <span class="best-bet-form">${form}</span>
+        ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
+        ${insight}
       </a>`;
     })
     .join("");
 }
+
+function propSlipLegFromProp(p) {
+  if (p.slip_leg) return p.slip_leg;
+  const side = p.recommended_side || "over";
+  return {
+    id: [p.game_id, p.player, p.market_type, p.line, side].join("|"),
+    game_id: p.game_id,
+    matchup: p.matchup,
+    player: p.player,
+    market_type: p.market_type,
+    market_label: p.market_label,
+    side,
+    line: p.line,
+    american_odds: p.recommended_odds,
+    hit_rate: p.recommended_hit_rate,
+    score: p.rank_score ?? p.score,
+  };
+}
+
+function renderBestProps(el, topProps, options = {}) {
+  if (!el) return;
+  const props = topProps || [];
+  if (!props.length) {
+    el.innerHTML = `
+      <div class="best-bets-empty-card">
+        ${emptyStateIcon("no-bets")}
+        <p>${options.emptyMessage || "No actionable player props yet. Open MLB games to load lines."}</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = props
+    .map((p, i) => {
+      const side = p.recommended_side || "over";
+      const odds = fmtAmericanOdds(p.recommended_odds);
+      const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
+      const line = `${p.market_label || p.market_type}: ${side} ${p.line}`;
+      const form = propHitRatesHtml(p, side);
+      const strength = lineStrengthHtml(p);
+      const insight = p.line_insight
+        ? `<span class="best-bet-insight">${p.line_insight}</span>`
+        : "";
+      const rankHint =
+        p.rank_score != null && p.matchup_adjustment
+          ? `<span class="best-bet-meta best-prop-rank">Matchup adj ${p.matchup_adjustment > 0 ? "+" : ""}${p.matchup_adjustment}</span>`
+          : "";
+      return `
+      <div class="best-bet-card best-prop-card">
+        <a class="best-prop-card-link" href="${gameHref}">
+          <span class="best-bet-team">${p.player}</span>
+          <span class="best-bet-meta">${p.matchup || ""}</span>
+          <span class="best-bet-meta">${line}</span>
+          <span class="best-bet-edge">${odds}</span>
+          ${rankHint}
+          <span class="best-bet-form">${form}</span>
+          ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
+          ${insight}
+        </a>
+        <button type="button" class="home-prop-add-btn" data-add-home-prop="${i}" aria-label="Add ${p.player} to prop slip">+ Add</button>
+      </div>`;
+    })
+    .join("");
+
+  el.querySelectorAll("[data-add-home-prop]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = Number(btn.dataset.addHomeProp);
+      const prop = props[idx];
+      if (!prop || !window.addPropToSlip) return;
+      window.addPropToSlip(propSlipLegFromProp(prop));
+      const prev = btn.textContent;
+      btn.textContent = "Added";
+      window.setTimeout(() => {
+        btn.textContent = prev;
+      }, 1500);
+    });
+  });
+}
+
+function populatePropSlipFromProps(props, count, { replace = true } = {}) {
+  const pool = (props || []).slice(0, count);
+  const legs = pool
+    .map((p) => propSlipLegFromProp(p))
+    .filter((leg) => leg.american_odds != null);
+
+  if (replace) {
+    savePropSlipLegs(legs);
+  } else {
+    const existing = getPropSlipLegs();
+    const seen = new Set(existing.map((l) => l.id));
+    for (const leg of legs) {
+      if (!seen.has(leg.id)) {
+        existing.push(leg);
+        seen.add(leg.id);
+      }
+    }
+    savePropSlipLegs(existing.slice(0, 30));
+  }
+  renderPropSlipPanel();
+  document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
+  return legs.length;
+}
+
+window.populatePropSlipFromProps = populatePropSlipFromProps;
 
 function renderWatchedGamesSection(el, games, options = {}) {
   if (!el) return;
@@ -1129,8 +1321,167 @@ function initSandboxNav() {
   });
 }
 
+const PROP_SLIP_KEY = "pb_prop_slip";
+
+function getPropSlipLegs() {
+  try {
+    const raw = localStorage.getItem(PROP_SLIP_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePropSlipLegs(legs) {
+  localStorage.setItem(PROP_SLIP_KEY, JSON.stringify(legs));
+}
+
+function fmtAmericanOdds(odds) {
+  if (odds == null) return "—";
+  return odds > 0 ? `+${odds}` : `${odds}`;
+}
+
+function propSlipLegLabel(leg) {
+  const side = leg.side === "under" ? "U" : "O";
+  const market = leg.market_label || leg.market_type;
+  return `${leg.player} ${market} ${side}${leg.line} (${fmtAmericanOdds(leg.american_odds)})`;
+}
+
+function clientParlayDecimal(legs) {
+  let payout = 1;
+  for (const leg of legs) {
+    const odds = Number(leg.american_odds);
+    if (!Number.isFinite(odds)) continue;
+    payout *= odds > 0 ? 1 + odds / 100 : 1 + 100 / Math.abs(odds);
+  }
+  return payout;
+}
+
+function renderPropSlipPanel() {
+  const panel = document.getElementById("prop-slip-panel");
+  const countEl = document.getElementById("prop-slip-count");
+  const legsEl = document.getElementById("prop-slip-legs");
+  const totalsEl = document.getElementById("prop-slip-totals");
+  if (!panel || !legsEl || !totalsEl) return;
+
+  const legs = getPropSlipLegs();
+  if (countEl) countEl.textContent = String(legs.length);
+
+  if (!legs.length) {
+    legsEl.innerHTML = "<p class=\"prop-slip-empty\">Add props from any game page to build a cross-game parlay slip.</p>";
+    totalsEl.innerHTML = "";
+    return;
+  }
+
+  legsEl.innerHTML = legs
+    .map(
+      (leg) => `
+        <div class="prop-slip-leg">
+          <div class="prop-slip-leg-text">
+            <strong>${leg.matchup || "MLB"}</strong>
+            <span>${propSlipLegLabel(leg)}</span>
+          </div>
+          <button type="button" class="prop-slip-remove" data-remove-prop="${leg.id}" aria-label="Remove">×</button>
+        </div>`
+    )
+    .join("");
+
+  legsEl.querySelectorAll("[data-remove-prop]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      removePropFromSlip(btn.getAttribute("data-remove-prop"));
+    });
+  });
+
+  const decimal = clientParlayDecimal(legs);
+  const profit10 = (decimal * 10 - 10).toFixed(2);
+  let american = "—";
+  if (decimal >= 2) american = fmtAmericanOdds(Math.round((decimal - 1) * 100));
+  else if (decimal > 1) american = fmtAmericanOdds(Math.round(-100 / (decimal - 1)));
+
+  const corrWarnings = propSlipCorrelationWarnings(legs);
+  const warnHtml = corrWarnings.length
+    ? `<div class="prop-slip-warn">${corrWarnings.map((w) => `<p>${w}</p>`).join("")}</div>`
+    : "";
+
+  totalsEl.innerHTML = `
+    ${warnHtml}
+    <p><strong>${legs.length}-leg parlay</strong> · Combined ${american}</p>
+    <p class="prop-slip-meta">$10 stake → $${profit10} profit if all legs hit (book may differ)</p>
+    <button type="button" class="btn-ghost" id="prop-slip-clear">Clear slip</button>
+  `;
+
+  document.getElementById("prop-slip-clear")?.addEventListener("click", () => {
+    savePropSlipLegs([]);
+    renderPropSlipPanel();
+  });
+
+  fetch("/api/parlay/props/eval", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ legs }),
+  })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data?.american_payout) return;
+      totalsEl.querySelector("p")?.insertAdjacentHTML(
+        "beforeend",
+        ` · Decimal ${Number(data.decimal_payout).toFixed(2)}`
+      );
+    })
+    .catch(() => {});
+}
+
+function addPropToSlip(leg) {
+  if (!leg?.id || leg.american_odds == null) return;
+  const legs = getPropSlipLegs();
+  if (legs.some((l) => l.id === leg.id)) return;
+  legs.push(leg);
+  savePropSlipLegs(legs);
+  renderPropSlipPanel();
+  const panel = document.getElementById("prop-slip-panel");
+  panel?.classList.add("prop-slip-panel--open");
+}
+
+function removePropFromSlip(legId) {
+  const legs = getPropSlipLegs().filter((l) => l.id !== legId);
+  savePropSlipLegs(legs);
+  renderPropSlipPanel();
+}
+
+function initPropSlipUi() {
+  if (document.getElementById("prop-slip-root")) return;
+
+  const root = document.createElement("div");
+  root.id = "prop-slip-root";
+  root.innerHTML = `
+    <button type="button" id="prop-slip-toggle" class="prop-slip-toggle" aria-expanded="false">
+      Prop slip <span id="prop-slip-count">0</span>
+    </button>
+    <div id="prop-slip-panel" class="prop-slip-panel" aria-label="Prop parlay slip">
+      <div class="prop-slip-head">
+        <strong>Your prop parlay</strong>
+        <button type="button" id="prop-slip-close" class="prop-slip-close" aria-label="Close">×</button>
+      </div>
+      <div id="prop-slip-legs" class="prop-slip-legs"></div>
+      <div id="prop-slip-totals" class="prop-slip-totals"></div>
+    </div>
+  `;
+  document.body.appendChild(root);
+
+  document.getElementById("prop-slip-toggle")?.addEventListener("click", () => {
+    document.getElementById("prop-slip-panel")?.classList.toggle("prop-slip-panel--open");
+  });
+  document.getElementById("prop-slip-close")?.addEventListener("click", () => {
+    document.getElementById("prop-slip-panel")?.classList.remove("prop-slip-panel--open");
+  });
+
+  window.addPropToSlip = addPropToSlip;
+  renderPropSlipPanel();
+}
+
 function bootNTGSplash() {
   initSandboxNav();
+  initPropSlipUi();
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
     initNTGSplash().catch(() => clearNTGSplashState());
   } else {

@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date
-from pathlib import Path
 from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.odds.odds_repository import get_today_snapshot
-from app.services.daily_board import DAILY_BOARD_CACHE
+from app.services.bet_context import enrich_ml_singles
+from app.services.daily_board import DAILY_BOARD_CACHE, _top_singles
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,10 @@ def _slate_index(slate: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             "model_prob_home": row.get("model_prob_home"),
             "home_ml": row.get("home_ml"),
             "away_ml": row.get("away_ml"),
+            "home_starting_pitcher": row.get("home_starting_pitcher"),
+            "away_starting_pitcher": row.get("away_starting_pitcher"),
+            "home_pitcher_era": row.get("home_pitcher_era"),
+            "away_pitcher_era": row.get("away_pitcher_era"),
         }
     return out
 
@@ -85,6 +89,16 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
     slate = board.get("slate") or []
     plus_ev_singles = sum(1 for g in slate if g.get("plus_ev_single"))
     plus_ev_totals = sum(1 for g in slate if g.get("plus_ev_total"))
+    cached_top = board.get("top_singles")
+    if cached_top is None and slate:
+        top_singles = _top_singles(slate, game_date)[:5]
+    else:
+        top_singles = (cached_top or [])[:5]
+    if top_singles and any(
+        p.get("line_strength") is None or p.get("win_rate_l10") is None
+        for p in top_singles
+    ):
+        top_singles = enrich_ml_singles(top_singles, slate, game_date)
 
     return {
         "date": board.get("date", game_date.isoformat()),
@@ -94,7 +108,7 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
         "games_with_odds": board.get("games_with_odds", 0),
         "plus_ev_singles": plus_ev_singles,
         "plus_ev_totals": plus_ev_totals,
-        "top_singles": (board.get("top_singles") or [])[:5],
+        "top_singles": top_singles,
         "slate_by_game_id": _slate_index(slate),
         "odds_fetched_at": odds_snap.get("fetched_at"),
         "odds_source": board.get("odds_source"),

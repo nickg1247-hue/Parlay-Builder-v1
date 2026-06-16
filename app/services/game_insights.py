@@ -21,6 +21,8 @@ from app.odds.odds_repository import (
 )
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import DAILY_BOARD_CACHE, DISCLAIMER, build_daily_board
+from app.services.mlb_game_explanations import build_mlb_game_explanation
+from app.services.mlb_team_recent import recent_games_for_matchup
 from app.services.schedule_mlb import get_mlb_game
 
 logger = logging.getLogger(__name__)
@@ -359,17 +361,52 @@ def _confidence_tier(label: str | None) -> str | None:
     if not label or label == "—":
         return None
     key = label.strip().lower()
+    if key in ("lean only", "blocked (stale data)"):
+        return None
     if key == "low":
         return "low"
-    if key == "medium":
+    if key in ("moderate", "medium"):
         return "medium"
-    if key in ("high", "extremely high"):
+    if key in ("high", "very high", "extremely high"):
         return "high"
     return None
 
 
-def _build_highlights(model: dict[str, Any]) -> dict[str, Any]:
+def _win_pct_highlight_tier(
+    pick_prob: float | None,
+    confidence_label: str | None = None,
+) -> str | None:
+    """Map model win probability to market highlight tier (not EV/edge)."""
+    if pick_prob is not None:
+        p = float(pick_prob)
+        if p < 0.54:
+            return None
+        if p < 0.58:
+            return "low"
+        if p < 0.62:
+            return "medium"
+        if p < 0.67:
+            return "high"
+        return "high"
+    return _confidence_tier(confidence_label)
+
+
+def _build_highlights(
+    model: dict[str, Any],
+    board_row: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     pick_side = model.get("pick_side")
+    pick_prob = None
+    if board_row:
+        pick_prob = board_row.get("model_confidence_prob")
+    if pick_prob is None and model.get("win_pct") is not None:
+        pick_prob = float(model["win_pct"]) / 100.0
+
+    win_label = model.get("win_confidence") or model.get("confidence")
+    ml_tier = (
+        _win_pct_highlight_tier(pick_prob, win_label) if pick_side else None
+    )
+
     totals_pick = (model.get("totals_pick") or "").strip().lower()
     total_side = None
     if totals_pick.startswith("over"):
@@ -377,18 +414,13 @@ def _build_highlights(model: dict[str, Any]) -> dict[str, Any]:
     elif totals_pick.startswith("under"):
         total_side = "under"
 
-    ml_tier = _confidence_tier(model.get("confidence")) if pick_side else None
-    totals_tier = (
-        _confidence_tier(model.get("totals_confidence")) if total_side else None
-    )
-
     return {
         "moneyline_side": pick_side,
         "moneyline_tier": ml_tier,
         "total_side": total_side,
-        "total_tier": totals_tier,
-        "spread_side": pick_side,
-        "spread_tier": ml_tier,
+        "total_tier": None,
+        "spread_side": None,
+        "spread_tier": None,
     }
 
 
@@ -441,7 +473,8 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
     else:
         edge = board_row.get("ml_edge_best")
 
-    confidence = board_row.get("model_confidence") or board_row.get("ml_confidence")
+    confidence = board_row.get("model_confidence")
+    ev_confidence = board_row.get("ml_confidence")
 
     return {
         "pick": pick_team,
@@ -450,6 +483,8 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
         "expected_runs": board_row.get("expected_total_runs"),
         "edge": edge,
         "confidence": confidence,
+        "win_confidence": confidence,
+        "ev_confidence": ev_confidence,
         "totals_pick": board_row.get("totals_pick"),
         "total_edge": board_row.get("total_edge"),
         "totals_confidence": board_row.get("totals_confidence"),
@@ -480,7 +515,18 @@ def build_game_insights(
         detail["game"], game_date, use_cache, force_refresh=False
     )
     market_cards = _build_market_cards(lines)
-    highlights = _build_highlights(model)
+    highlights = _build_highlights(model, board_row)
+    explanation = build_mlb_game_explanation(
+        game_id,
+        game_date,
+        board_row,
+        use_cache=use_cache,
+    )
+    recent_games = recent_games_for_matchup(
+        detail["game"]["home_team"],
+        detail["game"]["away_team"],
+        game_date,
+    )
 
     warnings = list(board.get("warnings", []))
     meta = last_fetch_meta()
@@ -504,6 +550,8 @@ def build_game_insights(
         "market_cards": market_cards,
         "highlights": highlights,
         "model": model,
+        "explanation": explanation,
+        "recent_games": recent_games,
         "parlays": _parlays_for_game(board, game_id),
         "edge_threshold": board.get("edge_threshold", DEFAULT_MIN_EDGE),
     }

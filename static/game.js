@@ -131,7 +131,37 @@
 
 
 
-  function teamColumnHtml(side, game, cards, highlights) {
+  function lastFiveHtml(games) {
+    if (!games || !games.length) {
+      return `
+        <div class="team-last5">
+          <p class="team-last5-title">Last 5</p>
+          <p class="team-last5-empty">No recent games</p>
+        </div>
+      `;
+    }
+
+    const rows = games
+      .map(
+        (g) => `
+          <li class="team-last5-row ${g.won ? "last5-win" : "last5-loss"}">
+            <span class="last5-result">${g.won ? "W" : "L"}</span>
+            <span class="last5-score">${g.team_runs}-${g.opp_runs}</span>
+            <span class="last5-opp">${g.at_vs} ${g.opponent_short || g.opponent}</span>
+          </li>
+        `
+      )
+      .join("");
+
+    return `
+      <div class="team-last5">
+        <p class="team-last5-title">Last 5</p>
+        <ul class="team-last5-list">${rows}</ul>
+      </div>
+    `;
+  }
+
+  function teamColumnHtml(side, game, cards, highlights, recentGames) {
 
     const isAway = side === "away";
 
@@ -182,6 +212,7 @@
         ${statCard("Moneyline", mlValue, mlTier)}
         ${statCard("Over/Under", ouValue, ouTier)}
         ${statCard("Spread", spreadValue, spreadTier)}
+        ${lastFiveHtml(recentGames)}
       </div>
     `;
 
@@ -230,7 +261,7 @@
 
         <p class="model-runs">Est. total runs: <strong>${runs}</strong></p>
 
-        <p class="model-edge">Edge ${edge} · ${model.confidence || "—"}</p>
+        <p class="model-edge">Win tier ${model.win_confidence || model.confidence || "Lean only"} · Edge ${edge}${model.ev_confidence && model.ev_confidence !== "—" ? ` · +EV ${model.ev_confidence}` : ""}</p>
 
         ${totalsLine}
 
@@ -249,14 +280,15 @@
     const cards = data.market_cards || {};
 
     const highlights = data.highlights || {};
+    const recent = data.recent_games || {};
 
     boardEl.innerHTML = [
 
-      teamColumnHtml("away", game, cards, highlights),
+      teamColumnHtml("away", game, cards, highlights, recent.away),
 
       modelCenterHtml(data.model, cards),
 
-      teamColumnHtml("home", game, cards, highlights),
+      teamColumnHtml("home", game, cards, highlights, recent.home),
 
     ].join("");
 
@@ -344,6 +376,340 @@
 
 
 
+  function propsUrl(refresh) {
+
+    const params = new URLSearchParams();
+
+    if (dateParam) params.set("date", dateParam);
+
+    if (refresh) params.set("refresh", "true");
+
+    const q = params.toString();
+
+    return `/api/games/mlb/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`;
+
+  }
+
+
+
+  function propLegId(prop, side) {
+
+    return [gameId, prop.player, prop.market_type, prop.line, side].join("|");
+
+  }
+
+
+
+  function propHitRatesHtml(prop, side) {
+    if (typeof window.propHitRatesHtml === "function") {
+      return window.propHitRatesHtml(prop, side);
+    }
+    const overKey = side === "over";
+    const l5 = overKey ? prop.hit_rate_over_l5 : prop.hit_rate_under_l5;
+    const l10 = overKey ? prop.hit_rate_over_l10 : prop.hit_rate_under_l10;
+    const season = overKey ? prop.hit_rate_over_season : prop.hit_rate_under_season;
+    const fmt = (v) => (v != null ? `${Math.round(v * 100)}%` : "—");
+    return `L5 ${fmt(l5)} · L10 ${fmt(l10)} · Season ${fmt(season)}`;
+  }
+
+  function propLineStrengthHtml(prop) {
+    if (typeof window.lineStrengthHtml === "function") {
+      return window.lineStrengthHtml(prop);
+    }
+    return "";
+  }
+
+
+
+  function renderProps(data) {
+
+    const loadingEl = document.getElementById("props-loading");
+
+    const errEl = document.getElementById("props-error");
+
+    const bodyEl = document.getElementById("props-body");
+
+    const refreshBtn = document.getElementById("props-refresh");
+
+    if (!bodyEl) return;
+
+    loadingEl?.classList.add("hidden");
+
+    if (!data || data.status === "empty") {
+
+      bodyEl.classList.remove("hidden");
+
+      bodyEl.innerHTML = `<p class="props-empty">${data?.message || "No player props available for this game yet."}</p>`;
+
+      return;
+
+    }
+
+    const top = data.top_picks || [];
+
+    const all = data.props || [];
+
+    const topBlock = top.length
+
+      ? `<div class="props-block">
+
+          <h3>Top form plays</h3>
+
+          <div class="props-cards">${top.map((p, i) => propCardHtml(p, data, i)).join("")}</div>
+
+        </div>`
+
+      : "";
+
+    const tableRows = all
+
+      .map((p, i) => {
+
+        const side = p.recommended_side || "over";
+
+        const odds = side === "over" ? p.over_odds : p.under_odds;
+
+        const score = p.score != null ? `${Math.round(p.score)}` : "—";
+
+        const hitRates = propHitRatesHtml(p, side);
+        const lineStrength = propLineStrengthHtml(p);
+
+        const actionable = p.actionable
+          ? ""
+          : `<span class="prop-skip-tag" title="${p.actionable_reason || "Not recommended"}">Skip</span>`;
+
+        return `<tr class="${p.actionable ? "" : "prop-row-skip"}">
+
+          <td>${p.player}</td>
+
+          <td>${p.market_label || p.market_type}</td>
+
+          <td>${p.line}</td>
+
+          <td>${side} ${fmtOdds(odds)} ${actionable}</td>
+
+          <td>${score}</td>
+
+          <td class="prop-hit-rates">${hitRates}</td>
+
+          <td class="prop-line-strength">${lineStrength}${p.line_insight ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>
+
+          <td class="props-actions">${propActionButtons(p, i, "all")}</td>
+
+        </tr>`;
+
+      })
+
+      .join("");
+
+    bodyEl.classList.remove("hidden");
+
+    bodyEl.innerHTML = `
+
+      ${topBlock}
+
+      <details class="props-all-lines" ${top.length ? "open" : ""}>
+
+        <summary>All lines (${all.length})</summary>
+
+        <div class="props-table-wrap">
+
+          <table class="props-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Player</th>
+
+                <th>Market</th>
+
+                <th>Line</th>
+
+                <th>Lean / odds</th>
+
+                <th>Score</th>
+
+                <th>Hit rates (pick side)</th>
+
+                <th>Line strength</th>
+
+                <th></th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>${tableRows || `<tr><td colspan="8">No lines</td></tr>`}</tbody>
+
+          </table>
+
+        </div>
+
+      </details>
+
+    `;
+
+    bodyEl.querySelectorAll("[data-add-prop]").forEach((btn) => {
+
+      btn.addEventListener("click", () => {
+
+        const idx = Number(btn.dataset.propIndex);
+
+        const list = btn.dataset.list === "top" ? top : all;
+
+        const prop = list[idx];
+
+        if (!prop || !prop.actionable || !window.addPropToSlip) return;
+
+        const side = prop.recommended_side || btn.dataset.side;
+
+        const odds = side === "over" ? prop.over_odds : prop.under_odds;
+
+        window.addPropToSlip({
+
+          id: propLegId(prop, side),
+
+          game_id: gameId,
+
+          matchup: data.matchup,
+
+          player: prop.player,
+
+          market_type: prop.market_type,
+
+          market_label: prop.market_label,
+
+          side,
+
+          line: prop.line,
+
+          american_odds: odds,
+
+          score: prop.score,
+
+        });
+
+        btn.textContent = "Added";
+
+        btn.disabled = true;
+
+      });
+
+    });
+
+    if (refreshBtn && data.source) {
+
+      refreshBtn.classList.remove("hidden");
+
+      refreshBtn.onclick = () => loadProps(true);
+
+    }
+
+  }
+
+
+
+  function propCardHtml(prop, data, index) {
+
+    const side = prop.recommended_side || "over";
+
+    const odds = side === "over" ? prop.over_odds : prop.under_odds;
+
+    const factors = (prop.factors || []).slice(0, 3).map((f) => `<li>${f}</li>`).join("");
+    const lineStrength = propLineStrengthHtml(prop);
+    const strengthBlock = lineStrength || prop.line_insight
+      ? `<p class="prop-card-strength">${lineStrength}${prop.line_insight ? `<span class="prop-line-insight">${prop.line_insight}</span>` : ""}</p>`
+      : "";
+
+    return `<article class="prop-card">
+
+      <div class="prop-card-head">
+
+        <strong>${prop.player}</strong>
+
+        <span class="prop-score">${prop.score != null ? Math.round(prop.score) : "—"}</span>
+
+      </div>
+
+      <p class="prop-card-line">${prop.market_label}: ${side} ${prop.line} (${fmtOdds(odds)})</p>
+
+      <p class="prop-card-meta">${propHitRatesHtml(prop, side)}</p>
+
+      ${strengthBlock}
+
+      ${factors ? `<ul class="prop-card-factors">${factors}</ul>` : ""}
+
+      <div class="prop-card-actions">${propActionButtons(prop, index, "top")}</div>
+
+    </article>`;
+
+  }
+
+
+
+  function propActionButtons(prop, index, listName) {
+
+    if (!prop.actionable) {
+      return `<span class="prop-skip-note">${prop.actionable_reason || "Not recommended"}</span>`;
+    }
+
+    const list = listName === "top" ? "top" : "all";
+
+    const side = prop.recommended_side;
+
+    if (!side) return "";
+
+    const odds = side === "over" ? prop.over_odds : prop.under_odds;
+
+    if (odds == null) return "";
+
+    const label = side === "over" ? "+ Over" : "+ Under";
+
+    return `<button type="button" class="btn-add-prop" data-add-prop="1" data-side="${side}" data-prop-index="${index}" data-list="${list}">${label}</button>`;
+
+  }
+
+
+
+  async function loadProps(refresh) {
+
+    const loadingEl = document.getElementById("props-loading");
+
+    const errEl = document.getElementById("props-error");
+
+    const bodyEl = document.getElementById("props-body");
+
+    try {
+
+      loadingEl?.classList.remove("hidden");
+
+      bodyEl?.classList.add("hidden");
+
+      errEl?.classList.add("hidden");
+
+      const data = await fetchJSON(propsUrl(refresh));
+
+      renderProps(data);
+
+    } catch (e) {
+
+      loadingEl?.classList.add("hidden");
+
+      if (errEl) {
+
+        errEl.classList.remove("hidden");
+
+        errEl.textContent = e.message || "Could not load props";
+
+      }
+
+    }
+
+  }
+
+
+
   function renderParlays(parlays) {
 
     const el = document.getElementById("parlays-body");
@@ -371,6 +737,140 @@
       })
 
       .join("");
+
+  }
+
+
+
+  function explanationList(title, items) {
+
+    if (!items || !items.length) {
+
+      return `<div class="explain-block"><h3>${title}</h3><p class="muted-label">No clear edge on available factors.</p></div>`;
+
+    }
+
+    return `
+
+      <div class="explain-block">
+
+        <h3>${title}</h3>
+
+        <ul class="explain-list">
+
+          ${items.map((t) => `<li>${t}</li>`).join("")}
+
+        </ul>
+
+      </div>`;
+
+  }
+
+
+
+  function renderExplanation(explanation) {
+
+    const el = document.getElementById("model-explanation-body");
+
+    const section = document.getElementById("model-explanation-section");
+
+    if (!el || !section) return;
+
+    if (!explanation) {
+
+      el.innerHTML = "<p class=\"muted-label\">Explanation unavailable — reload board or try demo date with cache.</p>";
+
+      return;
+
+    }
+
+    const totals = explanation.totals;
+
+    const factorRows = (explanation.factor_comparison || [])
+
+      .map(
+
+        (row) => `
+
+        <tr>
+
+          <td>${row.factor}</td>
+
+          <td>${row.home}</td>
+
+          <td>${row.away}</td>
+
+          <td class="explain-edge-${row.edge}">${
+
+            row.edge === "home"
+
+              ? explanation.home_team
+
+              : row.edge === "away"
+
+                ? explanation.away_team
+
+                : "Even"
+
+          }</td>
+
+        </tr>`
+
+      )
+
+      .join("");
+
+    const homeCol = explanation.home_team || "Home";
+
+    const awayCol = explanation.away_team || "Away";
+
+    const totalsHtml = totals
+
+      ? `
+
+      <div class="explain-block">
+
+        <h3>Runs / O-U</h3>
+
+        ${totals.summary ? `<p class="explain-summary">${totals.summary}</p>` : ""}
+
+        <ul class="explain-list">
+
+          ${(totals.bullets || []).map((t) => `<li>${t}</li>`).join("")}
+
+        </ul>
+
+      </div>`
+
+      : "";
+
+    el.innerHTML = `
+
+      ${explanation.summary ? `<p class="explain-summary">${explanation.summary}</p>` : ""}
+
+      <div class="explain-prob-row">
+
+        <span><strong>${explanation.home_team}</strong> ${explanation.home_win_pct != null ? explanation.home_win_pct + "%" : "—"} model win</span>
+
+        <span><strong>${explanation.away_team}</strong> ${explanation.away_win_pct != null ? explanation.away_win_pct + "%" : "—"} model win</span>
+
+      </div>
+
+      <div class="explain-columns">
+
+        ${explanationList(`Why ${explanation.home_team} could win`, explanation.why_home)}
+
+        ${explanationList(`Why ${explanation.away_team} could win`, explanation.why_away)}
+
+      </div>
+
+      ${totalsHtml}
+
+      ${factorRows ? `<div class="explain-block"><h3>Factor snapshot</h3><p class="explain-legend"><strong>${homeCol}</strong> is the home team in this table; <strong>${awayCol}</strong> is the away team.</p><table class="explain-table"><thead><tr><th>Factor</th><th>${homeCol}</th><th>${awayCol}</th><th>Edge</th></tr></thead><tbody>${factorRows}</tbody></table></div>` : ""}
+
+      ${explanation.disclaimer ? `<p class="explain-footnote">${explanation.disclaimer}</p>` : ""}
+
+    `;
 
   }
 
@@ -405,6 +905,8 @@
     renderMatchupHeader(header, data.game);
 
     renderMatchupBoard(data);
+
+    renderExplanation(data.explanation);
 
     renderParlays(data.parlays);
 
@@ -590,6 +1092,7 @@
 
   loadTeamColors()
     .then(() => loadInsights(false))
+    .then(() => loadProps(false))
     .catch((e) => {
 
       loading.classList.add("hidden");

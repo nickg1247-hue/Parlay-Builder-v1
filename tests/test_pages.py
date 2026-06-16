@@ -33,6 +33,7 @@ def test_home_page():
     assert 'href="/mlb/board"' not in text
     assert 'id="today-glance"' in text
     assert 'id="best-bets"' in text
+    assert 'id="best-props"' in text
     assert 'id="hero-chips"' in text
     assert 'id="news-list"' in text
     assert "/api/status/refresh" in text

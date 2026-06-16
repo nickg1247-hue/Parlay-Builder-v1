@@ -22,6 +22,12 @@ MARKET_SPREADS = "spreads"
 MARKETS_H2H_AND_TOTALS = f"{MARKET_H2H},{MARKET_TOTALS}"
 MARKETS_H2H_TOTALS_SPREADS = f"{MARKET_H2H},{MARKET_TOTALS},{MARKET_SPREADS}"
 
+# Core MLB player prop markets (one event-odds request; each market ≈ 1 API credit).
+DEFAULT_MLB_PROP_MARKETS = (
+    "batter_hits,batter_total_bases,batter_runs_scored,"
+    "batter_home_runs,batter_rbis,pitcher_strikeouts"
+)
+
 
 def clear_odds_cache() -> None:
     """No-op: in-memory cache replaced by odds_repository (kept for test compat)."""
@@ -88,6 +94,49 @@ def _fetch_historical_odds(
         response.raise_for_status()
         body = response.json()
         return body.get("data") or []
+
+
+def fetch_mlb_events(
+    api_key: str | None = None,
+    regions: str = "us",
+) -> list[dict[str, Any]] | None:
+    """List upcoming MLB events (includes event id for props endpoint)."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    url = f"{ODDS_API_BASE}/sports/{SPORT_MLB}/events"
+    params = {"apiKey": key, "regions": regions, "dateFormat": "iso"}
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+
+def fetch_mlb_event_odds(
+    event_id: str,
+    api_key: str | None = None,
+    regions: str = "us",
+    markets: str = DEFAULT_MLB_PROP_MARKETS,
+) -> dict[str, Any] | None:
+    """Player props and other markets for a single MLB event."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key or not event_id:
+        return None
+    url = f"{ODDS_API_BASE}/sports/{SPORT_MLB}/events/{event_id}/odds"
+    params = {
+        "apiKey": key,
+        "regions": regions,
+        "markets": markets,
+        "oddsFormat": "american",
+    }
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
 
 
 def fetch_live_mlb_odds(

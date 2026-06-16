@@ -1,0 +1,222 @@
+"""Player props service tests."""
+
+from datetime import date
+from unittest.mock import patch
+
+import pytest
+
+from app.odds import odds_repository as repo
+from app.services import prop_scoring, props_mlb
+
+
+FAKE_EVENT = {
+    "id": "evt123",
+    "home_team": "New York Yankees",
+    "away_team": "Boston Red Sox",
+    "commence_time": "2026-06-16T23:05:00Z",
+    "bookmakers": [
+        {
+            "key": "draftkings",
+            "markets": [
+                {
+                    "key": "batter_hits",
+                    "outcomes": [
+                        {
+                            "name": "Over",
+                            "description": "Aaron Judge",
+                            "price": -115,
+                            "point": 1.5,
+                        },
+                        {
+                            "name": "Under",
+                            "description": "Aaron Judge",
+                            "price": -105,
+                            "point": 1.5,
+                        },
+                    ],
+                },
+                {
+                    "key": "pitcher_strikeouts",
+                    "outcomes": [
+                        {
+                            "name": "Over",
+                            "description": "Gerrit Cole",
+                            "price": +110,
+                            "point": 5.5,
+                        },
+                        {
+                            "name": "Under",
+                            "description": "Gerrit Cole",
+                            "price": -130,
+                            "point": 5.5,
+                        },
+                    ],
+                },
+            ],
+        }
+    ],
+}
+
+
+@pytest.fixture
+def isolated_props(tmp_path, monkeypatch):
+    props_dir = tmp_path / "props_repository"
+    monkeypatch.setattr(props_mlb, "PROPS_DIR", props_dir)
+    monkeypatch.setattr(props_mlb, "EVENTS_DIR", props_dir / "events")
+    repo.reset_fetch_locks_for_tests()
+    prop_scoring.clear_prop_scoring_cache()
+    yield props_dir
+
+
+def test_parse_event_props_median_odds():
+    rows = props_mlb._parse_event_props(FAKE_EVENT)
+    assert len(rows) == 2
+    judge = next(r for r in rows if r["player"] == "Aaron Judge")
+    assert judge["market_type"] == "batter_hits"
+    assert judge["line"] == 1.5
+    assert judge["over_odds"] == -115
+    assert judge["under_odds"] == -105
+
+
+def test_prop_rank_key_perspective_then_odds():
+    soft_matchup = {
+        "rank_score": 95.0,
+        "recommended_hit_rate": 0.8,
+        "recommended_odds": -150,
+    }
+    perfect_tough = {
+        "rank_score": 78.0,
+        "recommended_hit_rate": 1.0,
+        "recommended_odds": 100,
+    }
+    ranked = sorted([soft_matchup, perfect_tough], key=props_mlb.prop_rank_key)
+    assert ranked[0] is soft_matchup
+    assert ranked[1] is perfect_tough
+
+
+def test_prop_rank_key_tie_break_odds():
+    high_hit_low_odds = {"rank_score": 82.0, "recommended_hit_rate": 0.8, "recommended_odds": -150}
+    high_hit_better_odds = {"rank_score": 82.0, "recommended_hit_rate": 0.8, "recommended_odds": 100}
+    lower_hit = {"rank_score": 70.0, "recommended_hit_rate": 0.7, "recommended_odds": 200}
+    ranked = sorted(
+        [high_hit_low_odds, high_hit_better_odds, lower_hit],
+        key=props_mlb.prop_rank_key,
+    )
+    assert ranked[0] is high_hit_better_odds
+    assert ranked[1] is high_hit_low_odds
+    assert ranked[2] is lower_hit
+
+
+def test_evaluate_prop_parlay():
+    result = props_mlb.evaluate_prop_parlay(
+        [
+            {"american_odds": -110},
+            {"american_odds": +120},
+        ]
+    )
+    assert result["leg_count"] == 2
+    assert result["decimal_payout"] > 3.0
+    assert result["american_payout"] is not None
+    assert result["profit_on_10"] > 0
+
+
+@patch("app.services.props_mlb._probable_pitchers", return_value=(None, None))
+@patch("app.services.props_mlb._enrich_props", side_effect=lambda props, **_: props)
+@patch("app.services.props_mlb.fetch_mlb_event_props_if_allowed")
+@patch("app.services.props_mlb.fetch_mlb_events_if_allowed")
+@patch("app.services.props_mlb.get_mlb_game")
+def test_build_game_props_fetches_and_caches(
+    mock_game,
+    mock_events,
+    mock_props,
+    _enrich,
+    _pitchers,
+    isolated_props,
+):
+    mock_game.return_value = {
+        "game": {
+            "game_id": "777001",
+            "home_team": "New York Yankees",
+            "away_team": "Boston Red Sox",
+        }
+    }
+    mock_events.return_value = repo.ApiFetchResult(
+        events=[{"id": "evt123", "home_team": "New York Yankees", "away_team": "Boston Red Sox"}],
+        source="the_odds_api_live",
+    )
+    mock_props.return_value = repo.ApiFetchResult(
+        events=[FAKE_EVENT],
+        source="the_odds_api_live",
+    )
+
+    payload = props_mlb.build_game_props("777001", game_date=date(2026, 6, 16), refresh=True)
+    assert payload is not None
+    assert payload["status"] == "ok"
+    assert len(payload["props"]) == 2
+    assert (isolated_props / "777001.json").exists()
+
+    mock_props.reset_mock()
+    cached = props_mlb.build_game_props("777001", game_date=date(2026, 6, 16), refresh=False)
+    assert cached["props"]
+    mock_props.assert_not_called()
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_recommends_over_on_hot_form(mock_logs, _pid):
+    mock_logs.return_value = tuple([2, 2, 1, 3, 2, 2, 1, 2, 3, 2])
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-110,
+        under_odds=-110,
+        season=2026,
+    )
+    assert result["recommended_side"] == "over"
+    assert result["actionable"] is True
+    assert result["score"] is not None
+    assert result["hit_rate_over_l10"] >= 0.5
+    assert result["sample_games_season"] == 10
+    assert result["line_strength"] in ("strong", "moderate", "weak")
+    assert result["line_strength_label"]
+
+
+def test_perspective_score_soft_matchup_beats_perfect_tough():
+    perfect_tough = prop_scoring._compute_rank_score(
+        hit_rate=1.0,
+        side="over",
+        recent_avg=0.6,
+        line=0.5,
+        matchup_pts=-22.0,
+        l5_over=1.0,
+        l5_under=None,
+    )
+    warm_soft = prop_scoring._compute_rank_score(
+        hit_rate=0.8,
+        side="over",
+        recent_avg=0.7,
+        line=0.5,
+        matchup_pts=22.0,
+        l5_over=0.8,
+        l5_under=None,
+    )
+    assert warm_soft > perfect_tough
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_marks_trap_when_only_wrong_side_listed(mock_logs, _pid):
+    # All zeros — under hits 100%, only over offered
+    mock_logs.return_value = tuple([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_home_runs",
+        line=0.5,
+        over_odds=-200,
+        under_odds=None,
+        season=2026,
+    )
+    assert result["actionable"] is False
+    assert result["score"] is None
+    assert "only Over is listed" in (result["actionable_reason"] or "")

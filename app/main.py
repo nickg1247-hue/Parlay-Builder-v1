@@ -37,6 +37,7 @@ from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
 from app.services.game_insights import build_game_insights
+from app.services.props_mlb import build_daily_top_props, build_game_props, evaluate_prop_parlay
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.cfb_daily_board import build_cfb_daily_board
@@ -145,6 +146,22 @@ class LoginRequest(BaseModel):
 
 class SaveCustomWeightsRequest(BaseModel):
     factors: dict[str, float] = Field(..., min_length=1)
+
+
+class PropParlayLeg(BaseModel):
+    player: str = Field(..., min_length=1)
+    market_type: str = Field(..., min_length=1)
+    market_label: str | None = None
+    side: str = Field(..., pattern="^(over|under)$")
+    line: float
+    american_odds: int
+    game_id: str | None = None
+    matchup: str | None = None
+    score: float | None = None
+
+
+class PropParlayEvalRequest(BaseModel):
+    legs: list[PropParlayLeg] = Field(default_factory=list)
 
 
 @app.get("/login")
@@ -427,6 +444,42 @@ async def mlb_game_insights(
     if insights is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return insights
+
+
+@app.get("/api/games/mlb/{game_id}/props")
+async def mlb_game_props(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    payload = build_game_props(game_id, game_date=game_date, refresh=refresh)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return payload
+
+
+@app.post("/api/parlay/props/eval")
+async def prop_parlay_eval(body: PropParlayEvalRequest):
+    legs = [leg.model_dump() for leg in body.legs]
+    return evaluate_prop_parlay(legs)
+
+
+@app.get("/api/daily/props")
+async def daily_top_props(
+    date_param: str | None = Query(None, alias="date"),
+    limit: int = Query(10, ge=1, le=30),
+    scan: bool = Query(
+        False,
+        description="Scan slate for props (uses cache; fetches missing games up to cap).",
+    ),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_daily_top_props(game_date, limit=limit, scan=scan)
 
 
 @app.get("/api/daily")

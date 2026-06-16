@@ -57,10 +57,49 @@
 
       <hr class="app-section-divider" aria-hidden="true">
 
-      <p class="app-section-title">Best bets today</p>
-      <div id="best-bets" class="best-bets-strip">
-        <div class="skeleton-card" style="min-width: 10rem; padding: 0.65rem;"><div class="skeleton-row"></div></div>
-        <div class="skeleton-card" style="min-width: 10rem; padding: 0.65rem;"><div class="skeleton-row"></div></div>
+      <p class="app-section-title">Today's picks</p>
+      <div class="home-picks-grid">
+        <div class="home-picks-col">
+          <h3 class="home-picks-col-title">Best bets</h3>
+          <div id="best-bets" class="home-picks-list">
+            <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
+          </div>
+        </div>
+        <div class="home-picks-col">
+          <div class="home-picks-col-head">
+            <h3 class="home-picks-col-title">Best player props</h3>
+            <button type="button" id="prop-add-top10" class="home-props-fill-btn home-props-fill-btn--compact">Add top 10 to slip</button>
+          </div>
+          <div id="best-props" class="home-picks-list">
+            <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-props-tools">
+        <label class="home-props-tools-label" for="prop-auto-count">Auto-build prop parlay</label>
+        <div class="home-props-tools-row">
+          <select id="prop-auto-count" class="home-props-select" aria-label="Number of prop legs">
+            <option value="10" selected>10 legs</option>
+            <option value="11">11 legs</option>
+            <option value="12">12 legs</option>
+            <option value="13">13 legs</option>
+            <option value="14">14 legs</option>
+            <option value="15">15 legs</option>
+            <option value="16">16 legs</option>
+            <option value="17">17 legs</option>
+            <option value="18">18 legs</option>
+            <option value="19">19 legs</option>
+            <option value="20">20 legs</option>
+            <option value="21">21 legs</option>
+            <option value="22">22 legs</option>
+            <option value="23">23 legs</option>
+            <option value="24">24 legs</option>
+            <option value="25">25 legs</option>
+          </select>
+          <button type="button" id="prop-auto-fill" class="home-props-fill-btn">Add to slip</button>
+        </div>
+        <p class="home-props-tools-note">Scans today's MLB slate for top matchup-adjusted props (form + opposing pitcher), tie-break by odds.</p>
       </div>
 
       <div id="watched-section" class="hidden"></div>
@@ -98,9 +137,29 @@
       await loadTeamColors();
       const glance = document.getElementById("today-glance");
       const bets = document.getElementById("best-bets");
+      const propsEl = document.getElementById("best-props");
       const watched = document.getElementById("watched-section");
       const refreshEl = document.getElementById("refresh-line");
       const heroChips = document.getElementById("hero-chips");
+      const autoFillBtn = document.getElementById("prop-auto-fill");
+      const autoCountEl = document.getElementById("prop-auto-count");
+      let homePropsPool = [];
+
+      async function loadHomeProps({ scan = false } = {}) {
+        const url = scan
+          ? "/api/daily/props?limit=25&scan=true"
+          : "/api/daily/props?limit=25";
+        const propsData = await fetchJSON(url).catch(() => ({ top_props: [] }));
+        homePropsPool = propsData.top_props || [];
+        renderBestProps(propsEl, homePropsPool.slice(0, 10), {
+          emptyMessage: homePropsPool.length
+            ? undefined
+            : scan
+              ? "No actionable props found after scanning today's slate."
+              : "Loading player props…",
+        });
+        return propsData;
+      }
 
       try {
         const [summary, scores, odds, status] = await Promise.all([
@@ -125,15 +184,70 @@
         renderHomeHeroChips(heroChips, { summary, scoreCounts: counts, status });
         renderTodayGlance(glance, summary, counts);
         renderBestBets(bets, summary.top_singles);
+        renderBestProps(propsEl, [], { emptyMessage: "Loading player props…" });
         renderWatchedGamesSection(watched, scores.games || [], {
           boardMap: summary.slate_by_game_id || {},
           gameDate: summary.date,
           colors: _teamColors,
         });
+
+        loadHomeProps({ scan: false }).then((cached) => {
+          if ((cached.total_actionable || 0) >= 5 || cached.source === "slate_cache") return;
+          loadHomeProps({ scan: true });
+        });
+
+        const addTop10Btn = document.getElementById("prop-add-top10");
+        if (addTop10Btn) {
+          addTop10Btn.onclick = async () => {
+            addTop10Btn.disabled = true;
+            const prev = addTop10Btn.textContent;
+            try {
+              if (homePropsPool.length < 10) {
+                addTop10Btn.textContent = "Scanning…";
+                await loadHomeProps({ scan: true });
+              }
+              const added = populatePropSlipFromProps(homePropsPool, 10, { replace: true });
+              addTop10Btn.textContent = added ? `Added ${added} legs` : "No props found";
+            } catch (_) {
+              addTop10Btn.textContent = "Add failed";
+            } finally {
+              addTop10Btn.disabled = false;
+              window.setTimeout(() => {
+                addTop10Btn.textContent = prev;
+              }, 2500);
+            }
+          };
+        }
+
+        if (autoFillBtn && autoCountEl) {
+          autoFillBtn.onclick = async () => {
+            const n = Number(autoCountEl.value) || 10;
+            autoFillBtn.disabled = true;
+            const prev = autoFillBtn.textContent;
+            try {
+              if (homePropsPool.length < n) {
+                autoFillBtn.textContent = "Scanning slate…";
+                await loadHomeProps({ scan: true });
+              }
+              const added = populatePropSlipFromProps(homePropsPool, n, { replace: true });
+              autoFillBtn.textContent = added ? `Added ${added} legs` : "No props found";
+            } catch (_) {
+              autoFillBtn.textContent = "Scan failed";
+            } finally {
+              autoFillBtn.disabled = false;
+              window.setTimeout(() => {
+                autoFillBtn.textContent = prev;
+              }, 2500);
+            }
+          };
+        }
       } catch (e) {
         renderHomeHeroChips(heroChips, { summary: null, scoreCounts: null, status: null });
         glance.innerHTML = `<div class="glance-card glance-muted"><span>Could not load today's summary.</span></div>`;
         bets.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Best bets unavailable.</p></div>`;
+        if (propsEl) {
+          propsEl.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Player props unavailable.</p></div>`;
+        }
         refreshEl.textContent = "Could not load refresh status";
       }
     })();

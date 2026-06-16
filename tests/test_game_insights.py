@@ -313,34 +313,56 @@ def test_build_market_cards_shape():
 
 def test_build_highlights_from_model():
 
-    model = gi._build_model(SAMPLE_BOARD["slate"][0])
+    row = {
+        **SAMPLE_BOARD["slate"][0],
+        "model_confidence": "Moderate",
+        "model_confidence_prob": 0.58,
+    }
+    model = gi._build_model(row)
 
-    highlights = gi._build_highlights(model)
+    highlights = gi._build_highlights(model, row)
 
     assert highlights["moneyline_side"] == "home"
 
-    assert highlights["spread_side"] == "home"
+    assert highlights["spread_side"] is None
 
     assert highlights["total_side"] == "over"
 
     assert highlights["moneyline_tier"] == "medium"
 
-    assert highlights["spread_tier"] == "medium"
+    assert highlights["spread_tier"] is None
 
-    assert highlights["total_tier"] == "medium"
+    assert highlights["total_tier"] is None
 
 
+def test_win_pct_lean_only_has_no_highlight():
+
+    row = {
+        **SAMPLE_BOARD["slate"][0],
+        "model_prob_home": 0.48,
+        "model_pick_side": "away",
+        "model_pick_team": "Boston Red Sox",
+        "model_confidence": "Lean only",
+        "model_confidence_prob": 0.52,
+    }
+    model = gi._build_model(row)
+    highlights = gi._build_highlights(model, row)
+    assert highlights["moneyline_tier"] is None
 
 
 def test_confidence_tier_mapping():
 
     assert gi._confidence_tier("Low") == "low"
 
+    assert gi._confidence_tier("Moderate") == "medium"
+
     assert gi._confidence_tier("Medium") == "medium"
 
     assert gi._confidence_tier("High") == "high"
 
-    assert gi._confidence_tier("Extremely high") == "high"
+    assert gi._confidence_tier("Very high") == "high"
+
+    assert gi._confidence_tier("Lean only") is None
 
     assert gi._confidence_tier("—") is None
 

@@ -16,7 +16,13 @@ import pandas as pd
 from app.config import PROJECT_ROOT
 from app.odds.live_odds import live_odds_enabled
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
-from app.odds.the_odds_api import fetch_historical_mlb_odds, fetch_live_mlb_odds
+from app.odds.the_odds_api import (
+    DEFAULT_MLB_PROP_MARKETS,
+    fetch_historical_mlb_odds,
+    fetch_live_mlb_odds,
+    fetch_mlb_event_odds,
+    fetch_mlb_events,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -800,3 +806,41 @@ def import_games_from_csv_rows(
         "games": rows,
     }
     save_date(game_date, payload, api_fetch=False)
+
+
+def fetch_mlb_events_if_allowed() -> ApiFetchResult:
+    """Quota-gated MLB events list (for event id lookup)."""
+    if not live_odds_enabled():
+        return ApiFetchResult(denied=True, denied_reason="live_odds_disabled")
+    allowed, deny_reason = _try_acquire_quota_slot()
+    if not allowed:
+        return ApiFetchResult(denied=True, denied_reason=deny_reason)
+    try:
+        events = fetch_mlb_events()
+        return ApiFetchResult(events=events or [], source="the_odds_api_live")
+    except Exception as exc:
+        _release_quota_slot()
+        logger.warning("Odds API events list failed: %s", exc)
+        return ApiFetchResult(error=str(exc))
+
+
+def fetch_mlb_event_props_if_allowed(
+    event_id: str,
+    markets: str = DEFAULT_MLB_PROP_MARKETS,
+) -> ApiFetchResult:
+    """Quota-gated player props for one MLB event."""
+    if not live_odds_enabled():
+        return ApiFetchResult(denied=True, denied_reason="live_odds_disabled")
+    allowed, deny_reason = _try_acquire_quota_slot()
+    if not allowed:
+        return ApiFetchResult(denied=True, denied_reason=deny_reason)
+    try:
+        event = fetch_mlb_event_odds(event_id, markets=markets)
+        if not event:
+            _release_quota_slot()
+            return ApiFetchResult(error="empty_response")
+        return ApiFetchResult(events=[event], source="the_odds_api_live")
+    except Exception as exc:
+        _release_quota_slot()
+        logger.warning("Odds API event props failed for %s: %s", event_id, exc)
+        return ApiFetchResult(error=str(exc))

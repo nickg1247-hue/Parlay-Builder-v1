@@ -347,6 +347,7 @@ def _slate_rows(
                 "plus_ev_total": totals.get("plus_ev_total", False),
                 "model_cover_side": model_cover_side,
                 "model_cover_team": model_cover_team,
+                **_pitcher_fields(row),
                 **spread,
             }
         )
@@ -390,12 +391,34 @@ def _totals_by_game(
     return out
 
 
-def _top_singles(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
+def _pitcher_fields(row: object) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key in (
+        "home_starting_pitcher",
+        "away_starting_pitcher",
+        "home_pitcher_era",
+        "away_pitcher_era",
+    ):
+        val = getattr(row, key, None)
+        if val is not None and not (isinstance(val, float) and pd.isna(val)):
+            if isinstance(val, str):
+                out[key] = val.strip() or None
+            else:
+                out[key] = round(float(val), 2) if key.endswith("_era") else val
+    return out
+
+
+def _top_singles(
+    slate: list[dict[str, Any]],
+    game_date: date,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
     picks = []
     for game in slate:
         if game.get("best_pick"):
             picks.append(
                 {
+                    "game_id": game.get("game_id"),
                     "matchup": game["matchup"],
                     "team": game["best_pick"]["team"],
                     "side": game["best_pick"]["side"],
@@ -409,7 +432,9 @@ def _top_singles(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, 
                 }
             )
     picks.sort(key=lambda p: p["edge"], reverse=True)
-    return picks[:limit]
+    from app.services.bet_context import enrich_ml_singles
+
+    return enrich_ml_singles(picks[:limit], slate, game_date)
 
 
 def _top_parlays_payload(
@@ -638,7 +663,7 @@ def build_daily_board(
     slate = _slate_rows(
         merged, has_odds, totals_by_game, min_edge, block_strong_picks=block_strong_picks
     )
-    top_singles = _top_singles(slate) if has_odds else []
+    top_singles = _top_singles(slate, game_date) if has_odds else []
     top_parlays = (
         _top_parlays_payload(merged, odds_source, min_edge, max_parlays)
         if has_odds

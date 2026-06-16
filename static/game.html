@@ -84,7 +84,11 @@
 
         <div id="game-matchup-board" class="matchup-board"></div>
 
-
+        <section class="detail-section" id="model-explanation-section">
+          <h2>Why the model thinks this</h2>
+          <p class="section-sub">Pregame factors behind the win lean and run total — not a guarantee.</p>
+          <div id="model-explanation-body" class="model-explanation-body"></div>
+        </section>
 
         <section class="detail-section" id="parlays-section">
 
@@ -96,11 +100,20 @@
 
 
 
-        <section class="detail-section">
+        <section class="detail-section" id="props-section">
 
-          <h2>Player props</h2>
+          <div class="props-section-head">
+            <h2>Player props</h2>
+            <button type="button" id="props-refresh" class="btn-ghost hidden">Refresh props</button>
+          </div>
 
-          <p>Market lines — Phase E</p>
+          <p class="section-sub">Lines from US sportsbooks, ranked by recent form and matchup context — not a guarantee.</p>
+
+          <div id="props-loading" class="empty-state">Loading props…</div>
+          <div id="props-error" class="error-state hidden"></div>
+          <div id="props-body" class="props-body hidden"></div>
+
+          <p class="disclaimer-small props-disclaimer">Prop hit rates use last 10 MLB games. Experimental analytics — not betting advice.</p>
 
         </section>
 
