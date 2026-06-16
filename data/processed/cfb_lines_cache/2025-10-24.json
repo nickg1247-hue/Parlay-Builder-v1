@@ -1,0 +1,47 @@
+{
+  "date": "2025-10-24",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401767701",
+      "game_id": "401767701",
+      "game_date": "2025-10-24",
+      "date": "2025-10-24",
+      "home_team": "Dartmouth",
+      "away_team": "Columbia",
+      "ou_line": 46.5,
+      "home_spread_point": -12.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401754372",
+      "game_id": "401754372",
+      "game_date": "2025-10-24",
+      "date": "2025-10-24",
+      "home_team": "Virginia Tech",
+      "away_team": "California",
+      "ou_line": 50.5,
+      "home_spread_point": -6.0,
+      "home_ml": -225,
+      "away_ml": 185
+    },
+    {
+      "cfbd_game_id": "401762492",
+      "game_id": "401762492",
+      "game_date": "2025-10-24",
+      "date": "2025-10-24",
+      "home_team": "Charlotte",
+      "away_team": "North Texas",
+      "ou_line": 60.5,
+      "home_spread_point": 25.5,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 9
+  }
+}

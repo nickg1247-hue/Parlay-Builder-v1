@@ -1,0 +1,35 @@
+{
+  "date": "2025-10-21",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401757285",
+      "game_id": "401757285",
+      "game_date": "2025-10-21",
+      "date": "2025-10-21",
+      "home_team": "FIU",
+      "away_team": "Kennesaw State",
+      "ou_line": 48.5,
+      "home_spread_point": 3.0,
+      "home_ml": 125,
+      "away_ml": -145
+    },
+    {
+      "cfbd_game_id": "401757286",
+      "game_id": "401757286",
+      "game_date": "2025-10-21",
+      "date": "2025-10-21",
+      "home_team": "Louisiana Tech",
+      "away_team": "Western Kentucky",
+      "ou_line": 49.5,
+      "home_spread_point": -5.0,
+      "home_ml": -225,
+      "away_ml": 190
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 9
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "date": "2025-11-05",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762851",
+      "game_id": "401762851",
+      "game_date": "2025-11-05",
+      "date": "2025-11-05",
+      "home_team": "Akron",
+      "away_team": "UMass",
+      "ou_line": 51.5,
+      "home_spread_point": -12.5,
+      "home_ml": -485,
+      "away_ml": 360
+    },
+    {
+      "cfbd_game_id": "401762852",
+      "game_id": "401762852",
+      "game_date": "2025-11-05",
+      "date": "2025-11-05",
+      "home_team": "Ohio",
+      "away_team": "Miami (OH)",
+      "ou_line": 50.5,
+      "home_spread_point": -2.5,
+      "home_ml": -148,
+      "away_ml": 124
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 11
+  }
+}

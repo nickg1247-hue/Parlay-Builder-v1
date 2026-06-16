@@ -1,0 +1,23 @@
+{
+  "date": "2025-10-17",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401754564",
+      "game_id": "401754564",
+      "game_date": "2025-10-17",
+      "date": "2025-10-17",
+      "home_team": "Miami",
+      "away_team": "Louisville",
+      "ou_line": 49.5,
+      "home_spread_point": -10.5,
+      "home_ml": -432,
+      "away_ml": 340
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 8
+  }
+}

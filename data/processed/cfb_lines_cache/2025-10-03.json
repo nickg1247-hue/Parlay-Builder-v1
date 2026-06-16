@@ -1,0 +1,71 @@
+{
+  "date": "2025-10-03",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401767681",
+      "game_id": "401767681",
+      "game_date": "2025-10-03",
+      "date": "2025-10-03",
+      "home_team": "Princeton",
+      "away_team": "Columbia",
+      "ou_line": 48.5,
+      "home_spread_point": -3.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767320",
+      "game_id": "401767320",
+      "game_date": "2025-10-03",
+      "date": "2025-10-03",
+      "home_team": "Brown",
+      "away_team": "Rhode Island",
+      "ou_line": 48.5,
+      "home_spread_point": 14.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401762475",
+      "game_id": "401762475",
+      "game_date": "2025-10-03",
+      "date": "2025-10-03",
+      "home_team": "South Florida",
+      "away_team": "Charlotte",
+      "ou_line": 54.5,
+      "home_spread_point": -28.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401757275",
+      "game_id": "401757275",
+      "game_date": "2025-10-03",
+      "date": "2025-10-03",
+      "home_team": "New Mexico State",
+      "away_team": "Sam Houston",
+      "ou_line": 52.5,
+      "home_spread_point": 2.0,
+      "home_ml": 105,
+      "away_ml": -120
+    },
+    {
+      "cfbd_game_id": "401757276",
+      "game_id": "401757276",
+      "game_date": "2025-10-03",
+      "date": "2025-10-03",
+      "home_team": "Delaware",
+      "away_team": "Western Kentucky",
+      "ou_line": 63.5,
+      "home_spread_point": -2.5,
+      "home_ml": -130,
+      "away_ml": 110
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 6
+  }
+}

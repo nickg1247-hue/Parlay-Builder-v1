@@ -1,0 +1,35 @@
+{
+  "date": "2025-11-14",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401761649",
+      "game_id": "401761649",
+      "game_date": "2025-11-14",
+      "date": "2025-11-14",
+      "home_team": "Old Dominion",
+      "away_team": "Troy",
+      "ou_line": 53.5,
+      "home_spread_point": -9.5,
+      "home_ml": -400,
+      "away_ml": 300
+    },
+    {
+      "cfbd_game_id": "401767414",
+      "game_id": "401767414",
+      "game_date": "2025-11-14",
+      "date": "2025-11-14",
+      "home_team": "North Carolina Central",
+      "away_team": "South Carolina State",
+      "ou_line": 57.5,
+      "home_spread_point": -7.0,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 12
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "date": "2025-09-19",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401767679",
+      "game_id": "401767679",
+      "game_date": "2025-09-19",
+      "date": "2025-09-19",
+      "home_team": "Lafayette",
+      "away_team": "Columbia",
+      "ou_line": 54.5,
+      "home_spread_point": -3.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401756900",
+      "game_id": "401756900",
+      "game_date": "2025-09-19",
+      "date": "2025-09-19",
+      "home_team": "Oklahoma State",
+      "away_team": "Tulsa",
+      "ou_line": 54.5,
+      "home_spread_point": -10.0,
+      "home_ml": -400,
+      "away_ml": 320
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 4
+  }
+}

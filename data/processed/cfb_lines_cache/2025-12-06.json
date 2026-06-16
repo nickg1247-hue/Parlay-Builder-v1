@@ -1,0 +1,95 @@
+{
+  "date": "2025-12-06",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401777352",
+      "game_id": "401777352",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "James Madison",
+      "away_team": "Troy",
+      "ou_line": 47.5,
+      "home_spread_point": -24.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401777324",
+      "game_id": "401777324",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Tulane",
+      "away_team": "North Texas",
+      "ou_line": 66.5,
+      "home_spread_point": 1.5,
+      "home_ml": 110,
+      "away_ml": -130
+    },
+    {
+      "cfbd_game_id": "401777327",
+      "game_id": "401777327",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Texas Tech",
+      "away_team": "BYU",
+      "ou_line": 50.5,
+      "home_spread_point": -12.5,
+      "home_ml": null,
+      "away_ml": 410
+    },
+    {
+      "cfbd_game_id": "401777329",
+      "game_id": "401777329",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Western Michigan",
+      "away_team": "Miami (OH)",
+      "ou_line": 44.5,
+      "home_spread_point": -2.5,
+      "home_ml": -140,
+      "away_ml": 115
+    },
+    {
+      "cfbd_game_id": "401777351",
+      "game_id": "401777351",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Alabama",
+      "away_team": "Georgia",
+      "ou_line": 48.5,
+      "home_spread_point": 1.5,
+      "home_ml": 115,
+      "away_ml": -135
+    },
+    {
+      "cfbd_game_id": "401777326",
+      "game_id": "401777326",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Boise State",
+      "away_team": "UNLV",
+      "ou_line": 59.5,
+      "home_spread_point": -6.0,
+      "home_ml": -180,
+      "away_ml": 155
+    },
+    {
+      "cfbd_game_id": "401777325",
+      "game_id": "401777325",
+      "game_date": "2025-12-06",
+      "date": "2025-12-06",
+      "home_team": "Jacksonville State",
+      "away_team": "Kennesaw State",
+      "ou_line": 62.5,
+      "home_spread_point": 3.0,
+      "home_ml": 120,
+      "away_ml": -140
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 15
+  }
+}

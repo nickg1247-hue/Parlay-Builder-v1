@@ -1,0 +1,23 @@
+{
+  "date": "2025-10-16",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762486",
+      "game_id": "401762486",
+      "game_date": "2025-10-16",
+      "date": "2025-10-16",
+      "home_team": "East Carolina",
+      "away_team": "Tulsa",
+      "ou_line": 54.5,
+      "home_spread_point": -16.5,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 8
+  }
+}

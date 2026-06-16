@@ -80,33 +80,44 @@ def test_parse_event_props_median_odds():
     assert judge["under_odds"] == -105
 
 
-def test_prop_rank_key_perspective_then_odds():
-    soft_matchup = {
-        "rank_score": 95.0,
+def test_prop_rank_key_hit_rate_first():
+    lower_l10 = {
+        "recommended_side": "over",
         "recommended_hit_rate": 0.8,
-        "recommended_odds": -150,
+        "hit_rate_over_l5": 0.8,
+        "hit_rate_over_l10": 0.8,
+        "hit_rate_over_season": 0.75,
     }
-    perfect_tough = {
-        "rank_score": 78.0,
+    higher_l10 = {
+        "recommended_side": "over",
         "recommended_hit_rate": 1.0,
-        "recommended_odds": 100,
+        "hit_rate_over_l5": 1.0,
+        "hit_rate_over_l10": 1.0,
+        "hit_rate_over_season": 0.9,
     }
-    ranked = sorted([soft_matchup, perfect_tough], key=props_mlb.prop_rank_key)
-    assert ranked[0] is soft_matchup
-    assert ranked[1] is perfect_tough
+    ranked = sorted([lower_l10, higher_l10], key=props_mlb.prop_rank_key)
+    assert ranked[0] is higher_l10
+    assert ranked[1] is lower_l10
 
 
-def test_prop_rank_key_tie_break_odds():
-    high_hit_low_odds = {"rank_score": 82.0, "recommended_hit_rate": 0.8, "recommended_odds": -150}
-    high_hit_better_odds = {"rank_score": 82.0, "recommended_hit_rate": 0.8, "recommended_odds": 100}
-    lower_hit = {"rank_score": 70.0, "recommended_hit_rate": 0.7, "recommended_odds": 200}
-    ranked = sorted(
-        [high_hit_low_odds, high_hit_better_odds, lower_hit],
-        key=props_mlb.prop_rank_key,
-    )
-    assert ranked[0] is high_hit_better_odds
-    assert ranked[1] is high_hit_low_odds
-    assert ranked[2] is lower_hit
+def test_prop_rank_key_tie_break_l5_then_season():
+    same_l10_a = {
+        "recommended_side": "over",
+        "recommended_hit_rate": 0.8,
+        "hit_rate_over_l5": 0.6,
+        "hit_rate_over_l10": 0.8,
+        "hit_rate_over_season": 0.7,
+    }
+    same_l10_b = {
+        "recommended_side": "over",
+        "recommended_hit_rate": 0.8,
+        "hit_rate_over_l5": 0.9,
+        "hit_rate_over_l10": 0.8,
+        "hit_rate_over_season": 0.65,
+    }
+    ranked = sorted([same_l10_a, same_l10_b], key=props_mlb.prop_rank_key)
+    assert ranked[0] is same_l10_b
+    assert ranked[1] is same_l10_a
 
 
 def test_load_best_slate_props_falls_back_to_repo(isolated_props):
@@ -228,26 +239,9 @@ def test_score_prop_recommends_over_on_hot_form(mock_logs, _pid):
     assert result["line_strength_label"]
 
 
-def test_perspective_score_soft_matchup_beats_perfect_tough():
-    perfect_tough = prop_scoring._compute_rank_score(
-        hit_rate=1.0,
-        side="over",
-        recent_avg=0.6,
-        line=0.5,
-        matchup_pts=-22.0,
-        l5_over=1.0,
-        l5_under=None,
-    )
-    warm_soft = prop_scoring._compute_rank_score(
-        hit_rate=0.8,
-        side="over",
-        recent_avg=0.7,
-        line=0.5,
-        matchup_pts=22.0,
-        l5_over=0.8,
-        l5_under=None,
-    )
-    assert warm_soft > perfect_tough
+def test_form_score_is_l10_hit_rate_percent():
+    assert prop_scoring._compute_rank_score(hit_rate=0.8) == 80.0
+    assert prop_scoring._compute_rank_score(hit_rate=1.0) == 100.0
 
 
 @patch("app.services.prop_scoring._search_player_id", return_value=592450)

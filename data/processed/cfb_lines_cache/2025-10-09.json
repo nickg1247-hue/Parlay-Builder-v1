@@ -1,0 +1,47 @@
+{
+  "date": "2025-10-09",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762480",
+      "game_id": "401762480",
+      "game_date": "2025-10-09",
+      "date": "2025-10-09",
+      "home_team": "Tulane",
+      "away_team": "East Carolina",
+      "ou_line": 53.5,
+      "home_spread_point": -7.0,
+      "home_ml": -270,
+      "away_ml": 220
+    },
+    {
+      "cfbd_game_id": "401757277",
+      "game_id": "401757277",
+      "game_date": "2025-10-09",
+      "date": "2025-10-09",
+      "home_team": "UTEP",
+      "away_team": "Liberty",
+      "ou_line": 46.5,
+      "home_spread_point": 1.5,
+      "home_ml": 105,
+      "away_ml": -125
+    },
+    {
+      "cfbd_game_id": "401757280",
+      "game_id": "401757280",
+      "game_date": "2025-10-09",
+      "date": "2025-10-09",
+      "home_team": "Kennesaw State",
+      "away_team": "Louisiana Tech",
+      "ou_line": 46.5,
+      "home_spread_point": 4.5,
+      "home_ml": 170,
+      "away_ml": -205
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 7
+  }
+}

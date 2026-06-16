@@ -1,0 +1,35 @@
+{
+  "date": "2025-11-07",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762500",
+      "game_id": "401762500",
+      "game_date": "2025-11-07",
+      "date": "2025-11-07",
+      "home_team": "South Florida",
+      "away_team": "UTSA",
+      "ou_line": 66.5,
+      "home_spread_point": -14.0,
+      "home_ml": null,
+      "away_ml": 425
+    },
+    {
+      "cfbd_game_id": "401761644",
+      "game_id": "401761644",
+      "game_date": "2025-11-07",
+      "date": "2025-11-07",
+      "home_team": "App State",
+      "away_team": "Georgia Southern",
+      "ou_line": 61.5,
+      "home_spread_point": -4.5,
+      "home_ml": -198,
+      "away_ml": 164
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 11
+  }
+}

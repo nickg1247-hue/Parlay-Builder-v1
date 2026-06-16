@@ -1,0 +1,191 @@
+{
+  "date": "2025-09-21",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401752847",
+      "game_id": "401752847",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "USC",
+      "away_team": "Michigan State",
+      "ou_line": 55.5,
+      "home_spread_point": -18.5,
+      "home_ml": null,
+      "away_ml": 475
+    },
+    {
+      "cfbd_game_id": "401760377",
+      "game_id": "401760377",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Utah State",
+      "away_team": "McNeese",
+      "ou_line": 63.5,
+      "home_spread_point": -23.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401761612",
+      "game_id": "401761612",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Texas State",
+      "away_team": "Nicholls",
+      "ou_line": 57.5,
+      "home_spread_point": -32.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767308",
+      "game_id": "401767308",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Utah Tech",
+      "away_team": "Northern Iowa",
+      "ou_line": 49.5,
+      "home_spread_point": 6.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767072",
+      "game_id": "401767072",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Stephen F. Austin",
+      "away_team": "Cal Poly",
+      "ou_line": 54.5,
+      "home_spread_point": -10.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767239",
+      "game_id": "401767239",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Abilene Christian",
+      "away_team": "Austin Peay",
+      "ou_line": 54.5,
+      "home_spread_point": 2.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767132",
+      "game_id": "401767132",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Sacramento State",
+      "away_team": "Central Arkansas",
+      "ou_line": 59.5,
+      "home_spread_point": -15.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767160",
+      "game_id": "401767160",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Weber State",
+      "away_team": "Butler",
+      "ou_line": 53.5,
+      "home_spread_point": -16.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767157",
+      "game_id": "401767157",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "UC Davis",
+      "away_team": "Southern Utah",
+      "ou_line": 61.5,
+      "home_spread_point": -6.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401756897",
+      "game_id": "401756897",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Colorado",
+      "away_team": "Wyoming",
+      "ou_line": 45.5,
+      "home_spread_point": -12.5,
+      "home_ml": -460,
+      "away_ml": 360
+    },
+    {
+      "cfbd_game_id": "401760373",
+      "game_id": "401760373",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Colorado State",
+      "away_team": "UTSA",
+      "ou_line": 58.5,
+      "home_spread_point": 5.0,
+      "home_ml": 180,
+      "away_ml": -215
+    },
+    {
+      "cfbd_game_id": "401760374",
+      "game_id": "401760374",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Hawaii",
+      "away_team": "Fresno State",
+      "ou_line": 47.5,
+      "home_spread_point": 2.5,
+      "home_ml": 115,
+      "away_ml": -135
+    },
+    {
+      "cfbd_game_id": "401752723",
+      "game_id": "401752723",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "Texas",
+      "away_team": "Sam Houston",
+      "ou_line": 51.5,
+      "home_spread_point": -39.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401757267",
+      "game_id": "401757267",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "UTEP",
+      "away_team": "UL Monroe",
+      "ou_line": 47.5,
+      "home_spread_point": -5.5,
+      "home_ml": -218,
+      "away_ml": 180
+    },
+    {
+      "cfbd_game_id": "401754540",
+      "game_id": "401754540",
+      "game_date": "2025-09-21",
+      "date": "2025-09-21",
+      "home_team": "San Diego State",
+      "away_team": "California",
+      "ou_line": 47.5,
+      "home_spread_point": 14.0,
+      "home_ml": 425,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 4
+  }
+}

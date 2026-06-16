@@ -1,0 +1,59 @@
+{
+  "date": "2025-10-05",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401767083",
+      "game_id": "401767083",
+      "game_date": "2025-10-05",
+      "date": "2025-10-05",
+      "home_team": "Idaho State",
+      "away_team": "Montana",
+      "ou_line": 62.5,
+      "home_spread_point": 13.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401754551",
+      "game_id": "401754551",
+      "game_date": "2025-10-05",
+      "date": "2025-10-05",
+      "home_team": "California",
+      "away_team": "Duke",
+      "ou_line": 54.5,
+      "home_spread_point": 3.5,
+      "home_ml": 140,
+      "away_ml": -165
+    },
+    {
+      "cfbd_game_id": "401762478",
+      "game_id": "401762478",
+      "game_date": "2025-10-05",
+      "date": "2025-10-05",
+      "home_team": "Memphis",
+      "away_team": "Tulsa",
+      "ou_line": 54.5,
+      "home_spread_point": -21.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401760383",
+      "game_id": "401760383",
+      "game_date": "2025-10-05",
+      "date": "2025-10-05",
+      "home_team": "Fresno State",
+      "away_team": "Nevada",
+      "ou_line": 45.5,
+      "home_spread_point": -12.5,
+      "home_ml": -500,
+      "away_ml": 390
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 6
+  }
+}

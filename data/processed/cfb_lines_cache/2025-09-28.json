@@ -1,0 +1,107 @@
+{
+  "date": "2025-09-28",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401761615",
+      "game_id": "401761615",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Louisiana",
+      "away_team": "Marshall",
+      "ou_line": 48.5,
+      "home_spread_point": 2.5,
+      "home_ml": 110,
+      "away_ml": -130
+    },
+    {
+      "cfbd_game_id": "401757272",
+      "game_id": "401757272",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "UTEP",
+      "away_team": "Louisiana Tech",
+      "ou_line": 48.5,
+      "home_spread_point": 3.5,
+      "home_ml": 154,
+      "away_ml": -185
+    },
+    {
+      "cfbd_game_id": "401756903",
+      "game_id": "401756903",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Colorado",
+      "away_team": "BYU",
+      "ou_line": 48.5,
+      "home_spread_point": 6.5,
+      "home_ml": 200,
+      "away_ml": -240
+    },
+    {
+      "cfbd_game_id": "401767491",
+      "game_id": "401767491",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Stephen F. Austin",
+      "away_team": "McNeese",
+      "ou_line": 55.5,
+      "home_spread_point": -13.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767293",
+      "game_id": "401767293",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Southern Utah",
+      "away_team": "West Georgia",
+      "ou_line": 59.5,
+      "home_spread_point": 1.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767073",
+      "game_id": "401767073",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Sacramento State",
+      "away_team": "Cal Poly",
+      "ou_line": 57.5,
+      "home_spread_point": -18.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767091",
+      "game_id": "401767091",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "Montana",
+      "away_team": "Idaho",
+      "ou_line": 55.5,
+      "home_spread_point": -7.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767158",
+      "game_id": "401767158",
+      "game_date": "2025-09-28",
+      "date": "2025-09-28",
+      "home_team": "UC Davis",
+      "away_team": "Weber State",
+      "ou_line": 63.5,
+      "home_spread_point": -16.5,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 5
+  }
+}

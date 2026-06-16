@@ -1,0 +1,23 @@
+{
+  "date": "2025-11-26",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762869",
+      "game_id": "401762869",
+      "game_date": "2025-11-26",
+      "date": "2025-11-26",
+      "home_team": "Eastern Michigan",
+      "away_team": "Western Michigan",
+      "ou_line": 49.5,
+      "home_spread_point": 10.0,
+      "home_ml": 300,
+      "away_ml": -380
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 14
+  }
+}

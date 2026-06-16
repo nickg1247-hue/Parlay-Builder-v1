@@ -1,0 +1,23 @@
+{
+  "date": "2025-09-02",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401754523",
+      "game_id": "401754523",
+      "game_date": "2025-09-02",
+      "date": "2025-09-02",
+      "home_team": "North Carolina",
+      "away_team": "TCU",
+      "ou_line": 55.5,
+      "home_spread_point": 3.5,
+      "home_ml": 140,
+      "away_ml": -165
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 1
+  }
+}

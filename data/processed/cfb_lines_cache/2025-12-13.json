@@ -1,0 +1,71 @@
+{
+  "date": "2025-12-13",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401833985",
+      "game_id": "401833985",
+      "game_date": "2025-12-13",
+      "date": "2025-12-13",
+      "home_team": "Montana State",
+      "away_team": "Stephen F. Austin",
+      "ou_line": 56.5,
+      "home_spread_point": -15.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401833986",
+      "game_id": "401833986",
+      "game_date": "2025-12-13",
+      "date": "2025-12-13",
+      "home_team": "Tarleton State",
+      "away_team": "Villanova",
+      "ou_line": 54.5,
+      "home_spread_point": -14.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401833987",
+      "game_id": "401833987",
+      "game_date": "2025-12-13",
+      "date": "2025-12-13",
+      "home_team": "Montana",
+      "away_team": "South Dakota",
+      "ou_line": 59.5,
+      "home_spread_point": -7.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401836219",
+      "game_id": "401836219",
+      "game_date": "2025-12-13",
+      "date": "2025-12-13",
+      "home_team": "UC Davis",
+      "away_team": "Illinois State",
+      "ou_line": 57.5,
+      "home_spread_point": -3.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401762521",
+      "game_id": "401762521",
+      "game_date": "2025-12-13",
+      "date": "2025-12-13",
+      "home_team": "Navy",
+      "away_team": "Army",
+      "ou_line": 38.5,
+      "home_spread_point": -6.0,
+      "home_ml": -200,
+      "away_ml": 170
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 16
+  }
+}

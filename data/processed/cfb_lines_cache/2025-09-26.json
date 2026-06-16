@@ -1,0 +1,23 @@
+{
+  "date": "2025-09-26",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401754543",
+      "game_id": "401754543",
+      "game_date": "2025-09-26",
+      "date": "2025-09-26",
+      "home_team": "Virginia",
+      "away_team": "Florida State",
+      "ou_line": 60.5,
+      "home_spread_point": 7.0,
+      "home_ml": 220,
+      "away_ml": -270
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 5
+  }
+}

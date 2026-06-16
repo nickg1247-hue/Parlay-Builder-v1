@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-10",
+  "fetched_at": "2026-06-09T15:22:38.648909+00:00",
+  "source": "the_odds_api_live",
+  "games": [
+    {
+      "home_team": "New York Knicks",
+      "away_team": "San Antonio Spurs",
+      "commence_time": "2026-06-11T00:40:00Z",
+      "home_ml": -125,
+      "away_ml": 105,
+      "odds_source": "the_odds_api_live"
+    }
+  ]
+}

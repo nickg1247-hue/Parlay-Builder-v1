@@ -1,0 +1,47 @@
+{
+  "date": "2025-11-19",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762864",
+      "game_id": "401762864",
+      "game_date": "2025-11-19",
+      "date": "2025-11-19",
+      "home_team": "Northern Illinois",
+      "away_team": "Western Michigan",
+      "ou_line": 39.5,
+      "home_spread_point": 7.0,
+      "home_ml": 225,
+      "away_ml": -278
+    },
+    {
+      "cfbd_game_id": "401762862",
+      "game_id": "401762862",
+      "game_date": "2025-11-19",
+      "date": "2025-11-19",
+      "home_team": "Bowling Green",
+      "away_team": "Akron",
+      "ou_line": 47.5,
+      "home_spread_point": -2.5,
+      "home_ml": -140,
+      "away_ml": 120
+    },
+    {
+      "cfbd_game_id": "401762863",
+      "game_id": "401762863",
+      "game_date": "2025-11-19",
+      "date": "2025-11-19",
+      "home_team": "Ohio",
+      "away_team": "UMass",
+      "ou_line": 53.5,
+      "home_spread_point": -33.5,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 13
+  }
+}

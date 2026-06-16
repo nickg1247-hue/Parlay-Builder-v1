@@ -1,0 +1,23 @@
+{
+  "date": "2025-09-25",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762471",
+      "game_id": "401762471",
+      "game_date": "2025-09-25",
+      "date": "2025-09-25",
+      "home_team": "East Carolina",
+      "away_team": "Army",
+      "ou_line": 52.5,
+      "home_spread_point": -3.5,
+      "home_ml": -170,
+      "away_ml": 145
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 5
+  }
+}

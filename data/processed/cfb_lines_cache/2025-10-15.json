@@ -1,0 +1,47 @@
+{
+  "date": "2025-10-15",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401757283",
+      "game_id": "401757283",
+      "game_date": "2025-10-15",
+      "date": "2025-10-15",
+      "home_team": "Jacksonville State",
+      "away_team": "Delaware",
+      "ou_line": 55.5,
+      "home_spread_point": 3.0,
+      "home_ml": 130,
+      "away_ml": -150
+    },
+    {
+      "cfbd_game_id": "401757284",
+      "game_id": "401757284",
+      "game_date": "2025-10-15",
+      "date": "2025-10-15",
+      "home_team": "Sam Houston",
+      "away_team": "UTEP",
+      "ou_line": 46.5,
+      "home_spread_point": 3.5,
+      "home_ml": 140,
+      "away_ml": -165
+    },
+    {
+      "cfbd_game_id": "401757281",
+      "game_id": "401757281",
+      "game_date": "2025-10-15",
+      "date": "2025-10-15",
+      "home_team": "Western Kentucky",
+      "away_team": "FIU",
+      "ou_line": 55.5,
+      "home_spread_point": -10.0,
+      "home_ml": -375,
+      "away_ml": 290
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 8
+  }
+}

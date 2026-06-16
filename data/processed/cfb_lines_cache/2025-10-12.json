@@ -1,0 +1,107 @@
+{
+  "date": "2025-10-12",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401756922",
+      "game_id": "401756922",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Utah",
+      "away_team": "Arizona State",
+      "ou_line": 44.5,
+      "home_spread_point": -9.5,
+      "home_ml": -320,
+      "away_ml": 260
+    },
+    {
+      "cfbd_game_id": "401767307",
+      "game_id": "401767307",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Utah Tech",
+      "away_team": "Tarleton State",
+      "ou_line": 59.5,
+      "home_spread_point": 28.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767133",
+      "game_id": "401767133",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Weber State",
+      "away_team": "Sacramento State",
+      "ou_line": 55.5,
+      "home_spread_point": 8.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401756916",
+      "game_id": "401756916",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Arizona",
+      "away_team": "BYU",
+      "ou_line": 46.5,
+      "home_spread_point": 2.5,
+      "home_ml": 120,
+      "away_ml": -140
+    },
+    {
+      "cfbd_game_id": "401760387",
+      "game_id": "401760387",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Boise State",
+      "away_team": "New Mexico",
+      "ou_line": 58.5,
+      "home_spread_point": -14.5,
+      "home_ml": null,
+      "away_ml": 472
+    },
+    {
+      "cfbd_game_id": "401761627",
+      "game_id": "401761627",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Texas State",
+      "away_team": "Troy",
+      "ou_line": 53.5,
+      "home_spread_point": -7.5,
+      "home_ml": -298,
+      "away_ml": 240
+    },
+    {
+      "cfbd_game_id": "401760389",
+      "game_id": "401760389",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Hawaii",
+      "away_team": "Utah State",
+      "ou_line": 57.5,
+      "home_spread_point": 1.5,
+      "home_ml": -102,
+      "away_ml": -118
+    },
+    {
+      "cfbd_game_id": "401760390",
+      "game_id": "401760390",
+      "game_date": "2025-10-12",
+      "date": "2025-10-12",
+      "home_team": "Nevada",
+      "away_team": "San Diego State",
+      "ou_line": 42.5,
+      "home_spread_point": 6.5,
+      "home_ml": 200,
+      "away_ml": -240
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 7
+  }
+}

@@ -247,25 +247,9 @@ def _matchup_adjustment(
     return pts, notes
 
 
-def _compute_rank_score(
-    *,
-    hit_rate: float,
-    side: str,
-    recent_avg: float,
-    line: float,
-    matchup_pts: float,
-    l5_over: float | None,
-    l5_under: float | None,
-) -> float:
-    """Blend recent hit rate with matchup perspective for cross-game ranking."""
-    base = hit_rate * 100.0
-    edge = (recent_avg - line) if side == "over" else (line - recent_avg)
-    edge_pts = max(-8.0, min(8.0, edge * 5.0))
-    l5 = l5_over if side == "over" else l5_under
-    momentum = 0.0
-    if l5 is not None:
-        momentum = max(-4.0, min(4.0, (l5 - hit_rate) * 20.0))
-    return round(max(0.0, min(100.0, base + matchup_pts + edge_pts + momentum)), 1)
+def _compute_rank_score(*, hit_rate: float, **_kwargs: Any) -> float:
+    """Form score for display and sorting: L10 hit rate as 0–100."""
+    return round(hit_rate * 100.0, 1)
 
 
 def _choose_actionable_side(
@@ -437,15 +421,7 @@ def score_prop(
     score: float | None = None
     rank_score: float | None = None
     if choice["actionable"] and hit_rate is not None and side:
-        rank_score = _compute_rank_score(
-            hit_rate=hit_rate,
-            side=side,
-            recent_avg=recent_avg,
-            line=line,
-            matchup_pts=adj,
-            l5_over=l5_over,
-            l5_under=l5_under,
-        )
+        rank_score = _compute_rank_score(hit_rate=hit_rate)
         score = rank_score
 
     line_strength = _prop_line_strength(

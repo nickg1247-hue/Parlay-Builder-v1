@@ -1066,10 +1066,6 @@ function renderBestProps(el, topProps, options = {}) {
       const insight = p.line_insight
         ? `<span class="best-bet-insight">${p.line_insight}</span>`
         : "";
-      const rankHint =
-        p.rank_score != null && p.matchup_adjustment
-          ? `<span class="best-bet-meta best-prop-rank">Matchup adj ${p.matchup_adjustment > 0 ? "+" : ""}${p.matchup_adjustment}</span>`
-          : "";
       return `
       <div class="best-bet-card best-prop-card">
         <a class="best-prop-card-link" href="${gameHref}">
@@ -1077,7 +1073,6 @@ function renderBestProps(el, topProps, options = {}) {
           <span class="best-bet-meta">${p.matchup || ""}</span>
           <span class="best-bet-meta">${line}</span>
           <span class="best-bet-edge">${odds}</span>
-          ${rankHint}
           <span class="best-bet-form">${form}</span>
           ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
           ${insight}

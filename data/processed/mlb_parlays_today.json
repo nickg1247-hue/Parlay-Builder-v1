@@ -1,0 +1,281 @@
+{
+  "generated_at": "2026-06-04T08:23:31.359221+00:00",
+  "date": "2026-06-04",
+  "odds_source": "the_odds_api",
+  "games_on_slate": 9,
+  "games_with_odds": 6,
+  "candidate_legs": 6,
+  "min_edge": 0.05,
+  "parlays": [
+    {
+      "num_legs": 4,
+      "model_joint_prob": 0.5106487614952252,
+      "market_joint_prob": 0.019982058518780536,
+      "decimal_payout": 42.804887400000005,
+      "ev": 20.85826273675257,
+      "edge_vs_market": 0.49066670297644466,
+      "legs": [
+        {
+          "game_id": "823457",
+          "date": "2026-06-04",
+          "matchup": "San Diego Padres @ Philadelphia Phillies",
+          "side": "away",
+          "team": "San Diego Padres",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3690036900369004,
+          "american_odds": 161,
+          "leg_edge": 0.47633465784173096
+        },
+        {
+          "game_id": "823542",
+          "date": "2026-06-04",
+          "matchup": "Cleveland Guardians @ New York Yankees",
+          "side": "away",
+          "team": "Cleveland Guardians",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3972960151802657,
+          "american_odds": 142,
+          "leg_edge": 0.4480423326983657
+        },
+        {
+          "game_id": "823779",
+          "date": "2026-06-04",
+          "matchup": "San Francisco Giants @ Milwaukee Brewers",
+          "side": "away",
+          "team": "San Francisco Giants",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3840448098492936,
+          "american_odds": 151,
+          "leg_edge": 0.46129353802933776
+        },
+        {
+          "game_id": "824919",
+          "date": "2026-06-04",
+          "matchup": "Toronto Blue Jays @ Atlanta Braves",
+          "side": "away",
+          "team": "Toronto Blue Jays",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3549060542797494,
+          "american_odds": 170,
+          "leg_edge": 0.49043229359888196
+        }
+      ]
+    },
+    {
+      "num_legs": 4,
+      "model_joint_prob": 0.5106487614952252,
+      "market_joint_prob": 0.024579237417014885,
+      "decimal_payout": 35.02911705882354,
+      "ev": 16.887575242359507,
+      "edge_vs_market": 0.4860695240782103,
+      "legs": [
+        {
+          "game_id": "823457",
+          "date": "2026-06-04",
+          "matchup": "San Diego Padres @ Philadelphia Phillies",
+          "side": "away",
+          "team": "San Diego Padres",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3690036900369004,
+          "american_odds": 161,
+          "leg_edge": 0.47633465784173096
+        },
+        {
+          "game_id": "823779",
+          "date": "2026-06-04",
+          "matchup": "San Francisco Giants @ Milwaukee Brewers",
+          "side": "away",
+          "team": "San Francisco Giants",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3840448098492936,
+          "american_odds": 151,
+          "leg_edge": 0.46129353802933776
+        },
+        {
+          "game_id": "824753",
+          "date": "2026-06-04",
+          "matchup": "Baltimore Orioles @ Boston Red Sox",
+          "side": "away",
+          "team": "Baltimore Orioles",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.4887000542397397,
+          "american_odds": -102,
+          "leg_edge": 0.35663829363889166
+        },
+        {
+          "game_id": "824919",
+          "date": "2026-06-04",
+          "matchup": "Toronto Blue Jays @ Atlanta Braves",
+          "side": "away",
+          "team": "Toronto Blue Jays",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3549060542797494,
+          "american_odds": 170,
+          "leg_edge": 0.49043229359888196
+        }
+      ]
+    },
+    {
+      "num_legs": 4,
+      "model_joint_prob": 0.5106487614952252,
+      "market_joint_prob": 0.025427327310533793,
+      "decimal_payout": 33.77309294117648,
+      "ev": 16.2461880822749,
+      "edge_vs_market": 0.48522143418469144,
+      "legs": [
+        {
+          "game_id": "823457",
+          "date": "2026-06-04",
+          "matchup": "San Diego Padres @ Philadelphia Phillies",
+          "side": "away",
+          "team": "San Diego Padres",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3690036900369004,
+          "american_odds": 161,
+          "leg_edge": 0.47633465784173096
+        },
+        {
+          "game_id": "823542",
+          "date": "2026-06-04",
+          "matchup": "Cleveland Guardians @ New York Yankees",
+          "side": "away",
+          "team": "Cleveland Guardians",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3972960151802657,
+          "american_odds": 142,
+          "leg_edge": 0.4480423326983657
+        },
+        {
+          "game_id": "824753",
+          "date": "2026-06-04",
+          "matchup": "Baltimore Orioles @ Boston Red Sox",
+          "side": "away",
+          "team": "Baltimore Orioles",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.4887000542397397,
+          "american_odds": -102,
+          "leg_edge": 0.35663829363889166
+        },
+        {
+          "game_id": "824919",
+          "date": "2026-06-04",
+          "matchup": "Toronto Blue Jays @ Atlanta Braves",
+          "side": "away",
+          "team": "Toronto Blue Jays",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3549060542797494,
+          "american_odds": 170,
+          "leg_edge": 0.49043229359888196
+        }
+      ]
+    },
+    {
+      "num_legs": 4,
+      "model_joint_prob": 0.5106487614952252,
+      "market_joint_prob": 0.025932905426488205,
+      "decimal_payout": 33.06881347826087,
+      "ev": 15.886548646790523,
+      "edge_vs_market": 0.484715856068737,
+      "legs": [
+        {
+          "game_id": "823457",
+          "date": "2026-06-04",
+          "matchup": "San Diego Padres @ Philadelphia Phillies",
+          "side": "away",
+          "team": "San Diego Padres",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3690036900369004,
+          "american_odds": 161,
+          "leg_edge": 0.47633465784173096
+        },
+        {
+          "game_id": "823698",
+          "date": "2026-06-04",
+          "matchup": "Kansas City Royals @ Minnesota Twins",
+          "side": "away",
+          "team": "Kansas City Royals",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.5156145438322551,
+          "american_odds": -115,
+          "leg_edge": 0.32972380404637625
+        },
+        {
+          "game_id": "823779",
+          "date": "2026-06-04",
+          "matchup": "San Francisco Giants @ Milwaukee Brewers",
+          "side": "away",
+          "team": "San Francisco Giants",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3840448098492936,
+          "american_odds": 151,
+          "leg_edge": 0.46129353802933776
+        },
+        {
+          "game_id": "824919",
+          "date": "2026-06-04",
+          "matchup": "Toronto Blue Jays @ Atlanta Braves",
+          "side": "away",
+          "team": "Toronto Blue Jays",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3549060542797494,
+          "american_odds": 170,
+          "leg_edge": 0.49043229359888196
+        }
+      ]
+    },
+    {
+      "num_legs": 4,
+      "model_joint_prob": 0.5106487614952252,
+      "market_joint_prob": 0.026463781652083688,
+      "decimal_payout": 32.47910470588236,
+      "ev": 15.585414592532565,
+      "edge_vs_market": 0.4841849798431415,
+      "legs": [
+        {
+          "game_id": "823542",
+          "date": "2026-06-04",
+          "matchup": "Cleveland Guardians @ New York Yankees",
+          "side": "away",
+          "team": "Cleveland Guardians",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3972960151802657,
+          "american_odds": 142,
+          "leg_edge": 0.4480423326983657
+        },
+        {
+          "game_id": "823779",
+          "date": "2026-06-04",
+          "matchup": "San Francisco Giants @ Milwaukee Brewers",
+          "side": "away",
+          "team": "San Francisco Giants",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3840448098492936,
+          "american_odds": 151,
+          "leg_edge": 0.46129353802933776
+        },
+        {
+          "game_id": "824753",
+          "date": "2026-06-04",
+          "matchup": "Baltimore Orioles @ Boston Red Sox",
+          "side": "away",
+          "team": "Baltimore Orioles",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.4887000542397397,
+          "american_odds": -102,
+          "leg_edge": 0.35663829363889166
+        },
+        {
+          "game_id": "824919",
+          "date": "2026-06-04",
+          "matchup": "Toronto Blue Jays @ Atlanta Braves",
+          "side": "away",
+          "team": "Toronto Blue Jays",
+          "model_prob": 0.8453383478786314,
+          "market_prob": 0.3549060542797494,
+          "american_odds": 170,
+          "leg_edge": 0.49043229359888196
+        }
+      ]
+    }
+  ]
+}

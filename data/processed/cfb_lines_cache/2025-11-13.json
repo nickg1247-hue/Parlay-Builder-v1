@@ -1,0 +1,47 @@
+{
+  "date": "2025-11-13",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762860",
+      "game_id": "401762860",
+      "game_date": "2025-11-13",
+      "date": "2025-11-13",
+      "home_team": "Miami (OH)",
+      "away_team": "Toledo",
+      "ou_line": 44.5,
+      "home_spread_point": 5.5,
+      "home_ml": 190,
+      "away_ml": -230
+    },
+    {
+      "cfbd_game_id": "401762858",
+      "game_id": "401762858",
+      "game_date": "2025-11-13",
+      "date": "2025-11-13",
+      "home_team": "Central Michigan",
+      "away_team": "Buffalo",
+      "ou_line": 44.5,
+      "home_spread_point": -2.5,
+      "home_ml": -130,
+      "away_ml": 110
+    },
+    {
+      "cfbd_game_id": "401762859",
+      "game_id": "401762859",
+      "game_date": "2025-11-13",
+      "date": "2025-11-13",
+      "home_team": "UMass",
+      "away_team": "Northern Illinois",
+      "ou_line": 43.5,
+      "home_spread_point": 9.5,
+      "home_ml": 290,
+      "away_ml": -380
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 12
+  }
+}

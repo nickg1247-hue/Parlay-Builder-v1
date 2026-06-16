@@ -1,0 +1,23 @@
+{
+  "date": "2025-11-25",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762868",
+      "game_id": "401762868",
+      "game_date": "2025-11-25",
+      "date": "2025-11-25",
+      "home_team": "UMass",
+      "away_team": "Bowling Green",
+      "ou_line": 44.5,
+      "home_spread_point": 14.0,
+      "home_ml": 450,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 14
+  }
+}

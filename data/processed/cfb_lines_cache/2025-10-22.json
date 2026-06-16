@@ -1,0 +1,23 @@
+{
+  "date": "2025-10-22",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401757287",
+      "game_id": "401757287",
+      "game_date": "2025-10-22",
+      "date": "2025-10-22",
+      "home_team": "Delaware",
+      "away_team": "Middle Tennessee",
+      "ou_line": 55.5,
+      "home_spread_point": -8.5,
+      "home_ml": -345,
+      "away_ml": 275
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 9
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "date": "2025-12-13",
+  "sport": "cfb",
+  "games": [
+    {
+      "sport": "cfb",
+      "game_id": "401762521",
+      "home_team": "Navy",
+      "away_team": "Army",
+      "home_team_id": 2426,
+      "away_team_id": 349,
+      "home_team_abbr": "NAVY",
+      "away_team_abbr": "ARMY",
+      "home_logo_url": "https://a.espncdn.com/i/teamlogos/ncaa/500/2426.png",
+      "away_logo_url": "https://a.espncdn.com/i/teamlogos/ncaa/500/349.png",
+      "home_record": null,
+      "away_record": null,
+      "start_time_utc": "2025-12-13T00:00:00Z",
+      "status": "Final",
+      "detailed_status": "Final",
+      "period_label": null,
+      "home_score": 17,
+      "away_score": 16,
+      "season": 2025,
+      "from_ingest": true
+    }
+  ],
+  "games_count": 1,
+  "cached_at": "2026-06-13T09:41:30.554614+00:00",
+  "source": "ingest"
+}

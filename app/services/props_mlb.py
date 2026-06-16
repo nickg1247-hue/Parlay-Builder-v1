@@ -43,15 +43,24 @@ def _max_slate_prop_fetch(games_on_slate: int) -> int:
     return max(1, games_on_slate)
 
 
-def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
-    """Sort actionable props: matchup-adjusted rank score, then L10, then odds."""
-    from app.odds.odds_math import american_to_decimal
+def prop_side_hit_rates(prop: dict[str, Any]) -> tuple[float, float, float]:
+    """L5, L10, and season hit rates for the recommended side."""
+    side = prop.get("recommended_side") or "over"
+    if side == "over":
+        l5 = prop.get("hit_rate_over_l5")
+        l10 = prop.get("hit_rate_over_l10") or prop.get("recommended_hit_rate")
+        season = prop.get("hit_rate_over_season")
+    else:
+        l5 = prop.get("hit_rate_under_l5")
+        l10 = prop.get("hit_rate_under_l10") or prop.get("recommended_hit_rate")
+        season = prop.get("hit_rate_under_season")
+    return (float(l5 or 0), float(l10 or 0), float(season or 0))
 
-    rank = float(prop.get("rank_score") or prop.get("score") or 0)
-    hit = float(prop.get("recommended_hit_rate") or 0)
-    odds = prop.get("recommended_odds")
-    decimal = american_to_decimal(int(odds)) if odds is not None else 0.0
-    return (-rank, -hit, -decimal)
+
+def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
+    """Sort actionable props: highest L10, then L5, then season hit rate."""
+    l5, l10, season = prop_side_hit_rates(prop)
+    return (-l10, -l5, -season)
 
 
 def prop_slip_leg(prop: dict[str, Any], *, game_id: str, matchup: str | None) -> dict[str, Any]:
@@ -358,8 +367,8 @@ def _enrich_props(
     enriched.sort(
         key=lambda r: (
             not r.get("actionable"),
-            r.get("rank_score") is None and r.get("score") is None,
-            -(r.get("rank_score") or r.get("score") or 0),
+            r.get("recommended_hit_rate") is None,
+            prop_rank_key(r),
             r["player"],
         ),
     )
@@ -585,8 +594,8 @@ def _daily_props_payload(
         "source": source,
         "cached_at": cached_at,
         "disclaimer": (
-            "Ranked by matchup-adjusted score (form + opposing pitcher), "
-            "then odds — experimental, not betting advice."
+            "Ranked by hit rate on the recommended side (L10, then L5, then season) "
+            "— experimental, not betting advice."
         ),
         "live_odds_enabled": live_odds_enabled(),
         "auto_scanned": auto_scanned,
@@ -613,6 +622,7 @@ def build_daily_top_props(
     if not scan:
         picks, source, meta = _load_best_slate_props(game_date)
         if picks:
+            picks.sort(key=prop_rank_key)
             return _daily_props_payload(
                 game_date=game_date,
                 limit=limit,

@@ -1,0 +1,179 @@
+{
+  "date": "2025-11-23",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401756956",
+      "game_id": "401756956",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Colorado",
+      "away_team": "Arizona State",
+      "ou_line": 47.5,
+      "home_spread_point": 7.0,
+      "home_ml": 215,
+      "away_ml": -265
+    },
+    {
+      "cfbd_game_id": "401752775",
+      "game_id": "401752775",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Florida",
+      "away_team": "Tennessee",
+      "ou_line": 57.5,
+      "home_spread_point": 3.5,
+      "home_ml": 145,
+      "away_ml": -175
+    },
+    {
+      "cfbd_game_id": "401752910",
+      "game_id": "401752910",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "UCLA",
+      "away_team": "Washington",
+      "ou_line": 51.5,
+      "home_spread_point": 10.5,
+      "home_ml": 330,
+      "away_ml": -425
+    },
+    {
+      "cfbd_game_id": "401754601",
+      "game_id": "401754601",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Georgia Tech",
+      "away_team": "Pitt",
+      "ou_line": 61.5,
+      "home_spread_point": -2.5,
+      "home_ml": -135,
+      "away_ml": 115
+    },
+    {
+      "cfbd_game_id": "401752908",
+      "game_id": "401752908",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Penn State",
+      "away_team": "Nebraska",
+      "ou_line": 45.5,
+      "home_spread_point": -7.0,
+      "home_ml": -285,
+      "away_ml": 230
+    },
+    {
+      "cfbd_game_id": "401754599",
+      "game_id": "401754599",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Stanford",
+      "away_team": "California",
+      "ou_line": 47.5,
+      "home_spread_point": 4.5,
+      "home_ml": 155,
+      "away_ml": -185
+    },
+    {
+      "cfbd_game_id": "401756955",
+      "game_id": "401756955",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Cincinnati",
+      "away_team": "BYU",
+      "ou_line": 56.5,
+      "home_spread_point": 2.5,
+      "home_ml": 120,
+      "away_ml": -142
+    },
+    {
+      "cfbd_game_id": "401760420",
+      "game_id": "401760420",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "San Diego State",
+      "away_team": "San Jose State",
+      "ou_line": 51.5,
+      "home_spread_point": -10.0,
+      "home_ml": -390,
+      "away_ml": 300
+    },
+    {
+      "cfbd_game_id": "401752777",
+      "game_id": "401752777",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "LSU",
+      "away_team": "Western Kentucky",
+      "ou_line": 52.5,
+      "home_spread_point": -24.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401762514",
+      "game_id": "401762514",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Rice",
+      "away_team": "North Texas",
+      "ou_line": 57.5,
+      "home_spread_point": 18.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401752915",
+      "game_id": "401752915",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Wisconsin",
+      "away_team": "Illinois",
+      "ou_line": 42.5,
+      "home_spread_point": 8.5,
+      "home_ml": 275,
+      "away_ml": -345
+    },
+    {
+      "cfbd_game_id": "401760415",
+      "game_id": "401760415",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Air Force",
+      "away_team": "New Mexico",
+      "ou_line": 53.5,
+      "home_spread_point": 3.5,
+      "home_ml": 135,
+      "away_ml": -160
+    },
+    {
+      "cfbd_game_id": "401760417",
+      "game_id": "401760417",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Fresno State",
+      "away_team": "Utah State",
+      "ou_line": 50.5,
+      "home_spread_point": -1.5,
+      "home_ml": -125,
+      "away_ml": 105
+    },
+    {
+      "cfbd_game_id": "401760416",
+      "game_id": "401760416",
+      "game_date": "2025-11-23",
+      "date": "2025-11-23",
+      "home_team": "Boise State",
+      "away_team": "Colorado State",
+      "ou_line": 45.5,
+      "home_spread_point": -17.5,
+      "home_ml": null,
+      "away_ml": 500
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 13
+  }
+}

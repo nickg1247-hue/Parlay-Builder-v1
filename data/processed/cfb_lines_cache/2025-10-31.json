@@ -1,0 +1,47 @@
+{
+  "date": "2025-10-31",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401767555",
+      "game_id": "401767555",
+      "game_date": "2025-10-31",
+      "date": "2025-10-31",
+      "home_team": "Pennsylvania",
+      "away_team": "Brown",
+      "ou_line": 50.5,
+      "home_spread_point": -11.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401754575",
+      "game_id": "401754575",
+      "game_date": "2025-10-31",
+      "date": "2025-10-31",
+      "home_team": "Syracuse",
+      "away_team": "North Carolina",
+      "ou_line": 45.5,
+      "home_spread_point": -1.5,
+      "home_ml": -120,
+      "away_ml": -105
+    },
+    {
+      "cfbd_game_id": "401762497",
+      "game_id": "401762497",
+      "game_date": "2025-10-31",
+      "date": "2025-10-31",
+      "home_team": "Rice",
+      "away_team": "Memphis",
+      "ou_line": 48.5,
+      "home_spread_point": 14.0,
+      "home_ml": 450,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 10
+  }
+}

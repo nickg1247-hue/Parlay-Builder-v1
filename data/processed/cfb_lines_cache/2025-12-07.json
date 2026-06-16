@@ -1,0 +1,35 @@
+{
+  "date": "2025-12-07",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401777353",
+      "game_id": "401777353",
+      "game_date": "2025-12-07",
+      "date": "2025-12-07",
+      "home_team": "Ohio State",
+      "away_team": "Indiana",
+      "ou_line": 46.5,
+      "home_spread_point": -3.5,
+      "home_ml": -195,
+      "away_ml": 165
+    },
+    {
+      "cfbd_game_id": "401777328",
+      "game_id": "401777328",
+      "game_date": "2025-12-07",
+      "date": "2025-12-07",
+      "home_team": "Virginia",
+      "away_team": "Duke",
+      "ou_line": 58.5,
+      "home_spread_point": -3.5,
+      "home_ml": -175,
+      "away_ml": 147
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 15
+  }
+}

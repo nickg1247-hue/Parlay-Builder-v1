@@ -1,0 +1,203 @@
+{
+  "date": "2025-08-28",
+  "source": "cfbd",
+  "games": [
+    {
+      "cfbd_game_id": "401762522",
+      "game_id": "401762522",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "South Florida",
+      "away_team": "Boise State",
+      "ou_line": 62.5,
+      "home_spread_point": 5.5,
+      "home_ml": 240,
+      "away_ml": -290
+    },
+    {
+      "cfbd_game_id": "401752794",
+      "game_id": "401752794",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Rutgers",
+      "away_team": "Ohio",
+      "ou_line": 52.5,
+      "home_spread_point": -15.5,
+      "home_ml": -455,
+      "away_ml": 370
+    },
+    {
+      "cfbd_game_id": "401756848",
+      "game_id": "401756848",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "UCF",
+      "away_team": "Jacksonville State",
+      "ou_line": 52.5,
+      "home_spread_point": -20.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401754373",
+      "game_id": "401754373",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "NC State",
+      "away_team": "East Carolina",
+      "ou_line": 61.5,
+      "home_spread_point": -13.5,
+      "home_ml": -437,
+      "away_ml": 340
+    },
+    {
+      "cfbd_game_id": "401762789",
+      "game_id": "401762789",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Akron",
+      "away_team": "Wyoming",
+      "ou_line": 48.5,
+      "home_spread_point": 5.0,
+      "home_ml": 250,
+      "away_ml": -300
+    },
+    {
+      "cfbd_game_id": "401762790",
+      "game_id": "401762790",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Bowling Green",
+      "away_team": "Lafayette",
+      "ou_line": 53.5,
+      "home_spread_point": -21.25,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401757219",
+      "game_id": "401757219",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Delaware",
+      "away_team": "Delaware State",
+      "ou_line": 55.5,
+      "home_spread_point": -30.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401756876",
+      "game_id": "401756876",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Oklahoma State",
+      "away_team": "UT Martin",
+      "ou_line": 56.5,
+      "home_spread_point": -26.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401754517",
+      "game_id": "401754517",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Duke",
+      "away_team": "Elon",
+      "ou_line": 51.5,
+      "home_spread_point": -36.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401761588",
+      "game_id": "401761588",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "UL Monroe",
+      "away_team": "St. Francis (PA)",
+      "ou_line": 47.5,
+      "home_spread_point": -30.75,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401752674",
+      "game_id": "401752674",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Missouri",
+      "away_team": "Central Arkansas",
+      "ou_line": 53.5,
+      "home_spread_point": -39.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767549",
+      "game_id": "401767549",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Youngstown State",
+      "away_team": "Mercyhurst",
+      "ou_line": 59.5,
+      "home_spread_point": -24.0,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767209",
+      "game_id": "401767209",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "St. Thomas (MN)",
+      "away_team": "Lindenwood",
+      "ou_line": 51.5,
+      "home_spread_point": 6.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767171",
+      "game_id": "401767171",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Eastern Illinois",
+      "away_team": "Dayton",
+      "ou_line": 47.5,
+      "home_spread_point": -9.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767327",
+      "game_id": "401767327",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Norfolk State",
+      "away_team": "Towson",
+      "ou_line": 49.5,
+      "home_spread_point": 8.5,
+      "home_ml": null,
+      "away_ml": null
+    },
+    {
+      "cfbd_game_id": "401767298",
+      "game_id": "401767298",
+      "game_date": "2025-08-28",
+      "date": "2025-08-28",
+      "home_team": "Samford",
+      "away_team": "West Georgia",
+      "ou_line": 55.5,
+      "home_spread_point": -6.5,
+      "home_ml": null,
+      "away_ml": null
+    }
+  ],
+  "meta": {
+    "season": 2025,
+    "season_type": "regular",
+    "week": 1
+  }
+}
