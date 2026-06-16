@@ -45,6 +45,14 @@ PROTECTED_API_PREFIXES = (
     "/api/clv/summary",
     "/api/lab/",
 )
+# Public on main site even when admin auth is on (prefix match on /api/daily would block these).
+PUBLIC_API_PATHS = frozenset({
+    "/api/daily/props",
+    "/api/parlay/props/eval",
+})
+PUBLIC_API_PREFIXES = (
+    "/api/games/mlb/",
+)
 
 
 def auth_explicitly_disabled() -> bool:
@@ -169,6 +177,10 @@ def safe_next_path(path: str | None) -> str:
 
 
 def is_protected_path(path: str) -> bool:
+    if path in PUBLIC_API_PATHS:
+        return False
+    if any(path.startswith(prefix) for prefix in PUBLIC_API_PREFIXES):
+        return False
     if path in PROTECTED_PAGE_PATHS or path in PROTECTED_STATIC_PATHS:
         return True
     return any(path.startswith(prefix) for prefix in PROTECTED_API_PREFIXES)

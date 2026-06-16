@@ -1,0 +1,32 @@
+"""Admin auth: public props routes on production."""
+
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.auth import admin_auth
+from app.main import app
+
+client = TestClient(app)
+
+
+@pytest.fixture
+def production_auth(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("ADMIN_PASSWORD", "test-secret")
+    monkeypatch.delenv("ADMIN_AUTH_DISABLED", raising=False)
+
+
+def test_daily_props_public_when_auth_enabled(production_auth):
+    with patch.object(admin_auth, "auth_enabled", return_value=True):
+        with patch.object(admin_auth, "is_authenticated", return_value=False):
+            resp = client.get("/api/daily/props?limit=1")
+    assert resp.status_code != 401
+
+
+def test_daily_board_still_protected_when_auth_enabled(production_auth):
+    with patch.object(admin_auth, "auth_enabled", return_value=True):
+        with patch.object(admin_auth, "is_authenticated", return_value=False):
+            resp = client.get("/api/daily")
+    assert resp.status_code == 401

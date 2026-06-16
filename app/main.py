@@ -1,4 +1,5 @@
 import app.config  # noqa: F401 — load .env before auth middleware reads env vars
+from app.config import PROJECT_ROOT
 
 import asyncio
 import logging
@@ -221,6 +222,25 @@ async def health():
         **get_market_eval_status(),
         **get_parlay_status(),
         **get_totals_model_status(),
+    }
+
+
+@app.get("/api/build")
+async def build_info():
+    """Deploy verification: BUILD id + key feature flags (public)."""
+    build_path = PROJECT_ROOT / "BUILD"
+    build_id = build_path.read_text(encoding="utf-8").strip() if build_path.exists() else "unknown"
+    props_dir = PROJECT_ROOT / "data" / "processed" / "props_repository"
+    return {
+        "build_id": build_id,
+        "features": {
+            "mlb_player_props": True,
+            "home_prop_slip": True,
+            "matchup_ranked_props": True,
+            "bet_context_line_strength": True,
+        },
+        "props_cache_games": len(list(props_dir.glob("*.json"))) if props_dir.exists() else 0,
+        "props_service": (PROJECT_ROOT / "app" / "services" / "props_mlb.py").exists(),
     }
 
 
