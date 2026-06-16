@@ -431,7 +431,10 @@
 
     const refreshBtn = document.getElementById("props-refresh");
 
-    if (!bodyEl) return;
+    if (!bodyEl) {
+      console.error("Player props UI missing — deploy latest game.html");
+      return;
+    }
 
     loadingEl?.classList.add("hidden");
 
@@ -1091,8 +1094,23 @@
 
 
   loadTeamColors()
-    .then(() => loadInsights(false))
-    .then(() => loadProps(false))
+    .then(async () => {
+      try {
+        await loadInsights(false);
+      } catch (e) {
+        loading.classList.add("hidden");
+        content.classList.remove("hidden");
+        if (errEl) {
+          errEl.classList.remove("hidden");
+          errEl.textContent = e.message || "Could not load game insights";
+        }
+      }
+      try {
+        await loadProps(false);
+      } catch (_) {
+        /* loadProps handles its own error UI */
+      }
+    })
     .catch((e) => {
 
       loading.classList.add("hidden");

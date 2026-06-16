@@ -9,9 +9,10 @@
       document.documentElement.classList.remove("ntg-splash-pending", "ntg-splash-active");
     }, 6000);
   </script>
+  <meta name="pb-build" content="2026-06-17-props-v2">
   <title>NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260617">
-  <link rel="stylesheet" href="/static/app.css?v=20260617">
+  <link rel="stylesheet" href="/static/style.css?v=20260617b">
+  <link rel="stylesheet" href="/static/app.css?v=20260617b">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -126,9 +127,10 @@
           <p class="news-loading">Loading headlines…</p>
         </div>
       </section>
+      <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260617"></script>
+  <script src="/static/app.js?v=20260617b"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -149,14 +151,32 @@
         const url = scan
           ? "/api/daily/props?limit=25&scan=true"
           : "/api/daily/props?limit=25";
-        const propsData = await fetchJSON(url).catch(() => ({ top_props: [] }));
+        let propsData = { top_props: [], total_actionable: 0 };
+        try {
+          const res = await fetch(url);
+          if (res.status === 401) {
+            renderBestProps(propsEl, [], {
+              emptyMessage:
+                "Props API blocked by login — redeploy latest main and restart parlay-builder.",
+            });
+            return propsData;
+          }
+          if (res.ok) propsData = await res.json();
+        } catch (_) {
+          renderBestProps(propsEl, [], {
+            emptyMessage: scan
+              ? "Could not load props — check server logs."
+              : "Loading player props…",
+          });
+          return propsData;
+        }
         homePropsPool = propsData.top_props || [];
         renderBestProps(propsEl, homePropsPool.slice(0, 10), {
           emptyMessage: homePropsPool.length
             ? undefined
             : scan
               ? "No actionable props found after scanning today's slate."
-              : "Loading player props…",
+              : "No cached props yet — scanning slate…",
         });
         return propsData;
       }
@@ -192,8 +212,8 @@
         });
 
         loadHomeProps({ scan: false }).then((cached) => {
-          if ((cached.total_actionable || 0) >= 5 || cached.source === "slate_cache") return;
-          loadHomeProps({ scan: true });
+          if ((cached.total_actionable || 0) > 0) return;
+          return loadHomeProps({ scan: true });
         });
 
         const addTop10Btn = document.getElementById("prop-add-top10");

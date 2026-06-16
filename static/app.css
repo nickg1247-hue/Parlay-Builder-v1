@@ -2502,6 +2502,9 @@ html.ntg-splash-active {
   color: #ff9aa3;
 }
 
-.model-lean-chip.chip-lean {
-  opacity: 0.75;
+.pb-build-badge {
+  margin-top: 1.5rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  opacity: 0.65;
 }

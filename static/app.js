@@ -1479,9 +1479,23 @@ function initPropSlipUi() {
   renderPropSlipPanel();
 }
 
+function showBuildBadge() {
+  const el = document.getElementById("pb-build-badge");
+  if (!el) return;
+  fetch("/api/build")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (!data?.build_id) return;
+      el.textContent = `Build ${data.build_id}`;
+      el.title = JSON.stringify(data.features || {});
+    })
+    .catch(() => {});
+}
+
 function bootNTGSplash() {
   initSandboxNav();
   initPropSlipUi();
+  showBuildBadge();
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
     initNTGSplash().catch(() => clearNTGSplashState());
   } else {
