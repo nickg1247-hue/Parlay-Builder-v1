@@ -67,8 +67,8 @@ def test_build_cfb_game_insights_success(mock_game, mock_board, _mock_feats, _mo
         "warnings": [],
         "edge_threshold": 0.08,
         "active_moneyline_model": {
-            "model_version": "v2_logistic_platt",
-            "feature_set": "cfb_v2",
+            "model_version": "v3_logistic_platt",
+            "feature_set": "cfb_v3",
         },
         "slate": [SAMPLE_BOARD_ROW],
     }
@@ -91,7 +91,7 @@ def test_build_cfb_game_insights_success(mock_game, mock_board, _mock_feats, _mo
     assert result["matchup_board"]["highlights"]["moneyline_side"] == "home"
     assert result["betting_ready"] is False
     assert "betting_ready=false" in result["disclaimer"]
-    assert result["active_model"]["model_version"] == "v2_logistic_platt"
+    assert result["active_model"]["model_version"] == "v3_logistic_platt"
     assert result["feature_snapshot"] == []
 
 

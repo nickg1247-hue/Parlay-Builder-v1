@@ -162,6 +162,28 @@ Leave `USE_LIVE_ODDS=false` (or unset) even if `ODDS_API_KEY` is in `.env` — *
 
 **Historical demo** (real past lines, no API): `/mlb/board` → **Demo** or `?use_cache=true&date=2025-08-15`. Demo CSV / cache has **moneyline only** — run line columns stay empty until **Run live** (`USE_LIVE_ODDS=true` + `ODDS_API_KEY`) or a repository snapshot with `spreads` is seeded. See `SPREAD.md`.
 
+### Slate filter (board + schedule)
+
+`filter_board_games()` in `app/parlay/slate.py` keeps only playable games for the board date. Used by `build_slate_dataframe()`, `refresh_schedule_cache()`, and exposed in the daily board payload as `slate_filter_meta` (counts excluded: `final`, `postponed`, `date_mismatch`, `game_type`).
+
+| Rule | Detail |
+|------|--------|
+| Status | Drop `Final` / `Game Over`; drop **Postponed**, **Cancelled**, **Suspended** (`detailedState` prefix; MLB `codedGameState` D/C/T/U — see `/v1/gameStatus`) |
+| `gameType` | Include `R` + postseason `P/F/D/L/W`; exclude spring/exhibition/all-star `S/E/A` |
+| Calendar | `gameDate` converted to **America/New_York** must equal board date (handles late ET starts stored as next UTC day) |
+| Dedupe | By `gamePk`; doubleheaders (same teams, different PK) stay |
+
+Odds merge (`attach_market_odds`) keys on **board date**, not odds `commence_time` UTC date alone.
+
+### Model pick vs +EV singles
+
+| UI label | Field | Meaning |
+|----------|-------|---------|
+| **Model pick** | `model_pick_team` / `model_pick_prob` | Who the model thinks wins (higher raw win %) |
+| **+EV singles** | `best_pick` / `top_singles` | Value vs market (≥ edge threshold); can disagree with model winner (`ml_picks_disagree`) |
+
+Forward CLV logging still records **+EV picks only** — not model winners without edge.
+
 ---
 
 ## Enable live odds (checklist)
@@ -810,6 +832,22 @@ python scripts/train_mlb_baseline.py
 | `home_rest_days` / `away_rest_days` | Median rest days from 2023–2024 training games |
 
 FIP columns are ignored (all null). See `MODEL.md` for holdout metrics and phase gate.
+
+## MLB moneyline ensemble (v4)
+
+**Train** (requires Phase 1 ingest + pitcher game log for bullpen/L3 features):
+
+```powershell
+python scripts/train_mlb_ensemble.py
+```
+
+**Architecture:** 35% logistic (Platt-calibrated baseline) + 45% `HistGradientBoostingClassifier` + 20% Elo implied probability. Final blend is Platt-calibrated on **2024**; holdout metrics on **2025**.
+
+**Pick confidence** (favorite-side win %): &lt;54% lean only · 54–58% low · 58–62% moderate · 62–67% high · 67%+ very high. Strong picks are suppressed when ingest/pitcher/team history is stale (`prediction_freshness.block_strong_picks` on the daily board API).
+
+**Promotion gate:** ensemble replaces production only if it beats the logistic baseline on at least **two** of log loss, Brier, high-confidence accuracy, +EV ROI, and mean CLV (see `data/processed/mlb_ensemble_metrics.json`).
+
+Artifacts: `data/processed/mlb_ensemble_model.joblib` (always written); production manifest updated only when the gate passes.
 
 ## MLB market comparison (Phase 3)
 

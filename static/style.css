@@ -219,6 +219,20 @@ tr.plus-ev td {
   color: var(--muted);
 }
 
+.conf-lean {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.lean-only-row td {
+  opacity: 0.85;
+}
+
+.stale-picks {
+  border-left: 3px solid #c9782a;
+  padding-left: 0.6rem;
+}
+
 .conf-medium {
   color: #b8a04a;
 }

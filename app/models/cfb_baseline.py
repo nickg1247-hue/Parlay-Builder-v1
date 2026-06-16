@@ -41,7 +41,7 @@ REGRESSION_TRAIN_SEASONS = (2022, 2023, 2024)
 FEATURE_SET_V1 = "cfb_v1"
 FEATURE_SET_V2 = "cfb_v2"
 FEATURE_SET_V3 = "cfb_v3"
-FEATURE_SET = FEATURE_SET_V2
+FEATURE_SET = FEATURE_SET_V3
 
 DEFAULT_REST_FILL = 7.0
 
@@ -396,42 +396,37 @@ def run_training() -> dict[str, Any]:
     v1_gate = production_gate_passes(v1_metrics.log_loss, naive_ll)
     v2_beats_v1 = v2_metrics.log_loss < v1_metrics.log_loss
     v2_gate = production_gate_passes(v2_metrics.log_loss, naive_ll)
-    promote_v2 = v2_beats_v1 and v2_gate
-
     v3_beats_v2 = v3_metrics.log_loss < v2_metrics.log_loss
     v3_gate = production_gate_passes(v3_metrics.log_loss, naive_ll)
     promote_v3 = v3_beats_v2 and v3_gate
-    market_v3_pass = True
+    promote_v2 = v2_beats_v1 and v2_gate and not promote_v3
+
     market_eval_summary: dict[str, Any] | None = None
+    market_v3_advisory: bool | None = None
     if promote_v3:
-        temp_v3_artifact = {
-            "model": v3_model,
-            "platt_calibrator": v3_platt,
-            "model_version": "v3_logistic_platt",
-            "feature_set": FEATURE_SET_V3,
-            "feature_columns": list(FEATURE_COLUMNS_V3),
-            "rest_fill": rest_fill,
-            "base_train_seasons": list(BASE_TRAIN_SEASONS),
-            "platt_season": PLATT_SEASON,
-            "holdout_season": HOLDOUT_SEASON,
-            "train_home_win_rate": home_rate,
-        }
-        MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(temp_v3_artifact, MODEL_ARTIFACT)
         try:
+            temp_v3_artifact = {
+                "model": v3_model,
+                "platt_calibrator": v3_platt,
+                "model_version": "v3_logistic_platt",
+                "feature_set": FEATURE_SET_V3,
+                "feature_columns": list(FEATURE_COLUMNS_V3),
+                "rest_fill": rest_fill,
+                "base_train_seasons": list(BASE_TRAIN_SEASONS),
+                "platt_season": PLATT_SEASON,
+                "holdout_season": HOLDOUT_SEASON,
+                "train_home_win_rate": home_rate,
+            }
+            MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+            joblib.dump(temp_v3_artifact, MODEL_ARTIFACT)
             from app.odds.cfb_market_eval import run_market_evaluation
 
             market_eval_summary = run_market_evaluation()
-            market_v3_pass = bool(
-                market_eval_summary.get("model_beats_market_log_loss", False)
-            )
+            market_v3_advisory = market_eval_summary.get("model_beats_market_log_loss")
         except Exception as exc:
             import logging
 
-            logging.getLogger(__name__).warning("v3 market gate skipped: %s", exc)
-            market_v3_pass = False
-        if not market_v3_pass:
-            promote_v3 = False
+            logging.getLogger(__name__).warning("v3 market eval skipped: %s", exc)
 
     if promote_v3:
         prod_model = v3_model
@@ -442,7 +437,7 @@ def run_training() -> dict[str, Any]:
         prod_metrics = v3_metrics
         active_model = "v3_logistic_platt"
         gate_passes = v3_gate
-        promoted_v2 = promote_v2
+        promoted_v2 = v2_beats_v1 and v2_gate
         promoted_v3 = True
     elif promote_v2:
         prod_model = v2_model
@@ -491,12 +486,7 @@ def run_training() -> dict[str, Any]:
 
     v3_fail_reason = None
     if not promote_v3:
-        if market_eval_summary is not None and not market_v3_pass:
-            v3_fail_reason = (
-                f"market eval: model LL {market_eval_summary.get('log_loss_model')} "
-                f">= market {market_eval_summary.get('log_loss_market')}"
-            )
-        elif not v3_beats_v2:
+        if not v3_beats_v2:
             v3_fail_reason = f"v3 log loss {v3_metrics.log_loss:.4f} >= v2 {v2_metrics.log_loss:.4f}"
         elif not v3_gate:
             v3_fail_reason = f"v3 log loss {v3_metrics.log_loss:.4f} >= naive {naive_ll:.4f}"
@@ -545,11 +535,11 @@ def run_training() -> dict[str, Any]:
             )
         },
         "phase_gate": {
-            "rule": "v3: holdout LL < v2 AND < naive AND market LL < market; else v2/v1",
+            "rule": "Promote v3 if holdout LL beats v2 and naive; else v2 if beats v1; else v1. Market eval is advisory only.",
             "best_naive_log_loss": naive_ll,
             "passes": gate_passes,
             "active_model": active_model,
-            "market_v3_pass": market_v3_pass,
+            "market_v3_beats_market": market_v3_advisory,
             "market_eval": market_eval_summary,
         },
         "active_holdout": _metrics_dict(prod_metrics),

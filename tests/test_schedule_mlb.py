@@ -17,7 +17,8 @@ SAMPLE_API_GAMES = [
     {
         "gamePk": 777001,
         "gameDate": "2026-06-06T23:05:00Z",
-        "status": {"abstractGameState": "Preview"},
+        "gameType": "R",
+        "status": {"abstractGameState": "Preview", "detailedState": "Scheduled"},
         "teams": {
             "home": {
                 "team": {"id": 147, "name": "New York Yankees"},

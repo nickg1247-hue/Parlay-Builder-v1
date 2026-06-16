@@ -59,7 +59,29 @@
             <tbody></tbody>
           </table>
         </div>
-        <p class="simple-note" id="simple-note">Based on our model (pitcher, recent form, home field). Not betting advice.</p>
+        <p class="simple-note" id="simple-note">Pure model win probability (not blended with market).</p>
+      </section>
+
+      <section>
+        <h2>Model picks <span class="sub">(who we think wins)</span></h2>
+        <p class="simple-note">Favorite by model win % with confidence tier (54%+ for actionable picks). Not the same as +EV value picks below.</p>
+        <div class="table-wrap">
+          <table id="model-picks-table">
+            <thead>
+              <tr>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Model win %</th>
+                <th>Confidence</th>
+                <th>Market fav %</th>
+                <th>+EV pick</th>
+                <th>Edge</th>
+                <th>Agree?</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </section>
 
       <section>
@@ -76,14 +98,18 @@
                 <th>Market P(over)</th>
                 <th>Total edge</th>
                 <th>Totals confidence</th>
+                <th>Model pick</th>
+                <th>Model win %</th>
+                <th>Pick confidence</th>
                 <th>Model P(home)</th>
                 <th>Market P(home)</th>
                 <th>ML edge</th>
                 <th>ML confidence</th>
                 <th>Run line</th>
-                <th>Model cover</th>
+                <th>Model cover pick</th>
+                <th>Model cover %</th>
                 <th>Market cover</th>
-                <th>Spread pick</th>
+                <th>+EV spread</th>
                 <th>Spread edge</th>
               </tr>
             </thead>
@@ -101,7 +127,8 @@
       </section>
 
       <section>
-        <h2>Top singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
+        <h2>+EV singles <span class="sub" id="singles-threshold-label">(value vs market, ≥8%)</span></h2>
+        <p class="simple-note">Not the same as model winner — these are value picks vs the market line.</p>
         <div id="singles-list" class="card-list"></div>
       </section>
 

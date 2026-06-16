@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import date
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 import pandas as pd
@@ -20,6 +21,81 @@ from app.odds.team_aliases import normalize_team_name
 logger = logging.getLogger(__name__)
 
 MLB_SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
+ET = ZoneInfo("America/New_York")
+
+# gameType: R=regular; P/F/D/L/W=postseason; S/E/A=spring/exhibition/all-star (exclude).
+_BOARD_GAME_TYPES = frozenset({"R", "P", "F", "D", "L", "W"})
+_EXCLUDED_GAME_TYPES = frozenset({"S", "E", "A"})
+
+# MLB Stats API status (see /v1/gameStatus): postponed codedGameState D; cancelled C;
+# suspended T/U. detailedState prefixes are the stable signal (Delayed uses P/I, not D).
+_POSTPONED_PREFIXES = ("Postponed", "Cancelled", "Suspended")
+
+
+def _game_et_date(game: dict[str, Any]) -> date:
+    raw = game.get("gameDate") or game.get("officialDate") or ""
+    dt = pd.to_datetime(raw, utc=True)
+    return dt.tz_convert(ET).date()
+
+
+def _board_game_exclusion_reason(
+    game: dict[str, Any],
+    board_date: date,
+) -> str | None:
+    status = game.get("status") or {}
+    abstract = status.get("abstractGameState") or ""
+    detailed = status.get("detailedState") or ""
+
+    if any(detailed.startswith(prefix) for prefix in _POSTPONED_PREFIXES):
+        return "postponed"
+    if abstract in ("Final", "Game Over"):
+        return "final"
+
+    game_type = (game.get("gameType") or "R").upper()
+    if game_type in _EXCLUDED_GAME_TYPES:
+        return "game_type"
+    if game_type not in _BOARD_GAME_TYPES:
+        return "game_type"
+
+    if _game_et_date(game) != board_date:
+        return "date_mismatch"
+    return None
+
+
+def slate_filter_meta(
+    games: list[dict[str, Any]],
+    board_date: date,
+) -> dict[str, int]:
+    """Count API games excluded by reason before dedupe."""
+    counts = {"final": 0, "postponed": 0, "date_mismatch": 0, "game_type": 0}
+    seen_pks: set[Any] = set()
+    for game in games:
+        game_pk = game.get("gamePk")
+        if game_pk in seen_pks:
+            continue
+        seen_pks.add(game_pk)
+        reason = _board_game_exclusion_reason(game, board_date)
+        if reason:
+            counts[reason] += 1
+    return counts
+
+
+def filter_board_games(
+    games: list[dict[str, Any]],
+    board_date: date,
+) -> list[dict[str, Any]]:
+    """Keep playable MLB games for the board date (ET calendar day)."""
+    kept: list[dict[str, Any]] = []
+    seen_pks: set[Any] = set()
+    for game in games:
+        game_pk = game.get("gamePk")
+        if game_pk in seen_pks:
+            continue
+        if _board_game_exclusion_reason(game, board_date):
+            continue
+        seen_pks.add(game_pk)
+        kept.append(game)
+    return kept
 
 
 def fetch_mlb_schedule_day(game_date: date) -> list[dict[str, Any]]:
@@ -54,16 +130,15 @@ def _scoring_params() -> tuple[dict, float]:
 def build_slate_dataframe(
     game_date: date,
     history: pd.DataFrame | None = None,
+    api_games: list[dict[str, Any]] | None = None,
 ) -> pd.DataFrame:
     history = history if history is not None else load_games()
     history = history[history["date"] < pd.Timestamp(game_date)].copy()
 
-    api_games = fetch_mlb_schedule_day(game_date)
+    if api_games is None:
+        api_games = filter_board_games(fetch_mlb_schedule_day(game_date), game_date)
     rows: list[dict[str, Any]] = []
     for game in api_games:
-        status = game.get("status", {}).get("abstractGameState", "")
-        if status in ("Final", "Game Over"):
-            continue
         home = game["teams"]["home"]
         away = game["teams"]["away"]
         home_team = normalize_team_name(home["team"]["name"])

@@ -29,6 +29,8 @@ from app.models.calibration import (
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.mlb_baseline import load_games
 from app.models.production_pipeline import get_active_model_info
+from app.models.mlb_ensemble import model_pick_from_prob
+from app.services.mlb_data_freshness import check_mlb_prediction_freshness
 from app.services.forward_clv import log_live_picks
 from app.parlay.ev_ranker import (
     DEFAULT_MAX_PARLAYS,
@@ -36,7 +38,13 @@ from app.parlay.ev_ranker import (
     rank_parlays,
     _candidate_legs,
 )
-from app.parlay.slate import build_slate_dataframe, build_slate_from_history
+from app.parlay.slate import (
+    build_slate_dataframe,
+    build_slate_from_history,
+    fetch_mlb_schedule_day,
+    filter_board_games,
+    slate_filter_meta,
+)
 from app.parlay.totals_slate import build_totals_slate
 
 logger = logging.getLogger(__name__)
@@ -187,12 +195,16 @@ def _history_stale_warning(game_date: date, use_cache: bool) -> str | None:
     return None
 
 
-def _build_slate(game_date: date, use_cache: bool) -> pd.DataFrame:
+def _build_slate(
+    game_date: date,
+    use_cache: bool,
+    api_games: list[dict[str, Any]] | None = None,
+) -> pd.DataFrame:
     if use_cache:
         slate = build_slate_from_history(game_date)
         if not slate.empty:
             return slate
-    return build_slate_dataframe(game_date)
+    return build_slate_dataframe(game_date, api_games=api_games)
 
 
 def _top_totals(slate: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
@@ -216,6 +228,8 @@ def _slate_rows(
     has_odds: bool,
     totals_by_game: dict[str, dict[str, Any]],
     min_edge: float,
+    *,
+    block_strong_picks: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for row in merged.itertuples(index=False):
@@ -257,11 +271,15 @@ def _slate_rows(
         display_home = blend_display_prob(model_home, market_home)
         disagree = model_disagrees_heavy_favorite(model_home, market_home)
 
-        model_pick_side = "home" if model_home >= 0.5 else "away"
-        model_pick_team = (
-            row.home_team if model_pick_side == "home" else row.away_team
+        pick = model_pick_from_prob(
+            model_home,
+            row.home_team,
+            row.away_team,
+            block_strong_picks=block_strong_picks,
         )
-        model_pick_prob = model_home if model_pick_side == "home" else 1.0 - model_home
+        model_pick_side = pick.model_pick_side
+        model_pick_team = pick.model_pick_team
+        model_pick_prob = pick.model_pick_prob
 
         totals = totals_by_game.get(str(row.game_id), {})
         ou_line = totals.get("ou_line")
@@ -275,6 +293,17 @@ def _slate_rows(
             abs(float(total_edge)) if total_edge is not None else None
         )
         spread = _spread_row_fields(row, min_edge)
+        model_cover_side = None
+        model_cover_team = None
+        mhc = spread.get("model_prob_home_cover")
+        mac = spread.get("model_prob_away_cover")
+        if mhc is not None and mac is not None:
+            if float(mhc) >= float(mac):
+                model_cover_side = "home"
+                model_cover_team = row.home_team
+            else:
+                model_cover_side = "away"
+                model_cover_team = row.away_team
         rows.append(
             {
                 "game_id": str(row.game_id),
@@ -293,12 +322,17 @@ def _slate_rows(
                 "best_pick": best_pick,
                 "model_pick_side": model_pick_side,
                 "model_pick_team": model_pick_team,
-                "model_pick_prob": round(model_pick_prob, 4),
+                "model_pick_prob": round(model_pick_prob, 4) if model_pick_prob is not None else None,
+                "model_pick_action": pick.model_pick_action,
+                "model_confidence": pick.model_confidence,
+                "model_confidence_prob": pick.model_confidence_prob,
                 "ev_pick_side": best_pick["side"] if best_pick else None,
                 "ev_pick_team": best_pick["team"] if best_pick else None,
                 "ev_pick_edge": best_pick["edge"] if best_pick else None,
                 "ml_picks_disagree": bool(
-                    best_pick and best_pick["side"] != model_pick_side
+                    best_pick
+                    and model_pick_side
+                    and best_pick["side"] != model_pick_side
                 ),
                 "model_disagrees_heavy_favorite": disagree,
                 "ou_line": ou_line,
@@ -311,6 +345,8 @@ def _slate_rows(
                 "total_edge": total_edge,
                 "totals_confidence": totals_confidence,
                 "plus_ev_total": totals.get("plus_ev_total", False),
+                "model_cover_side": model_cover_side,
+                "model_cover_team": model_cover_team,
                 **spread,
             }
         )
@@ -501,6 +537,9 @@ def build_daily_board(
     stale = _history_stale_warning(game_date, use_cache)
     if stale:
         warnings.append(stale)
+    freshness = check_mlb_prediction_freshness(game_date, use_cache=use_cache)
+    warnings.extend(freshness.get("issues", []))
+    block_strong_picks = bool(freshness.get("block_strong_picks"))
     if not use_cache and not live_odds_enabled():
         if not _has_odds_api_key():
             warnings.append(
@@ -512,7 +551,15 @@ def build_daily_board(
                 "Free mode: USE_LIVE_ODDS=false — model picks only, no sportsbook API calls."
             )
 
-    slate_df = _build_slate(game_date, use_cache)
+    slate_filter_counts = {"final": 0, "postponed": 0, "date_mismatch": 0, "game_type": 0}
+    if use_cache:
+        slate_df = _build_slate(game_date, use_cache)
+    else:
+        raw_api_games = fetch_mlb_schedule_day(game_date)
+        slate_filter_counts = slate_filter_meta(raw_api_games, game_date)
+        filtered_games = filter_board_games(raw_api_games, game_date)
+        slate_df = _build_slate(game_date, use_cache, api_games=filtered_games)
+
     if slate_df.empty:
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -527,6 +574,7 @@ def build_daily_board(
             "top_singles": [],
             "top_parlays": [],
             "top_totals": [],
+            "slate_filter_meta": slate_filter_counts,
             "active_moneyline_model": get_active_model_info("moneyline"),
             "active_totals_model": get_active_model_info("totals"),
             "status": _status_footer(),
@@ -587,7 +635,9 @@ def build_daily_board(
     except (FileNotFoundError, ValueError) as exc:
         logger.warning("Spread cover predictions skipped: %s", exc)
 
-    slate = _slate_rows(merged, has_odds, totals_by_game, min_edge)
+    slate = _slate_rows(
+        merged, has_odds, totals_by_game, min_edge, block_strong_picks=block_strong_picks
+    )
     top_singles = _top_singles(slate) if has_odds else []
     top_parlays = (
         _top_parlays_payload(merged, odds_source, min_edge, max_parlays)
@@ -610,6 +660,7 @@ def build_daily_board(
         "top_singles": top_singles,
         "top_parlays": top_parlays,
         "top_totals": top_totals,
+        "slate_filter_meta": slate_filter_counts,
         "totals_disclaimer": "Totals O/U model is experimental and separate from moneyline v3.",
         "spread_disclaimer": SPREAD_DISCLAIMER,
         "display_note": (
@@ -620,6 +671,7 @@ def build_daily_board(
         "edge_threshold": min_edge,
         "max_parlays": max_parlays,
         "skip_totals": skip_totals,
+        "prediction_freshness": freshness,
         "active_moneyline_model": get_active_model_info("moneyline"),
         "active_totals_model": get_active_model_info("totals"),
         "status": _status_footer(),

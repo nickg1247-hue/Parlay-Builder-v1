@@ -10,7 +10,7 @@ from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.odds.team_aliases import normalize_team_name
-from app.parlay.slate import fetch_mlb_schedule_day
+from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def _update_teams_map(games: list[dict[str, Any]]) -> dict[str, int]:
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
     """Fetch MLB schedule and write ``mlb_schedule_{date}.json``."""
     game_date = game_date or date.today()
-    api_games = fetch_mlb_schedule_day(game_date)
+    api_games = filter_board_games(fetch_mlb_schedule_day(game_date), game_date)
     games = [_game_record(g) for g in api_games]
     _update_teams_map(games)
     cached_at = datetime.now(timezone.utc).isoformat()

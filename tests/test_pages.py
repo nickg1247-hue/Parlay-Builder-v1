@@ -58,6 +58,9 @@ def test_mlb_board_page(auth_env):
     assert "MLB Daily Board" in text
     assert 'href="/sandbox"' in text
     assert "Run live" in text
+    assert "Model picks" in text
+    assert "+EV singles" in text
+    assert "model-picks-table" in text
     assert "mlb.js" in text
 
 
@@ -84,6 +87,8 @@ def test_slate_includes_model_and_ev_pick_fields(auth_env):
     row = body["slate"][0]
     assert "model_pick_team" in row
     assert "model_pick_prob" in row
+    assert "model_confidence" in row
+    assert "model_pick_action" in row
     assert "ev_pick_team" in row
     assert "ml_picks_disagree" in row
     assert row["model_pick_side"] in ("home", "away")

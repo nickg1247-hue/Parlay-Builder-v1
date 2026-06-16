@@ -99,6 +99,37 @@ def _parse_odds_api_events(events: list[dict[str, Any]]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _dedupe_odds_by_matchup(odds_df: pd.DataFrame) -> pd.DataFrame:
+    """One row per matchup — repository snapshots may append duplicate events."""
+    if odds_df.empty:
+        return odds_df
+    key = ["home_team", "away_team"]
+    if not odds_df.duplicated(subset=key).any():
+        return odds_df
+    numeric_cols = [
+        "home_ml",
+        "away_ml",
+        "home_spread_point",
+        "home_spread_american",
+        "away_spread_point",
+        "away_spread_american",
+    ]
+    agg: dict[str, tuple[str, Any]] = {
+        "date": ("date", "first"),
+        "odds_source": ("odds_source", "first"),
+    }
+    for col in numeric_cols:
+        if col in odds_df.columns:
+            agg[col] = (col, "median")
+    out = odds_df.groupby(key, as_index=False).agg(**agg)
+    for col in ("home_ml", "away_ml", "home_spread_american", "away_spread_american"):
+        if col in out.columns:
+            out[col] = out[col].apply(
+                lambda v: int(round(v)) if pd.notna(v) else v
+            )
+    return out
+
+
 def _load_cached_odds(game_date: date) -> pd.DataFrame:
     if not ODDS_2025_CSV.exists():
         return pd.DataFrame()
@@ -150,12 +181,15 @@ def attach_market_odds(
     if odds_df.empty:
         return slate, source
 
+    odds_df = _dedupe_odds_by_matchup(odds_df)
     slate = slate.copy()
-    slate["date_key"] = pd.to_datetime(slate["date"]).dt.strftime("%Y-%m-%d")
+    board_key = game_date.isoformat()
+    slate["date_key"] = board_key
     odds_df = odds_df.copy()
     odds_df["home_team"] = odds_df["home_team"].map(normalize_team_name)
     odds_df["away_team"] = odds_df["away_team"].map(normalize_team_name)
-    odds_df["date_key"] = pd.to_datetime(odds_df["date"]).dt.strftime("%Y-%m-%d")
+    # Merge on board calendar date — odds commence_time is UTC and can fall on adjacent day.
+    odds_df["date_key"] = board_key
     merged = slate.merge(
         odds_df,
         on=["date_key", "home_team", "away_team"],

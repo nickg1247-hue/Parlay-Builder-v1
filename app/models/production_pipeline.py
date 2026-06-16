@@ -39,8 +39,8 @@ LEGACY_MONEYLINE_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "mlb_baseline_
 LEGACY_TOTALS_ARTIFACT = PROJECT_ROOT / "data" / "processed" / "mlb_totals_model.joblib"
 
 PLATT_TRAIN_SEASON = 2023
-PLATT_CAL_SEASON = 2024
-TRAIN_SEASONS = (2023, 2024)
+PLATT_CAL_SEASON = 2025
+TRAIN_SEASONS = (2023, 2024, 2025)
 
 
 def _iso_now() -> str:
@@ -57,7 +57,7 @@ def _resolve_artifact_path(path_str: str) -> Path:
 
 
 def compute_imputation_params(raw: pd.DataFrame | None = None) -> tuple[dict, float]:
-    """ERA medians and rest_fill from 2023–2024 training games."""
+    """ERA medians and rest_fill from TRAIN_SEASONS games."""
     import math
 
     games = raw if raw is not None else load_games()

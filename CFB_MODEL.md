@@ -1,6 +1,6 @@
-# CFB moneyline model (Phase C2a)
+# CFB moneyline model
 
-## v1 baseline
+## Active production model: **v3** (`cfb_v3`)
 
 | Item | Value |
 |------|-------|
@@ -8,10 +8,22 @@
 | Train | Logistic regression on **2022–2023** |
 | Calibration | Platt sigmoid fit on **2024** |
 | Holdout | **2025** regular season |
-| Features | Elo diff, season win %, rest days, home field, B2B flags |
+| **Active** | **v3_logistic_platt** — Elo, form, conference, **SP+** |
 | Artifact | `data/processed/cfb_baseline_model.joblib` |
 | Metrics | `data/processed/cfb_baseline_metrics.json` |
 | Manifest | `data/processed/active_cfb_model.json` |
+
+### Holdout comparison (2025)
+
+| Model | Log loss | Accuracy |
+|-------|----------|----------|
+| v1 (Elo + rest) | 0.555 | 72.4% |
+| v2 (+ form/conf) | 0.547 | 73.1% |
+| **v3 (+ SP+)** | **0.538** | **73.9%** |
+
+Promotion rule: highest tier that beats the prior tier on holdout log loss **and** beats naive Elo/home-rate baseline. Market eval is advisory (does not block promotion).
+
+## v1 baseline (legacy)
 
 ## Production gate
 

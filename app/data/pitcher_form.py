@@ -79,6 +79,28 @@ def pitcher_last_n_starts(
     return combined.sort_values("date", ascending=False).head(n).copy()
 
 
+def pitcher_l3_rates(
+    pitcher_name: str | None,
+    before_date: pd.Timestamp,
+    season: int,
+    log: pd.DataFrame,
+) -> dict[str, float] | None:
+    """IP-weighted ERA/WHIP/IP over last 3 starts."""
+    starts = pitcher_last_n_starts(pitcher_name, before_date, season, log, n=3)
+    if starts.empty:
+        return None
+    ip = float(starts["ip"].sum())
+    if ip <= 0:
+        return None
+    era, whip = _rates_from_lines(
+        ip,
+        float(starts["er"].sum()),
+        float(starts["hits"].sum()),
+        float(starts["walks"].sum()),
+    )
+    return {"era": era, "whip": whip, "ip": ip, "starts": len(starts)}
+
+
 def pitcher_l5_rates(
     pitcher_name: str | None,
     before_date: pd.Timestamp,

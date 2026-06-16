@@ -11,6 +11,7 @@ const els = {
   error: document.getElementById("error"),
   boardDate: document.getElementById("board-date"),
   simpleBody: document.querySelector("#simple-table tbody"),
+  modelPicksBody: document.querySelector("#model-picks-table tbody"),
   slateBody: document.querySelector("#slate-table tbody"),
   singles: document.getElementById("singles-list"),
   parlays: document.getElementById("parlays-list"),
@@ -110,13 +111,69 @@ function winPct(probHome, isHome) {
   return `${p.toFixed(1)}%`;
 }
 
-function renderSimpleSlate(slate, meta) {
+function marketFavoritePct(game) {
+  const home = game.market_prob_home;
+  if (home == null) return "—";
+  const away = 1 - home;
+  if (home >= away) {
+    return `${game.home_team} ${pct(home)}`;
+  }
+  return `${game.away_team} ${pct(away)}`;
+}
+
+function renderModelPicks(slate) {
+  if (!els.modelPicksBody) return;
+  els.modelPicksBody.innerHTML = "";
+  if (!slate.length) {
+    els.modelPicksBody.innerHTML =
+      '<tr><td colspan="8" class="empty">No games on slate</td></tr>';
+    return;
+  }
+  for (const game of slate) {
+    const tr = document.createElement("tr");
+    const hasEv = Boolean(game.ev_pick_team);
+    if (game.ml_picks_disagree) tr.classList.add("pick-disagree-row");
+    if (hasEv && !game.ml_picks_disagree) tr.classList.add("pick-agree-row");
+    if (game.model_pick_action === "lean_only") tr.classList.add("lean-only-row");
+
+    const confLabel = game.model_confidence || "—";
+    const pickTeam =
+      game.model_pick_action === "lean_only"
+        ? `<span class="muted-label">${game.model_pick_team || "—"}</span>`
+        : game.model_pick_team || "—";
+
+    const evLabel = hasEv
+      ? game.ev_pick_team
+      : '<span class="muted-label">No +EV</span>';
+    const edgeLabel = hasEv
+      ? `<span class="edge-pos">+${(game.ev_pick_edge * 100).toFixed(1)}%</span>`
+      : "—";
+    const agreeLabel = !hasEv
+      ? "—"
+      : game.ml_picks_disagree
+        ? '<span class="disagree-badge">No</span>'
+        : '<span class="agree-badge">Yes</span>';
+
+    tr.innerHTML = `
+      <td>${game.matchup}</td>
+      <td class="model-winner-cell">${pickTeam}</td>
+      <td>${pct(game.model_pick_prob)}</td>
+      <td class="${modelConfidenceClass(confLabel)}">${confLabel}</td>
+      <td>${marketFavoritePct(game)}</td>
+      <td class="${hasEv ? "ev-pick-cell" : ""}">${evLabel}</td>
+      <td>${edgeLabel}</td>
+      <td>${agreeLabel}</td>
+    `;
+    els.modelPicksBody.appendChild(tr);
+  }
+}
+
+function renderSimpleSlate(slate) {
   els.simpleBody.innerHTML = "";
   const note = document.getElementById("simple-note");
   if (note) {
     note.textContent =
-      meta?.display_note ||
-      "50% model + 50% market when odds available; model-only otherwise. Not betting advice.";
+      "Pure model win probability (not blended with market).";
   }
   if (!slate.length) {
     els.simpleBody.innerHTML =
@@ -124,7 +181,7 @@ function renderSimpleSlate(slate, meta) {
     return;
   }
   for (const game of slate) {
-    const probHome = game.display_prob_home ?? game.model_prob_home;
+    const probHome = game.model_prob_home;
     const homePct = probHome * 100;
     const awayPct = (1 - probHome) * 100;
     const homeFav = homePct >= awayPct;
@@ -165,6 +222,24 @@ function confidenceClass(label) {
   }
 }
 
+function modelConfidenceClass(label) {
+  switch (label) {
+    case "Lean only":
+    case "Blocked (stale data)":
+      return "conf-lean";
+    case "Low":
+      return "conf-low";
+    case "Moderate":
+      return "conf-medium";
+    case "High":
+      return "conf-high";
+    case "Very high":
+      return "conf-extreme";
+    default:
+      return "";
+  }
+}
+
 function fmtSpreadLine(team, point, american) {
   if (point == null || american == null) return "—";
   const sign = point > 0 ? "+" : "";
@@ -184,15 +259,32 @@ function spreadMarketPct(game, side) {
   return null;
 }
 
+function modelCoverSide(game) {
+  if (game.model_cover_side) return game.model_cover_side;
+  const mhc = game.model_prob_home_cover;
+  const mac = game.model_prob_away_cover;
+  if (mhc == null || mac == null) return null;
+  return mhc >= mac ? "home" : "away";
+}
+
+function modelCoverTeam(game) {
+  if (game.model_cover_team) return game.model_cover_team;
+  const side = modelCoverSide(game);
+  if (side === "home") return game.home_team;
+  if (side === "away") return game.away_team;
+  return null;
+}
+
 function renderSlate(slate, edgeFraction = 0.08) {
   els.slateBody.innerHTML = "";
   if (!slate.length) {
     els.slateBody.innerHTML =
-      '<tr><td colspan="17" class="empty">No games on slate</td></tr>';
+      '<tr><td colspan="20" class="empty">No games on slate</td></tr>';
     return;
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
+    if (game.ml_picks_disagree) tr.classList.add("pick-disagree-row");
     if (game.plus_ev_single || game.plus_ev_total || game.plus_ev_spread) {
       tr.classList.add("plus-ev");
     }
@@ -201,24 +293,25 @@ function renderSlate(slate, edgeFraction = 0.08) {
     const pick = game.totals_pick || "—";
     const tEdge =
       game.total_edge != null ? `${(game.total_edge * 100).toFixed(1)}%` : "—";
+    const modelConf = game.model_confidence || "—";
+    const modelPickLabel =
+      game.model_pick_action === "lean_only"
+        ? `<span class="muted-label">${game.model_pick_team || "—"}</span>`
+        : game.model_pick_team || "—";
+    if (game.model_pick_action === "lean_only") tr.classList.add("lean-only-row");
     const mlConf = game.ml_confidence || "—";
     const totalsConf = game.totals_confidence || "—";
     const spreadPick = game.spread_best_pick;
     const runLine =
-      spreadPick != null
+      game.home_spread_point != null
         ? fmtSpreadLine(
-            spreadPick.team,
-            spreadPick.spread_point,
-            spreadPick.american_odds
+            game.home_team,
+            game.home_spread_point,
+            game.home_spread_american
           )
-        : game.home_spread_point != null
-          ? fmtSpreadLine(
-              game.home_team,
-              game.home_spread_point,
-              game.home_spread_american
-            )
-          : "—";
-    const coverSide = spreadPick ? spreadPick.side : "home";
+        : "—";
+    const coverSide = modelCoverSide(game) || "home";
+    const modelCoverTeamLabel = modelCoverTeam(game) || "—";
     const modelCover =
       spreadCoverPct(game, coverSide) != null
         ? pct(spreadCoverPct(game, coverSide))
@@ -227,7 +320,7 @@ function renderSlate(slate, edgeFraction = 0.08) {
       spreadMarketPct(game, coverSide) != null
         ? pct(spreadMarketPct(game, coverSide))
         : "—";
-    const spreadPickLabel = spreadPick
+    const evSpreadLabel = spreadPick
       ? `${spreadPick.team} ${spreadPick.spread_point > 0 ? "+" : ""}${spreadPick.spread_point}`
       : "—";
     const spreadEdge =
@@ -243,6 +336,9 @@ function renderSlate(slate, edgeFraction = 0.08) {
       <td>${pct(game.market_prob_over)}</td>
       <td class="${game.total_edge != null && game.total_edge >= edgeFraction ? "edge-pos" : ""}">${tEdge}</td>
       <td class="${confidenceClass(totalsConf)}">${totalsConf}</td>
+      <td class="model-winner-cell">${modelPickLabel}</td>
+      <td>${pct(game.model_pick_prob)}</td>
+      <td class="${modelConfidenceClass(modelConf)}">${modelConf}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
       <td class="${game.edge_home != null && game.edge_home >= edgeFraction ? "edge-pos" : ""}">
@@ -250,9 +346,10 @@ function renderSlate(slate, edgeFraction = 0.08) {
       </td>
       <td class="${confidenceClass(mlConf)}">${mlConf}</td>
       <td>${runLine}</td>
+      <td class="model-winner-cell">${modelCoverTeamLabel}</td>
       <td>${modelCover}</td>
       <td>${marketCover}</td>
-      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadPickLabel}</td>
+      <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${evSpreadLabel}</td>
       <td class="${game.plus_ev_spread ? "edge-pos" : ""}">${spreadEdge}</td>
     `;
     els.slateBody.appendChild(tr);
@@ -396,8 +493,13 @@ async function loadBoard(refresh = false) {
       data.board_live_test && data.synced_to_main
         ? '<div class="warning-item sync-ok">Live test complete — odds repository and daily board updated. Main-site game pages will pick up new lines within ~60s.</div>'
         : "";
+    const staleNote =
+      data.prediction_freshness?.block_strong_picks
+        ? '<div class="warning-item stale-picks">Strong model picks suppressed — refresh MLB ingest, pitcher log, or odds before trusting high-confidence picks.</div>'
+        : "";
     els.warnings.innerHTML =
       syncNote +
+      staleNote +
       (data.warnings || [])
         .map((w) => `<div class="warning-item">${w}</div>`)
         .join("");
@@ -417,7 +519,8 @@ async function loadBoard(refresh = false) {
       els.spreadNote.textContent = data.spread_disclaimer;
     }
 
-    renderSimpleSlate(data.slate || [], { display_note: data.display_note });
+    renderSimpleSlate(data.slate || []);
+    renderModelPicks(data.slate || []);
     renderSlate(data.slate || [], edgeFraction);
     renderTotals(data.top_totals || [], data.totals_disclaimer, edgeFraction);
     renderSingles(data.top_singles || [], edgeFraction);

@@ -606,11 +606,55 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
         FEATURE_COLUMNS_WAVE1,
         build_features_for_slate,
     )
+    from app.models.mlb_ensemble import (
+        attach_elo_strength_columns,
+        is_ensemble_artifact,
+        predict_ensemble_home_proba,
+    )
 
     artifact = load_model_artifact()
+    if is_ensemble_artifact(artifact):
+        prepared = _prepare_scoring_frame(df, artifact)
+        if "elo_home_pre" not in prepared.columns:
+            prepared = attach_elo_for_slate(prepared)
+        if "market_prob_home" in df.columns:
+            prepared["market_prob_home"] = pd.to_numeric(
+                df["market_prob_home"], errors="coerce"
+            ).values
+        prepared = attach_elo_strength_columns(prepared)
+        return predict_ensemble_home_proba(prepared, artifact)
+
     cols = artifact.get("feature_columns", FEATURE_COLUMNS)
     era_medians = artifact["era_medians"]
     rest_fill = artifact["rest_fill"]
+
+    prepared = _prepare_scoring_frame(df, artifact, cols, era_medians, rest_fill)
+    raw = artifact["model"].predict_proba(prepared[cols].values)[:, 1]
+    platt = artifact.get("platt_calibrator")
+    if platt is not None:
+        return platt.transform(raw)
+    return raw
+
+
+def _prepare_scoring_frame(
+    df: pd.DataFrame,
+    artifact: dict,
+    cols: list[str] | None = None,
+    era_medians: dict | None = None,
+    rest_fill: float | None = None,
+) -> pd.DataFrame:
+    from app.features.mlb_pregame import (
+        FEATURE_COLUMNS,
+        FEATURE_COLUMNS_WAVE1,
+        build_features_for_slate,
+    )
+
+    if cols is None:
+        cols = artifact.get("feature_columns", FEATURE_COLUMNS)
+    if era_medians is None:
+        era_medians = artifact["era_medians"]
+    if rest_fill is None:
+        rest_fill = artifact["rest_fill"]
 
     if "home_season_win_pct" in cols or any(
         c in cols for c in FEATURE_COLUMNS_WAVE1 if c not in FEATURE_COLUMNS
@@ -628,12 +672,7 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
         if "elo_home_pre" in cols:
             prepared = attach_elo_for_slate(prepared)
 
-    prepared = _sanitize_rest_days(prepared, rest_fill)
-    raw = artifact["model"].predict_proba(prepared[cols].values)[:, 1]
-    platt = artifact.get("platt_calibrator")
-    if platt is not None:
-        return platt.transform(raw)
-    return raw
+    return _sanitize_rest_days(prepared, rest_fill)
 
 
 def format_metrics_table(results: dict) -> str:

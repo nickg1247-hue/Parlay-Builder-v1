@@ -13,6 +13,7 @@ import pandas as pd
 from app.config import PROJECT_ROOT
 from app.data.pitcher_form import (
     get_pitcher_game_log,
+    pitcher_l3_rates,
     pitcher_l5_rates,
     team_bullpen_features,
 )
@@ -47,6 +48,14 @@ WAVE1_EXTRA_COLUMNS = [
     "away_pitcher_ip",
 ]
 
+PITCHER_L3_COLUMNS = [
+    "home_pitcher_era_l3",
+    "away_pitcher_era_l3",
+    "home_pitcher_whip_l3",
+    "away_pitcher_whip_l3",
+    "home_pitcher_ip_l3",
+    "away_pitcher_ip_l3",
+]
 PITCHER_L5_COLUMNS = [
     "home_pitcher_era_l5",
     "away_pitcher_era_l5",
@@ -247,6 +256,22 @@ def _compute_rest_days(
     return float(gap)
 
 
+def _pitcher_l3_block(
+    pitcher_name: str | None,
+    before: pd.Timestamp,
+    season: int,
+    profile: dict[str, float],
+    pitcher_log: pd.DataFrame,
+    prefix: str,
+) -> dict[str, float]:
+    l3 = pitcher_l3_rates(pitcher_name, before, season, pitcher_log)
+    return {
+        f"{prefix}_pitcher_era_l3": l3["era"] if l3 else profile["era"],
+        f"{prefix}_pitcher_whip_l3": l3["whip"] if l3 else profile["whip"],
+        f"{prefix}_pitcher_ip_l3": l3["ip"] if l3 else profile["ip"],
+    }
+
+
 def _pitcher_l5_block(
     pitcher_name: str | None,
     before: pd.Timestamp,
@@ -323,6 +348,8 @@ def _row_features(
     )
 
     log = pitcher_log if pitcher_log is not None else pd.DataFrame()
+    feats.update(_pitcher_l3_block(home_sp, before, season, home_prof, log, "home"))
+    feats.update(_pitcher_l3_block(away_sp, before, season, away_prof, log, "away"))
     feats.update(_pitcher_l5_block(home_sp, before, season, home_prof, log, "home"))
     feats.update(_pitcher_l5_block(away_sp, before, season, away_prof, log, "away"))
     home_bp = team_bullpen_features(row.home_team, before, log)
