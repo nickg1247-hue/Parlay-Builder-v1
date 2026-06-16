@@ -211,6 +211,11 @@
 
       : "";
 
+    const evLine =
+      model.ev_pick && model.ev_pick !== model.pick
+        ? `<p class="model-ev-line"><strong>+EV value:</strong> ${model.ev_pick}${model.ev_edge != null ? ` · +${(model.ev_edge * 100).toFixed(1)}%` : ""}</p>`
+        : "";
+
     return `
 
       <div class="model-center-col">
@@ -220,6 +225,8 @@
         <p class="model-pick">${model.pick}</p>
 
         <p class="model-win">${winPct} win</p>
+
+        ${evLine}
 
         <p class="model-runs">Est. total runs: <strong>${runs}</strong></p>
 

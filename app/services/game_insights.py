@@ -404,25 +404,44 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
             "totals_pick": None,
             "total_edge": None,
             "totals_confidence": None,
+            "ev_pick": None,
+            "ev_edge": None,
         }
 
-    best = board_row.get("best_pick")
-    if best:
-        pick_team = best.get("team")
-        pick_side = best.get("side")
-        edge = best.get("edge")
-    else:
-        pick_side = "home" if board_row.get("model_prob_home", 0.5) >= 0.5 else "away"
+    prob_home = board_row.get("model_prob_home")
+    pick_side = board_row.get("model_pick_side")
+    if pick_side:
+        pick_team = board_row.get("model_pick_team")
+    elif prob_home is not None:
+        pick_side = "home" if float(prob_home) >= 0.5 else "away"
         pick_team = (
             board_row["home_team"] if pick_side == "home" else board_row["away_team"]
         )
-        edge = board_row.get("ml_edge_best")
-
-    if pick_side == "home":
-        win_pct = _pct(board_row.get("display_prob_home"))
     else:
+        pick_side = None
+        pick_team = None
+
+    if pick_side == "home" and prob_home is not None:
+        win_pct = _pct(prob_home)
+    elif pick_side == "away" and prob_home is not None:
+        win_pct = _pct(1.0 - float(prob_home))
+    elif pick_side == "home":
+        win_pct = _pct(board_row.get("display_prob_home"))
+    elif pick_side == "away":
         dh = board_row.get("display_prob_home")
         win_pct = _pct(1.0 - float(dh)) if dh is not None else None
+    else:
+        win_pct = None
+
+    market_home = board_row.get("market_prob_home")
+    if pick_side == "home" and prob_home is not None and market_home is not None:
+        edge = float(prob_home) - float(market_home)
+    elif pick_side == "away" and prob_home is not None and market_home is not None:
+        edge = (1.0 - float(prob_home)) - (1.0 - float(market_home))
+    else:
+        edge = board_row.get("ml_edge_best")
+
+    confidence = board_row.get("model_confidence") or board_row.get("ml_confidence")
 
     return {
         "pick": pick_team,
@@ -430,12 +449,14 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
         "win_pct": win_pct,
         "expected_runs": board_row.get("expected_total_runs"),
         "edge": edge,
-        "confidence": board_row.get("ml_confidence"),
+        "confidence": confidence,
         "totals_pick": board_row.get("totals_pick"),
         "total_edge": board_row.get("total_edge"),
         "totals_confidence": board_row.get("totals_confidence"),
         "plus_ev_single": board_row.get("plus_ev_single", False),
         "plus_ev_total": board_row.get("plus_ev_total", False),
+        "ev_pick": board_row.get("ev_pick_team"),
+        "ev_edge": board_row.get("ev_pick_edge"),
     }
 
 

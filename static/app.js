@@ -507,22 +507,22 @@ function modelLeanLabel(boardRow, options = {}) {
 
 function modelLeanChips(boardRow, options = {}) {
   if (!boardRow) return [];
-  const sport = options.sport;
-  if (boardRow.best_pick?.team && sport !== "cfb") {
-    return [{ text: `Model: ${boardRow.best_pick.team}`, tier: boardRow.ml_confidence }];
-  }
   const chips = [];
-  if (boardRow.model_pick) {
-    chips.push({
-      text: `ML: ${boardRow.model_pick}`,
-      tier: boardRow.ml_confidence,
-    });
-  } else if (boardRow.model_prob_home != null) {
+  let modelTeam = boardRow.model_pick_team;
+  const modelConf = boardRow.model_confidence || boardRow.ml_confidence;
+  if (!modelTeam && boardRow.model_prob_home != null) {
     const home = Number(boardRow.model_prob_home) >= 0.5;
-    chips.push({
-      text: `ML: ${home ? boardRow.home_team : boardRow.away_team}`,
-      tier: boardRow.ml_confidence,
-    });
+    modelTeam = home ? boardRow.home_team : boardRow.away_team;
+  }
+  if (!modelTeam && boardRow.model_pick) {
+    modelTeam = boardRow.model_pick;
+  }
+  if (modelTeam) {
+    chips.push({ text: `Model: ${modelTeam}`, tier: modelConf });
+  }
+  const evTeam = boardRow.ev_pick_team ?? boardRow.best_pick?.team;
+  if (evTeam && options.sport !== "cfb") {
+    chips.push({ text: `+EV: ${evTeam}`, tier: boardRow.ml_confidence });
   }
   if (boardRow.spread_pick) {
     chips.push({ text: `Spread: ${boardRow.spread_pick}`, tier: boardRow.spread_confidence });

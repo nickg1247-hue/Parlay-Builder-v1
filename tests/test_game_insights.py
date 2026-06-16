@@ -258,11 +258,34 @@ def test_build_model_from_board_row():
 
     assert model["pick"] == "New York Yankees"
 
-    assert model["win_pct"] == 55.0
+    assert model["win_pct"] == 58.0
 
     assert model["expected_runs"] == 8.2
 
     assert model["totals_pick"] == "Over"
+
+
+def test_build_model_uses_model_pick_not_ev_when_disagree():
+    row = {
+        **SAMPLE_BOARD["slate"][0],
+        "model_prob_home": 0.62,
+        "model_pick_side": "home",
+        "model_pick_team": "New York Yankees",
+        "model_confidence": "High",
+        "best_pick": {
+            "side": "away",
+            "team": "Boston Red Sox",
+            "edge": 0.12,
+            "american_odds": 130,
+        },
+        "ev_pick_team": "Boston Red Sox",
+        "ev_pick_edge": 0.12,
+        "plus_ev_single": True,
+    }
+    model = gi._build_model(row)
+    assert model["pick"] == "New York Yankees"
+    assert model["ev_pick"] == "Boston Red Sox"
+    assert model["ev_edge"] == 0.12
 
 
 
