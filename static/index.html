@@ -9,10 +9,10 @@
       document.documentElement.classList.remove("ntg-splash-pending", "ntg-splash-active");
     }, 6000);
   </script>
-  <meta name="pb-build" content="2026-06-17-props-v2">
+  <meta name="pb-build" content="2026-06-17-props-v4">
   <title>NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260617b">
-  <link rel="stylesheet" href="/static/app.css?v=20260617b">
+  <link rel="stylesheet" href="/static/style.css?v=20260617d">
+  <link rel="stylesheet" href="/static/app.css?v=20260617d">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -130,7 +130,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260617b"></script>
+  <script src="/static/app.js?v=20260617d"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -171,12 +171,15 @@
           return propsData;
         }
         homePropsPool = propsData.top_props || [];
+        const hint = propsData.hint ? ` ${propsData.hint}` : "";
         renderBestProps(propsEl, homePropsPool.slice(0, 10), {
           emptyMessage: homePropsPool.length
             ? undefined
             : scan
-              ? "No actionable props found after scanning today's slate."
-              : "No cached props yet — scanning slate…",
+              ? `No actionable props found after scanning today's slate.${hint}`
+              : propsData.total_actionable
+                ? undefined
+                : `No cached props yet — scanning slate…${hint}`,
         });
         return propsData;
       }

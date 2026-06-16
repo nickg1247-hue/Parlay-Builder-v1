@@ -139,6 +139,12 @@ app = FastAPI(title="NTG Sports", lifespan=lifespan)
 app.add_middleware(AdminAuthMiddleware)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+_HTML_NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
+
+
+def _html_page(name: str) -> FileResponse:
+    return FileResponse(STATIC_DIR / name, headers=_HTML_NO_CACHE)
+
 
 class LoginRequest(BaseModel):
     username: str
@@ -227,12 +233,14 @@ async def health():
 
 @app.get("/api/build")
 async def build_info():
-    """Deploy verification: BUILD id + key feature flags (public)."""
+    """Deploy verification: BUILD id + props cache health (public)."""
     build_path = PROJECT_ROOT / "BUILD"
     build_id = build_path.read_text(encoding="utf-8").strip() if build_path.exists() else "unknown"
     props_dir = PROJECT_ROOT / "data" / "processed" / "props_repository"
+    props_sample = build_daily_top_props(date_type.today(), limit=3, scan=False)
     return {
         "build_id": build_id,
+        "project_root": str(PROJECT_ROOT),
         "features": {
             "mlb_player_props": True,
             "home_prop_slip": True,
@@ -240,7 +248,15 @@ async def build_info():
             "bet_context_line_strength": True,
         },
         "props_cache_games": len(list(props_dir.glob("*.json"))) if props_dir.exists() else 0,
+        "props_repository_exists": props_dir.exists(),
         "props_service": (PROJECT_ROOT / "app" / "services" / "props_mlb.py").exists(),
+        "props_api": {
+            "total_actionable": props_sample.get("total_actionable", 0),
+            "top_count": len(props_sample.get("top_props") or []),
+            "source": props_sample.get("source"),
+            "hint": props_sample.get("hint"),
+            "live_odds_enabled": props_sample.get("live_odds_enabled"),
+        },
     }
 
 
@@ -499,7 +515,11 @@ async def daily_top_props(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return build_daily_top_props(game_date, limit=limit, scan=scan)
+    result = build_daily_top_props(game_date, limit=limit, scan=scan)
+    if not result.get("top_props") and not scan:
+        result = build_daily_top_props(game_date, limit=limit, scan=True)
+        result["auto_scanned"] = True
+    return result
 
 
 @app.get("/api/daily")
@@ -547,7 +567,7 @@ async def daily_board(
 
 @app.get("/")
 async def home():
-    return FileResponse(STATIC_DIR / "index.html")
+    return _html_page("index.html")
 
 
 @app.get("/mlb")
@@ -650,7 +670,7 @@ async def nba_game_insights(
 
 @app.get("/mlb/game/{game_id}")
 async def mlb_game_page(game_id: str):
-    return FileResponse(STATIC_DIR / "game.html")
+    return _html_page("game.html")
 
 
 @app.get("/sandbox")

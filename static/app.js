@@ -1486,8 +1486,16 @@ function showBuildBadge() {
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
       if (!data?.build_id) return;
-      el.textContent = `Build ${data.build_id}`;
-      el.title = JSON.stringify(data.features || {});
+      const props = data.props_api || {};
+      const n = props.total_actionable ?? 0;
+      el.textContent = `Build ${data.build_id} · ${n} props cached`;
+      el.title = [
+        props.source ? `source: ${props.source}` : "",
+        props.hint || "",
+        JSON.stringify(data.features || {}),
+      ]
+        .filter(Boolean)
+        .join(" · ");
     })
     .catch(() => {});
 }

@@ -61,6 +61,8 @@ FAKE_EVENT = {
 @pytest.fixture
 def isolated_props(tmp_path, monkeypatch):
     props_dir = tmp_path / "props_repository"
+    props_dir.mkdir(parents=True, exist_ok=True)
+    (props_dir / "events").mkdir(exist_ok=True)
     monkeypatch.setattr(props_mlb, "PROPS_DIR", props_dir)
     monkeypatch.setattr(props_mlb, "EVENTS_DIR", props_dir / "events")
     repo.reset_fetch_locks_for_tests()
@@ -105,6 +107,50 @@ def test_prop_rank_key_tie_break_odds():
     assert ranked[0] is high_hit_better_odds
     assert ranked[1] is high_hit_low_odds
     assert ranked[2] is lower_hit
+
+
+def test_load_best_slate_props_falls_back_to_repo(isolated_props):
+    import json
+    from datetime import date
+
+    slate_path = isolated_props / "slate_2026-06-16.json"
+    slate_path.write_text(
+        json.dumps(
+            {
+                "all_props": [
+                    {
+                        "recommended_hit_rate": 0.8,
+                        "recommended_odds": -110,
+                        "rank_score": 80,
+                        "actionable": True,
+                        "game_id": "1",
+                        "player": "A",
+                        "market_type": "batter_hits",
+                        "line": 1.5,
+                        "recommended_side": "over",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    picks, source, _ = props_mlb._load_best_slate_props(date(2026, 6, 17))
+    assert source == "slate_cache_repo"
+    assert len(picks) == 1
+
+
+def test_build_daily_top_props_uses_repo_slate_without_scan(isolated_props):
+    import json
+    from datetime import date
+
+    (isolated_props / "slate_2026-06-16.json").write_text(
+        json.dumps({"all_props": [{"recommended_hit_rate": 0.75, "recommended_odds": 100, "rank_score": 75, "actionable": True, "game_id": "9", "player": "B", "market_type": "batter_hits", "line": 0.5, "recommended_side": "over"}]}),
+        encoding="utf-8",
+    )
+    with patch("app.services.props_mlb.get_mlb_schedule", return_value={"games": []}):
+        out = props_mlb.build_daily_top_props(date(2026, 6, 17), limit=5, scan=False)
+    assert out["total_actionable"] == 1
+    assert out["source"] == "slate_cache_repo"
 
 
 def test_evaluate_prop_parlay():

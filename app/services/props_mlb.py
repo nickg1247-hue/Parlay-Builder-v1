@@ -386,9 +386,11 @@ def build_game_props(
     cache_path = _props_cache_path(game_id)
     age = _cache_age_seconds(cache_path)
 
-    if not refresh and age is not None and age < DEFAULT_CACHE_TTL_SECONDS:
-        cached = _load_json(cache_path)
-        if cached and cached.get("props"):
+    if not refresh:
+        cached = _load_cached_game_props(str(game_id))
+        if cached:
+            if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
+                cached = {**cached, "stale_cache": True}
             return cached
 
     empty_payload: dict[str, Any] = {
@@ -512,6 +514,88 @@ def evaluate_prop_parlay(legs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _load_cached_game_props(game_id: str) -> dict[str, Any] | None:
+    """Return on-disk game props whenever present (git-deployed cache may be older than TTL)."""
+    payload = _load_json(_props_cache_path(game_id))
+    if payload and payload.get("props"):
+        return payload
+    return None
+
+
+def _load_best_slate_props(
+    game_date: date,
+) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
+    """Today's slate aggregate, else newest slate_*.json in the repository."""
+    cached = _load_json(_slate_cache_path(game_date))
+    if cached and cached.get("all_props") is not None:
+        return cached["all_props"] or [], "slate_cache", cached
+
+    candidates = sorted(
+        PROPS_DIR.glob("slate_*.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        data = _load_json(path)
+        if data and data.get("all_props"):
+            return data["all_props"] or [], "slate_cache_repo", data
+    return [], "none", None
+
+
+def _aggregate_repo_game_props() -> list[dict[str, Any]]:
+    """Last resort: merge actionable props from all per-game JSON files in the repo."""
+    picks: list[dict[str, Any]] = []
+    if not PROPS_DIR.exists():
+        return picks
+    for path in PROPS_DIR.glob("*.json"):
+        if not path.stem.isdigit():
+            continue
+        payload = _load_json(path)
+        if not payload:
+            continue
+        picks.extend(_collect_actionable_props(payload, path.stem))
+    picks.sort(key=prop_rank_key)
+    return picks
+
+
+def _daily_props_payload(
+    *,
+    game_date: date,
+    limit: int,
+    picks: list[dict[str, Any]],
+    source: str,
+    games_on_slate: int = 0,
+    games_scanned: int = 0,
+    games_fetched: int = 0,
+    fetch_cap_hit: bool = False,
+    cached_at: str | None = None,
+    hint: str | None = None,
+    auto_scanned: bool = False,
+) -> dict[str, Any]:
+    from app.odds.live_odds import live_odds_enabled
+
+    out: dict[str, Any] = {
+        "date": game_date.isoformat(),
+        "games_on_slate": games_on_slate,
+        "games_scanned": games_scanned,
+        "games_fetched": games_fetched,
+        "fetch_cap_hit": fetch_cap_hit,
+        "total_actionable": len(picks),
+        "top_props": picks[:limit],
+        "source": source,
+        "cached_at": cached_at,
+        "disclaimer": (
+            "Ranked by matchup-adjusted score (form + opposing pitcher), "
+            "then odds — experimental, not betting advice."
+        ),
+        "live_odds_enabled": live_odds_enabled(),
+        "auto_scanned": auto_scanned,
+    }
+    if hint:
+        out["hint"] = hint
+    return out
+
+
 def build_daily_top_props(
     game_date: date | None = None,
     *,
@@ -522,31 +606,27 @@ def build_daily_top_props(
     Aggregate actionable props across today's slate.
 
     When scan=True, fetch props for games missing cache (quota-gated, capped).
-    Rank by L10 hit rate on the recommended side; tie-break by better odds.
+    Serves git-deployed cache even when older than TTL so VPS deploys work offline.
     """
     game_date = game_date or date.today()
-    slate_path = _slate_cache_path(game_date)
-    slate_age = _cache_age_seconds(slate_path)
 
-    if not scan and slate_age is not None and slate_age < DEFAULT_CACHE_TTL_SECONDS:
-        cached_slate = _load_json(slate_path)
-        if cached_slate and cached_slate.get("all_props") is not None:
-            picks = cached_slate.get("all_props") or []
-            return {
-                "date": game_date.isoformat(),
-                "games_on_slate": cached_slate.get("games_on_slate", 0),
-                "games_scanned": cached_slate.get("games_scanned", 0),
-                "games_fetched": 0,
-                "fetch_cap_hit": False,
-                "total_actionable": len(picks),
-                "top_props": picks[:limit],
-                "source": "slate_cache",
-                "cached_at": cached_slate.get("cached_at"),
-                "disclaimer": (
-                    "Ranked by matchup-adjusted score (form + opposing pitcher), "
-                    "then odds — experimental, not betting advice."
+    if not scan:
+        picks, source, meta = _load_best_slate_props(game_date)
+        if picks:
+            return _daily_props_payload(
+                game_date=game_date,
+                limit=limit,
+                picks=picks,
+                source=source,
+                games_on_slate=meta.get("games_on_slate", 0) if meta else 0,
+                games_scanned=meta.get("games_scanned", 0) if meta else 0,
+                cached_at=meta.get("cached_at") if meta else None,
+                hint=(
+                    "Showing cached slate props from repository."
+                    if source == "slate_cache_repo"
+                    else None
                 ),
-            }
+            )
 
     schedule = get_mlb_schedule(game_date)
     games = schedule.get("games") or []
@@ -558,41 +638,51 @@ def build_daily_top_props(
     games_scanned = 0
     games_fetched = 0
     fetch_cap_hit = False
+    fetch_errors: list[str] = []
 
     for game in games:
         gid = str(game.get("game_id"))
         if not gid:
             continue
-        cache_path = _props_cache_path(gid)
-        payload = _load_json(cache_path)
-        age = _cache_age_seconds(cache_path)
-        cache_fresh = (
-            payload
-            and payload.get("props") is not None
-            and age is not None
-            and age < DEFAULT_CACHE_TTL_SECONDS
-        )
+        cached_payload = _load_cached_game_props(gid)
+        payload = cached_payload
 
-        if scan and not cache_fresh:
+        if scan and not cached_payload:
             if games_fetched >= fetch_limit:
                 fetch_cap_hit = True
-                if not payload:
-                    continue
-            else:
-                built = build_game_props(gid, game_date=game_date, refresh=False)
-                if built:
-                    payload = built
-                    games_fetched += 1
+                continue
+            built = build_game_props(gid, game_date=game_date, refresh=True)
+            if built:
+                payload = built
+                games_fetched += 1
+                msg = built.get("message")
+                if msg and not built.get("props"):
+                    fetch_errors.append(msg)
         elif not payload or not payload.get("props"):
             continue
 
         games_scanned += 1
         picks.extend(_collect_actionable_props(payload, gid))
 
+    source = "scan" if scan else "game_cache"
+    hint: str | None = None
+
+    if not picks:
+        picks = _aggregate_repo_game_props()
+        if picks:
+            source = "repo_game_cache"
+            hint = "Using props from on-disk game cache (schedule date may differ from cache)."
+        elif fetch_errors:
+            hint = fetch_errors[0]
+        elif not games:
+            hint = "No MLB games on today's schedule."
+        else:
+            hint = "No props cached yet — enable USE_LIVE_ODDS and ODDS_API_KEY, then scan."
+
     picks.sort(key=prop_rank_key)
-    if picks:
+    if picks and scan:
         _write_json(
-            slate_path,
+            _slate_cache_path(game_date),
             {
                 "date": game_date.isoformat(),
                 "cached_at": _clock().isoformat(),
@@ -603,17 +693,14 @@ def build_daily_top_props(
             },
         )
 
-    return {
-        "date": game_date.isoformat(),
-        "games_on_slate": len(games),
-        "games_scanned": games_scanned,
-        "games_fetched": games_fetched,
-        "fetch_cap_hit": fetch_cap_hit,
-        "total_actionable": len(picks),
-        "top_props": picks[:limit],
-        "source": "scan" if scan else "game_cache",
-        "disclaimer": (
-                    "Ranked by matchup-adjusted score (form + opposing pitcher), "
-                    "then odds — experimental, not betting advice."
-        ),
-    }
+    return _daily_props_payload(
+        game_date=game_date,
+        limit=limit,
+        picks=picks,
+        source=source,
+        games_on_slate=len(games),
+        games_scanned=games_scanned,
+        games_fetched=games_fetched,
+        fetch_cap_hit=fetch_cap_hit,
+        hint=hint,
+    )

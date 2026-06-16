@@ -47,6 +47,7 @@ PROTECTED_API_PREFIXES = (
 )
 # Public on main site even when admin auth is on (prefix match on /api/daily would block these).
 PUBLIC_API_PATHS = frozenset({
+    "/api/build",
     "/api/daily/props",
     "/api/parlay/props/eval",
 })
