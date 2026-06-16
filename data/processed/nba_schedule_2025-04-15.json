@@ -1,0 +1,29 @@
+{
+  "date": "2025-04-15",
+  "sport": "nba",
+  "games": [
+    {
+      "sport": "nba",
+      "game_id": "401766458",
+      "home_team": "Orlando Magic",
+      "away_team": "Atlanta Hawks",
+      "home_team_id": 19,
+      "away_team_id": 1,
+      "home_team_abbr": null,
+      "away_team_abbr": null,
+      "home_logo_url": null,
+      "away_logo_url": null,
+      "home_record": null,
+      "away_record": null,
+      "series_summary": null,
+      "start_time_utc": "2025-04-15T23:30Z",
+      "status": "Preview",
+      "detailed_status": "Scheduled",
+      "period_label": null,
+      "home_score": null,
+      "away_score": null
+    }
+  ],
+  "games_count": 1,
+  "cached_at": "2026-06-11T07:47:51.638900+00:00"
+}

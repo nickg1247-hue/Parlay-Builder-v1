@@ -1,0 +1,82 @@
+{
+  "train_seasons": [
+    2024,
+    2025
+  ],
+  "holdout_season": 2026,
+  "train_rows": 2621,
+  "holdout_rows": 1309,
+  "feature_set": "v2_score_rolling",
+  "production_model": "v2_score_rolling",
+  "promoted_v2": true,
+  "imputation": {
+    "last10_win_pct": 0.5,
+    "season_win_pct": 0.5,
+    "rest_days": 2.0,
+    "pts_per_game": 113.0,
+    "margin_avg": 0.0
+  },
+  "v1_comparison": {
+    "feature_set": "nba_v1",
+    "holdout": {
+      "log_loss": 0.6144724649447308,
+      "brier": 0.2127282422327092,
+      "accuracy": 0.6730328495034378
+    },
+    "production_gate_passes": true
+  },
+  "v2_comparison": {
+    "feature_set": "v2_score_rolling",
+    "holdout": {
+      "log_loss": 0.6034566621614181,
+      "brier": 0.20779737842738788,
+      "accuracy": 0.680672268907563
+    },
+    "production_gate_passes": true,
+    "beats_v1_log_loss": true
+  },
+  "metrics": {
+    "logistic_regression_v1": {
+      "log_loss": 0.6144724649447308,
+      "brier": 0.2127282422327092,
+      "accuracy": 0.6730328495034378
+    },
+    "logistic_regression_v2_score": {
+      "log_loss": 0.6034566621614181,
+      "brier": 0.20779737842738788,
+      "accuracy": 0.680672268907563
+    },
+    "naive_home_win_rate": {
+      "log_loss": 0.6873191485812109,
+      "brier": 0.24709122476754772,
+      "accuracy": 0.5546218487394958
+    },
+    "elo_baseline": {
+      "log_loss": 0.6258728401368967,
+      "brier": 0.21646208305945241,
+      "accuracy": 0.6600458365164248
+    },
+    "rolling_last10_home": {
+      "log_loss": 0.7561836235165644,
+      "brier": 0.24744078380445145,
+      "accuracy": 0.6103896103896104
+    }
+  },
+  "market_proxy": {
+    "log_loss": 0.6873191485812109,
+    "home_win_rate": 0.5459748187714613,
+    "source": "train_constant_no_odds"
+  },
+  "phase_gate": {
+    "rule": "log_loss < best_naive AND log_loss <= market_proxy",
+    "best_naive_log_loss": 0.6258728401368967,
+    "market_proxy_log_loss": 0.6873191485812109,
+    "passes": true,
+    "active_model": "v2_score_rolling"
+  },
+  "active_holdout": {
+    "log_loss": 0.6034566621614181,
+    "brier": 0.20779737842738788,
+    "accuracy": 0.680672268907563
+  }
+}

@@ -16,16 +16,18 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# Data (often too large for Git)
+# Data — raw ingest scratch stays local; processed artifacts tracked for VPS deploy
 data/raw/*
 !data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
 *.csv
 !app/data/park_factors.csv
+!data/processed/**/*.csv
 *.parquet
+!data/processed/**/*.parquet
 *.db
+!data/parlay_builder.db
 *.sqlite
+!data/parlay_builder.sqlite
 
 # Notebooks
 .ipynb_checkpoints/

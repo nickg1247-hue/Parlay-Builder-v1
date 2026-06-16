@@ -1,0 +1,22 @@
+{
+  "train_seasons": [
+    2024,
+    2025
+  ],
+  "holdout_season": 2026,
+  "train_rows": 2621,
+  "holdout_rows": 1309,
+  "holdout_with_ou_lines": 0,
+  "production_model": "v1_gbr_normal",
+  "over_prob_method": "normal_cdf",
+  "holdout_mae_total_pts": 15.689,
+  "league_avg_mae_total_pts": 17.665,
+  "holdout_total_std": 19.595,
+  "log_loss_model": null,
+  "log_loss_market": null,
+  "log_loss_league_avg": null,
+  "hit_rate_edge_flagged": null,
+  "totals_production_gate_passes": false,
+  "board_totals_enabled": false,
+  "note": "Import ou_line/over_odds/under_odds into nba_odds_2026.csv for holdout eval. Live board uses Odds API totals in same request as h2h+spreads."
+}

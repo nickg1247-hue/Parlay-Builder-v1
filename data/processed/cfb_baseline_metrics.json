@@ -1,0 +1,124 @@
+{
+  "base_train_seasons": [
+    2022,
+    2023
+  ],
+  "platt_season": 2024,
+  "holdout_season": 2025,
+  "train_rows": 2595,
+  "holdout_rows": 888,
+  "feature_set": "cfb_v3",
+  "production_model": "v3_logistic_platt",
+  "promoted_v2": false,
+  "promoted_v3": true,
+  "active_model": "v3_logistic_platt",
+  "imputation": {
+    "rest_days": 7.0
+  },
+  "v1_comparison": {
+    "feature_set": "cfb_v1",
+    "holdout": {
+      "log_loss": 0.5545240784346371,
+      "brier": 0.1863274242824202,
+      "accuracy": 0.7240990990990991
+    },
+    "gate_passes": true
+  },
+  "v2_comparison": {
+    "feature_set": "cfb_v2",
+    "holdout": {
+      "log_loss": 0.547383256822899,
+      "brier": 0.18367338699068164,
+      "accuracy": 0.7308558558558559
+    },
+    "gate_passes": true,
+    "beats_v1": true,
+    "fail_reason": null
+  },
+  "v3_comparison": {
+    "feature_set": "cfb_v3",
+    "holdout": {
+      "log_loss": 0.5377151596556415,
+      "brier": 0.17959780913657628,
+      "accuracy": 0.7387387387387387
+    },
+    "gate_passes": true,
+    "beats_v2": true,
+    "fail_reason": null
+  },
+  "metrics": {
+    "logistic_regression_v1": {
+      "log_loss": 0.5545240784346371,
+      "brier": 0.1863274242824202,
+      "accuracy": 0.7240990990990991
+    },
+    "logistic_regression_v2": {
+      "log_loss": 0.547383256822899,
+      "brier": 0.18367338699068164,
+      "accuracy": 0.7308558558558559
+    },
+    "logistic_regression_v3": {
+      "log_loss": 0.5377151596556415,
+      "brier": 0.17959780913657628,
+      "accuracy": 0.7387387387387387
+    },
+    "v2_uncalibrated": {
+      "log_loss": 0.5491072611978735,
+      "brier": 0.1852910213083455,
+      "accuracy": 0.7274774774774775
+    },
+    "v3_uncalibrated": {
+      "log_loss": 0.5364521055775829,
+      "brier": 0.18045893698330656,
+      "accuracy": 0.7376126126126126
+    },
+    "naive_home_win_rate": {
+      "log_loss": 0.6506518719706178,
+      "brier": 0.22904747886688906,
+      "accuracy": 0.6452702702702703
+    },
+    "elo_baseline": {
+      "log_loss": 0.5775544646647055,
+      "brier": 0.19595253446113875,
+      "accuracy": 0.7195945945945946
+    }
+  },
+  "phase_gate": {
+    "rule": "Promote v3 if holdout LL beats v2 and naive; else v2 if beats v1; else v1. Market eval is advisory only.",
+    "best_naive_log_loss": 0.5775544646647055,
+    "passes": true,
+    "active_model": "v3_logistic_platt",
+    "market_v3_beats_market": null,
+    "market_eval": {
+      "model_version": "v3_logistic_platt",
+      "holdout_season": 2025,
+      "holdout_games": 888,
+      "matched_games": 0,
+      "matched_ml_games": 0,
+      "match_rate_pct": 0.0,
+      "ml_match_rate_pct": 0.0,
+      "odds_sources": [],
+      "edge_threshold": 0.08,
+      "log_loss_model": null,
+      "log_loss_market": null,
+      "brier_model": null,
+      "accuracy_model": null,
+      "model_beats_market_log_loss": null,
+      "plus_ev_picks": 0,
+      "paper_trade_roi": 0.0,
+      "paper_trade_profit_units": 0.0,
+      "plus_ev_hit_rate": 0.0,
+      "spread_cover_log_loss": null,
+      "totals_over_log_loss": null,
+      "ev_signal": false,
+      "clv_required": true,
+      "betting_ready": false,
+      "advisor_note": "No holdout odds matched. Populate data/processed/cfb_lines_cache/ via CFBD or capture live lines to data/processed/cfb_odds_repository/."
+    }
+  },
+  "active_holdout": {
+    "log_loss": 0.5377151596556415,
+    "brier": 0.17959780913657628,
+    "accuracy": 0.7387387387387387
+  }
+}

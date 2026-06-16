@@ -1,0 +1,8 @@
+{
+  "track": "cfb_spread",
+  "model_version": "v1_margin_gbr_normal",
+  "path": "data/processed/cfb_margin_model.joblib",
+  "feature_set": "cfb_margin_v1",
+  "production_ready": true,
+  "promoted_at": "2026-06-11T08:17:49.542955+00:00"
+}

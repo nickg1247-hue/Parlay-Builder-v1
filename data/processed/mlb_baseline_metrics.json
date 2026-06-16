@@ -1,0 +1,91 @@
+{
+  "train_seasons": [
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 4859,
+  "holdout_rows": 2430,
+  "production_model": "v3_logistic_pruned_platt",
+  "replaced_artifact": true,
+  "imputation": {
+    "era": "season median from 2023-2024 training games",
+    "last10_win_pct": 0.5,
+    "last10_run_diff": 0.0,
+    "rest_days": 1.0
+  },
+  "calibration": {
+    "favorite_pick_agreement": {
+      "n_market_home_favorite": 806,
+      "n_model_agrees": 648,
+      "agreement_rate": 0.804
+    },
+    "display_blend": "50% model + 50% market (UI only)",
+    "platt_fit_season": 2024,
+    "platt_train_season": 2023
+  },
+  "feature_ablation": {
+    "wave1_pruned_n": 23,
+    "dropped_redundant": [
+      "home_win_pct_rank",
+      "away_win_pct_rank"
+    ]
+  },
+  "metrics": {
+    "home_always_wins": {
+      "log_loss": 6.316474711467909,
+      "brier": 0.4572007316882428,
+      "accuracy": 0.5427983539094651
+    },
+    "elo_baseline": {
+      "log_loss": 0.6882882616412301,
+      "brier": 0.24744248912929553,
+      "accuracy": 0.5518518518518518
+    },
+    "logistic_regression_v1": {
+      "log_loss": 0.67199937621642,
+      "brier": 0.23797728616291491,
+      "accuracy": 0.58559670781893
+    },
+    "logistic_regression_v2_wave1": {
+      "log_loss": 0.6718081889880297,
+      "brier": 0.23980251271748343,
+      "accuracy": 0.5695473251028806
+    },
+    "logistic_wave1_pruned": {
+      "log_loss": 0.6702377692710266,
+      "brier": 0.23903784001665568,
+      "accuracy": 0.5695473251028806
+    },
+    "logistic_wave1_pruned_platt": {
+      "log_loss": 0.6711847976770338,
+      "brier": 0.2393620133729556,
+      "accuracy": 0.577366255144033
+    },
+    "gradient_boosting_wave1_elo": {
+      "log_loss": 0.67785366345951,
+      "brier": 0.24251989501082574,
+      "accuracy": 0.5637860082304527
+    },
+    "market_implied": {
+      "log_loss": 0.6770401556548902,
+      "brier": null,
+      "accuracy": null,
+      "source": "computed"
+    }
+  },
+  "market_implied_baseline": {
+    "log_loss": 0.6770401556548902,
+    "brier": null,
+    "accuracy": null,
+    "source": "computed"
+  },
+  "phase_gate": {
+    "rule": "log_loss < v1 AND log_loss <= market",
+    "platt_passes": true,
+    "pruned_passes": true,
+    "wave1_logistic_passes": true,
+    "wave1_gbc_passes": false,
+    "replaced_production": true
+  }
+}

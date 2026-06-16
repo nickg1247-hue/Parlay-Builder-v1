@@ -1,0 +1,25 @@
+{
+  "train_seasons": [
+    2024,
+    2025
+  ],
+  "holdout_season": 2026,
+  "train_rows": 2621,
+  "holdout_rows": 1309,
+  "feature_set": "v2_score_rolling",
+  "holdout_mae_margin": 11.7795,
+  "holdout_margin_std": 15.1047,
+  "proxy_cover_log_loss_home": 0.6206,
+  "proxy_cover_log_loss_away": 0.6206,
+  "margin_derived_ml_log_loss": 0.6182,
+  "v2_logistic_log_loss": 0.6035,
+  "beats_v2_logistic": false,
+  "margin_production_gate_passes": false,
+  "board_spread_enabled": false,
+  "moneyline_promotion_eligible": false,
+  "proxy_lines": {
+    "home_spread_point": -5.5,
+    "away_spread_point": 5.5
+  },
+  "note": "No free historical NBA spread CSV; holdout eval uses \u00b15.5 proxy. Live board uses actual book lines from Odds API."
+}

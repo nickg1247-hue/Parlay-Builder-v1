@@ -276,6 +276,8 @@ Verify: `curl -s https://ntgsports.com/api/auth/status` → `"auth_enabled": tru
 sudo systemctl restart parlay-builder
 ```
 
+**Full deploy (code + models + cache):** processed artifacts (`data/processed/`), SQLite (`data/parlay_builder.db`), and parquets are tracked in git so `git pull origin main` on the VPS brings models and board cache without retraining. Secrets (`.env`) stay local only — copy or edit `.env` on the server separately.
+
 Sign in at `/login`. Session cookie lasts 7 days (`HttpOnly`, `SameSite=Lax`). Cookies are `Secure` when `APP_ENV=production` unless you set `ADMIN_COOKIE_SECURE=false` (required on HTTP-only VPS before HTTPS).
 
 ---

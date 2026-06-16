@@ -1,0 +1,8 @@
+{
+  "track": "nba_moneyline",
+  "run_id": "train_nba_baseline",
+  "path": "data/processed/nba_baseline_model.joblib",
+  "feature_set": "v2_score_rolling",
+  "model_version": "v2_score_rolling",
+  "promoted_at": "2026-06-11T06:15:41.257895+00:00"
+}

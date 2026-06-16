@@ -1,0 +1,2040 @@
+date,home_team,away_team,home_ml,away_ml,odds_line_type
+2025-02-20,Los Angeles Dodgers,Chicago Cubs,-170,142,currentLine_median
+2025-02-21,Arizona Diamondbacks,Colorado Rockies,-180,146,currentLine_median
+2025-02-21,Kansas City Royals,Texas Rangers,-109,-111,currentLine_median
+2025-02-21,New York Yankees,Tampa Bay Rays,-155,130,currentLine_median
+2025-02-22,Baltimore Orioles,Pittsburgh Pirates,-165,139,currentLine_median
+2025-02-22,Chicago Cubs,Chicago White Sox,-152,126,currentLine_median
+2025-02-22,Colorado Rockies,Arizona Diamondbacks,120,-146,currentLine_median
+2025-02-22,Detroit Tigers,Philadelphia Phillies,-130,110,currentLine_median
+2025-02-22,Los Angeles Angels,Seattle Mariners,-110,-110,currentLine_median
+2025-02-22,Los Angeles Dodgers,Kansas City Royals,-150,124,currentLine_median
+2025-02-22,Miami Marlins,St. Louis Cardinals,130,-157,currentLine_median
+2025-02-22,Minnesota Twins,Atlanta Braves,-150,125,currentLine_median
+2025-02-22,San Diego Padres,Athletics,-130,110,currentLine_median
+2025-02-22,Tampa Bay Rays,Boston Red Sox,-138,117,currentLine_median
+2025-02-22,Texas Rangers,San Francisco Giants,-135,114,currentLine_median
+2025-02-22,Toronto Blue Jays,New York Yankees,-179,150,currentLine_median
+2025-02-23,Atlanta Braves,Tampa Bay Rays,-156,130,currentLine_median
+2025-02-23,Boston Red Sox,Toronto Blue Jays,-197,163,currentLine_median
+2025-02-23,Chicago Cubs,Texas Rangers,-135,115,currentLine_median
+2025-02-23,Cleveland Guardians,Los Angeles Angels,-135,115,currentLine_median
+2025-02-23,Kansas City Royals,Chicago White Sox,-191,159,currentLine_median
+2025-02-23,Los Angeles Dodgers,San Diego Padres,-172,144,currentLine_median
+2025-02-23,New York Yankees,Detroit Tigers,-163,135,currentLine_median
+2025-02-23,Philadelphia Phillies,Baltimore Orioles,-130,110,currentLine_median
+2025-02-23,Pittsburgh Pirates,Minnesota Twins,-138,116,currentLine_median
+2025-02-23,San Francisco Giants,Cincinnati Reds,-160,135,currentLine_median
+2025-02-23,Seattle Mariners,Arizona Diamondbacks,-150,125,currentLine_median
+2025-02-23,St. Louis Cardinals,Houston Astros,-142,119,currentLine_median
+2025-02-24,Arizona Diamondbacks,Cleveland Guardians,-153,128,currentLine_median
+2025-02-24,Chicago White Sox,Texas Rangers,-141,119,currentLine_median
+2025-02-24,Cincinnati Reds,Los Angeles Dodgers,-116,-104,currentLine_median
+2025-02-24,Kansas City Royals,Athletics,-135,115,currentLine_median
+2025-02-24,Milwaukee Brewers,Seattle Mariners,-130,110,currentLine_median
+2025-02-24,San Diego Padres,Chicago Cubs,-168,140,currentLine_median
+2025-02-24,St. Louis Cardinals,New York Mets,-127,106,currentLine_median
+2025-02-25,Athletics,San Francisco Giants,-130,110,currentLine_median
+2025-02-25,Baltimore Orioles,Detroit Tigers,-160,132,currentLine_median
+2025-02-25,Chicago Cubs,Arizona Diamondbacks,-169,142,currentLine_median
+2025-02-25,Cleveland Guardians,Milwaukee Brewers,-155,130,currentLine_median
+2025-02-25,Colorado Rockies,Chicago White Sox,-146,121,currentLine_median
+2025-02-25,Houston Astros,New York Mets,-154,130,currentLine_median
+2025-02-25,Miami Marlins,Washington Nationals,-106,-114,currentLine_median
+2025-02-25,Minnesota Twins,New York Yankees,-172,142,currentLine_median
+2025-02-25,San Diego Padres,Los Angeles Angels,-130,110,currentLine_median
+2025-02-25,Tampa Bay Rays,Philadelphia Phillies,-143,120,currentLine_median
+2025-02-25,Texas Rangers,Kansas City Royals,-135,114,currentLine_median
+2025-02-25,Toronto Blue Jays,St. Louis Cardinals,-199,164,currentLine_median
+2025-02-26,Boston Red Sox,Tampa Bay Rays,-157,130,currentLine_median
+2025-02-26,Chicago White Sox,San Diego Padres,-108,-112,currentLine_median
+2025-02-26,Cleveland Guardians,Texas Rangers,-149,125,currentLine_median
+2025-02-26,Detroit Tigers,Minnesota Twins,-163,136,currentLine_median
+2025-02-26,Kansas City Royals,Colorado Rockies,-153,127,currentLine_median
+2025-02-26,Los Angeles Angels,Cincinnati Reds,-122,101,currentLine_median
+2025-02-26,Miami Marlins,New York Mets,121,-143,currentLine_median
+2025-02-26,New York Yankees,St. Louis Cardinals,-142,119,currentLine_median
+2025-02-26,San Francisco Giants,Chicago Cubs,-155,130,currentLine_median
+2025-02-26,Seattle Mariners,Athletics,-135,114,currentLine_median
+2025-02-26,Toronto Blue Jays,Philadelphia Phillies,-124,103,currentLine_median
+2025-02-26,Washington Nationals,Houston Astros,-141,118,currentLine_median
+2025-02-27,Athletics,San Diego Padres,-141,120,currentLine_median
+2025-02-27,Baltimore Orioles,Toronto Blue Jays,-219,178,currentLine_median
+2025-02-27,Chicago Cubs,Los Angeles Angels,-190,160,currentLine_median
+2025-02-27,Chicago White Sox,Cleveland Guardians,-120,100,currentLine_median
+2025-02-27,Cincinnati Reds,Arizona Diamondbacks,-137,116,currentLine_median
+2025-02-27,Colorado Rockies,Los Angeles Dodgers,107,-127,currentLine_median
+2025-02-27,Milwaukee Brewers,Kansas City Royals,-135,115,currentLine_median
+2025-02-27,Minnesota Twins,Pittsburgh Pirates,-189,156,currentLine_median
+2025-02-27,Philadelphia Phillies,New York Yankees,-142,120,currentLine_median
+2025-02-27,St. Louis Cardinals,Miami Marlins,-135,115,currentLine_median
+2025-02-27,Washington Nationals,Atlanta Braves,-130,110,currentLine_median
+2025-02-28,Arizona Diamondbacks,Kansas City Royals,-150,125,currentLine_median
+2025-02-28,Athletics,Cincinnati Reds,-127,106,currentLine_median
+2025-02-28,Cleveland Guardians,Colorado Rockies,-154,130,currentLine_median
+2025-02-28,Houston Astros,St. Louis Cardinals,-143,120,currentLine_median
+2025-02-28,Miami Marlins,Atlanta Braves,-150,124,currentLine_median
+2025-02-28,Minnesota Twins,Baltimore Orioles,-160,131,currentLine_median
+2025-02-28,New York Mets,Washington Nationals,-164,136,currentLine_median
+2025-02-28,Philadelphia Phillies,Boston Red Sox,-161,135,currentLine_median
+2025-02-28,Pittsburgh Pirates,Tampa Bay Rays,-125,105,currentLine_median
+2025-02-28,San Diego Padres,Seattle Mariners,-135,114,currentLine_median
+2025-02-28,San Francisco Giants,Milwaukee Brewers,-180,150,currentLine_median
+2025-02-28,Texas Rangers,Chicago Cubs,-175,145,currentLine_median
+2025-03-01,Arizona Diamondbacks,Colorado Rockies,-156,130,currentLine_median
+2025-03-01,Atlanta Braves,Toronto Blue Jays,-199,164,currentLine_median
+2025-03-01,Baltimore Orioles,Pittsburgh Pirates,-135,114,currentLine_median
+2025-03-01,Boston Red Sox,Minnesota Twins,-155,130,currentLine_median
+2025-03-01,Cincinnati Reds,San Diego Padres,-167,139,currentLine_median
+2025-03-01,Detroit Tigers,Philadelphia Phillies,-161,135,currentLine_median
+2025-03-01,Los Angeles Angels,Athletics,-116,-104,currentLine_median
+2025-03-01,Los Angeles Dodgers,San Francisco Giants,-135,114,currentLine_median
+2025-03-01,Milwaukee Brewers,Texas Rangers,-180,150,currentLine_median
+2025-03-01,New York Yankees,Houston Astros,-158,132,currentLine_median
+2025-03-01,Seattle Mariners,Chicago White Sox,-181,148,currentLine_median
+2025-03-01,Tampa Bay Rays,New York Mets,-180,150,currentLine_median
+2025-03-02,Atlanta Braves,New York Yankees,-140,119,currentLine_median
+2025-03-02,Boston Red Sox,New York Mets,-180,150,currentLine_median
+2025-03-02,Chicago Cubs,Cincinnati Reds,-141,120,currentLine_median
+2025-03-02,Cleveland Guardians,Milwaukee Brewers,-143,120,currentLine_median
+2025-03-02,Colorado Rockies,Seattle Mariners,-113,-107,currentLine_median
+2025-03-02,Houston Astros,Washington Nationals,-175,144,currentLine_median
+2025-03-02,Miami Marlins,St. Louis Cardinals,110,-130,currentLine_median
+2025-03-02,Minnesota Twins,Tampa Bay Rays,-186,154,currentLine_median
+2025-03-02,Pittsburgh Pirates,Detroit Tigers,-131,110,currentLine_median
+2025-03-02,San Diego Padres,Kansas City Royals,-161,135,currentLine_median
+2025-03-02,San Francisco Giants,Los Angeles Angels,-178,147,currentLine_median
+2025-03-02,Texas Rangers,Arizona Diamondbacks,-142,119,currentLine_median
+2025-03-03,Arizona Diamondbacks,Chicago Cubs,-143,119,currentLine_median
+2025-03-03,Baltimore Orioles,Boston Red Sox,-165,140,currentLine_median
+2025-03-03,Chicago White Sox,Athletics,-121,101,currentLine_median
+2025-03-03,Cincinnati Reds,Milwaukee Brewers,-149,125,currentLine_median
+2025-03-03,Detroit Tigers,Toronto Blue Jays,-132,110,currentLine_median
+2025-03-03,Kansas City Royals,Texas Rangers,-142,120,currentLine_median
+2025-03-03,Los Angeles Angels,Colorado Rockies,-163,135,currentLine_median
+2025-03-03,New York Yankees,Pittsburgh Pirates,-160,131,currentLine_median
+2025-03-03,Seattle Mariners,Cleveland Guardians,-125,105,currentLine_median
+2025-03-03,Tampa Bay Rays,Atlanta Braves,-123,103,currentLine_median
+2025-03-04,Atlanta Braves,Minnesota Twins,-189,159,currentLine_median
+2025-03-04,Cleveland Guardians,Los Angeles Angels,-180,150,currentLine_median
+2025-03-04,Philadelphia Phillies,New York Yankees,-185,151,currentLine_median
+2025-03-04,Pittsburgh Pirates,Boston Red Sox,-121,101,currentLine_median
+2025-03-04,Tampa Bay Rays,Detroit Tigers,-140,117,currentLine_median
+2025-03-04,Texas Rangers,Athletics,-148,123,currentLine_median
+2025-03-05,Arizona Diamondbacks,San Francisco Giants,-155,130,currentLine_median
+2025-03-05,Boston Red Sox,Tampa Bay Rays,-209,171,currentLine_median
+2025-03-05,Cincinnati Reds,Texas Rangers,-138,115,currentLine_median
+2025-03-05,Detroit Tigers,Philadelphia Phillies,-140,118,currentLine_median
+2025-03-05,Houston Astros,St. Louis Cardinals,-172,144,currentLine_median
+2025-03-05,Kansas City Royals,Seattle Mariners,-124,102,currentLine_median
+2025-03-05,Los Angeles Angels,Los Angeles Dodgers,-152,125,currentLine_median
+2025-03-05,Miami Marlins,Washington Nationals,-130,108,currentLine_median
+2025-03-05,Minnesota Twins,Baltimore Orioles,-125,105,currentLine_median
+2025-03-05,Pittsburgh Pirates,Toronto Blue Jays,-134,111,currentLine_median
+2025-03-05,San Diego Padres,Colorado Rockies,-147,121,currentLine_median
+2025-03-06,Athletics,Milwaukee Brewers,-146,122,currentLine_median
+2025-03-06,Atlanta Braves,Miami Marlins,-200,164,currentLine_median
+2025-03-06,Baltimore Orioles,Pittsburgh Pirates,-130,110,currentLine_median
+2025-03-06,Chicago Cubs,Kansas City Royals,-146,122,currentLine_median
+2025-03-06,New York Mets,Houston Astros,-185,154,currentLine_median
+2025-03-06,New York Yankees,Minnesota Twins,-197,163,currentLine_median
+2025-03-06,Philadelphia Phillies,Tampa Bay Rays,-177,147,currentLine_median
+2025-03-06,San Francisco Giants,Chicago White Sox,-225,185,currentLine_median
+2025-03-06,St. Louis Cardinals,Washington Nationals,-137,116,currentLine_median
+2025-03-06,Toronto Blue Jays,Boston Red Sox,-219,180,currentLine_median
+2025-03-07,Athletics,Cleveland Guardians,-135,114,currentLine_median
+2025-03-07,Boston Red Sox,Miami Marlins,-180,150,currentLine_median
+2025-03-07,Detroit Tigers,Baltimore Orioles,-142,119,currentLine_median
+2025-03-07,New York Yankees,Toronto Blue Jays,-151,125,currentLine_median
+2025-03-07,Pittsburgh Pirates,Philadelphia Phillies,-155,130,currentLine_median
+2025-03-07,Washington Nationals,New York Mets,-110,-110,currentLine_median
+2025-03-08,Atlanta Braves,Pittsburgh Pirates,-185,154,currentLine_median
+2025-03-08,Baltimore Orioles,Tampa Bay Rays,-157,132,currentLine_median
+2025-03-08,Chicago Cubs,Seattle Mariners,-137,115,currentLine_median
+2025-03-08,Chicago White Sox,Los Angeles Dodgers,172,-209,currentLine_median
+2025-03-08,Houston Astros,New York Yankees,-130,108,currentLine_median
+2025-03-08,Miami Marlins,New York Mets,-105,-115,currentLine_median
+2025-03-08,Milwaukee Brewers,Los Angeles Angels,-143,120,currentLine_median
+2025-03-08,Minnesota Twins,Boston Red Sox,-155,130,currentLine_median
+2025-03-08,San Diego Padres,Cleveland Guardians,-187,154,currentLine_median
+2025-03-08,Washington Nationals,St. Louis Cardinals,-113,-107,currentLine_median
+2025-03-09,Boston Red Sox,Atlanta Braves,-165,140,currentLine_median
+2025-03-09,Cleveland Guardians,Chicago White Sox,-208,175,currentLine_median
+2025-03-09,Detroit Tigers,Pittsburgh Pirates,-210,175,currentLine_median
+2025-03-09,Houston Astros,Miami Marlins,-214,175,currentLine_median
+2025-03-09,Kansas City Royals,Milwaukee Brewers,-155,130,currentLine_median
+2025-03-09,Los Angeles Angels,Cincinnati Reds,-149,124,currentLine_median
+2025-03-09,New York Mets,Washington Nationals,-161,135,currentLine_median
+2025-03-09,Seattle Mariners,Colorado Rockies,-179,150,currentLine_median
+2025-03-09,St. Louis Cardinals,New York Yankees,-197,165,currentLine_median
+2025-03-09,Tampa Bay Rays,Toronto Blue Jays,-155,130,currentLine_median
+2025-03-10,Athletics,Chicago White Sox,-160,134,currentLine_median
+2025-03-10,Atlanta Braves,Tampa Bay Rays,-186,154,currentLine_median
+2025-03-10,Los Angeles Dodgers,Arizona Diamondbacks,-219,178,currentLine_median
+2025-03-10,Milwaukee Brewers,Seattle Mariners,-155,129,currentLine_median
+2025-03-10,Minnesota Twins,Philadelphia Phillies,-202,167,currentLine_median
+2025-03-10,New York Mets,St. Louis Cardinals,-141,119,currentLine_median
+2025-03-10,Pittsburgh Pirates,Baltimore Orioles,-150,124,currentLine_median
+2025-03-10,San Diego Padres,Cincinnati Reds,-141,120,currentLine_median
+2025-03-10,Toronto Blue Jays,Houston Astros,-220,180,currentLine_median
+2025-03-11,Arizona Diamondbacks,Kansas City Royals,-153,127,currentLine_median
+2025-03-11,Atlanta Braves,Detroit Tigers,-165,139,currentLine_median
+2025-03-11,Boston Red Sox,Philadelphia Phillies,-160,134,currentLine_median
+2025-03-11,Chicago Cubs,Milwaukee Brewers,-187,155,currentLine_median
+2025-03-11,Cincinnati Reds,Colorado Rockies,-170,142,currentLine_median
+2025-03-11,Houston Astros,New York Mets,-207,170,currentLine_median
+2025-03-11,Los Angeles Dodgers,Cleveland Guardians,-209,175,currentLine_median
+2025-03-11,San Diego Padres,Chicago White Sox,-214,177,currentLine_median
+2025-03-11,San Francisco Giants,Athletics,-157,130,currentLine_median
+2025-03-11,St. Louis Cardinals,Miami Marlins,-135,114,currentLine_median
+2025-03-11,Texas Rangers,Los Angeles Angels,-180,150,currentLine_median
+2025-03-11,Toronto Blue Jays,Minnesota Twins,-206,171,currentLine_median
+2025-03-12,Athletics,Arizona Diamondbacks,-120,100,currentLine_median
+2025-03-12,Baltimore Orioles,Atlanta Braves,-200,165,currentLine_median
+2025-03-12,Boston Red Sox,Minnesota Twins,-129,107,currentLine_median
+2025-03-12,Chicago White Sox,Los Angeles Angels,110,-130,currentLine_median
+2025-03-12,Cleveland Guardians,San Francisco Giants,-180,150,currentLine_median
+2025-03-12,Colorado Rockies,San Diego Padres,-155,132,currentLine_median
+2025-03-12,Detroit Tigers,Tampa Bay Rays,-127,107,currentLine_median
+2025-03-12,Seattle Mariners,Kansas City Royals,-169,142,currentLine_median
+2025-03-12,St. Louis Cardinals,New York Mets,-110,-110,currentLine_median
+2025-03-12,Texas Rangers,Cincinnati Reds,-135,115,currentLine_median
+2025-03-12,Washington Nationals,Houston Astros,-191,159,currentLine_median
+2025-03-13,Chicago White Sox,Milwaukee Brewers,110,-130,currentLine_median
+2025-03-13,Cincinnati Reds,Athletics,-115,-105,currentLine_median
+2025-03-13,Colorado Rockies,Cleveland Guardians,-130,110,currentLine_median
+2025-03-13,Detroit Tigers,New York Yankees,-119,-102,currentLine_median
+2025-03-13,Kansas City Royals,San Diego Padres,-112,-108,currentLine_median
+2025-03-13,Minnesota Twins,Pittsburgh Pirates,105,-125,currentLine_median
+2025-03-13,New York Mets,Boston Red Sox,-180,150,currentLine_median
+2025-03-13,Philadelphia Phillies,Atlanta Braves,-220,180,currentLine_median
+2025-03-13,San Francisco Giants,Texas Rangers,-175,145,currentLine_median
+2025-03-13,Tampa Bay Rays,Washington Nationals,-115,-105,currentLine_median
+2025-03-13,Toronto Blue Jays,Baltimore Orioles,-187,156,currentLine_median
+2025-03-14,Arizona Diamondbacks,Cincinnati Reds,-180,140,currentLine_median
+2025-03-14,Atlanta Braves,Washington Nationals,-198,161,currentLine_median
+2025-03-14,Cleveland Guardians,Seattle Mariners,105,-125,currentLine_median
+2025-03-14,Houston Astros,Toronto Blue Jays,-132,110,currentLine_median
+2025-03-14,Miami Marlins,Boston Red Sox,-110,-110,currentLine_median
+2025-03-14,Milwaukee Brewers,San Francisco Giants,-151,124,currentLine_median
+2025-03-14,New York Mets,St. Louis Cardinals,-187,155,currentLine_median
+2025-03-14,New York Yankees,Philadelphia Phillies,-140,117,currentLine_median
+2025-03-14,Pittsburgh Pirates,Detroit Tigers,-140,119,currentLine_median
+2025-03-15,Houston Astros,Miami Marlins,-161,135,currentLine_median
+2025-03-15,Philadelphia Phillies,Detroit Tigers,-141,120,currentLine_median
+2025-03-15,Pittsburgh Pirates,Baltimore Orioles,-165,139,currentLine_median
+2025-03-15,St. Louis Cardinals,Toronto Blue Jays,-165,140,currentLine_median
+2025-03-15,Tampa Bay Rays,New York Yankees,-149,124,currentLine_median
+2025-03-15,Washington Nationals,New York Mets,103,-124,currentLine_median
+2025-03-16,Cincinnati Reds,Seattle Mariners,-145,123,currentLine_median
+2025-03-16,Colorado Rockies,Kansas City Royals,-110,-110,currentLine_median
+2025-03-16,Miami Marlins,St. Louis Cardinals,113,-135,currentLine_median
+2025-03-16,Milwaukee Brewers,Cleveland Guardians,-146,121,currentLine_median
+2025-03-16,Minnesota Twins,Boston Red Sox,-125,105,currentLine_median
+2025-03-16,New York Mets,Houston Astros,-116,-103,currentLine_median
+2025-03-16,San Francisco Giants,Athletics,-150,124,currentLine_median
+2025-03-16,Texas Rangers,Chicago White Sox,-197,163,currentLine_median
+2025-03-16,Toronto Blue Jays,Atlanta Braves,-231,190,currentLine_median
+2025-03-17,Athletics,Seattle Mariners,-111,-109,currentLine_median
+2025-03-17,Chicago White Sox,San Francisco Giants,-108,-112,currentLine_median
+2025-03-17,Cleveland Guardians,Cincinnati Reds,-164,137,currentLine_median
+2025-03-17,San Diego Padres,Milwaukee Brewers,-142,119,currentLine_median
+2025-03-17,Washington Nationals,St. Louis Cardinals,-191,157,currentLine_median
+2025-03-18,Baltimore Orioles,Toronto Blue Jays,-141,120,currentLine_median
+2025-03-18,Chicago Cubs,Los Angeles Dodgers,125,-149,currentLine_median
+2025-03-18,Cincinnati Reds,Los Angeles Angels,-209,175,currentLine_median
+2025-03-18,Houston Astros,Washington Nationals,-164,139,currentLine_median
+2025-03-18,Minnesota Twins,Detroit Tigers,-164,139,currentLine_median
+2025-03-18,New York Yankees,Boston Red Sox,-185,153,currentLine_median
+2025-03-18,Pittsburgh Pirates,Philadelphia Phillies,111,-132,currentLine_median
+2025-03-18,Seattle Mariners,Milwaukee Brewers,-185,152,currentLine_median
+2025-03-18,St. Louis Cardinals,Miami Marlins,-165,140,currentLine_median
+2025-03-18,Texas Rangers,Cleveland Guardians,-190,156,currentLine_median
+2025-03-19,Arizona Diamondbacks,Colorado Rockies,-169,140,currentLine_median
+2025-03-19,Boston Red Sox,Detroit Tigers,-170,142,currentLine_median
+2025-03-19,Chicago Cubs,Los Angeles Dodgers,124,-148,currentLine_median
+2025-03-19,Houston Astros,New York Mets,-115,-105,currentLine_median
+2025-03-19,Kansas City Royals,San Francisco Giants,-164,138,currentLine_median
+2025-03-19,Milwaukee Brewers,Chicago White Sox,-179,148,currentLine_median
+2025-03-19,Seattle Mariners,Texas Rangers,112,-133,currentLine_median
+2025-03-19,St. Louis Cardinals,Washington Nationals,-143,121,currentLine_median
+2025-03-19,Tampa Bay Rays,Pittsburgh Pirates,-149,124,currentLine_median
+2025-03-20,Arizona Diamondbacks,Athletics,-141,120,currentLine_median
+2025-03-20,Atlanta Braves,Philadelphia Phillies,-209,175,currentLine_median
+2025-03-20,Baltimore Orioles,New York Yankees,-154,129,currentLine_median
+2025-03-20,Chicago White Sox,Los Angeles Angels,-117,-103,currentLine_median
+2025-03-20,Cincinnati Reds,Kansas City Royals,-160,132,currentLine_median
+2025-03-20,Miami Marlins,Houston Astros,-130,110,currentLine_median
+2025-03-20,Minnesota Twins,Boston Red Sox,-130,110,currentLine_median
+2025-03-20,Toronto Blue Jays,Tampa Bay Rays,-206,172,currentLine_median
+2025-03-20,Washington Nationals,New York Mets,-111,-109,currentLine_median
+2025-03-21,Boston Red Sox,Pittsburgh Pirates,-189,158,currentLine_median
+2025-03-21,Chicago Cubs,San Diego Padres,104,-125,currentLine_median
+2025-03-21,Milwaukee Brewers,Arizona Diamondbacks,100,-120,currentLine_median
+2025-03-21,San Francisco Giants,Cleveland Guardians,-225,182,currentLine_median
+2025-03-21,Tampa Bay Rays,Atlanta Braves,120,-146,currentLine_median
+2025-03-21,Washington Nationals,Miami Marlins,-164,140,currentLine_median
+2025-03-22,Athletics,Milwaukee Brewers,-125,105,currentLine_median
+2025-03-22,Detroit Tigers,Atlanta Braves,-175,145,currentLine_median
+2025-03-22,Minnesota Twins,Toronto Blue Jays,-202,167,currentLine_median
+2025-03-22,New York Mets,Washington Nationals,-175,145,currentLine_median
+2025-03-22,New York Yankees,Philadelphia Phillies,-104,-116,currentLine_median
+2025-03-22,Pittsburgh Pirates,Baltimore Orioles,-155,130,currentLine_median
+2025-03-22,San Francisco Giants,Arizona Diamondbacks,-172,143,currentLine_median
+2025-03-22,Tampa Bay Rays,Boston Red Sox,-170,141,currentLine_median
+2025-03-22,Texas Rangers,Kansas City Royals,-104,-117,currentLine_median
+2025-03-23,Atlanta Braves,Baltimore Orioles,-169,142,currentLine_median
+2025-03-23,Boston Red Sox,Minnesota Twins,-185,154,currentLine_median
+2025-03-23,Chicago Cubs,Athletics,100,-120,currentLine_median
+2025-03-23,Cincinnati Reds,Cleveland Guardians,-185,155,currentLine_median
+2025-03-23,Los Angeles Dodgers,Los Angeles Angels,-186,153,currentLine_median
+2025-03-23,New York Mets,Miami Marlins,-183,152,currentLine_median
+2025-03-23,New York Yankees,Tampa Bay Rays,-167,139,currentLine_median
+2025-03-23,Philadelphia Phillies,Detroit Tigers,-205,170,currentLine_median
+2025-03-23,Toronto Blue Jays,Pittsburgh Pirates,-172,143,currentLine_median
+2025-03-24,Arizona Diamondbacks,Cleveland Guardians,-147,125,currentLine_median
+2025-03-24,Chicago White Sox,Athletics,119,-141,currentLine_median
+2025-03-24,Los Angeles Angels,Los Angeles Dodgers,152,-184,currentLine_median
+2025-03-24,Minnesota Twins,Pittsburgh Pirates,-185,153,currentLine_median
+2025-03-24,New York Mets,New York Yankees,-225,185,currentLine_median
+2025-03-24,Philadelphia Phillies,Tampa Bay Rays,-157,132,currentLine_median
+2025-03-24,San Diego Padres,Seattle Mariners,100,-120,currentLine_median
+2025-03-25,Arizona Diamondbacks,Cleveland Guardians,-172,142,currentLine_median
+2025-03-25,Chicago Cubs,Atlanta Braves,-115,-105,currentLine_median
+2025-03-25,Los Angeles Angels,Los Angeles Dodgers,154,-187,currentLine_median
+2025-03-25,Miami Marlins,New York Yankees,182,-225,currentLine_median
+2025-03-25,Minnesota Twins,Colorado Rockies,-161,135,currentLine_median
+2025-03-25,San Francisco Giants,Detroit Tigers,-135,111,currentLine_median
+2025-03-25,Texas Rangers,Kansas City Royals,-143,120,currentLine_median
+2025-03-27,Chicago White Sox,Los Angeles Angels,147,-192,currentLine_median
+2025-03-27,Cincinnati Reds,San Francisco Giants,-110,-110,currentLine_median
+2025-03-27,Kansas City Royals,Cleveland Guardians,-175,145,currentLine_median
+2025-03-27,Los Angeles Dodgers,Detroit Tigers,-168,140,currentLine_median
+2025-03-27,Miami Marlins,Pittsburgh Pirates,125,-150,currentLine_median
+2025-03-27,New York Yankees,Milwaukee Brewers,-148,121,currentLine_median
+2025-03-27,San Diego Padres,Atlanta Braves,105,-127,currentLine_median
+2025-03-27,Seattle Mariners,Athletics,-169,144,currentLine_median
+2025-03-27,St. Louis Cardinals,Minnesota Twins,-105,-115,currentLine_median
+2025-03-27,Texas Rangers,Boston Red Sox,106,-125,currentLine_median
+2025-03-27,Washington Nationals,Philadelphia Phillies,133,-157,currentLine_median
+2025-03-28,Arizona Diamondbacks,Chicago Cubs,-145,122,currentLine_median
+2025-03-28,Los Angeles Dodgers,Detroit Tigers,-226,185,currentLine_median
+2025-03-28,Miami Marlins,Pittsburgh Pirates,119,-140,currentLine_median
+2025-03-28,San Diego Padres,Atlanta Braves,-135,115,currentLine_median
+2025-03-28,Seattle Mariners,Athletics,-140,118,currentLine_median
+2025-03-28,Tampa Bay Rays,Colorado Rockies,-219,180,currentLine_median
+2025-03-28,Texas Rangers,Boston Red Sox,-105,-115,currentLine_median
+2025-03-28,Toronto Blue Jays,Baltimore Orioles,-125,106,currentLine_median
+2025-03-29,Arizona Diamondbacks,Chicago Cubs,-120,100,currentLine_median
+2025-03-29,Chicago White Sox,Los Angeles Angels,138,-163,currentLine_median
+2025-03-29,Cincinnati Reds,San Francisco Giants,-120,100,currentLine_median
+2025-03-29,Houston Astros,New York Mets,-120,102,currentLine_median
+2025-03-29,Los Angeles Dodgers,Detroit Tigers,-202,167,currentLine_median
+2025-03-29,Miami Marlins,Pittsburgh Pirates,105,-123,currentLine_median
+2025-03-29,New York Yankees,Milwaukee Brewers,-169,141,currentLine_median
+2025-03-29,San Diego Padres,Atlanta Braves,128,-152,currentLine_median
+2025-03-29,Seattle Mariners,Athletics,-177,149,currentLine_median
+2025-03-29,St. Louis Cardinals,Minnesota Twins,-109,-111,currentLine_median
+2025-03-29,Tampa Bay Rays,Colorado Rockies,-192,160,currentLine_median
+2025-03-29,Texas Rangers,Boston Red Sox,-115,-105,currentLine_median
+2025-03-29,Toronto Blue Jays,Baltimore Orioles,-125,106,currentLine_median
+2025-03-29,Washington Nationals,Philadelphia Phillies,130,-155,currentLine_median
+2025-03-30,Arizona Diamondbacks,Chicago Cubs,-118,-106,currentLine_median
+2025-03-30,Chicago White Sox,Los Angeles Angels,105,-125,currentLine_median
+2025-03-30,Cincinnati Reds,San Francisco Giants,103,-122,currentLine_median
+2025-03-30,Kansas City Royals,Cleveland Guardians,-115,-105,currentLine_median
+2025-03-30,Miami Marlins,Pittsburgh Pirates,-125,105,currentLine_median
+2025-03-30,New York Yankees,Milwaukee Brewers,-150,121,currentLine_median
+2025-03-30,San Diego Padres,Atlanta Braves,-130,110,currentLine_median
+2025-03-30,Seattle Mariners,Athletics,-197,154,currentLine_median
+2025-03-30,St. Louis Cardinals,Minnesota Twins,-106,-112,currentLine_median
+2025-03-30,Tampa Bay Rays,Colorado Rockies,-189,156,currentLine_median
+2025-03-30,Texas Rangers,Boston Red Sox,-165,135,currentLine_median
+2025-03-30,Toronto Blue Jays,Baltimore Orioles,-137,113,currentLine_median
+2025-03-30,Washington Nationals,Philadelphia Phillies,120,-141,currentLine_median
+2025-03-31,Athletics,Chicago Cubs,121,-158,currentLine_median
+2025-03-31,Baltimore Orioles,Boston Red Sox,-147,124,currentLine_median
+2025-03-31,Chicago White Sox,Minnesota Twins,165,-200,currentLine_median
+2025-03-31,Cincinnati Reds,Texas Rangers,110,-130,currentLine_median
+2025-03-31,Houston Astros,San Francisco Giants,-127,109,currentLine_median
+2025-03-31,Los Angeles Dodgers,Atlanta Braves,-226,185,currentLine_median
+2025-03-31,Miami Marlins,New York Mets,157,-189,currentLine_median
+2025-03-31,Milwaukee Brewers,Kansas City Royals,-119,-102,currentLine_median
+2025-03-31,Philadelphia Phillies,Colorado Rockies,-320,252,currentLine_median
+2025-03-31,San Diego Padres,Cleveland Guardians,-135,114,currentLine_median
+2025-03-31,Seattle Mariners,Detroit Tigers,-120,101,currentLine_median
+2025-03-31,St. Louis Cardinals,Los Angeles Angels,-160,135,currentLine_median
+2025-03-31,Tampa Bay Rays,Pittsburgh Pirates,-185,152,currentLine_median
+2025-03-31,Toronto Blue Jays,Washington Nationals,-175,145,currentLine_median
+2025-04-01,Athletics,Chicago Cubs,113,-133,currentLine_median
+2025-04-01,Chicago White Sox,Minnesota Twins,138,-163,currentLine_median
+2025-04-01,Cincinnati Reds,Texas Rangers,127,-150,currentLine_median
+2025-04-01,Houston Astros,San Francisco Giants,116,-136,currentLine_median
+2025-04-01,Los Angeles Dodgers,Atlanta Braves,-130,110,currentLine_median
+2025-04-01,Miami Marlins,New York Mets,130,-154,currentLine_median
+2025-04-01,Milwaukee Brewers,Kansas City Royals,-125,105,currentLine_median
+2025-04-01,New York Yankees,Arizona Diamondbacks,102,-125,currentLine_median
+2025-04-01,San Diego Padres,Cleveland Guardians,-175,145,currentLine_median
+2025-04-01,Seattle Mariners,Detroit Tigers,-177,149,currentLine_median
+2025-04-01,St. Louis Cardinals,Los Angeles Angels,-140,118,currentLine_median
+2025-04-01,Tampa Bay Rays,Pittsburgh Pirates,-165,140,currentLine_median
+2025-04-01,Toronto Blue Jays,Washington Nationals,-160,134,currentLine_median
+2025-04-02,Athletics,Chicago Cubs,-120,102,currentLine_median
+2025-04-02,Baltimore Orioles,Boston Red Sox,105,-125,currentLine_median
+2025-04-02,Chicago White Sox,Minnesota Twins,159,-189,currentLine_median
+2025-04-02,Cincinnati Reds,Texas Rangers,-142,120,currentLine_median
+2025-04-02,Houston Astros,San Francisco Giants,-168,141,currentLine_median
+2025-04-02,Los Angeles Dodgers,Atlanta Braves,-245,195,currentLine_median
+2025-04-02,Miami Marlins,New York Mets,180,-219,currentLine_median
+2025-04-02,Milwaukee Brewers,Kansas City Royals,-125,105,currentLine_median
+2025-04-02,New York Yankees,Arizona Diamondbacks,-145,121,currentLine_median
+2025-04-02,Philadelphia Phillies,Colorado Rockies,-351,262,currentLine_median
+2025-04-02,San Diego Padres,Cleveland Guardians,-210,161,currentLine_median
+2025-04-02,Seattle Mariners,Detroit Tigers,105,-125,currentLine_median
+2025-04-02,St. Louis Cardinals,Los Angeles Angels,-150,121,currentLine_median
+2025-04-02,Tampa Bay Rays,Pittsburgh Pirates,-105,-115,currentLine_median
+2025-04-02,Toronto Blue Jays,Washington Nationals,-110,-110,currentLine_median
+2025-04-03,Baltimore Orioles,Boston Red Sox,-125,106,currentLine_median
+2025-04-03,Milwaukee Brewers,Cincinnati Reds,-119,100,currentLine_median
+2025-04-03,Minnesota Twins,Houston Astros,-140,119,currentLine_median
+2025-04-03,New York Yankees,Arizona Diamondbacks,-140,120,currentLine_median
+2025-04-03,Philadelphia Phillies,Colorado Rockies,-220,180,currentLine_median
+2025-04-04,Atlanta Braves,Miami Marlins,-247,202,currentLine_median
+2025-04-04,Boston Red Sox,St. Louis Cardinals,-120,100,currentLine_median
+2025-04-04,Chicago Cubs,San Diego Padres,-168,142,currentLine_median
+2025-04-04,Detroit Tigers,Chicago White Sox,-257,210,currentLine_median
+2025-04-04,Kansas City Royals,Baltimore Orioles,-105,-112,currentLine_median
+2025-04-04,Los Angeles Angels,Cleveland Guardians,-105,-115,currentLine_median
+2025-04-04,Milwaukee Brewers,Cincinnati Reds,-130,110,currentLine_median
+2025-04-04,New York Mets,Toronto Blue Jays,-140,112,currentLine_median
+2025-04-04,Philadelphia Phillies,Los Angeles Dodgers,114,-135,currentLine_median
+2025-04-04,Pittsburgh Pirates,New York Yankees,144,-179,currentLine_median
+2025-04-04,San Francisco Giants,Seattle Mariners,-152,129,currentLine_median
+2025-04-04,Texas Rangers,Tampa Bay Rays,-130,110,currentLine_median
+2025-04-04,Washington Nationals,Arizona Diamondbacks,133,-158,currentLine_median
+2025-04-05,Atlanta Braves,Miami Marlins,-265,212,currentLine_median
+2025-04-05,Chicago Cubs,San Diego Padres,-116,-102,currentLine_median
+2025-04-05,Colorado Rockies,Athletics,-110,-110,currentLine_median
+2025-04-05,Detroit Tigers,Chicago White Sox,-247,202,currentLine_median
+2025-04-05,Kansas City Royals,Baltimore Orioles,-115,-105,currentLine_median
+2025-04-05,Los Angeles Angels,Cleveland Guardians,123,-152,currentLine_median
+2025-04-05,Milwaukee Brewers,Cincinnati Reds,-123,104,currentLine_median
+2025-04-05,Minnesota Twins,Houston Astros,-130,110,currentLine_median
+2025-04-05,New York Mets,Toronto Blue Jays,-135,114,currentLine_median
+2025-04-05,Philadelphia Phillies,Los Angeles Dodgers,-112,-106,currentLine_median
+2025-04-05,Pittsburgh Pirates,New York Yankees,132,-163,currentLine_median
+2025-04-05,San Francisco Giants,Seattle Mariners,-120,100,currentLine_median
+2025-04-05,Texas Rangers,Tampa Bay Rays,-189,154,currentLine_median
+2025-04-05,Washington Nationals,Arizona Diamondbacks,114,-135,currentLine_median
+2025-04-06,Boston Red Sox,St. Louis Cardinals,-130,110,currentLine_median
+2025-04-06,Chicago Cubs,San Diego Padres,-145,121,currentLine_median
+2025-04-06,Detroit Tigers,Chicago White Sox,-181,152,currentLine_median
+2025-04-06,Milwaukee Brewers,Cincinnati Reds,-152,121,currentLine_median
+2025-04-06,New York Mets,Toronto Blue Jays,-147,123,currentLine_median
+2025-04-06,Philadelphia Phillies,Los Angeles Dodgers,155,-200,currentLine_median
+2025-04-06,Pittsburgh Pirates,New York Yankees,139,-167,currentLine_median
+2025-04-06,San Francisco Giants,Seattle Mariners,-119,100,currentLine_median
+2025-04-06,Texas Rangers,Tampa Bay Rays,-110,-110,currentLine_median
+2025-04-06,Washington Nationals,Arizona Diamondbacks,150,-180,currentLine_median
+2025-04-07,Arizona Diamondbacks,Baltimore Orioles,-125,105,currentLine_median
+2025-04-07,Athletics,San Diego Padres,130,-155,currentLine_median
+2025-04-07,Boston Red Sox,Toronto Blue Jays,-130,110,currentLine_median
+2025-04-07,Chicago Cubs,Texas Rangers,-130,110,currentLine_median
+2025-04-07,Detroit Tigers,New York Yankees,130,-155,currentLine_median
+2025-04-07,Kansas City Royals,Minnesota Twins,-115,-105,currentLine_median
+2025-04-07,New York Mets,Miami Marlins,-276,225,currentLine_median
+2025-04-07,Pittsburgh Pirates,St. Louis Cardinals,-105,-120,currentLine_median
+2025-04-07,San Francisco Giants,Cincinnati Reds,-163,139,currentLine_median
+2025-04-07,Seattle Mariners,Houston Astros,-165,140,currentLine_median
+2025-04-07,Washington Nationals,Los Angeles Dodgers,150,-182,currentLine_median
+2025-04-08,Athletics,San Diego Padres,110,-130,currentLine_median
+2025-04-08,Atlanta Braves,Philadelphia Phillies,-120,-103,currentLine_median
+2025-04-08,Boston Red Sox,Toronto Blue Jays,-220,172,currentLine_median
+2025-04-08,Chicago Cubs,Texas Rangers,-160,135,currentLine_median
+2025-04-08,Cleveland Guardians,Chicago White Sox,-205,163,currentLine_median
+2025-04-08,Colorado Rockies,Milwaukee Brewers,139,-163,currentLine_median
+2025-04-08,Detroit Tigers,New York Yankees,-167,139,currentLine_median
+2025-04-08,Kansas City Royals,Minnesota Twins,-121,102,currentLine_median
+2025-04-08,New York Mets,Miami Marlins,-292,235,currentLine_median
+2025-04-08,Pittsburgh Pirates,St. Louis Cardinals,-143,120,currentLine_median
+2025-04-08,San Francisco Giants,Cincinnati Reds,-130,110,currentLine_median
+2025-04-08,Seattle Mariners,Houston Astros,-132,110,currentLine_median
+2025-04-08,Tampa Bay Rays,Los Angeles Angels,-178,150,currentLine_median
+2025-04-08,Washington Nationals,Los Angeles Dodgers,152,-182,currentLine_median
+2025-04-09,Arizona Diamondbacks,Baltimore Orioles,-117,100,currentLine_median
+2025-04-09,Athletics,San Diego Padres,-140,118,currentLine_median
+2025-04-09,Atlanta Braves,Philadelphia Phillies,-146,123,currentLine_median
+2025-04-09,Boston Red Sox,Toronto Blue Jays,-130,110,currentLine_median
+2025-04-09,Chicago Cubs,Texas Rangers,-175,145,currentLine_median
+2025-04-09,Cleveland Guardians,Chicago White Sox,-172,144,currentLine_median
+2025-04-09,Colorado Rockies,Milwaukee Brewers,122,-144,currentLine_median
+2025-04-09,Detroit Tigers,New York Yankees,125,-151,currentLine_median
+2025-04-09,Kansas City Royals,Minnesota Twins,-106,-112,currentLine_median
+2025-04-09,New York Mets,Miami Marlins,-210,175,currentLine_median
+2025-04-09,Pittsburgh Pirates,St. Louis Cardinals,-105,-115,currentLine_median
+2025-04-09,San Francisco Giants,Cincinnati Reds,-145,123,currentLine_median
+2025-04-09,Seattle Mariners,Houston Astros,121,-143,currentLine_median
+2025-04-09,Tampa Bay Rays,Los Angeles Angels,-146,123,currentLine_median
+2025-04-09,Washington Nationals,Los Angeles Dodgers,163,-197,currentLine_median
+2025-04-10,Atlanta Braves,Philadelphia Phillies,-137,115,currentLine_median
+2025-04-10,Boston Red Sox,Toronto Blue Jays,-130,110,currentLine_median
+2025-04-10,Cleveland Guardians,Chicago White Sox,-250,205,currentLine_median
+2025-04-10,Colorado Rockies,Milwaukee Brewers,110,-130,currentLine_median
+2025-04-10,Tampa Bay Rays,Los Angeles Angels,-115,-108,currentLine_median
+2025-04-11,Arizona Diamondbacks,Milwaukee Brewers,-157,132,currentLine_median
+2025-04-11,Athletics,New York Mets,109,-128,currentLine_median
+2025-04-11,Chicago White Sox,Boston Red Sox,140,-165,currentLine_median
+2025-04-11,Cincinnati Reds,Pittsburgh Pirates,-166,141,currentLine_median
+2025-04-11,Houston Astros,Los Angeles Angels,-140,119,currentLine_median
+2025-04-11,Los Angeles Dodgers,Chicago Cubs,-185,152,currentLine_median
+2025-04-11,Miami Marlins,Washington Nationals,-105,-115,currentLine_median
+2025-04-11,Minnesota Twins,Detroit Tigers,-119,100,currentLine_median
+2025-04-11,New York Yankees,San Francisco Giants,-137,117,currentLine_median
+2025-04-11,San Diego Padres,Colorado Rockies,-228,185,currentLine_median
+2025-04-11,St. Louis Cardinals,Philadelphia Phillies,-102,-115,currentLine_median
+2025-04-11,Tampa Bay Rays,Atlanta Braves,-140,119,currentLine_median
+2025-04-12,Arizona Diamondbacks,Milwaukee Brewers,-180,150,currentLine_median
+2025-04-12,Athletics,New York Mets,114,-135,currentLine_median
+2025-04-12,Chicago White Sox,Boston Red Sox,135,-161,currentLine_median
+2025-04-12,Cincinnati Reds,Pittsburgh Pirates,-120,100,currentLine_median
+2025-04-12,Cleveland Guardians,Kansas City Royals,-144,117,currentLine_median
+2025-04-12,Houston Astros,Los Angeles Angels,-165,140,currentLine_median
+2025-04-12,Los Angeles Dodgers,Chicago Cubs,-182,153,currentLine_median
+2025-04-12,Miami Marlins,Washington Nationals,-141,120,currentLine_median
+2025-04-12,Minnesota Twins,Detroit Tigers,-164,140,currentLine_median
+2025-04-12,New York Yankees,San Francisco Giants,-135,115,currentLine_median
+2025-04-12,San Diego Padres,Colorado Rockies,-170,144,currentLine_median
+2025-04-12,Seattle Mariners,Texas Rangers,-143,120,currentLine_median
+2025-04-12,St. Louis Cardinals,Philadelphia Phillies,157,-187,currentLine_median
+2025-04-12,Tampa Bay Rays,Atlanta Braves,-137,117,currentLine_median
+2025-04-13,Arizona Diamondbacks,Milwaukee Brewers,-120,-104,currentLine_median
+2025-04-13,Athletics,New York Mets,122,-144,currentLine_median
+2025-04-13,Baltimore Orioles,Toronto Blue Jays,-135,115,currentLine_median
+2025-04-13,Chicago White Sox,Boston Red Sox,200,-245,currentLine_median
+2025-04-13,Cincinnati Reds,Pittsburgh Pirates,-185,154,currentLine_median
+2025-04-13,Cleveland Guardians,Kansas City Royals,120,-140,currentLine_median
+2025-04-13,Houston Astros,Los Angeles Angels,-164,140,currentLine_median
+2025-04-13,Los Angeles Dodgers,Chicago Cubs,-235,193,currentLine_median
+2025-04-13,Miami Marlins,Washington Nationals,130,-154,currentLine_median
+2025-04-13,Minnesota Twins,Detroit Tigers,-115,-105,currentLine_median
+2025-04-13,New York Yankees,San Francisco Giants,-120,100,currentLine_median
+2025-04-13,San Diego Padres,Colorado Rockies,-250,202,currentLine_median
+2025-04-13,Seattle Mariners,Texas Rangers,-146,122,currentLine_median
+2025-04-13,St. Louis Cardinals,Philadelphia Phillies,144,-170,currentLine_median
+2025-04-13,Tampa Bay Rays,Atlanta Braves,144,-169,currentLine_median
+2025-04-14,Los Angeles Dodgers,Colorado Rockies,-357,285,currentLine_median
+2025-04-14,Milwaukee Brewers,Detroit Tigers,138,-163,currentLine_median
+2025-04-14,Minnesota Twins,New York Mets,-119,100,currentLine_median
+2025-04-14,New York Yankees,Kansas City Royals,-147,120,currentLine_median
+2025-04-14,Philadelphia Phillies,San Francisco Giants,-115,-104,currentLine_median
+2025-04-14,Pittsburgh Pirates,Washington Nationals,-205,170,currentLine_median
+2025-04-14,San Diego Padres,Chicago Cubs,-148,125,currentLine_median
+2025-04-14,St. Louis Cardinals,Houston Astros,-109,-110,currentLine_median
+2025-04-14,Tampa Bay Rays,Boston Red Sox,-119,100,currentLine_median
+2025-04-15,Baltimore Orioles,Cleveland Guardians,-152,127,currentLine_median
+2025-04-15,Chicago White Sox,Athletics,135,-164,currentLine_median
+2025-04-15,Cincinnati Reds,Seattle Mariners,-105,-115,currentLine_median
+2025-04-15,Los Angeles Dodgers,Colorado Rockies,-304,242,currentLine_median
+2025-04-15,Miami Marlins,Arizona Diamondbacks,130,-163,currentLine_median
+2025-04-15,Milwaukee Brewers,Detroit Tigers,-110,-110,currentLine_median
+2025-04-15,Minnesota Twins,New York Mets,-108,-110,currentLine_median
+2025-04-15,New York Yankees,Kansas City Royals,-267,200,currentLine_median
+2025-04-15,Philadelphia Phillies,San Francisco Giants,-163,138,currentLine_median
+2025-04-15,Pittsburgh Pirates,Washington Nationals,-125,105,currentLine_median
+2025-04-15,San Diego Padres,Chicago Cubs,124,-154,currentLine_median
+2025-04-15,St. Louis Cardinals,Houston Astros,116,-136,currentLine_median
+2025-04-15,Tampa Bay Rays,Boston Red Sox,-130,110,currentLine_median
+2025-04-15,Texas Rangers,Los Angeles Angels,-140,118,currentLine_median
+2025-04-15,Toronto Blue Jays,Atlanta Braves,-105,-115,currentLine_median
+2025-04-16,Baltimore Orioles,Cleveland Guardians,-125,106,currentLine_median
+2025-04-16,Chicago White Sox,Athletics,135,-160,currentLine_median
+2025-04-16,Los Angeles Dodgers,Colorado Rockies,-327,260,currentLine_median
+2025-04-16,Miami Marlins,Arizona Diamondbacks,122,-145,currentLine_median
+2025-04-16,Milwaukee Brewers,Detroit Tigers,-153,129,currentLine_median
+2025-04-16,Minnesota Twins,New York Mets,-120,100,currentLine_median
+2025-04-16,New York Yankees,Kansas City Royals,-155,131,currentLine_median
+2025-04-16,Philadelphia Phillies,San Francisco Giants,-146,124,currentLine_median
+2025-04-16,Pittsburgh Pirates,Washington Nationals,-117,-104,currentLine_median
+2025-04-16,San Diego Padres,Chicago Cubs,-113,-105,currentLine_median
+2025-04-16,St. Louis Cardinals,Houston Astros,-110,-110,currentLine_median
+2025-04-16,Tampa Bay Rays,Boston Red Sox,-157,126,currentLine_median
+2025-04-16,Texas Rangers,Los Angeles Angels,110,-132,currentLine_median
+2025-04-16,Toronto Blue Jays,Atlanta Braves,110,-131,currentLine_median
+2025-04-17,Baltimore Orioles,Cleveland Guardians,-134,112,currentLine_median
+2025-04-17,Chicago White Sox,Athletics,114,-134,currentLine_median
+2025-04-17,Cincinnati Reds,Seattle Mariners,-128,109,currentLine_median
+2025-04-17,Detroit Tigers,Kansas City Royals,-155,130,currentLine_median
+2025-04-17,Miami Marlins,Arizona Diamondbacks,123,-146,currentLine_median
+2025-04-17,New York Mets,St. Louis Cardinals,-141,120,currentLine_median
+2025-04-17,Philadelphia Phillies,San Francisco Giants,-211,165,currentLine_median
+2025-04-17,Pittsburgh Pirates,Washington Nationals,-149,125,currentLine_median
+2025-04-17,Tampa Bay Rays,New York Yankees,-115,-105,currentLine_median
+2025-04-17,Texas Rangers,Los Angeles Angels,-161,134,currentLine_median
+2025-04-18,Atlanta Braves,Minnesota Twins,-150,125,currentLine_median
+2025-04-18,Baltimore Orioles,Cincinnati Reds,-167,140,currentLine_median
+2025-04-18,Boston Red Sox,Chicago White Sox,-238,195,currentLine_median
+2025-04-18,Chicago Cubs,Arizona Diamondbacks,-105,-113,currentLine_median
+2025-04-18,Detroit Tigers,Kansas City Royals,122,-146,currentLine_median
+2025-04-18,Houston Astros,San Diego Padres,-168,141,currentLine_median
+2025-04-18,Los Angeles Angels,San Francisco Giants,132,-157,currentLine_median
+2025-04-18,Milwaukee Brewers,Athletics,-183,152,currentLine_median
+2025-04-18,New York Mets,St. Louis Cardinals,-215,177,currentLine_median
+2025-04-18,Philadelphia Phillies,Miami Marlins,-238,195,currentLine_median
+2025-04-18,Pittsburgh Pirates,Cleveland Guardians,110,-130,currentLine_median
+2025-04-18,Tampa Bay Rays,New York Yankees,100,-120,currentLine_median
+2025-04-18,Texas Rangers,Los Angeles Dodgers,105,-125,currentLine_median
+2025-04-18,Toronto Blue Jays,Seattle Mariners,-125,105,currentLine_median
+2025-04-19,Atlanta Braves,Minnesota Twins,-240,195,currentLine_median
+2025-04-19,Baltimore Orioles,Cincinnati Reds,-122,102,currentLine_median
+2025-04-19,Boston Red Sox,Chicago White Sox,-360,270,currentLine_median
+2025-04-19,Chicago Cubs,Arizona Diamondbacks,-130,110,currentLine_median
+2025-04-19,Colorado Rockies,Washington Nationals,115,-135,currentLine_median
+2025-04-19,Detroit Tigers,Kansas City Royals,-135,114,currentLine_median
+2025-04-19,Houston Astros,San Diego Padres,105,-125,currentLine_median
+2025-04-19,Los Angeles Angels,San Francisco Giants,123,-147,currentLine_median
+2025-04-19,Milwaukee Brewers,Athletics,-134,114,currentLine_median
+2025-04-19,New York Mets,St. Louis Cardinals,-204,170,currentLine_median
+2025-04-19,Philadelphia Phillies,Miami Marlins,-225,185,currentLine_median
+2025-04-19,Pittsburgh Pirates,Cleveland Guardians,-182,150,currentLine_median
+2025-04-19,Texas Rangers,Los Angeles Dodgers,-115,-103,currentLine_median
+2025-04-19,Toronto Blue Jays,Seattle Mariners,100,-120,currentLine_median
+2025-04-20,Baltimore Orioles,Cincinnati Reds,-204,170,currentLine_median
+2025-04-20,Boston Red Sox,Chicago White Sox,-297,232,currentLine_median
+2025-04-20,Chicago Cubs,Arizona Diamondbacks,-142,120,currentLine_median
+2025-04-20,Colorado Rockies,Washington Nationals,115,-135,currentLine_median
+2025-04-20,Detroit Tigers,Kansas City Royals,-225,185,currentLine_median
+2025-04-20,Houston Astros,San Diego Padres,-120,101,currentLine_median
+2025-04-20,Los Angeles Angels,San Francisco Giants,-115,-105,currentLine_median
+2025-04-20,Milwaukee Brewers,Athletics,-135,115,currentLine_median
+2025-04-20,New York Mets,St. Louis Cardinals,-142,121,currentLine_median
+2025-04-20,Philadelphia Phillies,Miami Marlins,-325,260,currentLine_median
+2025-04-20,Pittsburgh Pirates,Cleveland Guardians,-125,102,currentLine_median
+2025-04-20,Tampa Bay Rays,New York Yankees,148,-176,currentLine_median
+2025-04-20,Texas Rangers,Los Angeles Dodgers,131,-156,currentLine_median
+2025-04-20,Toronto Blue Jays,Seattle Mariners,-108,-110,currentLine_median
+2025-04-21,Atlanta Braves,St. Louis Cardinals,-220,182,currentLine_median
+2025-04-21,Boston Red Sox,Chicago White Sox,-299,240,currentLine_median
+2025-04-21,Cleveland Guardians,New York Yankees,108,-127,currentLine_median
+2025-04-21,Detroit Tigers,San Diego Padres,-146,124,currentLine_median
+2025-04-21,Houston Astros,Toronto Blue Jays,-140,119,currentLine_median
+2025-04-21,Miami Marlins,Cincinnati Reds,102,-127,currentLine_median
+2025-04-21,New York Mets,Philadelphia Phillies,-138,117,currentLine_median
+2025-04-21,San Francisco Giants,Milwaukee Brewers,-135,115,currentLine_median
+2025-04-22,Arizona Diamondbacks,Tampa Bay Rays,-190,157,currentLine_median
+2025-04-22,Athletics,Texas Rangers,-125,105,currentLine_median
+2025-04-22,Atlanta Braves,St. Louis Cardinals,-139,119,currentLine_median
+2025-04-22,Boston Red Sox,Seattle Mariners,-120,101,currentLine_median
+2025-04-22,Chicago Cubs,Los Angeles Dodgers,-104,-115,currentLine_median
+2025-04-22,Cleveland Guardians,New York Yankees,-118,100,currentLine_median
+2025-04-22,Detroit Tigers,San Diego Padres,-141,120,currentLine_median
+2025-04-22,Houston Astros,Toronto Blue Jays,100,-120,currentLine_median
+2025-04-22,Kansas City Royals,Colorado Rockies,-265,217,currentLine_median
+2025-04-22,Los Angeles Angels,Pittsburgh Pirates,-187,155,currentLine_median
+2025-04-22,Miami Marlins,Cincinnati Reds,-105,-115,currentLine_median
+2025-04-22,Minnesota Twins,Chicago White Sox,-270,210,currentLine_median
+2025-04-22,New York Mets,Philadelphia Phillies,110,-130,currentLine_median
+2025-04-22,San Francisco Giants,Milwaukee Brewers,-149,124,currentLine_median
+2025-04-22,Washington Nationals,Baltimore Orioles,117,-138,currentLine_median
+2025-04-23,Arizona Diamondbacks,Tampa Bay Rays,-161,135,currentLine_median
+2025-04-23,Athletics,Texas Rangers,-115,-104,currentLine_median
+2025-04-23,Atlanta Braves,St. Louis Cardinals,-164,140,currentLine_median
+2025-04-23,Boston Red Sox,Seattle Mariners,-140,120,currentLine_median
+2025-04-23,Chicago Cubs,Los Angeles Dodgers,-127,109,currentLine_median
+2025-04-23,Cleveland Guardians,New York Yankees,142,-170,currentLine_median
+2025-04-23,Detroit Tigers,San Diego Padres,-167,140,currentLine_median
+2025-04-23,Houston Astros,Toronto Blue Jays,-115,-105,currentLine_median
+2025-04-23,Los Angeles Angels,Pittsburgh Pirates,-135,115,currentLine_median
+2025-04-23,Miami Marlins,Cincinnati Reds,-109,-110,currentLine_median
+2025-04-23,Minnesota Twins,Chicago White Sox,-275,221,currentLine_median
+2025-04-23,San Francisco Giants,Milwaukee Brewers,-146,123,currentLine_median
+2025-04-23,Washington Nationals,Baltimore Orioles,122,-144,currentLine_median
+2025-04-24,Arizona Diamondbacks,Tampa Bay Rays,-137,118,currentLine_median
+2025-04-24,Athletics,Texas Rangers,120,-141,currentLine_median
+2025-04-24,Boston Red Sox,Seattle Mariners,-180,150,currentLine_median
+2025-04-24,Kansas City Royals,Colorado Rockies,-199,165,currentLine_median
+2025-04-24,Minnesota Twins,Chicago White Sox,-226,185,currentLine_median
+2025-04-24,San Francisco Giants,Milwaukee Brewers,-160,135,currentLine_median
+2025-04-24,Washington Nationals,Baltimore Orioles,-139,112,currentLine_median
+2025-04-25,Arizona Diamondbacks,Atlanta Braves,105,-130,currentLine_median
+2025-04-25,Athletics,Chicago White Sox,-250,205,currentLine_median
+2025-04-25,Chicago Cubs,Philadelphia Phillies,-160,135,currentLine_median
+2025-04-25,Colorado Rockies,Cincinnati Reds,115,-135,currentLine_median
+2025-04-25,Kansas City Royals,Houston Astros,100,-117,currentLine_median
+2025-04-25,Los Angeles Dodgers,Pittsburgh Pirates,-222,184,currentLine_median
+2025-04-25,Minnesota Twins,Los Angeles Angels,-215,172,currentLine_median
+2025-04-25,New York Yankees,Toronto Blue Jays,-145,120,currentLine_median
+2025-04-25,San Diego Padres,Tampa Bay Rays,-146,123,currentLine_median
+2025-04-25,San Francisco Giants,Texas Rangers,-130,110,currentLine_median
+2025-04-25,Seattle Mariners,Miami Marlins,-300,240,currentLine_median
+2025-04-25,St. Louis Cardinals,Milwaukee Brewers,-132,113,currentLine_median
+2025-04-25,Washington Nationals,New York Mets,155,-185,currentLine_median
+2025-04-26,Arizona Diamondbacks,Atlanta Braves,-125,105,currentLine_median
+2025-04-26,Athletics,Chicago White Sox,-231,191,currentLine_median
+2025-04-26,Chicago Cubs,Philadelphia Phillies,-103,-115,currentLine_median
+2025-04-26,Cleveland Guardians,Boston Red Sox,140,-180,currentLine_median
+2025-04-26,Colorado Rockies,Cincinnati Reds,172,-206,currentLine_median
+2025-04-26,Detroit Tigers,Baltimore Orioles,101,-121,currentLine_median
+2025-04-26,Los Angeles Dodgers,Pittsburgh Pirates,-277,225,currentLine_median
+2025-04-26,Minnesota Twins,Los Angeles Angels,-135,112,currentLine_median
+2025-04-26,San Diego Padres,Tampa Bay Rays,-162,130,currentLine_median
+2025-04-26,San Francisco Giants,Texas Rangers,-141,120,currentLine_median
+2025-04-26,Seattle Mariners,Miami Marlins,-239,198,currentLine_median
+2025-04-26,St. Louis Cardinals,Milwaukee Brewers,-150,125,currentLine_median
+2025-04-26,Washington Nationals,New York Mets,166,-200,currentLine_median
+2025-04-27,Arizona Diamondbacks,Atlanta Braves,105,-124,currentLine_median
+2025-04-27,Athletics,Chicago White Sox,-194,161,currentLine_median
+2025-04-27,Chicago Cubs,Philadelphia Phillies,-127,108,currentLine_median
+2025-04-27,Cleveland Guardians,Boston Red Sox,100,-119,currentLine_median
+2025-04-27,Colorado Rockies,Cincinnati Reds,135,-158,currentLine_median
+2025-04-27,Detroit Tigers,Baltimore Orioles,-247,202,currentLine_median
+2025-04-27,Kansas City Royals,Houston Astros,121,-143,currentLine_median
+2025-04-27,Los Angeles Dodgers,Pittsburgh Pirates,-350,276,currentLine_median
+2025-04-27,Minnesota Twins,Los Angeles Angels,-180,147,currentLine_median
+2025-04-27,New York Yankees,Toronto Blue Jays,-164,138,currentLine_median
+2025-04-27,San Diego Padres,Tampa Bay Rays,-105,-117,currentLine_median
+2025-04-27,San Francisco Giants,Texas Rangers,-139,118,currentLine_median
+2025-04-27,Seattle Mariners,Miami Marlins,-142,120,currentLine_median
+2025-04-27,St. Louis Cardinals,Milwaukee Brewers,-110,-110,currentLine_median
+2025-04-27,Washington Nationals,New York Mets,128,-152,currentLine_median
+2025-04-28,Baltimore Orioles,New York Yankees,114,-135,currentLine_median
+2025-04-28,Cincinnati Reds,St. Louis Cardinals,-123,104,currentLine_median
+2025-04-28,Cleveland Guardians,Minnesota Twins,-125,105,currentLine_median
+2025-04-28,Colorado Rockies,Atlanta Braves,150,-179,currentLine_median
+2025-04-28,Houston Astros,Detroit Tigers,-125,102,currentLine_median
+2025-04-28,Los Angeles Dodgers,Miami Marlins,-292,235,currentLine_median
+2025-04-28,Texas Rangers,Athletics,-110,-110,currentLine_median
+2025-04-28,Washington Nationals,New York Mets,149,-176,currentLine_median
+2025-04-29,Baltimore Orioles,New York Yankees,144,-172,currentLine_median
+2025-04-29,Chicago White Sox,Milwaukee Brewers,220,-272,currentLine_median
+2025-04-29,Cleveland Guardians,Minnesota Twins,-135,114,currentLine_median
+2025-04-29,Colorado Rockies,Atlanta Braves,180,-219,currentLine_median
+2025-04-29,Los Angeles Dodgers,Miami Marlins,-212,176,currentLine_median
+2025-04-29,New York Mets,Arizona Diamondbacks,-138,117,currentLine_median
+2025-04-29,Philadelphia Phillies,Washington Nationals,-191,160,currentLine_median
+2025-04-29,Pittsburgh Pirates,Chicago Cubs,129,-152,currentLine_median
+2025-04-29,San Diego Padres,San Francisco Giants,104,-123,currentLine_median
+2025-04-29,Seattle Mariners,Los Angeles Angels,-219,180,currentLine_median
+2025-04-29,Tampa Bay Rays,Kansas City Royals,-160,135,currentLine_median
+2025-04-29,Texas Rangers,Athletics,-204,170,currentLine_median
+2025-04-29,Toronto Blue Jays,Boston Red Sox,119,-140,currentLine_median
+2025-04-30,Baltimore Orioles,New York Yankees,-120,100,currentLine_median
+2025-04-30,Chicago White Sox,Milwaukee Brewers,131,-156,currentLine_median
+2025-04-30,Cincinnati Reds,St. Louis Cardinals,-116,-103,currentLine_median
+2025-04-30,Cleveland Guardians,Minnesota Twins,-110,-110,currentLine_median
+2025-04-30,Colorado Rockies,Atlanta Braves,230,-289,currentLine_median
+2025-04-30,Houston Astros,Detroit Tigers,-120,100,currentLine_median
+2025-04-30,Los Angeles Dodgers,Miami Marlins,-332,267,currentLine_median
+2025-04-30,New York Mets,Arizona Diamondbacks,-109,-110,currentLine_median
+2025-04-30,Philadelphia Phillies,Washington Nationals,-252,207,currentLine_median
+2025-04-30,Pittsburgh Pirates,Chicago Cubs,149,-177,currentLine_median
+2025-04-30,San Diego Padres,San Francisco Giants,-142,120,currentLine_median
+2025-04-30,Seattle Mariners,Los Angeles Angels,-140,119,currentLine_median
+2025-04-30,Tampa Bay Rays,Kansas City Royals,-164,140,currentLine_median
+2025-04-30,Texas Rangers,Athletics,-156,132,currentLine_median
+2025-04-30,Toronto Blue Jays,Boston Red Sox,-110,-110,currentLine_median
+2025-05-01,Chicago White Sox,Milwaukee Brewers,138,-163,currentLine_median
+2025-05-01,Cleveland Guardians,Minnesota Twins,109,-128,currentLine_median
+2025-05-01,Los Angeles Angels,Detroit Tigers,125,-149,currentLine_median
+2025-05-01,New York Mets,Arizona Diamondbacks,-164,140,currentLine_median
+2025-05-01,Philadelphia Phillies,Washington Nationals,-177,149,currentLine_median
+2025-05-01,Pittsburgh Pirates,Chicago Cubs,-126,106,currentLine_median
+2025-05-01,San Francisco Giants,Colorado Rockies,-280,225,currentLine_median
+2025-05-01,Tampa Bay Rays,Kansas City Royals,-165,140,currentLine_median
+2025-05-01,Texas Rangers,Athletics,-130,110,currentLine_median
+2025-05-01,Toronto Blue Jays,Boston Red Sox,-106,-113,currentLine_median
+2025-05-02,Atlanta Braves,Los Angeles Dodgers,150,-182,currentLine_median
+2025-05-02,Baltimore Orioles,Kansas City Royals,-141,120,currentLine_median
+2025-05-02,Boston Red Sox,Minnesota Twins,-120,100,currentLine_median
+2025-05-02,Chicago White Sox,Houston Astros,177,-228,currentLine_median
+2025-05-02,Cincinnati Reds,Washington Nationals,-212,170,currentLine_median
+2025-05-02,Los Angeles Angels,Detroit Tigers,160,-190,currentLine_median
+2025-05-02,Miami Marlins,Athletics,114,-135,currentLine_median
+2025-05-02,Milwaukee Brewers,Chicago Cubs,100,-125,currentLine_median
+2025-05-02,New York Yankees,Tampa Bay Rays,-245,199,currentLine_median
+2025-05-02,Philadelphia Phillies,Arizona Diamondbacks,-155,122,currentLine_median
+2025-05-02,Pittsburgh Pirates,San Diego Padres,114,-135,currentLine_median
+2025-05-02,San Francisco Giants,Colorado Rockies,-300,230,currentLine_median
+2025-05-02,St. Louis Cardinals,New York Mets,100,-120,currentLine_median
+2025-05-02,Texas Rangers,Seattle Mariners,110,-130,currentLine_median
+2025-05-02,Toronto Blue Jays,Cleveland Guardians,-169,142,currentLine_median
+2025-05-03,Atlanta Braves,Los Angeles Dodgers,-132,112,currentLine_median
+2025-05-03,Baltimore Orioles,Kansas City Royals,-115,-107,currentLine_median
+2025-05-03,Chicago White Sox,Houston Astros,192,-232,currentLine_median
+2025-05-03,Cincinnati Reds,Washington Nationals,-192,161,currentLine_median
+2025-05-03,Los Angeles Angels,Detroit Tigers,170,-205,currentLine_median
+2025-05-03,Miami Marlins,Athletics,-127,107,currentLine_median
+2025-05-03,Milwaukee Brewers,Chicago Cubs,-111,-113,currentLine_median
+2025-05-03,New York Yankees,Tampa Bay Rays,-215,172,currentLine_median
+2025-05-03,Philadelphia Phillies,Arizona Diamondbacks,-125,104,currentLine_median
+2025-05-03,Pittsburgh Pirates,San Diego Padres,-120,100,currentLine_median
+2025-05-03,San Francisco Giants,Colorado Rockies,-317,240,currentLine_median
+2025-05-03,Texas Rangers,Seattle Mariners,110,-130,currentLine_median
+2025-05-03,Toronto Blue Jays,Cleveland Guardians,-161,135,currentLine_median
+2025-05-04,Atlanta Braves,Los Angeles Dodgers,119,-140,currentLine_median
+2025-05-04,Baltimore Orioles,Kansas City Royals,-147,120,currentLine_median
+2025-05-04,Boston Red Sox,Minnesota Twins,-170,137,currentLine_median
+2025-05-04,Chicago White Sox,Houston Astros,136,-173,currentLine_median
+2025-05-04,Cincinnati Reds,Washington Nationals,-109,-111,currentLine_median
+2025-05-04,Los Angeles Angels,Detroit Tigers,146,-175,currentLine_median
+2025-05-04,Miami Marlins,Athletics,-116,-110,currentLine_median
+2025-05-04,Milwaukee Brewers,Chicago Cubs,-106,-120,currentLine_median
+2025-05-04,New York Yankees,Tampa Bay Rays,-169,144,currentLine_median
+2025-05-04,Philadelphia Phillies,Arizona Diamondbacks,-155,131,currentLine_median
+2025-05-04,Pittsburgh Pirates,San Diego Padres,-112,-110,currentLine_median
+2025-05-04,San Francisco Giants,Colorado Rockies,-405,320,currentLine_median
+2025-05-04,St. Louis Cardinals,New York Mets,130,-154,currentLine_median
+2025-05-04,Texas Rangers,Seattle Mariners,-179,150,currentLine_median
+2025-05-04,Toronto Blue Jays,Cleveland Guardians,-105,-115,currentLine_median
+2025-05-05,Arizona Diamondbacks,New York Mets,-119,100,currentLine_median
+2025-05-05,Athletics,Seattle Mariners,-105,-117,currentLine_median
+2025-05-05,Atlanta Braves,Cincinnati Reds,-135,114,currentLine_median
+2025-05-05,Chicago Cubs,San Francisco Giants,-179,142,currentLine_median
+2025-05-05,Kansas City Royals,Chicago White Sox,-225,186,currentLine_median
+2025-05-05,Miami Marlins,Los Angeles Dodgers,187,-239,currentLine_median
+2025-05-05,Milwaukee Brewers,Houston Astros,-115,-110,currentLine_median
+2025-05-05,New York Yankees,San Diego Padres,-160,135,currentLine_median
+2025-05-05,St. Louis Cardinals,Pittsburgh Pirates,-130,108,currentLine_median
+2025-05-06,Athletics,Seattle Mariners,-120,101,currentLine_median
+2025-05-06,Atlanta Braves,Cincinnati Reds,-226,185,currentLine_median
+2025-05-06,Boston Red Sox,Texas Rangers,100,-119,currentLine_median
+2025-05-06,Chicago Cubs,San Francisco Giants,-149,125,currentLine_median
+2025-05-06,Kansas City Royals,Chicago White Sox,-284,217,currentLine_median
+2025-05-06,Los Angeles Angels,Toronto Blue Jays,-104,-115,currentLine_median
+2025-05-06,Miami Marlins,Los Angeles Dodgers,222,-290,currentLine_median
+2025-05-06,Milwaukee Brewers,Houston Astros,-127,101,currentLine_median
+2025-05-06,Minnesota Twins,Baltimore Orioles,-171,142,currentLine_median
+2025-05-06,New York Yankees,San Diego Padres,-127,104,currentLine_median
+2025-05-06,St. Louis Cardinals,Pittsburgh Pirates,-111,-116,currentLine_median
+2025-05-06,Tampa Bay Rays,Philadelphia Phillies,113,-133,currentLine_median
+2025-05-06,Washington Nationals,Cleveland Guardians,-108,-110,currentLine_median
+2025-05-07,Arizona Diamondbacks,New York Mets,-103,-115,currentLine_median
+2025-05-07,Athletics,Seattle Mariners,118,-140,currentLine_median
+2025-05-07,Atlanta Braves,Cincinnati Reds,-120,101,currentLine_median
+2025-05-07,Boston Red Sox,Texas Rangers,-140,120,currentLine_median
+2025-05-07,Chicago Cubs,San Francisco Giants,-164,139,currentLine_median
+2025-05-07,Colorado Rockies,Detroit Tigers,142,-171,currentLine_median
+2025-05-07,Kansas City Royals,Chicago White Sox,-247,195,currentLine_median
+2025-05-07,Los Angeles Angels,Toronto Blue Jays,100,-119,currentLine_median
+2025-05-07,Miami Marlins,Los Angeles Dodgers,187,-227,currentLine_median
+2025-05-07,Milwaukee Brewers,Houston Astros,115,-135,currentLine_median
+2025-05-07,Minnesota Twins,Baltimore Orioles,-140,119,currentLine_median
+2025-05-07,New York Yankees,San Diego Padres,-179,150,currentLine_median
+2025-05-07,St. Louis Cardinals,Pittsburgh Pirates,-184,149,currentLine_median
+2025-05-07,Tampa Bay Rays,Philadelphia Phillies,132,-165,currentLine_median
+2025-05-07,Washington Nationals,Cleveland Guardians,-109,-110,currentLine_median
+2025-05-08,Arizona Diamondbacks,Los Angeles Dodgers,139,-163,currentLine_median
+2025-05-08,Atlanta Braves,Cincinnati Reds,-210,167,currentLine_median
+2025-05-08,Boston Red Sox,Texas Rangers,-174,140,currentLine_median
+2025-05-08,Colorado Rockies,Detroit Tigers,167,-209,currentLine_median
+2025-05-08,Kansas City Royals,Chicago White Sox,-254,207,currentLine_median
+2025-05-08,Los Angeles Angels,Toronto Blue Jays,115,-135,currentLine_median
+2025-05-08,Minnesota Twins,Baltimore Orioles,-166,140,currentLine_median
+2025-05-08,Tampa Bay Rays,Philadelphia Phillies,138,-163,currentLine_median
+2025-05-09,Athletics,New York Yankees,129,-160,currentLine_median
+2025-05-09,Chicago White Sox,Miami Marlins,162,-207,currentLine_median
+2025-05-09,Cleveland Guardians,Philadelphia Phillies,-105,-115,currentLine_median
+2025-05-09,Colorado Rockies,San Diego Padres,154,-185,currentLine_median
+2025-05-09,Detroit Tigers,Texas Rangers,-317,240,currentLine_median
+2025-05-09,Houston Astros,Cincinnati Reds,-207,164,currentLine_median
+2025-05-09,Kansas City Royals,Boston Red Sox,-110,-110,currentLine_median
+2025-05-09,Los Angeles Angels,Baltimore Orioles,119,-140,currentLine_median
+2025-05-09,Minnesota Twins,San Francisco Giants,-108,-116,currentLine_median
+2025-05-09,New York Mets,Chicago Cubs,-142,120,currentLine_median
+2025-05-09,Pittsburgh Pirates,Atlanta Braves,128,-154,currentLine_median
+2025-05-09,Seattle Mariners,Toronto Blue Jays,-147,122,currentLine_median
+2025-05-09,Tampa Bay Rays,Milwaukee Brewers,100,-120,currentLine_median
+2025-05-09,Washington Nationals,St. Louis Cardinals,-107,-115,currentLine_median
+2025-05-10,Arizona Diamondbacks,Los Angeles Dodgers,-115,-103,currentLine_median
+2025-05-10,Athletics,New York Yankees,139,-163,currentLine_median
+2025-05-10,Cleveland Guardians,Philadelphia Phillies,110,-130,currentLine_median
+2025-05-10,Colorado Rockies,San Diego Padres,210,-276,currentLine_median
+2025-05-10,Detroit Tigers,Texas Rangers,103,-127,currentLine_median
+2025-05-10,Houston Astros,Cincinnati Reds,-125,105,currentLine_median
+2025-05-10,Kansas City Royals,Boston Red Sox,-115,-105,currentLine_median
+2025-05-10,Los Angeles Angels,Baltimore Orioles,120,-140,currentLine_median
+2025-05-10,New York Mets,Chicago Cubs,-168,136,currentLine_median
+2025-05-10,Pittsburgh Pirates,Atlanta Braves,130,-154,currentLine_median
+2025-05-10,Seattle Mariners,Toronto Blue Jays,-140,114,currentLine_median
+2025-05-10,Tampa Bay Rays,Milwaukee Brewers,-120,100,currentLine_median
+2025-05-10,Washington Nationals,St. Louis Cardinals,-105,-115,currentLine_median
+2025-05-11,Arizona Diamondbacks,Los Angeles Dodgers,104,-134,currentLine_median
+2025-05-11,Athletics,New York Yankees,114,-146,currentLine_median
+2025-05-11,Chicago White Sox,Miami Marlins,115,-141,currentLine_median
+2025-05-11,Cleveland Guardians,Philadelphia Phillies,143,-177,currentLine_median
+2025-05-11,Colorado Rockies,San Diego Padres,262,-327,currentLine_median
+2025-05-11,Detroit Tigers,Texas Rangers,-117,-102,currentLine_median
+2025-05-11,Houston Astros,Cincinnati Reds,-150,120,currentLine_median
+2025-05-11,Kansas City Royals,Boston Red Sox,-135,111,currentLine_median
+2025-05-11,Los Angeles Angels,Baltimore Orioles,122,-145,currentLine_median
+2025-05-11,Minnesota Twins,San Francisco Giants,-162,136,currentLine_median
+2025-05-11,New York Mets,Chicago Cubs,-130,109,currentLine_median
+2025-05-11,Pittsburgh Pirates,Atlanta Braves,192,-234,currentLine_median
+2025-05-11,Seattle Mariners,Toronto Blue Jays,-188,152,currentLine_median
+2025-05-11,Tampa Bay Rays,Milwaukee Brewers,-142,120,currentLine_median
+2025-05-11,Washington Nationals,St. Louis Cardinals,-142,120,currentLine_median
+2025-05-12,Atlanta Braves,Washington Nationals,-190,160,currentLine_median
+2025-05-12,Chicago Cubs,Miami Marlins,-262,212,currentLine_median
+2025-05-12,Cleveland Guardians,Milwaukee Brewers,100,-120,currentLine_median
+2025-05-12,Houston Astros,Kansas City Royals,-125,105,currentLine_median
+2025-05-12,New York Mets,Pittsburgh Pirates,-168,140,currentLine_median
+2025-05-12,Philadelphia Phillies,St. Louis Cardinals,-177,145,currentLine_median
+2025-05-12,San Diego Padres,Los Angeles Angels,-231,185,currentLine_median
+2025-05-12,San Francisco Giants,Arizona Diamondbacks,104,-123,currentLine_median
+2025-05-12,Seattle Mariners,New York Yankees,124,-152,currentLine_median
+2025-05-12,Texas Rangers,Colorado Rockies,-269,215,currentLine_median
+2025-05-13,Atlanta Braves,Washington Nationals,-187,150,currentLine_median
+2025-05-13,Chicago Cubs,Miami Marlins,-260,212,currentLine_median
+2025-05-13,Cincinnati Reds,Chicago White Sox,-218,175,currentLine_median
+2025-05-13,Cleveland Guardians,Milwaukee Brewers,-135,114,currentLine_median
+2025-05-13,Houston Astros,Kansas City Royals,-135,115,currentLine_median
+2025-05-13,Los Angeles Dodgers,Athletics,-204,170,currentLine_median
+2025-05-13,New York Mets,Pittsburgh Pirates,-255,202,currentLine_median
+2025-05-13,San Diego Padres,Los Angeles Angels,-186,146,currentLine_median
+2025-05-13,San Francisco Giants,Arizona Diamondbacks,-104,-115,currentLine_median
+2025-05-13,Seattle Mariners,New York Yankees,123,-158,currentLine_median
+2025-05-13,Texas Rangers,Colorado Rockies,-236,194,currentLine_median
+2025-05-13,Toronto Blue Jays,Tampa Bay Rays,-136,116,currentLine_median
+2025-05-14,Atlanta Braves,Washington Nationals,-188,158,currentLine_median
+2025-05-14,Baltimore Orioles,Minnesota Twins,-147,121,currentLine_median
+2025-05-14,Chicago Cubs,Miami Marlins,-219,180,currentLine_median
+2025-05-14,Cincinnati Reds,Chicago White Sox,-200,165,currentLine_median
+2025-05-14,Cleveland Guardians,Milwaukee Brewers,-127,103,currentLine_median
+2025-05-14,Detroit Tigers,Boston Red Sox,-247,205,currentLine_median
+2025-05-14,Houston Astros,Kansas City Royals,-125,105,currentLine_median
+2025-05-14,Los Angeles Dodgers,Athletics,-299,240,currentLine_median
+2025-05-14,New York Mets,Pittsburgh Pirates,-272,221,currentLine_median
+2025-05-14,Philadelphia Phillies,St. Louis Cardinals,-125,103,currentLine_median
+2025-05-14,San Diego Padres,Los Angeles Angels,-189,156,currentLine_median
+2025-05-14,San Francisco Giants,Arizona Diamondbacks,-105,-115,currentLine_median
+2025-05-14,Seattle Mariners,New York Yankees,-106,-116,currentLine_median
+2025-05-14,Texas Rangers,Colorado Rockies,-239,195,currentLine_median
+2025-05-14,Toronto Blue Jays,Tampa Bay Rays,-160,135,currentLine_median
+2025-05-15,Atlanta Braves,Washington Nationals,-202,170,currentLine_median
+2025-05-15,Baltimore Orioles,Minnesota Twins,-135,114,currentLine_median
+2025-05-15,Cincinnati Reds,Chicago White Sox,-256,200,currentLine_median
+2025-05-15,Los Angeles Dodgers,Athletics,-270,205,currentLine_median
+2025-05-15,Texas Rangers,Houston Astros,-135,115,currentLine_median
+2025-05-15,Toronto Blue Jays,Tampa Bay Rays,-171,144,currentLine_median
+2025-05-16,Arizona Diamondbacks,Colorado Rockies,-412,300,currentLine_median
+2025-05-16,Baltimore Orioles,Washington Nationals,-125,105,currentLine_median
+2025-05-16,Boston Red Sox,Atlanta Braves,-115,-105,currentLine_median
+2025-05-16,Chicago Cubs,Chicago White Sox,-234,192,currentLine_median
+2025-05-16,Kansas City Royals,St. Louis Cardinals,-155,130,currentLine_median
+2025-05-16,Los Angeles Dodgers,Los Angeles Angels,-330,260,currentLine_median
+2025-05-16,Milwaukee Brewers,Minnesota Twins,-105,-120,currentLine_median
+2025-05-16,New York Yankees,New York Mets,-148,124,currentLine_median
+2025-05-16,Philadelphia Phillies,Pittsburgh Pirates,-247,200,currentLine_median
+2025-05-16,San Diego Padres,Seattle Mariners,-177,143,currentLine_median
+2025-05-16,San Francisco Giants,Athletics,-198,164,currentLine_median
+2025-05-16,Texas Rangers,Houston Astros,-197,165,currentLine_median
+2025-05-16,Toronto Blue Jays,Detroit Tigers,100,-120,currentLine_median
+2025-05-17,Arizona Diamondbacks,Colorado Rockies,-330,245,currentLine_median
+2025-05-17,Baltimore Orioles,Washington Nationals,-153,129,currentLine_median
+2025-05-17,Boston Red Sox,Atlanta Braves,-120,100,currentLine_median
+2025-05-17,Chicago Cubs,Chicago White Sox,-265,208,currentLine_median
+2025-05-17,Kansas City Royals,St. Louis Cardinals,-115,-105,currentLine_median
+2025-05-17,Los Angeles Dodgers,Los Angeles Angels,-239,195,currentLine_median
+2025-05-17,Miami Marlins,Tampa Bay Rays,121,-142,currentLine_median
+2025-05-17,Milwaukee Brewers,Minnesota Twins,102,-126,currentLine_median
+2025-05-17,New York Yankees,New York Mets,-135,114,currentLine_median
+2025-05-17,Philadelphia Phillies,Pittsburgh Pirates,-332,267,currentLine_median
+2025-05-17,San Diego Padres,Seattle Mariners,-193,157,currentLine_median
+2025-05-17,San Francisco Giants,Athletics,-164,140,currentLine_median
+2025-05-17,Toronto Blue Jays,Detroit Tigers,114,-135,currentLine_median
+2025-05-18,Arizona Diamondbacks,Colorado Rockies,-304,245,currentLine_median
+2025-05-18,Baltimore Orioles,Washington Nationals,-186,154,currentLine_median
+2025-05-18,Boston Red Sox,Atlanta Braves,105,-125,currentLine_median
+2025-05-18,Chicago Cubs,Chicago White Sox,-270,217,currentLine_median
+2025-05-18,Cincinnati Reds,Cleveland Guardians,-132,112,currentLine_median
+2025-05-18,Kansas City Royals,St. Louis Cardinals,-105,-115,currentLine_median
+2025-05-18,Los Angeles Dodgers,Los Angeles Angels,-240,196,currentLine_median
+2025-05-18,Miami Marlins,Tampa Bay Rays,138,-169,currentLine_median
+2025-05-18,Milwaukee Brewers,Minnesota Twins,-150,121,currentLine_median
+2025-05-18,New York Yankees,New York Mets,-174,138,currentLine_median
+2025-05-18,Philadelphia Phillies,Pittsburgh Pirates,-105,-114,currentLine_median
+2025-05-18,San Diego Padres,Seattle Mariners,-147,119,currentLine_median
+2025-05-18,San Francisco Giants,Athletics,-153,129,currentLine_median
+2025-05-18,Texas Rangers,Houston Astros,-105,-115,currentLine_median
+2025-05-18,Toronto Blue Jays,Detroit Tigers,-125,105,currentLine_median
+2025-05-19,Athletics,Los Angeles Angels,-135,115,currentLine_median
+2025-05-19,Boston Red Sox,New York Mets,105,-127,currentLine_median
+2025-05-19,Chicago White Sox,Seattle Mariners,153,-189,currentLine_median
+2025-05-19,Colorado Rockies,Philadelphia Phillies,202,-247,currentLine_median
+2025-05-19,Los Angeles Dodgers,Arizona Diamondbacks,-155,130,currentLine_median
+2025-05-19,Miami Marlins,Chicago Cubs,140,-168,currentLine_median
+2025-05-19,Pittsburgh Pirates,Cincinnati Reds,-102,-119,currentLine_median
+2025-05-19,San Francisco Giants,Kansas City Royals,-137,116,currentLine_median
+2025-05-19,St. Louis Cardinals,Detroit Tigers,-165,140,currentLine_median
+2025-05-19,Tampa Bay Rays,Houston Astros,-140,119,currentLine_median
+2025-05-20,Athletics,Los Angeles Angels,-170,144,currentLine_median
+2025-05-20,Boston Red Sox,New York Mets,115,-143,currentLine_median
+2025-05-20,Chicago White Sox,Seattle Mariners,150,-182,currentLine_median
+2025-05-20,Los Angeles Dodgers,Arizona Diamondbacks,-234,191,currentLine_median
+2025-05-20,Miami Marlins,Chicago Cubs,117,-146,currentLine_median
+2025-05-20,Milwaukee Brewers,Baltimore Orioles,-124,105,currentLine_median
+2025-05-20,New York Yankees,Texas Rangers,-217,180,currentLine_median
+2025-05-20,Pittsburgh Pirates,Cincinnati Reds,125,-149,currentLine_median
+2025-05-20,San Francisco Giants,Kansas City Royals,-135,115,currentLine_median
+2025-05-20,St. Louis Cardinals,Detroit Tigers,150,-179,currentLine_median
+2025-05-20,Tampa Bay Rays,Houston Astros,-137,112,currentLine_median
+2025-05-20,Toronto Blue Jays,San Diego Padres,-106,-115,currentLine_median
+2025-05-20,Washington Nationals,Atlanta Braves,141,-166,currentLine_median
+2025-05-21,Athletics,Los Angeles Angels,-155,130,currentLine_median
+2025-05-21,Boston Red Sox,New York Mets,-153,126,currentLine_median
+2025-05-21,Chicago White Sox,Seattle Mariners,125,-150,currentLine_median
+2025-05-21,Colorado Rockies,Philadelphia Phillies,170,-204,currentLine_median
+2025-05-21,Los Angeles Dodgers,Arizona Diamondbacks,-154,126,currentLine_median
+2025-05-21,Miami Marlins,Chicago Cubs,125,-152,currentLine_median
+2025-05-21,Milwaukee Brewers,Baltimore Orioles,-112,-107,currentLine_median
+2025-05-21,Minnesota Twins,Cleveland Guardians,-122,102,currentLine_median
+2025-05-21,New York Yankees,Texas Rangers,-115,-105,currentLine_median
+2025-05-21,Pittsburgh Pirates,Cincinnati Reds,109,-130,currentLine_median
+2025-05-21,San Francisco Giants,Kansas City Royals,-222,184,currentLine_median
+2025-05-21,St. Louis Cardinals,Detroit Tigers,-120,-105,currentLine_median
+2025-05-21,Tampa Bay Rays,Houston Astros,141,-168,currentLine_median
+2025-05-21,Toronto Blue Jays,San Diego Padres,-165,140,currentLine_median
+2025-05-22,Athletics,Los Angeles Angels,-141,113,currentLine_median
+2025-05-22,Colorado Rockies,Philadelphia Phillies,232,-287,currentLine_median
+2025-05-22,Detroit Tigers,Cleveland Guardians,-127,108,currentLine_median
+2025-05-22,Houston Astros,Seattle Mariners,110,-130,currentLine_median
+2025-05-22,New York Yankees,Texas Rangers,-160,133,currentLine_median
+2025-05-22,Pittsburgh Pirates,Milwaukee Brewers,-105,-117,currentLine_median
+2025-05-22,Toronto Blue Jays,San Diego Padres,100,-120,currentLine_median
+2025-05-22,Washington Nationals,Atlanta Braves,130,-155,currentLine_median
+2025-05-23,Athletics,Philadelphia Phillies,187,-231,currentLine_median
+2025-05-23,Atlanta Braves,San Diego Padres,-182,150,currentLine_median
+2025-05-23,Boston Red Sox,Baltimore Orioles,-122,100,currentLine_median
+2025-05-23,Chicago White Sox,Texas Rangers,157,-189,currentLine_median
+2025-05-23,Cincinnati Reds,Chicago Cubs,-106,-116,currentLine_median
+2025-05-23,Colorado Rockies,New York Yankees,245,-304,currentLine_median
+2025-05-23,Detroit Tigers,Cleveland Guardians,-117,-102,currentLine_median
+2025-05-23,Houston Astros,Seattle Mariners,-119,100,currentLine_median
+2025-05-23,Los Angeles Angels,Miami Marlins,-158,134,currentLine_median
+2025-05-23,Minnesota Twins,Kansas City Royals,-174,134,currentLine_median
+2025-05-23,Pittsburgh Pirates,Milwaukee Brewers,-126,105,currentLine_median
+2025-05-23,St. Louis Cardinals,Arizona Diamondbacks,-104,-115,currentLine_median
+2025-05-23,Tampa Bay Rays,Toronto Blue Jays,-140,119,currentLine_median
+2025-05-23,Washington Nationals,San Francisco Giants,-115,-103,currentLine_median
+2025-05-24,Athletics,Philadelphia Phillies,142,-168,currentLine_median
+2025-05-24,Atlanta Braves,San Diego Padres,-155,130,currentLine_median
+2025-05-24,Boston Red Sox,Baltimore Orioles,-132,108,currentLine_median
+2025-05-24,Chicago White Sox,Texas Rangers,138,-163,currentLine_median
+2025-05-24,Cincinnati Reds,Chicago Cubs,-105,-115,currentLine_median
+2025-05-24,Colorado Rockies,New York Yankees,282,-385,currentLine_median
+2025-05-24,Detroit Tigers,Cleveland Guardians,-156,125,currentLine_median
+2025-05-24,Houston Astros,Seattle Mariners,-105,-111,currentLine_median
+2025-05-24,Los Angeles Angels,Miami Marlins,-212,170,currentLine_median
+2025-05-24,Minnesota Twins,Kansas City Royals,-125,105,currentLine_median
+2025-05-24,New York Mets,Los Angeles Dodgers,-117,-104,currentLine_median
+2025-05-24,Pittsburgh Pirates,Milwaukee Brewers,-110,-112,currentLine_median
+2025-05-24,St. Louis Cardinals,Arizona Diamondbacks,-120,100,currentLine_median
+2025-05-24,Tampa Bay Rays,Toronto Blue Jays,-116,-107,currentLine_median
+2025-05-24,Washington Nationals,San Francisco Giants,135,-159,currentLine_median
+2025-05-25,Athletics,Philadelphia Phillies,171,-202,currentLine_median
+2025-05-25,Atlanta Braves,San Diego Padres,-151,126,currentLine_median
+2025-05-25,Boston Red Sox,Baltimore Orioles,-130,110,currentLine_median
+2025-05-25,Chicago White Sox,Texas Rangers,100,-119,currentLine_median
+2025-05-25,Cincinnati Reds,Chicago Cubs,108,-133,currentLine_median
+2025-05-25,Colorado Rockies,New York Yankees,235,-299,currentLine_median
+2025-05-25,Detroit Tigers,Cleveland Guardians,-322,260,currentLine_median
+2025-05-25,Houston Astros,Seattle Mariners,121,-146,currentLine_median
+2025-05-25,Los Angeles Angels,Miami Marlins,-113,-107,currentLine_median
+2025-05-25,Minnesota Twins,Kansas City Royals,-129,101,currentLine_median
+2025-05-25,New York Mets,Los Angeles Dodgers,-118,-105,currentLine_median
+2025-05-25,Pittsburgh Pirates,Milwaukee Brewers,130,-157,currentLine_median
+2025-05-25,St. Louis Cardinals,Arizona Diamondbacks,-133,109,currentLine_median
+2025-05-25,Tampa Bay Rays,Toronto Blue Jays,-115,-110,currentLine_median
+2025-05-25,Washington Nationals,San Francisco Giants,124,-148,currentLine_median
+2025-05-26,Arizona Diamondbacks,Pittsburgh Pirates,-197,163,currentLine_median
+2025-05-26,Baltimore Orioles,St. Louis Cardinals,-102,-117,currentLine_median
+2025-05-26,Chicago Cubs,Colorado Rockies,-347,272,currentLine_median
+2025-05-26,Cleveland Guardians,Los Angeles Dodgers,177,-227,currentLine_median
+2025-05-26,Detroit Tigers,San Francisco Giants,-119,-107,currentLine_median
+2025-05-26,Kansas City Royals,Cincinnati Reds,-116,-105,currentLine_median
+2025-05-26,Los Angeles Angels,New York Yankees,162,-195,currentLine_median
+2025-05-26,Milwaukee Brewers,Boston Red Sox,141,-166,currentLine_median
+2025-05-26,New York Mets,Chicago White Sox,-282,230,currentLine_median
+2025-05-26,San Diego Padres,Miami Marlins,-154,128,currentLine_median
+2025-05-26,Tampa Bay Rays,Minnesota Twins,-120,-104,currentLine_median
+2025-05-26,Texas Rangers,Toronto Blue Jays,-136,115,currentLine_median
+2025-05-27,Arizona Diamondbacks,Pittsburgh Pirates,-304,231,currentLine_median
+2025-05-27,Baltimore Orioles,St. Louis Cardinals,105,-125,currentLine_median
+2025-05-27,Chicago Cubs,Colorado Rockies,-335,267,currentLine_median
+2025-05-27,Cleveland Guardians,Los Angeles Dodgers,104,-132,currentLine_median
+2025-05-27,Houston Astros,Athletics,-242,199,currentLine_median
+2025-05-27,Kansas City Royals,Cincinnati Reds,-123,104,currentLine_median
+2025-05-27,Los Angeles Angels,New York Yankees,180,-216,currentLine_median
+2025-05-27,Milwaukee Brewers,Boston Red Sox,-110,-108,currentLine_median
+2025-05-27,New York Mets,Chicago White Sox,-288,235,currentLine_median
+2025-05-27,Philadelphia Phillies,Atlanta Braves,-110,-111,currentLine_median
+2025-05-27,San Diego Padres,Miami Marlins,-162,127,currentLine_median
+2025-05-27,Seattle Mariners,Washington Nationals,-171,137,currentLine_median
+2025-05-27,Tampa Bay Rays,Minnesota Twins,103,-123,currentLine_median
+2025-05-27,Texas Rangers,Toronto Blue Jays,-148,123,currentLine_median
+2025-05-28,Arizona Diamondbacks,Pittsburgh Pirates,-135,114,currentLine_median
+2025-05-28,Baltimore Orioles,St. Louis Cardinals,-115,-110,currentLine_median
+2025-05-28,Chicago Cubs,Colorado Rockies,-387,285,currentLine_median
+2025-05-28,Cleveland Guardians,Los Angeles Dodgers,145,-174,currentLine_median
+2025-05-28,Detroit Tigers,San Francisco Giants,-115,-105,currentLine_median
+2025-05-28,Houston Astros,Athletics,-151,121,currentLine_median
+2025-05-28,Kansas City Royals,Cincinnati Reds,100,-120,currentLine_median
+2025-05-28,Los Angeles Angels,New York Yankees,140,-166,currentLine_median
+2025-05-28,Milwaukee Brewers,Boston Red Sox,-152,125,currentLine_median
+2025-05-28,New York Mets,Chicago White Sox,-250,202,currentLine_median
+2025-05-28,San Diego Padres,Miami Marlins,-161,135,currentLine_median
+2025-05-28,Seattle Mariners,Washington Nationals,-240,183,currentLine_median
+2025-05-28,Tampa Bay Rays,Minnesota Twins,-130,107,currentLine_median
+2025-05-28,Texas Rangers,Toronto Blue Jays,-138,115,currentLine_median
+2025-05-29,Houston Astros,Tampa Bay Rays,-115,-105,currentLine_median
+2025-05-29,Philadelphia Phillies,Atlanta Braves,101,-128,currentLine_median
+2025-05-29,Seattle Mariners,Washington Nationals,-126,100,currentLine_median
+2025-05-29,Toronto Blue Jays,Athletics,-164,138,currentLine_median
+2025-05-30,Arizona Diamondbacks,Washington Nationals,-233,185,currentLine_median
+2025-05-30,Atlanta Braves,Boston Red Sox,-174,140,currentLine_median
+2025-05-30,Baltimore Orioles,Chicago White Sox,-221,178,currentLine_median
+2025-05-30,Chicago Cubs,Cincinnati Reds,-163,138,currentLine_median
+2025-05-30,Cleveland Guardians,Los Angeles Angels,-150,122,currentLine_median
+2025-05-30,Houston Astros,Tampa Bay Rays,-154,130,currentLine_median
+2025-05-30,Kansas City Royals,Detroit Tigers,100,-120,currentLine_median
+2025-05-30,Los Angeles Dodgers,New York Yankees,117,-137,currentLine_median
+2025-05-30,Miami Marlins,San Francisco Giants,134,-163,currentLine_median
+2025-05-30,New York Mets,Colorado Rockies,-373,270,currentLine_median
+2025-05-30,Philadelphia Phillies,Milwaukee Brewers,-120,100,currentLine_median
+2025-05-30,San Diego Padres,Pittsburgh Pirates,-200,161,currentLine_median
+2025-05-30,Seattle Mariners,Minnesota Twins,-163,128,currentLine_median
+2025-05-30,Texas Rangers,St. Louis Cardinals,109,-130,currentLine_median
+2025-05-30,Toronto Blue Jays,Athletics,-184,154,currentLine_median
+2025-05-31,Arizona Diamondbacks,Washington Nationals,-188,150,currentLine_median
+2025-05-31,Atlanta Braves,Boston Red Sox,-194,155,currentLine_median
+2025-05-31,Baltimore Orioles,Chicago White Sox,-177,141,currentLine_median
+2025-05-31,Chicago Cubs,Cincinnati Reds,-187,151,currentLine_median
+2025-05-31,Cleveland Guardians,Los Angeles Angels,-180,144,currentLine_median
+2025-05-31,Houston Astros,Tampa Bay Rays,-138,111,currentLine_median
+2025-05-31,Kansas City Royals,Detroit Tigers,160,-191,currentLine_median
+2025-05-31,Los Angeles Dodgers,New York Yankees,102,-127,currentLine_median
+2025-05-31,Miami Marlins,San Francisco Giants,122,-150,currentLine_median
+2025-05-31,New York Mets,Colorado Rockies,-367,285,currentLine_median
+2025-05-31,Philadelphia Phillies,Milwaukee Brewers,-180,150,currentLine_median
+2025-05-31,San Diego Padres,Pittsburgh Pirates,-222,182,currentLine_median
+2025-05-31,Seattle Mariners,Minnesota Twins,-112,-110,currentLine_median
+2025-05-31,Texas Rangers,St. Louis Cardinals,126,-151,currentLine_median
+2025-05-31,Toronto Blue Jays,Athletics,-150,123,currentLine_median
+2025-06-01,Arizona Diamondbacks,Washington Nationals,-236,185,currentLine_median
+2025-06-01,Atlanta Braves,Boston Red Sox,100,-122,currentLine_median
+2025-06-01,Baltimore Orioles,Chicago White Sox,-147,119,currentLine_median
+2025-06-01,Chicago Cubs,Cincinnati Reds,-175,135,currentLine_median
+2025-06-01,Cleveland Guardians,Los Angeles Angels,-210,172,currentLine_median
+2025-06-01,Houston Astros,Tampa Bay Rays,-172,140,currentLine_median
+2025-06-01,Kansas City Royals,Detroit Tigers,-166,137,currentLine_median
+2025-06-01,Los Angeles Dodgers,New York Yankees,-178,150,currentLine_median
+2025-06-01,New York Mets,Colorado Rockies,-422,326,currentLine_median
+2025-06-01,Philadelphia Phillies,Milwaukee Brewers,-170,138,currentLine_median
+2025-06-01,San Diego Padres,Pittsburgh Pirates,-156,124,currentLine_median
+2025-06-01,Seattle Mariners,Minnesota Twins,-140,115,currentLine_median
+2025-06-01,Texas Rangers,St. Louis Cardinals,-165,137,currentLine_median
+2025-06-01,Toronto Blue Jays,Athletics,-250,194,currentLine_median
+2025-06-02,Athletics,Minnesota Twins,137,-165,currentLine_median
+2025-06-02,Boston Red Sox,Los Angeles Angels,-149,125,currentLine_median
+2025-06-02,Chicago White Sox,Detroit Tigers,202,-260,currentLine_median
+2025-06-02,Cincinnati Reds,Milwaukee Brewers,-117,-108,currentLine_median
+2025-06-02,Los Angeles Dodgers,New York Mets,-160,135,currentLine_median
+2025-06-02,Miami Marlins,Colorado Rockies,-207,172,currentLine_median
+2025-06-02,San Francisco Giants,San Diego Padres,-185,147,currentLine_median
+2025-06-03,Athletics,Minnesota Twins,175,-210,currentLine_median
+2025-06-03,Atlanta Braves,Arizona Diamondbacks,-168,137,currentLine_median
+2025-06-03,Boston Red Sox,Los Angeles Angels,-147,123,currentLine_median
+2025-06-03,Chicago White Sox,Detroit Tigers,118,-149,currentLine_median
+2025-06-03,Los Angeles Dodgers,New York Mets,-146,123,currentLine_median
+2025-06-03,Miami Marlins,Colorado Rockies,-180,145,currentLine_median
+2025-06-03,New York Yankees,Cleveland Guardians,-204,171,currentLine_median
+2025-06-03,Pittsburgh Pirates,Houston Astros,-197,157,currentLine_median
+2025-06-03,San Francisco Giants,San Diego Padres,-160,135,currentLine_median
+2025-06-03,Seattle Mariners,Baltimore Orioles,-152,123,currentLine_median
+2025-06-03,St. Louis Cardinals,Kansas City Royals,-154,120,currentLine_median
+2025-06-03,Tampa Bay Rays,Texas Rangers,-152,122,currentLine_median
+2025-06-03,Toronto Blue Jays,Philadelphia Phillies,115,-135,currentLine_median
+2025-06-03,Washington Nationals,Chicago Cubs,120,-142,currentLine_median
+2025-06-04,Athletics,Minnesota Twins,149,-177,currentLine_median
+2025-06-04,Atlanta Braves,Arizona Diamondbacks,-177,145,currentLine_median
+2025-06-04,Chicago White Sox,Detroit Tigers,166,-200,currentLine_median
+2025-06-04,Cincinnati Reds,Milwaukee Brewers,-137,110,currentLine_median
+2025-06-04,Los Angeles Dodgers,New York Mets,-144,115,currentLine_median
+2025-06-04,Miami Marlins,Colorado Rockies,-168,132,currentLine_median
+2025-06-04,New York Yankees,Cleveland Guardians,-196,163,currentLine_median
+2025-06-04,Pittsburgh Pirates,Houston Astros,110,-132,currentLine_median
+2025-06-04,San Francisco Giants,San Diego Padres,-104,-115,currentLine_median
+2025-06-04,Seattle Mariners,Baltimore Orioles,-117,-110,currentLine_median
+2025-06-04,Tampa Bay Rays,Texas Rangers,-130,110,currentLine_median
+2025-06-04,Toronto Blue Jays,Philadelphia Phillies,-110,-110,currentLine_median
+2025-06-04,Washington Nationals,Chicago Cubs,120,-140,currentLine_median
+2025-06-05,Athletics,Minnesota Twins,165,-200,currentLine_median
+2025-06-05,Atlanta Braves,Arizona Diamondbacks,-163,136,currentLine_median
+2025-06-05,Chicago White Sox,Detroit Tigers,164,-209,currentLine_median
+2025-06-05,Los Angeles Dodgers,New York Mets,-130,110,currentLine_median
+2025-06-05,New York Yankees,Cleveland Guardians,-275,225,currentLine_median
+2025-06-05,Pittsburgh Pirates,Houston Astros,121,-142,currentLine_median
+2025-06-05,San Francisco Giants,San Diego Padres,-120,-105,currentLine_median
+2025-06-05,Seattle Mariners,Baltimore Orioles,-155,130,currentLine_median
+2025-06-05,St. Louis Cardinals,Kansas City Royals,-110,-108,currentLine_median
+2025-06-05,Tampa Bay Rays,Texas Rangers,-140,120,currentLine_median
+2025-06-05,Toronto Blue Jays,Philadelphia Phillies,-105,-115,currentLine_median
+2025-06-05,Washington Nationals,Chicago Cubs,126,-150,currentLine_median
+2025-06-06,Athletics,Baltimore Orioles,100,-124,currentLine_median
+2025-06-06,Chicago White Sox,Kansas City Royals,115,-135,currentLine_median
+2025-06-06,Cleveland Guardians,Houston Astros,112,-138,currentLine_median
+2025-06-06,Colorado Rockies,New York Mets,222,-294,currentLine_median
+2025-06-06,Detroit Tigers,Chicago Cubs,-202,166,currentLine_median
+2025-06-06,Los Angeles Angels,Seattle Mariners,108,-128,currentLine_median
+2025-06-06,Milwaukee Brewers,San Diego Padres,-152,125,currentLine_median
+2025-06-06,Minnesota Twins,Toronto Blue Jays,-131,110,currentLine_median
+2025-06-06,New York Yankees,Boston Red Sox,-199,163,currentLine_median
+2025-06-06,Pittsburgh Pirates,Philadelphia Phillies,110,-131,currentLine_median
+2025-06-06,Tampa Bay Rays,Miami Marlins,-157,124,currentLine_median
+2025-06-06,Washington Nationals,Texas Rangers,-105,-115,currentLine_median
+2025-06-07,Athletics,Baltimore Orioles,108,-136,currentLine_median
+2025-06-07,Chicago White Sox,Kansas City Royals,117,-139,currentLine_median
+2025-06-07,Cincinnati Reds,Arizona Diamondbacks,-110,-112,currentLine_median
+2025-06-07,Cleveland Guardians,Houston Astros,-107,-115,currentLine_median
+2025-06-07,Colorado Rockies,New York Mets,234,-294,currentLine_median
+2025-06-07,Detroit Tigers,Chicago Cubs,-110,-114,currentLine_median
+2025-06-07,Los Angeles Angels,Seattle Mariners,140,-168,currentLine_median
+2025-06-07,Milwaukee Brewers,San Diego Padres,-145,120,currentLine_median
+2025-06-07,Minnesota Twins,Toronto Blue Jays,-119,100,currentLine_median
+2025-06-07,New York Yankees,Boston Red Sox,-115,-109,currentLine_median
+2025-06-07,Pittsburgh Pirates,Philadelphia Phillies,117,-140,currentLine_median
+2025-06-07,San Francisco Giants,Atlanta Braves,-140,119,currentLine_median
+2025-06-07,St. Louis Cardinals,Los Angeles Dodgers,151,-193,currentLine_median
+2025-06-07,Tampa Bay Rays,Miami Marlins,-160,135,currentLine_median
+2025-06-07,Washington Nationals,Texas Rangers,140,-165,currentLine_median
+2025-06-08,Athletics,Baltimore Orioles,105,-132,currentLine_median
+2025-06-08,Cleveland Guardians,Houston Astros,-145,119,currentLine_median
+2025-06-08,Colorado Rockies,New York Mets,225,-280,currentLine_median
+2025-06-08,Detroit Tigers,Chicago Cubs,-120,100,currentLine_median
+2025-06-08,Los Angeles Angels,Seattle Mariners,110,-130,currentLine_median
+2025-06-08,Milwaukee Brewers,San Diego Padres,-180,142,currentLine_median
+2025-06-08,Minnesota Twins,Toronto Blue Jays,-188,156,currentLine_median
+2025-06-08,New York Yankees,Boston Red Sox,-247,197,currentLine_median
+2025-06-08,Pittsburgh Pirates,Philadelphia Phillies,-120,100,currentLine_median
+2025-06-08,San Francisco Giants,Atlanta Braves,109,-131,currentLine_median
+2025-06-08,St. Louis Cardinals,Los Angeles Dodgers,115,-138,currentLine_median
+2025-06-08,Tampa Bay Rays,Miami Marlins,-227,175,currentLine_median
+2025-06-09,Arizona Diamondbacks,Seattle Mariners,-167,140,currentLine_median
+2025-06-09,Boston Red Sox,Tampa Bay Rays,-110,-109,currentLine_median
+2025-06-09,Cleveland Guardians,Cincinnati Reds,-160,135,currentLine_median
+2025-06-09,Los Angeles Angels,Athletics,-141,118,currentLine_median
+2025-06-09,Milwaukee Brewers,Atlanta Braves,144,-177,currentLine_median
+2025-06-09,Philadelphia Phillies,Chicago Cubs,-133,106,currentLine_median
+2025-06-09,Pittsburgh Pirates,Miami Marlins,-125,100,currentLine_median
+2025-06-09,San Diego Padres,Los Angeles Dodgers,102,-130,currentLine_median
+2025-06-09,St. Louis Cardinals,Toronto Blue Jays,-126,105,currentLine_median
+2025-06-10,Arizona Diamondbacks,Seattle Mariners,-146,118,currentLine_median
+2025-06-10,Baltimore Orioles,Detroit Tigers,-145,115,currentLine_median
+2025-06-10,Boston Red Sox,Tampa Bay Rays,-115,-110,currentLine_median
+2025-06-10,Cleveland Guardians,Cincinnati Reds,-115,-110,currentLine_median
+2025-06-10,Colorado Rockies,San Francisco Giants,170,-206,currentLine_median
+2025-06-10,Houston Astros,Chicago White Sox,-174,145,currentLine_median
+2025-06-10,Kansas City Royals,New York Yankees,157,-197,currentLine_median
+2025-06-10,Los Angeles Angels,Athletics,-164,139,currentLine_median
+2025-06-10,Minnesota Twins,Texas Rangers,-127,103,currentLine_median
+2025-06-10,New York Mets,Washington Nationals,-150,123,currentLine_median
+2025-06-10,Philadelphia Phillies,Chicago Cubs,-111,-113,currentLine_median
+2025-06-10,Pittsburgh Pirates,Miami Marlins,-175,139,currentLine_median
+2025-06-10,San Diego Padres,Los Angeles Dodgers,-116,-108,currentLine_median
+2025-06-11,Arizona Diamondbacks,Seattle Mariners,-120,-104,currentLine_median
+2025-06-11,Baltimore Orioles,Detroit Tigers,-137,114,currentLine_median
+2025-06-11,Boston Red Sox,Tampa Bay Rays,-134,107,currentLine_median
+2025-06-11,Cleveland Guardians,Cincinnati Reds,101,-121,currentLine_median
+2025-06-11,Colorado Rockies,San Francisco Giants,162,-196,currentLine_median
+2025-06-11,Houston Astros,Chicago White Sox,-177,144,currentLine_median
+2025-06-11,Kansas City Royals,New York Yankees,105,-129,currentLine_median
+2025-06-11,Los Angeles Angels,Athletics,-155,130,currentLine_median
+2025-06-11,Milwaukee Brewers,Atlanta Braves,151,-189,currentLine_median
+2025-06-11,Minnesota Twins,Texas Rangers,-151,126,currentLine_median
+2025-06-11,New York Mets,Washington Nationals,-288,231,currentLine_median
+2025-06-11,Philadelphia Phillies,Chicago Cubs,-115,-113,currentLine_median
+2025-06-11,Pittsburgh Pirates,Miami Marlins,-174,140,currentLine_median
+2025-06-11,San Diego Padres,Los Angeles Dodgers,123,-152,currentLine_median
+2025-06-11,St. Louis Cardinals,Toronto Blue Jays,-145,115,currentLine_median
+2025-06-12,Baltimore Orioles,Detroit Tigers,166,-204,currentLine_median
+2025-06-12,Chicago Cubs,Pittsburgh Pirates,-207,167,currentLine_median
+2025-06-12,Colorado Rockies,San Francisco Giants,170,-205,currentLine_median
+2025-06-12,Houston Astros,Chicago White Sox,-279,221,currentLine_median
+2025-06-12,Kansas City Royals,New York Yankees,107,-130,currentLine_median
+2025-06-12,Milwaukee Brewers,St. Louis Cardinals,112,-133,currentLine_median
+2025-06-12,New York Mets,Washington Nationals,-216,181,currentLine_median
+2025-06-13,Atlanta Braves,Colorado Rockies,-377,297,currentLine_median
+2025-06-13,Baltimore Orioles,Los Angeles Angels,-189,158,currentLine_median
+2025-06-13,Boston Red Sox,New York Yankees,-154,124,currentLine_median
+2025-06-13,Chicago Cubs,Pittsburgh Pirates,-115,-103,currentLine_median
+2025-06-13,Detroit Tigers,Cincinnati Reds,-136,114,currentLine_median
+2025-06-13,Houston Astros,Minnesota Twins,-102,-116,currentLine_median
+2025-06-13,Kansas City Royals,Athletics,-165,139,currentLine_median
+2025-06-13,Los Angeles Dodgers,San Francisco Giants,-198,161,currentLine_median
+2025-06-13,Milwaukee Brewers,St. Louis Cardinals,-163,137,currentLine_median
+2025-06-13,New York Mets,Tampa Bay Rays,-171,141,currentLine_median
+2025-06-13,Seattle Mariners,Cleveland Guardians,-114,-105,currentLine_median
+2025-06-13,Texas Rangers,Chicago White Sox,-173,142,currentLine_median
+2025-06-13,Washington Nationals,Miami Marlins,-110,-109,currentLine_median
+2025-06-14,Arizona Diamondbacks,San Diego Padres,-168,143,currentLine_median
+2025-06-14,Atlanta Braves,Colorado Rockies,-353,277,currentLine_median
+2025-06-14,Baltimore Orioles,Los Angeles Angels,-156,127,currentLine_median
+2025-06-14,Boston Red Sox,New York Yankees,144,-173,currentLine_median
+2025-06-14,Chicago Cubs,Pittsburgh Pirates,-237,194,currentLine_median
+2025-06-14,Detroit Tigers,Cincinnati Reds,-188,158,currentLine_median
+2025-06-14,Houston Astros,Minnesota Twins,-117,-110,currentLine_median
+2025-06-14,Kansas City Royals,Athletics,-164,134,currentLine_median
+2025-06-14,Los Angeles Dodgers,San Francisco Giants,-186,150,currentLine_median
+2025-06-14,New York Mets,Tampa Bay Rays,-149,123,currentLine_median
+2025-06-14,Philadelphia Phillies,Toronto Blue Jays,-163,135,currentLine_median
+2025-06-14,Seattle Mariners,Cleveland Guardians,-149,120,currentLine_median
+2025-06-14,Texas Rangers,Chicago White Sox,-310,250,currentLine_median
+2025-06-14,Washington Nationals,Miami Marlins,-130,109,currentLine_median
+2025-06-15,Arizona Diamondbacks,San Diego Padres,-136,115,currentLine_median
+2025-06-15,Atlanta Braves,Colorado Rockies,-353,276,currentLine_median
+2025-06-15,Baltimore Orioles,Los Angeles Angels,-111,-108,currentLine_median
+2025-06-15,Boston Red Sox,New York Yankees,154,-184,currentLine_median
+2025-06-15,Chicago Cubs,Pittsburgh Pirates,-150,125,currentLine_median
+2025-06-15,Detroit Tigers,Cincinnati Reds,-186,154,currentLine_median
+2025-06-15,Houston Astros,Minnesota Twins,-121,-103,currentLine_median
+2025-06-15,Kansas City Royals,Athletics,-151,125,currentLine_median
+2025-06-15,Los Angeles Dodgers,San Francisco Giants,-190,158,currentLine_median
+2025-06-15,Milwaukee Brewers,St. Louis Cardinals,-141,117,currentLine_median
+2025-06-15,New York Mets,Tampa Bay Rays,-155,130,currentLine_median
+2025-06-15,Philadelphia Phillies,Toronto Blue Jays,-183,146,currentLine_median
+2025-06-15,Seattle Mariners,Cleveland Guardians,-127,101,currentLine_median
+2025-06-15,Texas Rangers,Chicago White Sox,-164,135,currentLine_median
+2025-06-15,Washington Nationals,Miami Marlins,-166,137,currentLine_median
+2025-06-16,Los Angeles Dodgers,San Diego Padres,-178,146,currentLine_median
+2025-06-16,Miami Marlins,Philadelphia Phillies,-105,-114,currentLine_median
+2025-06-16,New York Yankees,Los Angeles Angels,-202,165,currentLine_median
+2025-06-16,Seattle Mariners,Boston Red Sox,-177,146,currentLine_median
+2025-06-16,Washington Nationals,Colorado Rockies,-169,141,currentLine_median
+2025-06-17,Athletics,Houston Astros,106,-127,currentLine_median
+2025-06-17,Atlanta Braves,New York Mets,-141,120,currentLine_median
+2025-06-17,Chicago Cubs,Milwaukee Brewers,-158,132,currentLine_median
+2025-06-17,Chicago White Sox,St. Louis Cardinals,112,-133,currentLine_median
+2025-06-17,Cincinnati Reds,Minnesota Twins,-140,110,currentLine_median
+2025-06-17,Detroit Tigers,Pittsburgh Pirates,-206,168,currentLine_median
+2025-06-17,Los Angeles Dodgers,San Diego Padres,-221,180,currentLine_median
+2025-06-17,Miami Marlins,Philadelphia Phillies,145,-175,currentLine_median
+2025-06-17,New York Yankees,Los Angeles Angels,-250,199,currentLine_median
+2025-06-17,San Francisco Giants,Cleveland Guardians,-150,125,currentLine_median
+2025-06-17,Seattle Mariners,Boston Red Sox,-160,133,currentLine_median
+2025-06-17,Tampa Bay Rays,Baltimore Orioles,-109,-110,currentLine_median
+2025-06-17,Texas Rangers,Kansas City Royals,-126,105,currentLine_median
+2025-06-17,Toronto Blue Jays,Arizona Diamondbacks,-125,105,currentLine_median
+2025-06-17,Washington Nationals,Colorado Rockies,-195,162,currentLine_median
+2025-06-18,Athletics,Houston Astros,153,-185,currentLine_median
+2025-06-18,Atlanta Braves,New York Mets,-204,169,currentLine_median
+2025-06-18,Cincinnati Reds,Minnesota Twins,-125,105,currentLine_median
+2025-06-18,Los Angeles Dodgers,San Diego Padres,-202,167,currentLine_median
+2025-06-18,Miami Marlins,Philadelphia Phillies,153,-187,currentLine_median
+2025-06-18,New York Yankees,Los Angeles Angels,-268,211,currentLine_median
+2025-06-18,San Francisco Giants,Cleveland Guardians,-152,127,currentLine_median
+2025-06-18,Seattle Mariners,Boston Red Sox,105,-125,currentLine_median
+2025-06-18,Tampa Bay Rays,Baltimore Orioles,-120,100,currentLine_median
+2025-06-18,Texas Rangers,Kansas City Royals,111,-135,currentLine_median
+2025-06-18,Toronto Blue Jays,Arizona Diamondbacks,-111,-110,currentLine_median
+2025-06-18,Washington Nationals,Colorado Rockies,-155,131,currentLine_median
+2025-06-19,Athletics,Houston Astros,121,-144,currentLine_median
+2025-06-19,Atlanta Braves,New York Mets,-138,117,currentLine_median
+2025-06-19,Chicago Cubs,Milwaukee Brewers,-130,109,currentLine_median
+2025-06-19,Chicago White Sox,St. Louis Cardinals,140,-168,currentLine_median
+2025-06-19,Cincinnati Reds,Minnesota Twins,-111,-108,currentLine_median
+2025-06-19,Detroit Tigers,Pittsburgh Pirates,105,-125,currentLine_median
+2025-06-19,Los Angeles Dodgers,San Diego Padres,-270,217,currentLine_median
+2025-06-19,Miami Marlins,Philadelphia Phillies,109,-138,currentLine_median
+2025-06-19,New York Yankees,Los Angeles Angels,-297,235,currentLine_median
+2025-06-19,San Francisco Giants,Cleveland Guardians,-188,155,currentLine_median
+2025-06-19,Tampa Bay Rays,Baltimore Orioles,-141,120,currentLine_median
+2025-06-19,Texas Rangers,Kansas City Royals,-126,107,currentLine_median
+2025-06-19,Toronto Blue Jays,Arizona Diamondbacks,-166,140,currentLine_median
+2025-06-19,Washington Nationals,Colorado Rockies,-175,144,currentLine_median
+2025-06-20,Athletics,Cleveland Guardians,105,-125,currentLine_median
+2025-06-20,Chicago Cubs,Seattle Mariners,-144,120,currentLine_median
+2025-06-20,Colorado Rockies,Arizona Diamondbacks,152,-190,currentLine_median
+2025-06-20,Los Angeles Angels,Houston Astros,139,-174,currentLine_median
+2025-06-20,Los Angeles Dodgers,Washington Nationals,-191,157,currentLine_median
+2025-06-20,Miami Marlins,Atlanta Braves,128,-160,currentLine_median
+2025-06-20,Minnesota Twins,Milwaukee Brewers,-155,130,currentLine_median
+2025-06-20,New York Yankees,Baltimore Orioles,-332,260,currentLine_median
+2025-06-20,Philadelphia Phillies,New York Mets,-195,162,currentLine_median
+2025-06-20,Pittsburgh Pirates,Texas Rangers,157,-190,currentLine_median
+2025-06-20,San Diego Padres,Kansas City Royals,-172,140,currentLine_median
+2025-06-20,San Francisco Giants,Boston Red Sox,-131,110,currentLine_median
+2025-06-20,St. Louis Cardinals,Cincinnati Reds,-153,122,currentLine_median
+2025-06-20,Tampa Bay Rays,Detroit Tigers,-111,-107,currentLine_median
+2025-06-20,Toronto Blue Jays,Chicago White Sox,-202,166,currentLine_median
+2025-06-21,Athletics,Cleveland Guardians,114,-135,currentLine_median
+2025-06-21,Chicago Cubs,Seattle Mariners,-172,143,currentLine_median
+2025-06-21,Colorado Rockies,Arizona Diamondbacks,165,-200,currentLine_median
+2025-06-21,Los Angeles Angels,Houston Astros,-130,108,currentLine_median
+2025-06-21,Los Angeles Dodgers,Washington Nationals,-280,226,currentLine_median
+2025-06-21,Miami Marlins,Atlanta Braves,139,-165,currentLine_median
+2025-06-21,Minnesota Twins,Milwaukee Brewers,-135,114,currentLine_median
+2025-06-21,New York Yankees,Baltimore Orioles,-177,137,currentLine_median
+2025-06-21,Philadelphia Phillies,New York Mets,102,-128,currentLine_median
+2025-06-21,San Diego Padres,Kansas City Royals,-154,130,currentLine_median
+2025-06-21,San Francisco Giants,Boston Red Sox,-125,104,currentLine_median
+2025-06-21,St. Louis Cardinals,Cincinnati Reds,-200,164,currentLine_median
+2025-06-21,Tampa Bay Rays,Detroit Tigers,-140,116,currentLine_median
+2025-06-21,Toronto Blue Jays,Chicago White Sox,-221,169,currentLine_median
+2025-06-22,Athletics,Cleveland Guardians,-107,-113,currentLine_median
+2025-06-22,Chicago Cubs,Seattle Mariners,106,-125,currentLine_median
+2025-06-22,Colorado Rockies,Arizona Diamondbacks,147,-177,currentLine_median
+2025-06-22,Los Angeles Angels,Houston Astros,-109,-116,currentLine_median
+2025-06-22,Los Angeles Dodgers,Washington Nationals,-253,202,currentLine_median
+2025-06-22,Miami Marlins,Atlanta Braves,133,-158,currentLine_median
+2025-06-22,Minnesota Twins,Milwaukee Brewers,-136,115,currentLine_median
+2025-06-22,New York Yankees,Baltimore Orioles,-210,175,currentLine_median
+2025-06-22,Philadelphia Phillies,New York Mets,-124,100,currentLine_median
+2025-06-22,Pittsburgh Pirates,Texas Rangers,-117,-102,currentLine_median
+2025-06-22,San Diego Padres,Kansas City Royals,-126,100,currentLine_median
+2025-06-22,San Francisco Giants,Boston Red Sox,-164,136,currentLine_median
+2025-06-22,St. Louis Cardinals,Cincinnati Reds,-105,-114,currentLine_median
+2025-06-22,Tampa Bay Rays,Detroit Tigers,-110,-110,currentLine_median
+2025-06-22,Toronto Blue Jays,Chicago White Sox,-212,167,currentLine_median
+2025-06-23,Baltimore Orioles,Texas Rangers,-132,110,currentLine_median
+2025-06-23,Chicago White Sox,Arizona Diamondbacks,119,-143,currentLine_median
+2025-06-23,Cincinnati Reds,New York Yankees,105,-125,currentLine_median
+2025-06-23,Milwaukee Brewers,Pittsburgh Pirates,-166,139,currentLine_median
+2025-06-23,Minnesota Twins,Seattle Mariners,110,-132,currentLine_median
+2025-06-23,New York Mets,Atlanta Braves,132,-175,currentLine_median
+2025-06-23,San Diego Padres,Washington Nationals,-202,159,currentLine_median
+2025-06-23,St. Louis Cardinals,Chicago Cubs,101,-121,currentLine_median
+2025-06-24,Baltimore Orioles,Texas Rangers,-120,100,currentLine_median
+2025-06-24,Chicago White Sox,Arizona Diamondbacks,100,-120,currentLine_median
+2025-06-24,Cincinnati Reds,New York Yankees,138,-166,currentLine_median
+2025-06-24,Cleveland Guardians,Toronto Blue Jays,112,-134,currentLine_median
+2025-06-24,Colorado Rockies,Los Angeles Dodgers,200,-262,currentLine_median
+2025-06-24,Detroit Tigers,Athletics,-346,270,currentLine_median
+2025-06-24,Houston Astros,Philadelphia Phillies,-155,130,currentLine_median
+2025-06-24,Kansas City Royals,Tampa Bay Rays,-144,120,currentLine_median
+2025-06-24,Los Angeles Angels,Boston Red Sox,140,-167,currentLine_median
+2025-06-24,Milwaukee Brewers,Pittsburgh Pirates,-219,173,currentLine_median
+2025-06-24,Minnesota Twins,Seattle Mariners,-114,-110,currentLine_median
+2025-06-24,New York Mets,Atlanta Braves,115,-135,currentLine_median
+2025-06-24,San Diego Padres,Washington Nationals,-173,142,currentLine_median
+2025-06-24,San Francisco Giants,Miami Marlins,-206,160,currentLine_median
+2025-06-24,St. Louis Cardinals,Chicago Cubs,-108,-115,currentLine_median
+2025-06-25,Baltimore Orioles,Texas Rangers,123,-153,currentLine_median
+2025-06-25,Chicago White Sox,Arizona Diamondbacks,128,-153,currentLine_median
+2025-06-25,Cincinnati Reds,New York Yankees,175,-210,currentLine_median
+2025-06-25,Cleveland Guardians,Toronto Blue Jays,-122,102,currentLine_median
+2025-06-25,Colorado Rockies,Los Angeles Dodgers,260,-329,currentLine_median
+2025-06-25,Detroit Tigers,Athletics,-187,155,currentLine_median
+2025-06-25,Houston Astros,Philadelphia Phillies,130,-155,currentLine_median
+2025-06-25,Kansas City Royals,Tampa Bay Rays,110,-135,currentLine_median
+2025-06-25,Los Angeles Angels,Boston Red Sox,-130,108,currentLine_median
+2025-06-25,Minnesota Twins,Seattle Mariners,-120,100,currentLine_median
+2025-06-25,New York Mets,Atlanta Braves,-141,120,currentLine_median
+2025-06-25,San Diego Padres,Washington Nationals,-140,117,currentLine_median
+2025-06-25,San Francisco Giants,Miami Marlins,-230,187,currentLine_median
+2025-06-25,St. Louis Cardinals,Chicago Cubs,132,-158,currentLine_median
+2025-06-26,Cleveland Guardians,Toronto Blue Jays,-135,115,currentLine_median
+2025-06-26,Colorado Rockies,Los Angeles Dodgers,235,-294,currentLine_median
+2025-06-26,Detroit Tigers,Athletics,-154,130,currentLine_median
+2025-06-26,Houston Astros,Philadelphia Phillies,-159,127,currentLine_median
+2025-06-26,Kansas City Royals,Tampa Bay Rays,105,-124,currentLine_median
+2025-06-26,Minnesota Twins,Seattle Mariners,-135,115,currentLine_median
+2025-06-26,New York Mets,Atlanta Braves,-121,100,currentLine_median
+2025-06-26,San Francisco Giants,Miami Marlins,-189,150,currentLine_median
+2025-06-26,St. Louis Cardinals,Chicago Cubs,114,-135,currentLine_median
+2025-06-27,Arizona Diamondbacks,Miami Marlins,-200,157,currentLine_median
+2025-06-27,Atlanta Braves,Philadelphia Phillies,-183,149,currentLine_median
+2025-06-27,Baltimore Orioles,Tampa Bay Rays,106,-130,currentLine_median
+2025-06-27,Boston Red Sox,Toronto Blue Jays,-125,105,currentLine_median
+2025-06-27,Chicago White Sox,San Francisco Giants,134,-160,currentLine_median
+2025-06-27,Cincinnati Reds,San Diego Padres,110,-130,currentLine_median
+2025-06-27,Detroit Tigers,Minnesota Twins,-140,116,currentLine_median
+2025-06-27,Houston Astros,Chicago Cubs,-120,100,currentLine_median
+2025-06-27,Kansas City Royals,Los Angeles Dodgers,136,-164,currentLine_median
+2025-06-27,Los Angeles Angels,Washington Nationals,-169,139,currentLine_median
+2025-06-27,Milwaukee Brewers,Colorado Rockies,-230,175,currentLine_median
+2025-06-27,New York Yankees,Athletics,-270,217,currentLine_median
+2025-06-27,Pittsburgh Pirates,New York Mets,120,-141,currentLine_median
+2025-06-27,Texas Rangers,Seattle Mariners,-102,-119,currentLine_median
+2025-06-28,Arizona Diamondbacks,Miami Marlins,-164,139,currentLine_median
+2025-06-28,Atlanta Braves,Philadelphia Phillies,-179,143,currentLine_median
+2025-06-28,Baltimore Orioles,Tampa Bay Rays,-116,-103,currentLine_median
+2025-06-28,Chicago White Sox,San Francisco Giants,140,-166,currentLine_median
+2025-06-28,Cincinnati Reds,San Diego Padres,-155,131,currentLine_median
+2025-06-28,Cleveland Guardians,St. Louis Cardinals,-121,102,currentLine_median
+2025-06-28,Detroit Tigers,Minnesota Twins,-160,135,currentLine_median
+2025-06-28,Houston Astros,Chicago Cubs,-114,-105,currentLine_median
+2025-06-28,Kansas City Royals,Los Angeles Dodgers,135,-162,currentLine_median
+2025-06-28,Los Angeles Angels,Washington Nationals,-118,-104,currentLine_median
+2025-06-28,Milwaukee Brewers,Colorado Rockies,-326,245,currentLine_median
+2025-06-28,New York Yankees,Athletics,-316,240,currentLine_median
+2025-06-28,Pittsburgh Pirates,New York Mets,117,-144,currentLine_median
+2025-06-28,Texas Rangers,Seattle Mariners,105,-126,currentLine_median
+2025-06-29,Arizona Diamondbacks,Miami Marlins,-193,155,currentLine_median
+2025-06-29,Atlanta Braves,Philadelphia Phillies,-164,135,currentLine_median
+2025-06-29,Baltimore Orioles,Tampa Bay Rays,-117,-102,currentLine_median
+2025-06-29,Boston Red Sox,Toronto Blue Jays,-110,-110,currentLine_median
+2025-06-29,Chicago White Sox,San Francisco Giants,129,-157,currentLine_median
+2025-06-29,Cincinnati Reds,San Diego Padres,-138,113,currentLine_median
+2025-06-29,Cleveland Guardians,St. Louis Cardinals,-105,-113,currentLine_median
+2025-06-29,Detroit Tigers,Minnesota Twins,-304,240,currentLine_median
+2025-06-29,Houston Astros,Chicago Cubs,-143,115,currentLine_median
+2025-06-29,Kansas City Royals,Los Angeles Dodgers,100,-120,currentLine_median
+2025-06-29,Los Angeles Angels,Washington Nationals,-130,110,currentLine_median
+2025-06-29,Milwaukee Brewers,Colorado Rockies,-260,204,currentLine_median
+2025-06-29,New York Yankees,Athletics,-217,177,currentLine_median
+2025-06-29,Pittsburgh Pirates,New York Mets,121,-148,currentLine_median
+2025-06-29,Texas Rangers,Seattle Mariners,100,-120,currentLine_median
+2025-06-30,Arizona Diamondbacks,San Francisco Giants,125,-150,currentLine_median
+2025-06-30,Boston Red Sox,Cincinnati Reds,-173,144,currentLine_median
+2025-06-30,Philadelphia Phillies,San Diego Padres,-267,207,currentLine_median
+2025-06-30,Pittsburgh Pirates,St. Louis Cardinals,-112,-105,currentLine_median
+2025-06-30,Seattle Mariners,Kansas City Royals,-162,136,currentLine_median
+2025-06-30,Tampa Bay Rays,Athletics,-187,155,currentLine_median
+2025-06-30,Texas Rangers,Baltimore Orioles,-106,-114,currentLine_median
+2025-06-30,Toronto Blue Jays,New York Yankees,119,-142,currentLine_median
+2025-07-01,Arizona Diamondbacks,San Francisco Giants,-130,110,currentLine_median
+2025-07-01,Atlanta Braves,Los Angeles Angels,-210,175,currentLine_median
+2025-07-01,Chicago Cubs,Cleveland Guardians,-202,167,currentLine_median
+2025-07-01,Colorado Rockies,Houston Astros,120,-152,currentLine_median
+2025-07-01,Los Angeles Dodgers,Chicago White Sox,-364,282,currentLine_median
+2025-07-01,Miami Marlins,Minnesota Twins,115,-140,currentLine_median
+2025-07-01,Pittsburgh Pirates,St. Louis Cardinals,-161,130,currentLine_median
+2025-07-01,Seattle Mariners,Kansas City Royals,-136,115,currentLine_median
+2025-07-01,Tampa Bay Rays,Athletics,-172,144,currentLine_median
+2025-07-01,Texas Rangers,Baltimore Orioles,-190,159,currentLine_median
+2025-07-01,Toronto Blue Jays,New York Yankees,139,-165,currentLine_median
+2025-07-02,Arizona Diamondbacks,San Francisco Giants,-141,119,currentLine_median
+2025-07-02,Atlanta Braves,Los Angeles Angels,-142,120,currentLine_median
+2025-07-02,Boston Red Sox,Cincinnati Reds,-130,110,currentLine_median
+2025-07-02,Chicago Cubs,Cleveland Guardians,-166,140,currentLine_median
+2025-07-02,Colorado Rockies,Houston Astros,224,-277,currentLine_median
+2025-07-02,Los Angeles Dodgers,Chicago White Sox,-358,279,currentLine_median
+2025-07-02,Miami Marlins,Minnesota Twins,100,-122,currentLine_median
+2025-07-02,New York Mets,Milwaukee Brewers,100,-120,currentLine_median
+2025-07-02,Philadelphia Phillies,San Diego Padres,-155,123,currentLine_median
+2025-07-02,Pittsburgh Pirates,St. Louis Cardinals,115,-143,currentLine_median
+2025-07-02,Seattle Mariners,Kansas City Royals,-176,140,currentLine_median
+2025-07-02,Tampa Bay Rays,Athletics,-209,172,currentLine_median
+2025-07-02,Texas Rangers,Baltimore Orioles,-160,133,currentLine_median
+2025-07-02,Toronto Blue Jays,New York Yankees,115,-135,currentLine_median
+2025-07-02,Washington Nationals,Detroit Tigers,-121,-103,currentLine_median
+2025-07-03,Arizona Diamondbacks,San Francisco Giants,102,-121,currentLine_median
+2025-07-03,Atlanta Braves,Los Angeles Angels,-154,129,currentLine_median
+2025-07-03,Chicago Cubs,Cleveland Guardians,-136,115,currentLine_median
+2025-07-03,Colorado Rockies,Houston Astros,159,-192,currentLine_median
+2025-07-03,Los Angeles Dodgers,Chicago White Sox,-275,221,currentLine_median
+2025-07-03,Miami Marlins,Minnesota Twins,-105,-115,currentLine_median
+2025-07-03,New York Mets,Milwaukee Brewers,-160,135,currentLine_median
+2025-07-03,Seattle Mariners,Kansas City Royals,-127,106,currentLine_median
+2025-07-03,Toronto Blue Jays,New York Yankees,115,-135,currentLine_median
+2025-07-03,Washington Nationals,Detroit Tigers,116,-137,currentLine_median
+2025-07-04,Arizona Diamondbacks,Kansas City Royals,-115,-105,currentLine_median
+2025-07-04,Athletics,San Francisco Giants,-110,-110,currentLine_median
+2025-07-04,Atlanta Braves,Baltimore Orioles,-188,155,currentLine_median
+2025-07-04,Chicago Cubs,St. Louis Cardinals,-155,129,currentLine_median
+2025-07-04,Cleveland Guardians,Detroit Tigers,105,-126,currentLine_median
+2025-07-04,Colorado Rockies,Chicago White Sox,101,-120,currentLine_median
+2025-07-04,Los Angeles Dodgers,Houston Astros,-185,154,currentLine_median
+2025-07-04,Miami Marlins,Milwaukee Brewers,115,-137,currentLine_median
+2025-07-04,Minnesota Twins,Tampa Bay Rays,-120,100,currentLine_median
+2025-07-04,New York Mets,New York Yankees,-115,-105,currentLine_median
+2025-07-04,Philadelphia Phillies,Cincinnati Reds,-159,134,currentLine_median
+2025-07-04,San Diego Padres,Texas Rangers,-114,-110,currentLine_median
+2025-07-04,Seattle Mariners,Pittsburgh Pirates,-189,154,currentLine_median
+2025-07-04,Toronto Blue Jays,Los Angeles Angels,-145,123,currentLine_median
+2025-07-04,Washington Nationals,Boston Red Sox,-105,-115,currentLine_median
+2025-07-05,Arizona Diamondbacks,Kansas City Royals,-135,113,currentLine_median
+2025-07-05,Athletics,San Francisco Giants,153,-189,currentLine_median
+2025-07-05,Atlanta Braves,Baltimore Orioles,-155,129,currentLine_median
+2025-07-05,Chicago Cubs,St. Louis Cardinals,-165,139,currentLine_median
+2025-07-05,Cleveland Guardians,Detroit Tigers,118,-139,currentLine_median
+2025-07-05,Colorado Rockies,Chicago White Sox,-149,118,currentLine_median
+2025-07-05,Los Angeles Dodgers,Houston Astros,-152,127,currentLine_median
+2025-07-05,Miami Marlins,Milwaukee Brewers,111,-140,currentLine_median
+2025-07-05,New York Mets,New York Yankees,124,-149,currentLine_median
+2025-07-05,Philadelphia Phillies,Cincinnati Reds,-207,165,currentLine_median
+2025-07-05,Seattle Mariners,Pittsburgh Pirates,-170,142,currentLine_median
+2025-07-05,Toronto Blue Jays,Los Angeles Angels,-205,163,currentLine_median
+2025-07-06,Arizona Diamondbacks,Kansas City Royals,-165,131,currentLine_median
+2025-07-06,Athletics,San Francisco Giants,-125,104,currentLine_median
+2025-07-06,Atlanta Braves,Baltimore Orioles,-173,139,currentLine_median
+2025-07-06,Chicago Cubs,St. Louis Cardinals,-234,186,currentLine_median
+2025-07-06,Cleveland Guardians,Detroit Tigers,190,-245,currentLine_median
+2025-07-06,Los Angeles Dodgers,Houston Astros,-197,162,currentLine_median
+2025-07-06,Minnesota Twins,Tampa Bay Rays,-130,110,currentLine_median
+2025-07-06,New York Mets,New York Yankees,145,-182,currentLine_median
+2025-07-06,Philadelphia Phillies,Cincinnati Reds,-245,193,currentLine_median
+2025-07-06,San Diego Padres,Texas Rangers,-130,110,currentLine_median
+2025-07-06,Seattle Mariners,Pittsburgh Pirates,-120,-105,currentLine_median
+2025-07-06,Toronto Blue Jays,Los Angeles Angels,-186,156,currentLine_median
+2025-07-06,Washington Nationals,Boston Red Sox,200,-245,currentLine_median
+2025-07-07,Boston Red Sox,Colorado Rockies,-250,202,currentLine_median
+2025-07-07,Chicago White Sox,Toronto Blue Jays,137,-167,currentLine_median
+2025-07-07,Detroit Tigers,Tampa Bay Rays,-109,-110,currentLine_median
+2025-07-07,Houston Astros,Cleveland Guardians,-133,108,currentLine_median
+2025-07-07,Kansas City Royals,Pittsburgh Pirates,-155,128,currentLine_median
+2025-07-07,Los Angeles Angels,Texas Rangers,115,-136,currentLine_median
+2025-07-07,Milwaukee Brewers,Los Angeles Dodgers,118,-140,currentLine_median
+2025-07-07,San Diego Padres,Arizona Diamondbacks,-125,103,currentLine_median
+2025-07-07,San Francisco Giants,Philadelphia Phillies,118,-140,currentLine_median
+2025-07-08,Baltimore Orioles,New York Mets,105,-125,currentLine_median
+2025-07-08,Boston Red Sox,Colorado Rockies,-311,233,currentLine_median
+2025-07-08,Cincinnati Reds,Miami Marlins,-123,103,currentLine_median
+2025-07-08,Detroit Tigers,Tampa Bay Rays,-130,109,currentLine_median
+2025-07-08,Houston Astros,Cleveland Guardians,-210,172,currentLine_median
+2025-07-08,Kansas City Royals,Pittsburgh Pirates,-137,115,currentLine_median
+2025-07-08,Milwaukee Brewers,Los Angeles Dodgers,-109,-110,currentLine_median
+2025-07-08,Minnesota Twins,Chicago Cubs,107,-131,currentLine_median
+2025-07-08,New York Yankees,Seattle Mariners,-148,116,currentLine_median
+2025-07-08,San Diego Padres,Arizona Diamondbacks,-153,121,currentLine_median
+2025-07-08,San Francisco Giants,Philadelphia Phillies,-160,134,currentLine_median
+2025-07-08,St. Louis Cardinals,Washington Nationals,-239,195,currentLine_median
+2025-07-09,Athletics,Atlanta Braves,108,-128,currentLine_median
+2025-07-09,Boston Red Sox,Colorado Rockies,-373,277,currentLine_median
+2025-07-09,Chicago White Sox,Toronto Blue Jays,119,-141,currentLine_median
+2025-07-09,Cincinnati Reds,Miami Marlins,-145,116,currentLine_median
+2025-07-09,Detroit Tigers,Tampa Bay Rays,-150,125,currentLine_median
+2025-07-09,Houston Astros,Cleveland Guardians,-158,132,currentLine_median
+2025-07-09,Kansas City Royals,Pittsburgh Pirates,-190,159,currentLine_median
+2025-07-09,Los Angeles Angels,Texas Rangers,-107,-112,currentLine_median
+2025-07-09,Milwaukee Brewers,Los Angeles Dodgers,125,-152,currentLine_median
+2025-07-09,Minnesota Twins,Chicago Cubs,-113,-105,currentLine_median
+2025-07-09,New York Yankees,Seattle Mariners,-157,132,currentLine_median
+2025-07-09,San Diego Padres,Arizona Diamondbacks,-180,144,currentLine_median
+2025-07-09,San Francisco Giants,Philadelphia Phillies,115,-135,currentLine_median
+2025-07-10,Athletics,Atlanta Braves,152,-195,currentLine_median
+2025-07-10,Baltimore Orioles,New York Mets,111,-132,currentLine_median
+2025-07-10,Boston Red Sox,Tampa Bay Rays,-132,101,currentLine_median
+2025-07-10,Cincinnati Reds,Miami Marlins,-172,140,currentLine_median
+2025-07-10,Los Angeles Angels,Texas Rangers,-113,-105,currentLine_median
+2025-07-10,Minnesota Twins,Chicago Cubs,-111,-115,currentLine_median
+2025-07-10,San Diego Padres,Arizona Diamondbacks,105,-125,currentLine_median
+2025-07-10,St. Louis Cardinals,Washington Nationals,-145,120,currentLine_median
+2025-07-11,Athletics,Toronto Blue Jays,144,-170,currentLine_median
+2025-07-11,Baltimore Orioles,Miami Marlins,-145,118,currentLine_median
+2025-07-11,Boston Red Sox,Tampa Bay Rays,-109,-114,currentLine_median
+2025-07-11,Chicago White Sox,Cleveland Guardians,115,-135,currentLine_median
+2025-07-11,Cincinnati Reds,Colorado Rockies,-255,206,currentLine_median
+2025-07-11,Detroit Tigers,Seattle Mariners,-289,229,currentLine_median
+2025-07-11,Houston Astros,Texas Rangers,-124,105,currentLine_median
+2025-07-11,Kansas City Royals,New York Mets,106,-130,currentLine_median
+2025-07-11,Los Angeles Angels,Arizona Diamondbacks,-112,-108,currentLine_median
+2025-07-11,Milwaukee Brewers,Washington Nationals,-216,176,currentLine_median
+2025-07-11,Minnesota Twins,Pittsburgh Pirates,-141,118,currentLine_median
+2025-07-11,New York Yankees,Chicago Cubs,-171,141,currentLine_median
+2025-07-11,San Diego Padres,Philadelphia Phillies,128,-158,currentLine_median
+2025-07-11,San Francisco Giants,Los Angeles Dodgers,-135,114,currentLine_median
+2025-07-11,St. Louis Cardinals,Atlanta Braves,-116,-105,currentLine_median
+2025-07-12,Athletics,Toronto Blue Jays,120,-143,currentLine_median
+2025-07-12,Baltimore Orioles,Miami Marlins,-183,147,currentLine_median
+2025-07-12,Boston Red Sox,Tampa Bay Rays,-194,150,currentLine_median
+2025-07-12,Chicago White Sox,Cleveland Guardians,113,-139,currentLine_median
+2025-07-12,Cincinnati Reds,Colorado Rockies,-297,230,currentLine_median
+2025-07-12,Detroit Tigers,Seattle Mariners,-112,-107,currentLine_median
+2025-07-12,Houston Astros,Texas Rangers,-116,-105,currentLine_median
+2025-07-12,Kansas City Royals,New York Mets,110,-131,currentLine_median
+2025-07-12,Los Angeles Angels,Arizona Diamondbacks,-128,105,currentLine_median
+2025-07-12,Milwaukee Brewers,Washington Nationals,-280,224,currentLine_median
+2025-07-12,Minnesota Twins,Pittsburgh Pirates,-135,115,currentLine_median
+2025-07-12,New York Yankees,Chicago Cubs,-159,133,currentLine_median
+2025-07-12,San Diego Padres,Philadelphia Phillies,146,-177,currentLine_median
+2025-07-12,San Francisco Giants,Los Angeles Dodgers,134,-160,currentLine_median
+2025-07-12,St. Louis Cardinals,Atlanta Braves,-104,-116,currentLine_median
+2025-07-13,Athletics,Toronto Blue Jays,109,-130,currentLine_median
+2025-07-13,Baltimore Orioles,Miami Marlins,-144,121,currentLine_median
+2025-07-13,Boston Red Sox,Tampa Bay Rays,-122,100,currentLine_median
+2025-07-13,Chicago White Sox,Cleveland Guardians,118,-141,currentLine_median
+2025-07-13,Cincinnati Reds,Colorado Rockies,-264,210,currentLine_median
+2025-07-13,Detroit Tigers,Seattle Mariners,-106,-118,currentLine_median
+2025-07-13,Houston Astros,Texas Rangers,-135,115,currentLine_median
+2025-07-13,Kansas City Royals,New York Mets,-115,-106,currentLine_median
+2025-07-13,Los Angeles Angels,Arizona Diamondbacks,-130,107,currentLine_median
+2025-07-13,Milwaukee Brewers,Washington Nationals,-282,227,currentLine_median
+2025-07-13,Minnesota Twins,Pittsburgh Pirates,-162,135,currentLine_median
+2025-07-13,New York Yankees,Chicago Cubs,-130,108,currentLine_median
+2025-07-13,San Diego Padres,Philadelphia Phillies,112,-136,currentLine_median
+2025-07-13,San Francisco Giants,Los Angeles Dodgers,119,-141,currentLine_median
+2025-07-13,St. Louis Cardinals,Atlanta Braves,-189,149,currentLine_median
+2025-07-18,Arizona Diamondbacks,St. Louis Cardinals,-110,-110,currentLine_median
+2025-07-18,Atlanta Braves,New York Yankees,-135,114,currentLine_median
+2025-07-18,Chicago Cubs,Boston Red Sox,-146,117,currentLine_median
+2025-07-18,Cleveland Guardians,Athletics,-130,110,currentLine_median
+2025-07-18,Colorado Rockies,Minnesota Twins,148,-178,currentLine_median
+2025-07-18,Los Angeles Dodgers,Milwaukee Brewers,-200,164,currentLine_median
+2025-07-18,Miami Marlins,Kansas City Royals,-105,-115,currentLine_median
+2025-07-18,New York Mets,Cincinnati Reds,-162,132,currentLine_median
+2025-07-18,Philadelphia Phillies,Los Angeles Angels,-236,185,currentLine_median
+2025-07-18,Pittsburgh Pirates,Chicago White Sox,-155,130,currentLine_median
+2025-07-18,Seattle Mariners,Houston Astros,-150,121,currentLine_median
+2025-07-18,Tampa Bay Rays,Baltimore Orioles,-125,105,currentLine_median
+2025-07-18,Texas Rangers,Detroit Tigers,-115,-105,currentLine_median
+2025-07-18,Toronto Blue Jays,San Francisco Giants,-136,115,currentLine_median
+2025-07-18,Washington Nationals,San Diego Padres,125,-150,currentLine_median
+2025-07-19,Arizona Diamondbacks,St. Louis Cardinals,113,-133,currentLine_median
+2025-07-19,Atlanta Braves,New York Yankees,110,-130,currentLine_median
+2025-07-19,Chicago Cubs,Boston Red Sox,-154,129,currentLine_median
+2025-07-19,Cleveland Guardians,Athletics,-147,117,currentLine_median
+2025-07-19,Colorado Rockies,Minnesota Twins,166,-202,currentLine_median
+2025-07-19,Los Angeles Dodgers,Milwaukee Brewers,-139,112,currentLine_median
+2025-07-19,New York Mets,Cincinnati Reds,-178,149,currentLine_median
+2025-07-19,Philadelphia Phillies,Los Angeles Angels,-131,110,currentLine_median
+2025-07-19,Pittsburgh Pirates,Chicago White Sox,-136,115,currentLine_median
+2025-07-19,Seattle Mariners,Houston Astros,-145,116,currentLine_median
+2025-07-19,Tampa Bay Rays,Baltimore Orioles,-127,106,currentLine_median
+2025-07-19,Texas Rangers,Detroit Tigers,-121,-103,currentLine_median
+2025-07-19,Toronto Blue Jays,San Francisco Giants,112,-132,currentLine_median
+2025-07-19,Washington Nationals,San Diego Padres,115,-137,currentLine_median
+2025-07-20,Arizona Diamondbacks,St. Louis Cardinals,-146,115,currentLine_median
+2025-07-20,Atlanta Braves,New York Yankees,-131,110,currentLine_median
+2025-07-20,Chicago Cubs,Boston Red Sox,115,-135,currentLine_median
+2025-07-20,Cleveland Guardians,Athletics,-105,-115,currentLine_median
+2025-07-20,Colorado Rockies,Minnesota Twins,206,-255,currentLine_median
+2025-07-20,Los Angeles Dodgers,Milwaukee Brewers,-171,139,currentLine_median
+2025-07-20,Miami Marlins,Kansas City Royals,100,-120,currentLine_median
+2025-07-20,New York Mets,Cincinnati Reds,-141,117,currentLine_median
+2025-07-20,Philadelphia Phillies,Los Angeles Angels,-167,140,currentLine_median
+2025-07-20,Pittsburgh Pirates,Chicago White Sox,-145,119,currentLine_median
+2025-07-20,Seattle Mariners,Houston Astros,-150,119,currentLine_median
+2025-07-20,Tampa Bay Rays,Baltimore Orioles,-125,105,currentLine_median
+2025-07-20,Texas Rangers,Detroit Tigers,130,-173,currentLine_median
+2025-07-20,Washington Nationals,San Diego Padres,104,-123,currentLine_median
+2025-07-21,Arizona Diamondbacks,Houston Astros,-145,121,currentLine_median
+2025-07-21,Atlanta Braves,San Francisco Giants,-134,114,currentLine_median
+2025-07-21,Chicago Cubs,Kansas City Royals,-152,126,currentLine_median
+2025-07-21,Cleveland Guardians,Baltimore Orioles,-143,120,currentLine_median
+2025-07-21,Colorado Rockies,St. Louis Cardinals,149,-179,currentLine_median
+2025-07-21,Los Angeles Dodgers,Minnesota Twins,-195,157,currentLine_median
+2025-07-21,Miami Marlins,San Diego Padres,-143,120,currentLine_median
+2025-07-21,New York Mets,Los Angeles Angels,-189,152,currentLine_median
+2025-07-21,Philadelphia Phillies,Boston Red Sox,-241,196,currentLine_median
+2025-07-21,Pittsburgh Pirates,Detroit Tigers,-134,110,currentLine_median
+2025-07-21,Seattle Mariners,Milwaukee Brewers,-130,107,currentLine_median
+2025-07-21,Tampa Bay Rays,Chicago White Sox,-220,180,currentLine_median
+2025-07-21,Texas Rangers,Athletics,-120,101,currentLine_median
+2025-07-21,Washington Nationals,Cincinnati Reds,104,-125,currentLine_median
+2025-07-22,Arizona Diamondbacks,Houston Astros,-104,-115,currentLine_median
+2025-07-22,Atlanta Braves,San Francisco Giants,-122,100,currentLine_median
+2025-07-22,Chicago Cubs,Kansas City Royals,-257,210,currentLine_median
+2025-07-22,Cleveland Guardians,Baltimore Orioles,-171,136,currentLine_median
+2025-07-22,Colorado Rockies,St. Louis Cardinals,140,-164,currentLine_median
+2025-07-22,Los Angeles Dodgers,Minnesota Twins,-198,164,currentLine_median
+2025-07-22,Miami Marlins,San Diego Padres,-130,110,currentLine_median
+2025-07-22,New York Mets,Los Angeles Angels,-167,139,currentLine_median
+2025-07-22,Philadelphia Phillies,Boston Red Sox,-189,155,currentLine_median
+2025-07-22,Pittsburgh Pirates,Detroit Tigers,115,-135,currentLine_median
+2025-07-22,Seattle Mariners,Milwaukee Brewers,-136,111,currentLine_median
+2025-07-22,Tampa Bay Rays,Chicago White Sox,-270,207,currentLine_median
+2025-07-22,Texas Rangers,Athletics,-225,185,currentLine_median
+2025-07-22,Toronto Blue Jays,New York Yankees,-120,-105,currentLine_median
+2025-07-22,Washington Nationals,Cincinnati Reds,119,-140,currentLine_median
+2025-07-23,Arizona Diamondbacks,Houston Astros,-140,111,currentLine_median
+2025-07-23,Atlanta Braves,San Francisco Giants,-160,135,currentLine_median
+2025-07-23,Chicago Cubs,Kansas City Royals,-177,146,currentLine_median
+2025-07-23,Cleveland Guardians,Baltimore Orioles,-131,110,currentLine_median
+2025-07-23,Colorado Rockies,St. Louis Cardinals,156,-190,currentLine_median
+2025-07-23,Los Angeles Dodgers,Minnesota Twins,-224,180,currentLine_median
+2025-07-23,Miami Marlins,San Diego Padres,121,-144,currentLine_median
+2025-07-23,New York Mets,Los Angeles Angels,-179,150,currentLine_median
+2025-07-23,Philadelphia Phillies,Boston Red Sox,-159,134,currentLine_median
+2025-07-23,Pittsburgh Pirates,Detroit Tigers,115,-135,currentLine_median
+2025-07-23,Seattle Mariners,Milwaukee Brewers,-125,100,currentLine_median
+2025-07-23,Tampa Bay Rays,Chicago White Sox,-225,185,currentLine_median
+2025-07-23,Texas Rangers,Athletics,-141,119,currentLine_median
+2025-07-23,Toronto Blue Jays,New York Yankees,118,-141,currentLine_median
+2025-07-23,Washington Nationals,Cincinnati Reds,109,-130,currentLine_median
+2025-07-24,Cleveland Guardians,Baltimore Orioles,-120,100,currentLine_median
+2025-07-24,Detroit Tigers,Toronto Blue Jays,-140,118,currentLine_median
+2025-07-24,Houston Astros,Athletics,-149,125,currentLine_median
+2025-07-24,Los Angeles Angels,Seattle Mariners,-142,120,currentLine_median
+2025-07-24,St. Louis Cardinals,San Diego Padres,-156,130,currentLine_median
+2025-07-25,Baltimore Orioles,Colorado Rockies,-202,163,currentLine_median
+2025-07-25,Boston Red Sox,Los Angeles Dodgers,-115,-106,currentLine_median
+2025-07-25,Chicago White Sox,Chicago Cubs,153,-186,currentLine_median
+2025-07-25,Cincinnati Reds,Tampa Bay Rays,-112,-111,currentLine_median
+2025-07-25,Detroit Tigers,Toronto Blue Jays,-115,-105,currentLine_median
+2025-07-25,Houston Astros,Athletics,-134,114,currentLine_median
+2025-07-25,Los Angeles Angels,Seattle Mariners,110,-130,currentLine_median
+2025-07-25,Milwaukee Brewers,Miami Marlins,-237,190,currentLine_median
+2025-07-25,Minnesota Twins,Washington Nationals,-164,139,currentLine_median
+2025-07-25,New York Yankees,Philadelphia Phillies,-164,139,currentLine_median
+2025-07-25,Pittsburgh Pirates,Arizona Diamondbacks,-108,-116,currentLine_median
+2025-07-25,San Francisco Giants,New York Mets,-147,122,currentLine_median
+2025-07-25,St. Louis Cardinals,San Diego Padres,110,-130,currentLine_median
+2025-07-25,Texas Rangers,Atlanta Braves,-155,130,currentLine_median
+2025-07-26,Baltimore Orioles,Colorado Rockies,-250,205,currentLine_median
+2025-07-26,Boston Red Sox,Los Angeles Dodgers,-165,139,currentLine_median
+2025-07-26,Chicago White Sox,Chicago Cubs,145,-187,currentLine_median
+2025-07-26,Cincinnati Reds,Tampa Bay Rays,-123,102,currentLine_median
+2025-07-26,Detroit Tigers,Toronto Blue Jays,-180,150,currentLine_median
+2025-07-26,Houston Astros,Athletics,-187,157,currentLine_median
+2025-07-26,Kansas City Royals,Cleveland Guardians,-138,118,currentLine_median
+2025-07-26,Los Angeles Angels,Seattle Mariners,113,-136,currentLine_median
+2025-07-26,Milwaukee Brewers,Miami Marlins,-165,133,currentLine_median
+2025-07-26,Minnesota Twins,Washington Nationals,-251,206,currentLine_median
+2025-07-26,New York Yankees,Philadelphia Phillies,110,-135,currentLine_median
+2025-07-26,Pittsburgh Pirates,Arizona Diamondbacks,122,-147,currentLine_median
+2025-07-26,San Francisco Giants,New York Mets,-111,-109,currentLine_median
+2025-07-26,St. Louis Cardinals,San Diego Padres,-143,116,currentLine_median
+2025-07-26,Texas Rangers,Atlanta Braves,-110,-112,currentLine_median
+2025-07-27,Baltimore Orioles,Colorado Rockies,-210,175,currentLine_median
+2025-07-27,Boston Red Sox,Los Angeles Dodgers,-106,-115,currentLine_median
+2025-07-27,Chicago White Sox,Chicago Cubs,147,-176,currentLine_median
+2025-07-27,Cincinnati Reds,Tampa Bay Rays,-110,-110,currentLine_median
+2025-07-27,Detroit Tigers,Toronto Blue Jays,-116,-103,currentLine_median
+2025-07-27,Houston Astros,Athletics,-143,120,currentLine_median
+2025-07-27,Kansas City Royals,Cleveland Guardians,-133,109,currentLine_median
+2025-07-27,Los Angeles Angels,Seattle Mariners,149,-178,currentLine_median
+2025-07-27,Milwaukee Brewers,Miami Marlins,-148,117,currentLine_median
+2025-07-27,Minnesota Twins,Washington Nationals,-172,144,currentLine_median
+2025-07-27,New York Yankees,Philadelphia Phillies,114,-135,currentLine_median
+2025-07-27,Pittsburgh Pirates,Arizona Diamondbacks,-150,125,currentLine_median
+2025-07-27,San Francisco Giants,New York Mets,108,-128,currentLine_median
+2025-07-27,Texas Rangers,Atlanta Braves,-122,100,currentLine_median
+2025-07-28,Athletics,Seattle Mariners,108,-128,currentLine_median
+2025-07-28,Baltimore Orioles,Toronto Blue Jays,-102,-118,currentLine_median
+2025-07-28,Chicago White Sox,Philadelphia Phillies,193,-234,currentLine_median
+2025-07-28,Cincinnati Reds,Los Angeles Dodgers,125,-150,currentLine_median
+2025-07-28,Cleveland Guardians,Colorado Rockies,-284,229,currentLine_median
+2025-07-28,Detroit Tigers,Arizona Diamondbacks,-144,115,currentLine_median
+2025-07-28,Houston Astros,Washington Nationals,-257,210,currentLine_median
+2025-07-28,Kansas City Royals,Atlanta Braves,128,-156,currentLine_median
+2025-07-28,Los Angeles Angels,Texas Rangers,180,-222,currentLine_median
+2025-07-28,Milwaukee Brewers,Chicago Cubs,-105,-115,currentLine_median
+2025-07-28,Minnesota Twins,Boston Red Sox,-110,-110,currentLine_median
+2025-07-28,New York Yankees,Tampa Bay Rays,-130,109,currentLine_median
+2025-07-28,San Diego Padres,New York Mets,-130,109,currentLine_median
+2025-07-28,San Francisco Giants,Pittsburgh Pirates,-135,115,currentLine_median
+2025-07-28,St. Louis Cardinals,Miami Marlins,-120,101,currentLine_median
+2025-07-29,Athletics,Seattle Mariners,-109,-110,currentLine_median
+2025-07-29,Baltimore Orioles,Toronto Blue Jays,105,-125,currentLine_median
+2025-07-29,Chicago White Sox,Philadelphia Phillies,150,-182,currentLine_median
+2025-07-29,Cincinnati Reds,Los Angeles Dodgers,119,-152,currentLine_median
+2025-07-29,Cleveland Guardians,Colorado Rockies,-197,163,currentLine_median
+2025-07-29,Detroit Tigers,Arizona Diamondbacks,-160,134,currentLine_median
+2025-07-29,Houston Astros,Washington Nationals,-122,103,currentLine_median
+2025-07-29,Kansas City Royals,Atlanta Braves,-127,107,currentLine_median
+2025-07-29,Los Angeles Angels,Texas Rangers,-135,114,currentLine_median
+2025-07-29,Milwaukee Brewers,Chicago Cubs,-130,109,currentLine_median
+2025-07-29,Minnesota Twins,Boston Red Sox,105,-126,currentLine_median
+2025-07-29,New York Yankees,Tampa Bay Rays,-189,146,currentLine_median
+2025-07-29,San Francisco Giants,Pittsburgh Pirates,-170,144,currentLine_median
+2025-07-29,St. Louis Cardinals,Miami Marlins,-159,130,currentLine_median
+2025-07-30,Athletics,Seattle Mariners,125,-150,currentLine_median
+2025-07-30,Chicago White Sox,Philadelphia Phillies,115,-136,currentLine_median
+2025-07-30,Cincinnati Reds,Los Angeles Dodgers,136,-165,currentLine_median
+2025-07-30,Cleveland Guardians,Colorado Rockies,-179,149,currentLine_median
+2025-07-30,Detroit Tigers,Arizona Diamondbacks,-130,110,currentLine_median
+2025-07-30,Houston Astros,Washington Nationals,-110,-109,currentLine_median
+2025-07-30,Kansas City Royals,Atlanta Braves,-123,100,currentLine_median
+2025-07-30,Los Angeles Angels,Texas Rangers,109,-130,currentLine_median
+2025-07-30,Milwaukee Brewers,Chicago Cubs,-125,105,currentLine_median
+2025-07-30,Minnesota Twins,Boston Red Sox,-120,101,currentLine_median
+2025-07-30,New York Yankees,Tampa Bay Rays,-140,119,currentLine_median
+2025-07-30,San Diego Padres,New York Mets,-119,100,currentLine_median
+2025-07-30,San Francisco Giants,Pittsburgh Pirates,-205,170,currentLine_median
+2025-07-30,St. Louis Cardinals,Miami Marlins,-136,115,currentLine_median
+2025-07-31,New York Yankees,Tampa Bay Rays,105,-125,currentLine_median
+2025-07-31,Seattle Mariners,Texas Rangers,-173,144,currentLine_median
+2025-08-01,Athletics,Arizona Diamondbacks,-126,106,currentLine_median
+2025-08-01,Boston Red Sox,Houston Astros,105,-125,currentLine_median
+2025-08-01,Chicago Cubs,Baltimore Orioles,-154,130,currentLine_median
+2025-08-01,Cincinnati Reds,Atlanta Braves,-156,123,currentLine_median
+2025-08-01,Cleveland Guardians,Minnesota Twins,-144,115,currentLine_median
+2025-08-01,Colorado Rockies,Pittsburgh Pirates,117,-139,currentLine_median
+2025-08-01,Los Angeles Angels,Chicago White Sox,-160,128,currentLine_median
+2025-08-01,Miami Marlins,New York Yankees,130,-158,currentLine_median
+2025-08-01,New York Mets,San Francisco Giants,-149,123,currentLine_median
+2025-08-01,Philadelphia Phillies,Detroit Tigers,-153,128,currentLine_median
+2025-08-01,San Diego Padres,St. Louis Cardinals,-222,172,currentLine_median
+2025-08-01,Seattle Mariners,Texas Rangers,-199,163,currentLine_median
+2025-08-01,Tampa Bay Rays,Los Angeles Dodgers,-103,-116,currentLine_median
+2025-08-01,Toronto Blue Jays,Kansas City Royals,-157,130,currentLine_median
+2025-08-01,Washington Nationals,Milwaukee Brewers,130,-155,currentLine_median
+2025-08-02,Athletics,Arizona Diamondbacks,-125,105,currentLine_median
+2025-08-02,Boston Red Sox,Houston Astros,-142,115,currentLine_median
+2025-08-02,Chicago Cubs,Baltimore Orioles,-283,212,currentLine_median
+2025-08-02,Cleveland Guardians,Minnesota Twins,-158,132,currentLine_median
+2025-08-02,Colorado Rockies,Pittsburgh Pirates,197,-242,currentLine_median
+2025-08-02,Los Angeles Angels,Chicago White Sox,-135,115,currentLine_median
+2025-08-02,Miami Marlins,New York Yankees,-120,-104,currentLine_median
+2025-08-02,New York Mets,San Francisco Giants,-200,161,currentLine_median
+2025-08-02,Philadelphia Phillies,Detroit Tigers,-115,-109,currentLine_median
+2025-08-02,San Diego Padres,St. Louis Cardinals,-176,141,currentLine_median
+2025-08-02,Seattle Mariners,Texas Rangers,-137,112,currentLine_median
+2025-08-02,Tampa Bay Rays,Los Angeles Dodgers,101,-121,currentLine_median
+2025-08-02,Toronto Blue Jays,Kansas City Royals,-143,116,currentLine_median
+2025-08-02,Washington Nationals,Milwaukee Brewers,156,-189,currentLine_median
+2025-08-03,Athletics,Arizona Diamondbacks,-130,106,currentLine_median
+2025-08-03,Boston Red Sox,Houston Astros,109,-130,currentLine_median
+2025-08-03,Chicago Cubs,Baltimore Orioles,-190,155,currentLine_median
+2025-08-03,Cincinnati Reds,Atlanta Braves,-120,100,currentLine_median
+2025-08-03,Colorado Rockies,Pittsburgh Pirates,130,-155,currentLine_median
+2025-08-03,Los Angeles Angels,Chicago White Sox,-135,114,currentLine_median
+2025-08-03,Miami Marlins,New York Yankees,100,-120,currentLine_median
+2025-08-03,New York Mets,San Francisco Giants,-164,136,currentLine_median
+2025-08-03,Philadelphia Phillies,Detroit Tigers,-187,153,currentLine_median
+2025-08-03,San Diego Padres,St. Louis Cardinals,-200,165,currentLine_median
+2025-08-03,Seattle Mariners,Texas Rangers,119,-141,currentLine_median
+2025-08-03,Tampa Bay Rays,Los Angeles Dodgers,135,-161,currentLine_median
+2025-08-03,Toronto Blue Jays,Kansas City Royals,-171,135,currentLine_median
+2025-08-03,Washington Nationals,Milwaukee Brewers,117,-147,currentLine_median
+2025-08-04,Arizona Diamondbacks,San Diego Padres,110,-130,currentLine_median
+2025-08-04,Atlanta Braves,Milwaukee Brewers,115,-136,currentLine_median
+2025-08-04,Boston Red Sox,Kansas City Royals,-165,132,currentLine_median
+2025-08-04,Chicago Cubs,Cincinnati Reds,-152,123,currentLine_median
+2025-08-04,Colorado Rockies,Toronto Blue Jays,180,-223,currentLine_median
+2025-08-04,Detroit Tigers,Minnesota Twins,-189,154,currentLine_median
+2025-08-04,Los Angeles Angels,Tampa Bay Rays,-121,-102,currentLine_median
+2025-08-04,Los Angeles Dodgers,St. Louis Cardinals,-177,147,currentLine_median
+2025-08-04,Miami Marlins,Houston Astros,-133,112,currentLine_median
+2025-08-04,New York Mets,Cleveland Guardians,-204,165,currentLine_median
+2025-08-04,Philadelphia Phillies,Baltimore Orioles,-203,166,currentLine_median
+2025-08-04,Pittsburgh Pirates,San Francisco Giants,105,-128,currentLine_median
+2025-08-04,Texas Rangers,New York Yankees,115,-139,currentLine_median
+2025-08-05,Atlanta Braves,Milwaukee Brewers,123,-149,currentLine_median
+2025-08-05,Boston Red Sox,Kansas City Royals,-244,190,currentLine_median
+2025-08-05,Chicago Cubs,Cincinnati Reds,-187,154,currentLine_median
+2025-08-05,Colorado Rockies,Toronto Blue Jays,189,-234,currentLine_median
+2025-08-05,Detroit Tigers,Minnesota Twins,-144,121,currentLine_median
+2025-08-05,Los Angeles Angels,Tampa Bay Rays,-130,105,currentLine_median
+2025-08-05,Los Angeles Dodgers,St. Louis Cardinals,-182,150,currentLine_median
+2025-08-05,Miami Marlins,Houston Astros,-105,-115,currentLine_median
+2025-08-05,New York Mets,Cleveland Guardians,-161,135,currentLine_median
+2025-08-05,Philadelphia Phillies,Baltimore Orioles,-142,120,currentLine_median
+2025-08-05,Pittsburgh Pirates,San Francisco Giants,113,-140,currentLine_median
+2025-08-05,Seattle Mariners,Chicago White Sox,-250,205,currentLine_median
+2025-08-05,Texas Rangers,New York Yankees,-125,106,currentLine_median
+2025-08-05,Washington Nationals,Athletics,-134,113,currentLine_median
+2025-08-06,Arizona Diamondbacks,San Diego Padres,112,-135,currentLine_median
+2025-08-06,Atlanta Braves,Milwaukee Brewers,-130,110,currentLine_median
+2025-08-06,Boston Red Sox,Kansas City Royals,-140,118,currentLine_median
+2025-08-06,Chicago Cubs,Cincinnati Reds,-133,112,currentLine_median
+2025-08-06,Colorado Rockies,Toronto Blue Jays,235,-313,currentLine_median
+2025-08-06,Detroit Tigers,Minnesota Twins,-205,168,currentLine_median
+2025-08-06,Los Angeles Angels,Tampa Bay Rays,101,-120,currentLine_median
+2025-08-06,Los Angeles Dodgers,St. Louis Cardinals,-220,180,currentLine_median
+2025-08-06,Miami Marlins,Houston Astros,-115,-105,currentLine_median
+2025-08-06,New York Mets,Cleveland Guardians,-193,150,currentLine_median
+2025-08-06,Philadelphia Phillies,Baltimore Orioles,-188,147,currentLine_median
+2025-08-06,Pittsburgh Pirates,San Francisco Giants,125,-152,currentLine_median
+2025-08-06,Seattle Mariners,Chicago White Sox,-274,220,currentLine_median
+2025-08-06,Texas Rangers,New York Yankees,110,-130,currentLine_median
+2025-08-06,Washington Nationals,Athletics,121,-147,currentLine_median
+2025-08-07,Atlanta Braves,Miami Marlins,118,-139,currentLine_median
+2025-08-07,Pittsburgh Pirates,Cincinnati Reds,-166,140,currentLine_median
+2025-08-07,Seattle Mariners,Chicago White Sox,-295,236,currentLine_median
+2025-08-07,Washington Nationals,Athletics,126,-150,currentLine_median
+2025-08-08,Arizona Diamondbacks,Colorado Rockies,-221,180,currentLine_median
+2025-08-08,Baltimore Orioles,Athletics,-125,105,currentLine_median
+2025-08-08,Chicago White Sox,Cleveland Guardians,112,-135,currentLine_median
+2025-08-08,Detroit Tigers,Los Angeles Angels,-293,233,currentLine_median
+2025-08-08,Los Angeles Dodgers,Toronto Blue Jays,-140,117,currentLine_median
+2025-08-08,Milwaukee Brewers,New York Mets,-147,122,currentLine_median
+2025-08-08,Minnesota Twins,Kansas City Royals,-140,111,currentLine_median
+2025-08-08,New York Yankees,Houston Astros,-116,-104,currentLine_median
+2025-08-08,Pittsburgh Pirates,Cincinnati Reds,105,-125,currentLine_median
+2025-08-08,San Diego Padres,Boston Red Sox,-183,145,currentLine_median
+2025-08-08,San Francisco Giants,Washington Nationals,-169,141,currentLine_median
+2025-08-08,Seattle Mariners,Tampa Bay Rays,-130,110,currentLine_median
+2025-08-08,St. Louis Cardinals,Chicago Cubs,129,-160,currentLine_median
+2025-08-08,Texas Rangers,Philadelphia Phillies,105,-126,currentLine_median
+2025-08-09,Arizona Diamondbacks,Colorado Rockies,-245,193,currentLine_median
+2025-08-09,Atlanta Braves,Miami Marlins,-110,-110,currentLine_median
+2025-08-09,Baltimore Orioles,Athletics,-115,-105,currentLine_median
+2025-08-09,Chicago White Sox,Cleveland Guardians,118,-140,currentLine_median
+2025-08-09,Detroit Tigers,Los Angeles Angels,-135,114,currentLine_median
+2025-08-09,Los Angeles Dodgers,Toronto Blue Jays,-156,130,currentLine_median
+2025-08-09,Milwaukee Brewers,New York Mets,-117,-102,currentLine_median
+2025-08-09,Minnesota Twins,Kansas City Royals,100,-120,currentLine_median
+2025-08-09,New York Yankees,Houston Astros,-110,-110,currentLine_median
+2025-08-09,Pittsburgh Pirates,Cincinnati Reds,-109,-110,currentLine_median
+2025-08-09,San Diego Padres,Boston Red Sox,-140,118,currentLine_median
+2025-08-09,San Francisco Giants,Washington Nationals,-166,140,currentLine_median
+2025-08-09,Seattle Mariners,Tampa Bay Rays,-147,122,currentLine_median
+2025-08-09,St. Louis Cardinals,Chicago Cubs,160,-217,currentLine_median
+2025-08-09,Texas Rangers,Philadelphia Phillies,-132,111,currentLine_median
+2025-08-10,Arizona Diamondbacks,Colorado Rockies,-292,232,currentLine_median
+2025-08-10,Atlanta Braves,Miami Marlins,-130,110,currentLine_median
+2025-08-10,Baltimore Orioles,Athletics,-125,104,currentLine_median
+2025-08-10,Chicago White Sox,Cleveland Guardians,109,-130,currentLine_median
+2025-08-10,Detroit Tigers,Los Angeles Angels,-186,153,currentLine_median
+2025-08-10,Los Angeles Dodgers,Toronto Blue Jays,-188,156,currentLine_median
+2025-08-10,Milwaukee Brewers,New York Mets,-109,-117,currentLine_median
+2025-08-10,Minnesota Twins,Kansas City Royals,-111,-110,currentLine_median
+2025-08-10,New York Yankees,Houston Astros,-224,184,currentLine_median
+2025-08-10,Pittsburgh Pirates,Cincinnati Reds,-108,-120,currentLine_median
+2025-08-10,San Diego Padres,Boston Red Sox,-154,124,currentLine_median
+2025-08-10,San Francisco Giants,Washington Nationals,-160,135,currentLine_median
+2025-08-10,Seattle Mariners,Tampa Bay Rays,-193,153,currentLine_median
+2025-08-10,St. Louis Cardinals,Chicago Cubs,113,-135,currentLine_median
+2025-08-10,Texas Rangers,Philadelphia Phillies,136,-164,currentLine_median
+2025-08-11,Athletics,Tampa Bay Rays,-110,-109,currentLine_median
+2025-08-11,Chicago White Sox,Detroit Tigers,125,-150,currentLine_median
+2025-08-11,Cincinnati Reds,Philadelphia Phillies,-132,111,currentLine_median
+2025-08-11,Houston Astros,Boston Red Sox,218,-301,currentLine_median
+2025-08-11,Kansas City Royals,Washington Nationals,-152,126,currentLine_median
+2025-08-11,Los Angeles Angels,Los Angeles Dodgers,141,-170,currentLine_median
+2025-08-11,Milwaukee Brewers,Pittsburgh Pirates,-193,162,currentLine_median
+2025-08-11,New York Yankees,Minnesota Twins,-182,150,currentLine_median
+2025-08-11,San Francisco Giants,San Diego Padres,-131,110,currentLine_median
+2025-08-11,St. Louis Cardinals,Colorado Rockies,-240,188,currentLine_median
+2025-08-11,Texas Rangers,Arizona Diamondbacks,-167,140,currentLine_median
+2025-08-12,Athletics,Tampa Bay Rays,-110,-110,currentLine_median
+2025-08-12,Baltimore Orioles,Seattle Mariners,130,-157,currentLine_median
+2025-08-12,Chicago White Sox,Detroit Tigers,187,-265,currentLine_median
+2025-08-12,Cincinnati Reds,Philadelphia Phillies,123,-147,currentLine_median
+2025-08-12,Cleveland Guardians,Miami Marlins,-136,115,currentLine_median
+2025-08-12,Los Angeles Angels,Los Angeles Dodgers,144,-172,currentLine_median
+2025-08-12,New York Yankees,Minnesota Twins,-225,182,currentLine_median
+2025-08-12,San Francisco Giants,San Diego Padres,-120,100,currentLine_median
+2025-08-12,Texas Rangers,Arizona Diamondbacks,-234,178,currentLine_median
+2025-08-12,Toronto Blue Jays,Chicago Cubs,-125,105,currentLine_median
+2025-08-13,Athletics,Tampa Bay Rays,125,-149,currentLine_median
+2025-08-13,Baltimore Orioles,Seattle Mariners,115,-138,currentLine_median
+2025-08-13,Chicago White Sox,Detroit Tigers,123,-148,currentLine_median
+2025-08-13,Cincinnati Reds,Philadelphia Phillies,105,-125,currentLine_median
+2025-08-13,Cleveland Guardians,Miami Marlins,-135,115,currentLine_median
+2025-08-13,Houston Astros,Boston Red Sox,-155,131,currentLine_median
+2025-08-13,Kansas City Royals,Washington Nationals,-170,140,currentLine_median
+2025-08-13,Los Angeles Angels,Los Angeles Dodgers,159,-192,currentLine_median
+2025-08-13,Milwaukee Brewers,Pittsburgh Pirates,-268,205,currentLine_median
+2025-08-13,New York Mets,Atlanta Braves,-209,171,currentLine_median
+2025-08-13,New York Yankees,Minnesota Twins,-150,125,currentLine_median
+2025-08-13,San Francisco Giants,San Diego Padres,122,-147,currentLine_median
+2025-08-13,St. Louis Cardinals,Colorado Rockies,-239,190,currentLine_median
+2025-08-13,Texas Rangers,Arizona Diamondbacks,-149,120,currentLine_median
+2025-08-13,Toronto Blue Jays,Chicago Cubs,-134,110,currentLine_median
+2025-08-14,Baltimore Orioles,Seattle Mariners,110,-130,currentLine_median
+2025-08-14,Colorado Rockies,Arizona Diamondbacks,144,-174,currentLine_median
+2025-08-14,Minnesota Twins,Detroit Tigers,168,-202,currentLine_median
+2025-08-14,New York Mets,Atlanta Braves,-188,147,currentLine_median
+2025-08-14,Toronto Blue Jays,Chicago Cubs,-103,-115,currentLine_median
+2025-08-14,Washington Nationals,Philadelphia Phillies,145,-185,currentLine_median
+2025-08-15,Athletics,Los Angeles Angels,-109,-110,currentLine_median
+2025-08-15,Boston Red Sox,Miami Marlins,-166,140,currentLine_median
+2025-08-15,Chicago Cubs,Pittsburgh Pirates,-195,161,currentLine_median
+2025-08-15,Cleveland Guardians,Atlanta Braves,-118,-102,currentLine_median
+2025-08-15,Colorado Rockies,Arizona Diamondbacks,165,-200,currentLine_median
+2025-08-15,Houston Astros,Baltimore Orioles,-233,181,currentLine_median
+2025-08-15,Kansas City Royals,Chicago White Sox,-181,149,currentLine_median
+2025-08-15,Los Angeles Dodgers,San Diego Padres,-138,116,currentLine_median
+2025-08-15,Minnesota Twins,Detroit Tigers,108,-132,currentLine_median
+2025-08-15,New York Mets,Seattle Mariners,-132,111,currentLine_median
+2025-08-15,San Francisco Giants,Tampa Bay Rays,-115,-105,currentLine_median
+2025-08-15,St. Louis Cardinals,New York Yankees,119,-143,currentLine_median
+2025-08-15,Toronto Blue Jays,Texas Rangers,-105,-114,currentLine_median
+2025-08-15,Washington Nationals,Philadelphia Phillies,167,-202,currentLine_median
+2025-08-16,Athletics,Los Angeles Angels,-125,105,currentLine_median
+2025-08-16,Boston Red Sox,Miami Marlins,-192,159,currentLine_median
+2025-08-16,Chicago Cubs,Pittsburgh Pirates,-228,184,currentLine_median
+2025-08-16,Cincinnati Reds,Milwaukee Brewers,102,-122,currentLine_median
+2025-08-16,Cleveland Guardians,Atlanta Braves,-110,-109,currentLine_median
+2025-08-16,Colorado Rockies,Arizona Diamondbacks,144,-172,currentLine_median
+2025-08-16,Houston Astros,Baltimore Orioles,-140,118,currentLine_median
+2025-08-16,Kansas City Royals,Chicago White Sox,-142,121,currentLine_median
+2025-08-16,Los Angeles Dodgers,San Diego Padres,-125,105,currentLine_median
+2025-08-16,Minnesota Twins,Detroit Tigers,-110,-109,currentLine_median
+2025-08-16,New York Mets,Seattle Mariners,-105,-115,currentLine_median
+2025-08-16,San Francisco Giants,Tampa Bay Rays,-104,-115,currentLine_median
+2025-08-16,St. Louis Cardinals,New York Yankees,119,-140,currentLine_median
+2025-08-16,Toronto Blue Jays,Texas Rangers,-180,150,currentLine_median
+2025-08-16,Washington Nationals,Philadelphia Phillies,124,-149,currentLine_median

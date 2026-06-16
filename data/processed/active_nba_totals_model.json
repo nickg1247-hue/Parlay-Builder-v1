@@ -1,0 +1,7 @@
+{
+  "track": "nba_totals",
+  "model_version": "v1_gbr_normal",
+  "path": "data/processed/nba_totals_model.joblib",
+  "production_ready": false,
+  "promoted_at": "2026-06-11T06:15:43.612122+00:00"
+}

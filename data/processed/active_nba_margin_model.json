@@ -1,0 +1,8 @@
+{
+  "track": "nba_spread",
+  "model_version": "v1_margin_gbr_normal",
+  "path": "data/processed/nba_margin_model.joblib",
+  "feature_set": "v2_score_rolling",
+  "production_ready": false,
+  "promoted_at": "2026-06-11T06:15:42.454736+00:00"
+}

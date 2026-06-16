@@ -1,0 +1,134 @@
+{
+  "id": "7cac46aa-44b5-45e8-9bbc-8f661e86a653",
+  "track": "totals",
+  "experiment_id": "bad-totals-3",
+  "feature_set": "totals_no_last10",
+  "feature_columns": [
+    "home_season_runs_scored_pg",
+    "home_season_runs_allowed_pg",
+    "away_season_runs_scored_pg",
+    "away_season_runs_allowed_pg",
+    "home_last30_runs_scored_pg",
+    "home_last30_runs_allowed_pg",
+    "away_last30_runs_scored_pg",
+    "away_last30_runs_allowed_pg",
+    "home_home_split_runs_scored_pg",
+    "home_home_split_runs_allowed_pg",
+    "away_away_split_runs_scored_pg",
+    "away_away_split_runs_allowed_pg",
+    "park_factor_runs",
+    "home_pitcher_era",
+    "away_pitcher_era",
+    "home_pitcher_whip",
+    "away_pitcher_whip",
+    "home_pitcher_ip",
+    "away_pitcher_ip",
+    "home_rest_days",
+    "away_rest_days",
+    "h2h_avg_total_runs"
+  ],
+  "n_features": 22,
+  "goal_metric": "totals_log_loss_model",
+  "goal_value": 0.7,
+  "goal_met": false,
+  "goal_within_tolerance": false,
+  "goal_tolerance_pct": 0.05,
+  "metric_actual_value": 0.7501,
+  "goal_gap_pct": 0.0716,
+  "goal_note": "Not within 5% of goal (actual=0.7501, goal=0.7, gap=7.2%)",
+  "status": "completed",
+  "created_at": "2026-06-05T06:37:47.327970+00:00",
+  "splits": {
+    "train": "seasons \u2264 2023",
+    "validation": "season 2024 (walk-forward, tuning allowed)",
+    "locked_test": "season 2025 (confirm only \u2014 no tuning)"
+  },
+  "preflight": {
+    "track": "totals",
+    "leakage": {
+      "passed": true,
+      "checks": [
+        "totals_rolling_excludes_current"
+      ]
+    },
+    "shuffle_labels": {
+      "passed": true,
+      "accuracy": 0.5362,
+      "log_loss": 0.6883,
+      "threshold_accuracy_max": 0.58,
+      "threshold_log_loss_min": 0.65
+    },
+    "passed": true
+  },
+  "learning_curve": [
+    {
+      "month": "2024-03",
+      "games": 55,
+      "log_loss_model": 0.8301,
+      "total_runs_mae": 3.717
+    },
+    {
+      "month": "2024-04",
+      "games": 397,
+      "log_loss_model": 0.7681,
+      "total_runs_mae": 3.496
+    },
+    {
+      "month": "2024-05",
+      "games": 409,
+      "log_loss_model": 0.7819,
+      "total_runs_mae": 3.442
+    },
+    {
+      "month": "2024-06",
+      "games": 401,
+      "log_loss_model": 0.7693,
+      "total_runs_mae": 3.505
+    },
+    {
+      "month": "2024-07",
+      "games": 369,
+      "log_loss_model": 0.7198,
+      "total_runs_mae": 3.423
+    },
+    {
+      "month": "2024-08",
+      "games": 413,
+      "log_loss_model": 0.7325,
+      "total_runs_mae": 3.501
+    },
+    {
+      "month": "2024-09",
+      "games": 385,
+      "log_loss_model": 0.7166,
+      "total_runs_mae": 3.326
+    }
+  ],
+  "validation_summary": {
+    "season": 2024,
+    "moneyline": {
+      "games_with_odds": 2429,
+      "winner_accuracy_pct": 59.2,
+      "plus_ev_picks": 0,
+      "plus_ev_accuracy_pct": 0.0,
+      "log_loss_model": 0.6939,
+      "log_loss_market": null,
+      "model_beats_market": null,
+      "min_edge": 0.08
+    },
+    "totals": {
+      "games_with_ou_line": 2083,
+      "ou_pick_accuracy_pct": 53.1,
+      "plus_ev_ou_picks": 1469,
+      "plus_ev_ou_accuracy_pct": 54.25,
+      "total_runs_mae": 3.456,
+      "total_runs_bias": 0.278,
+      "log_loss_model": 0.7501,
+      "log_loss_market": 0.6927,
+      "min_edge": 0.08,
+      "totals_beats_market": false
+    }
+  },
+  "test_confirm": null,
+  "promotion_allowed": false
+}

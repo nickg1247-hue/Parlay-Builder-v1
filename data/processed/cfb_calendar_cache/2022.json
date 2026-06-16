@@ -1,0 +1,146 @@
+[
+  {
+    "season": 2022,
+    "week": 1,
+    "seasonType": "regular",
+    "startDate": "2022-08-05T07:00:00.000Z",
+    "endDate": "2022-09-06T06:59:00.000Z",
+    "firstGameStart": "2022-08-05T07:00:00.000Z",
+    "lastGameStart": "2022-09-06T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 2,
+    "seasonType": "regular",
+    "startDate": "2022-09-06T07:00:00.000Z",
+    "endDate": "2022-09-13T06:59:00.000Z",
+    "firstGameStart": "2022-09-06T07:00:00.000Z",
+    "lastGameStart": "2022-09-13T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 3,
+    "seasonType": "regular",
+    "startDate": "2022-09-13T07:00:00.000Z",
+    "endDate": "2022-09-20T06:59:00.000Z",
+    "firstGameStart": "2022-09-13T07:00:00.000Z",
+    "lastGameStart": "2022-09-20T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 4,
+    "seasonType": "regular",
+    "startDate": "2022-09-20T07:00:00.000Z",
+    "endDate": "2022-09-27T06:59:00.000Z",
+    "firstGameStart": "2022-09-20T07:00:00.000Z",
+    "lastGameStart": "2022-09-27T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 5,
+    "seasonType": "regular",
+    "startDate": "2022-09-27T07:00:00.000Z",
+    "endDate": "2022-10-04T06:59:00.000Z",
+    "firstGameStart": "2022-09-27T07:00:00.000Z",
+    "lastGameStart": "2022-10-04T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 6,
+    "seasonType": "regular",
+    "startDate": "2022-10-04T07:00:00.000Z",
+    "endDate": "2022-10-11T06:59:00.000Z",
+    "firstGameStart": "2022-10-04T07:00:00.000Z",
+    "lastGameStart": "2022-10-11T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 7,
+    "seasonType": "regular",
+    "startDate": "2022-10-11T07:00:00.000Z",
+    "endDate": "2022-10-18T06:59:00.000Z",
+    "firstGameStart": "2022-10-11T07:00:00.000Z",
+    "lastGameStart": "2022-10-18T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 8,
+    "seasonType": "regular",
+    "startDate": "2022-10-18T07:00:00.000Z",
+    "endDate": "2022-10-25T06:59:00.000Z",
+    "firstGameStart": "2022-10-18T07:00:00.000Z",
+    "lastGameStart": "2022-10-25T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 9,
+    "seasonType": "regular",
+    "startDate": "2022-10-25T07:00:00.000Z",
+    "endDate": "2022-11-01T06:59:00.000Z",
+    "firstGameStart": "2022-10-25T07:00:00.000Z",
+    "lastGameStart": "2022-11-01T06:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 10,
+    "seasonType": "regular",
+    "startDate": "2022-11-01T07:00:00.000Z",
+    "endDate": "2022-11-08T07:59:00.000Z",
+    "firstGameStart": "2022-11-01T07:00:00.000Z",
+    "lastGameStart": "2022-11-08T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 11,
+    "seasonType": "regular",
+    "startDate": "2022-11-08T08:00:00.000Z",
+    "endDate": "2022-11-15T07:59:00.000Z",
+    "firstGameStart": "2022-11-08T08:00:00.000Z",
+    "lastGameStart": "2022-11-15T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 12,
+    "seasonType": "regular",
+    "startDate": "2022-11-15T08:00:00.000Z",
+    "endDate": "2022-11-22T07:59:00.000Z",
+    "firstGameStart": "2022-11-15T08:00:00.000Z",
+    "lastGameStart": "2022-11-22T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 13,
+    "seasonType": "regular",
+    "startDate": "2022-11-22T08:00:00.000Z",
+    "endDate": "2022-11-29T07:59:00.000Z",
+    "firstGameStart": "2022-11-22T08:00:00.000Z",
+    "lastGameStart": "2022-11-29T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 14,
+    "seasonType": "regular",
+    "startDate": "2022-11-29T08:00:00.000Z",
+    "endDate": "2022-12-06T07:59:00.000Z",
+    "firstGameStart": "2022-11-29T08:00:00.000Z",
+    "lastGameStart": "2022-12-06T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 15,
+    "seasonType": "regular",
+    "startDate": "2022-12-06T08:00:00.000Z",
+    "endDate": "2022-12-11T07:59:00.000Z",
+    "firstGameStart": "2022-12-06T08:00:00.000Z",
+    "lastGameStart": "2022-12-11T07:59:00.000Z"
+  },
+  {
+    "season": 2022,
+    "week": 1,
+    "seasonType": "postseason",
+    "startDate": "2022-12-11T08:00:00.000Z",
+    "endDate": "2023-01-11T07:59:00.000Z",
+    "firstGameStart": "2022-12-11T08:00:00.000Z",
+    "lastGameStart": "2023-01-11T07:59:00.000Z"
+  }
+]

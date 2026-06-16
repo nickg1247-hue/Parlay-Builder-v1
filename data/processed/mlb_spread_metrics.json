@@ -1,0 +1,13 @@
+{
+  "train_seasons": [
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 4859,
+  "holdout_rows": 2430,
+  "holdout_mae_margin": 3.4665,
+  "holdout_margin_std": 4.4608,
+  "proxy_cover_accuracy_home": 0.6494,
+  "note": "No free historical run-line CSV; holdout eval uses \u00b11.5 proxy. Live board uses actual book lines from Odds API."
+}

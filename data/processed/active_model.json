@@ -1,0 +1,8 @@
+{
+  "track": "moneyline",
+  "run_id": "train_baseline",
+  "path": "data/processed/models/train_baseline.joblib",
+  "feature_set": "train_mlb_baseline",
+  "model_version": "v3_logistic_pruned_platt",
+  "promoted_at": "2026-06-16T03:34:51.080477+00:00"
+}

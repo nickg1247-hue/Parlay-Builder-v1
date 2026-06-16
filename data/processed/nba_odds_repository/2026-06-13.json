@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-13",
+  "fetched_at": "2026-06-11T07:06:55.569295+00:00",
+  "source": "the_odds_api_live",
+  "games": [
+    {
+      "home_team": "San Antonio Spurs",
+      "away_team": "New York Knicks",
+      "commence_time": "2026-06-14T00:40:00Z",
+      "home_ml": -200,
+      "away_ml": 169,
+      "odds_source": "the_odds_api_live",
+      "home_spread_point": -5.5,
+      "home_spread_american": -106,
+      "away_spread_point": 5.5,
+      "away_spread_american": -113,
+      "ou_line": 216.5,
+      "over_odds": -110,
+      "under_odds": -110
+    }
+  ]
+}

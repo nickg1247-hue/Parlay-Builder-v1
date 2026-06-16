@@ -1,0 +1,22 @@
+{
+  "train_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 2595,
+  "holdout_rows": 888,
+  "production_model": "v1_gbr_normal",
+  "over_prob_method": "normal_cdf",
+  "proxy_ou_line": 54.5,
+  "league_avg_total": 54.0,
+  "holdout_mae_total_pts": 12.892,
+  "league_avg_mae_total_pts": 13.046,
+  "holdout_total_std": 16.105,
+  "log_loss_model": 0.6866,
+  "log_loss_league_avg": 0.6915,
+  "totals_production_gate_passes": true,
+  "board_totals_enabled": true,
+  "note": "Holdout O/U eval uses train-median proxy line (no free historical CFB totals CSV). Live board (Phase 3) uses Odds API totals on americanfootball_ncaaf."
+}

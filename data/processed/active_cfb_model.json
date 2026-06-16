@@ -1,0 +1,8 @@
+{
+  "track": "cfb_moneyline",
+  "run_id": "train_cfb_baseline",
+  "path": "data/processed/cfb_baseline_model.joblib",
+  "feature_set": "cfb_v3",
+  "model_version": "v3_logistic_platt",
+  "promoted_at": "2026-06-16T01:57:23.234962+00:00"
+}

@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-06-11T08:50:09.543614+00:00",
+  "status": "ok",
+  "method": "walk_forward_expanding_window",
+  "description": "Each holdout season: train on all prior seasons only; features built chronologically with no same-day leakage; compare predictions to actual results.",
+  "seasons_available": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "folds": [
+    {
+      "holdout_season": 2023,
+      "train_seasons": [
+        2022
+      ],
+      "moneyline": {
+        "games": 868,
+        "correct_picks": 634,
+        "wrong_picks": 234,
+        "accuracy_pct": 73.04,
+        "log_loss": 0.548,
+        "brier": 0.1821,
+        "beats_naive": true,
+        "naive_log_loss": 0.5946,
+        "home_rate_log_loss": 0.657,
+        "elo_log_loss": 0.5946
+      },
+      "spread": {
+        "games": 868,
+        "proxy_spread": -7.0,
+        "margin_mae": 14.513,
+        "spread_picks_made": 868,
+        "spread_pick_accuracy_pct": 67.97
+      },
+      "totals": {
+        "games": 868,
+        "proxy_ou_line": 55.5,
+        "total_mae": 13.856,
+        "ou_picks_made": 868,
+        "ou_pick_accuracy_pct": 57.6
+      }
+    },
+    {
+      "holdout_season": 2024,
+      "train_seasons": [
+        2022,
+        2023
+      ],
+      "moneyline": {
+        "games": 873,
+        "correct_picks": 594,
+        "wrong_picks": 279,
+        "accuracy_pct": 68.04,
+        "log_loss": 0.6068,
+        "brier": 0.2068,
+        "beats_naive": false,
+        "naive_log_loss": 0.6059,
+        "home_rate_log_loss": 0.6546,
+        "elo_log_loss": 0.6059
+      },
+      "spread": {
+        "games": 873,
+        "proxy_spread": -7.0,
+        "margin_mae": 14.761,
+        "spread_picks_made": 873,
+        "spread_pick_accuracy_pct": 67.93
+      },
+      "totals": {
+        "games": 873,
+        "proxy_ou_line": 54.5,
+        "total_mae": 13.509,
+        "ou_picks_made": 873,
+        "ou_pick_accuracy_pct": 53.72
+      }
+    },
+    {
+      "holdout_season": 2025,
+      "train_seasons": [
+        2022,
+        2023,
+        2024
+      ],
+      "moneyline": {
+        "games": 888,
+        "correct_picks": 645,
+        "wrong_picks": 243,
+        "accuracy_pct": 72.64,
+        "log_loss": 0.5404,
+        "brier": 0.1822,
+        "beats_naive": true,
+        "naive_log_loss": 0.5776,
+        "home_rate_log_loss": 0.6506,
+        "elo_log_loss": 0.5776
+      },
+      "spread": {
+        "games": 888,
+        "proxy_spread": -7.0,
+        "margin_mae": 14.129,
+        "spread_picks_made": 888,
+        "spread_pick_accuracy_pct": 68.92
+      },
+      "totals": {
+        "games": 888,
+        "proxy_ou_line": 54.5,
+        "total_mae": 12.892,
+        "ou_picks_made": 888,
+        "ou_pick_accuracy_pct": 56.53
+      }
+    }
+  ],
+  "aggregate": {
+    "holdout_games_scored": 2629,
+    "moneyline_accuracy_pct": 71.24,
+    "moneyline_log_loss": 0.565,
+    "beats_naive_every_fold": false,
+    "spread_pick_accuracy_pct": 68.28,
+    "ou_pick_accuracy_pct": 55.95
+  },
+  "feature_effects": {
+    "logistic_importance_avg": [
+      {
+        "feature": "elo_diff",
+        "avg_abs_logistic_coef": 35.2948,
+        "folds": 3
+      },
+      {
+        "feature": "away_season_win_pct",
+        "avg_abs_logistic_coef": 0.0751,
+        "folds": 3
+      },
+      {
+        "feature": "rest_diff",
+        "avg_abs_logistic_coef": 0.0432,
+        "folds": 3
+      },
+      {
+        "feature": "home_season_win_pct",
+        "avg_abs_logistic_coef": 0.0418,
+        "folds": 3
+      },
+      {
+        "feature": "away_rest_days",
+        "avg_abs_logistic_coef": 0.0336,
+        "folds": 3
+      },
+      {
+        "feature": "home_rest_days",
+        "avg_abs_logistic_coef": 0.0265,
+        "folds": 3
+      },
+      {
+        "feature": "away_b2b",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "home_b2b",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "home_field",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      }
+    ],
+    "univariate_correlation": [
+      {
+        "feature": "elo_diff",
+        "correlation_with_home_win": 0.357
+      },
+      {
+        "feature": "away_season_win_pct",
+        "correlation_with_home_win": -0.2429
+      },
+      {
+        "feature": "home_season_win_pct",
+        "correlation_with_home_win": 0.1704
+      },
+      {
+        "feature": "home_rest_days",
+        "correlation_with_home_win": -0.0262
+      },
+      {
+        "feature": "rest_diff",
+        "correlation_with_home_win": -0.0238
+      },
+      {
+        "feature": "away_rest_days",
+        "correlation_with_home_win": 0.0027
+      }
+    ],
+    "interpretation": "logistic_importance_avg: larger avg_abs_logistic_coef across folds means the feature moved the moneyline model more. univariate_correlation: exploratory |r| with home_win (not causal)."
+  },
+  "proof_summary": {
+    "verdict": "mixed_vs_naive",
+    "moneyline_beats_naive_all_folds": false,
+    "aggregate_winner_accuracy": "71.2%",
+    "note": "Spread/totals scored at proxy lines (-7, train-median O/U) \u2014 not sportsbook closes. Add historical odds for market proof (Phase 3)."
+  },
+  "report_path": "data/processed/cfb_backtest_report.json"
+}

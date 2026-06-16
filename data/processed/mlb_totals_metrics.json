@@ -1,0 +1,31 @@
+{
+  "train_seasons": [
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 4859,
+  "holdout_rows": 2430,
+  "holdout_with_ou_lines": 1617,
+  "production_model": "v1_gbr_poisson",
+  "replaced_artifact": false,
+  "metrics": {
+    "league_avg_baseline": {
+      "mae": 3.6148148148148147,
+      "log_loss": 0.7406854781461003
+    },
+    "gbr_totals": {
+      "mae": 3.5756557960419117,
+      "log_loss": 0.732842642529606,
+      "hit_rate_edge_flagged": 0.5383867832847424
+    },
+    "market_implied": {
+      "log_loss": 0.6927988801823384
+    }
+  },
+  "phase_gate": {
+    "rule": "model over/under log_loss <= market on 2025 matched lines",
+    "passes": false
+  },
+  "benchmark_note": "Realistic O/U direction accuracy ~53-57%; no 80% gate."
+}

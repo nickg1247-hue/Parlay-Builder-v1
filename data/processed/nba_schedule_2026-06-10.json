@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-10",
+  "sport": "nba",
+  "games": [
+    {
+      "sport": "nba",
+      "game_id": "401859966",
+      "home_team": "New York Knicks",
+      "away_team": "San Antonio Spurs",
+      "home_team_id": 18,
+      "away_team_id": 24,
+      "home_team_abbr": "NY",
+      "away_team_abbr": "SA",
+      "home_logo_url": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/ny.png",
+      "away_logo_url": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/sa.png",
+      "home_record": "53-29",
+      "away_record": "62-20",
+      "series_summary": "NY leads series 2-0",
+      "start_time_utc": "2026-06-11T00:30Z",
+      "status": "Preview",
+      "detailed_status": "Scheduled",
+      "period_label": "6/10 - 8:30 PM EDT",
+      "home_score": 0,
+      "away_score": 0
+    }
+  ],
+  "games_count": 1,
+  "cached_at": "2026-06-07T05:38:15.116303+00:00"
+}

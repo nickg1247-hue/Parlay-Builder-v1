@@ -1,0 +1,7 @@
+{
+  "track": "cfb_totals",
+  "model_version": "v1_gbr_normal",
+  "path": "data/processed/cfb_totals_model.joblib",
+  "production_ready": true,
+  "promoted_at": "2026-06-11T08:17:53.821628+00:00"
+}

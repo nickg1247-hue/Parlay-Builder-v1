@@ -1,0 +1,16 @@
+{
+  "model_version": "v1_logistic",
+  "holdout_season": 2025,
+  "holdout_games": 2430,
+  "matched_games": 1758,
+  "match_rate_pct": 72.35,
+  "edge_threshold": 0.08,
+  "log_loss_model": 0.6733,
+  "log_loss_market": 0.677,
+  "model_beats_market_log_loss": true,
+  "plus_ev_picks": 627,
+  "paper_trade_roi": 0.2186,
+  "paper_trade_profit_units": 137.08,
+  "plus_ev_hit_rate": 0.5614,
+  "ev_signal": true
+}

@@ -1,0 +1,3 @@
+game_id,date,home_team,away_team,home_win,home_ml,away_ml,model_prob_home,market_prob_home,edge_home,edge_away,pick_side,is_plus_ev,paper_profit,pick_won
+g1,2025-10-21,Boston Celtics,New York Knicks,1,-150,130,0.9057262036084617,0.5798319327731092,0.3258942708353525,-0.32589427083535244,home,True,0.6666666666666666,1
+g2,2025-10-22,Miami Heat,Boston Celtics,0,110,-130,0.09427379639153906,0.4572564612326044,-0.36298266484106534,0.36298266484106523,away,True,0.7692307692307693,1

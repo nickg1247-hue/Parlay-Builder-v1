@@ -1,0 +1,84 @@
+{
+  "train_seasons": [
+    2023,
+    2024
+  ],
+  "calibration_season": 2024,
+  "holdout_season": 2025,
+  "holdout": {
+    "winner_accuracy": 0.5745,
+    "log_loss": 0.905652,
+    "brier": 0.29563,
+    "accuracy_by_confidence": {
+      "no_pick": {
+        "n": 152,
+        "accuracy": 0.5
+      },
+      "low": {
+        "n": 152,
+        "accuracy": 0.5
+      },
+      "moderate": {
+        "n": 144,
+        "accuracy": 0.5417
+      },
+      "high": {
+        "n": 203,
+        "accuracy": 0.4631
+      },
+      "very_high": {
+        "n": 1779,
+        "accuracy": 0.6026
+      },
+      "summary": {
+        "no_pick_pct": 0.0626,
+        "total_games": 2430
+      }
+    },
+    "high_confidence_accuracy": 0.5883,
+    "plus_ev_roi": -0.1027,
+    "plus_ev_picks": 1521,
+    "mean_clv": null,
+    "no_pick_pct": 0.0626
+  },
+  "baseline_logistic_holdout": {
+    "winner_accuracy": 0.5774,
+    "log_loss": 0.671185,
+    "brier": 0.239362,
+    "accuracy_by_confidence": {
+      "no_pick": {
+        "n": 731,
+        "accuracy": 0.5062
+      },
+      "low": {
+        "n": 594,
+        "accuracy": 0.5623
+      },
+      "moderate": {
+        "n": 461,
+        "accuracy": 0.5618
+      },
+      "high": {
+        "n": 414,
+        "accuracy": 0.6473
+      },
+      "very_high": {
+        "n": 230,
+        "accuracy": 0.7478
+      },
+      "summary": {
+        "no_pick_pct": 0.3008,
+        "total_games": 2430
+      }
+    },
+    "high_confidence_accuracy": 0.6832,
+    "plus_ev_roi": -0.2989,
+    "plus_ev_picks": 540,
+    "mean_clv": null,
+    "no_pick_pct": 0.3008
+  },
+  "promotion_improved_metrics": [
+    "plus_ev_roi"
+  ],
+  "promoted": false
+}

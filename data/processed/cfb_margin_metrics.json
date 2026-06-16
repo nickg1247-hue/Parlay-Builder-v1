@@ -1,0 +1,25 @@
+{
+  "train_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 2595,
+  "holdout_rows": 888,
+  "feature_set": "cfb_margin_v1",
+  "holdout_mae_margin": 14.1295,
+  "holdout_margin_std": 17.7172,
+  "proxy_cover_log_loss_home": 0.5575,
+  "proxy_cover_log_loss_away": 0.5584,
+  "margin_derived_ml_log_loss": 0.5257,
+  "cfb_baseline_log_loss": 0.5545,
+  "beats_cfb_baseline_sanity": true,
+  "margin_production_gate_passes": true,
+  "board_spread_enabled": true,
+  "proxy_lines": {
+    "home_spread_point": -7.0,
+    "away_spread_point": 7.0
+  },
+  "note": "No free historical CFB spread CSV; holdout eval uses home -7 / away +7 proxy. Live board (Phase 3) uses book lines from Odds API americanfootball_ncaaf."
+}

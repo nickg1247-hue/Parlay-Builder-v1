@@ -1,0 +1,198 @@
+{
+  "id": "bd2f1085-a99b-40e0-bc33-aa251a390559",
+  "track": "totals",
+  "experiment_id": "confirm-totals",
+  "feature_set": "totals_full",
+  "feature_columns": [
+    "home_season_runs_scored_pg",
+    "home_season_runs_allowed_pg",
+    "away_season_runs_scored_pg",
+    "away_season_runs_allowed_pg",
+    "home_last10_runs_scored_pg",
+    "home_last10_runs_allowed_pg",
+    "away_last10_runs_scored_pg",
+    "away_last10_runs_allowed_pg",
+    "home_last30_runs_scored_pg",
+    "home_last30_runs_allowed_pg",
+    "away_last30_runs_scored_pg",
+    "away_last30_runs_allowed_pg",
+    "home_home_split_runs_scored_pg",
+    "home_home_split_runs_allowed_pg",
+    "away_away_split_runs_scored_pg",
+    "away_away_split_runs_allowed_pg",
+    "park_factor_runs",
+    "home_pitcher_era",
+    "away_pitcher_era",
+    "home_pitcher_whip",
+    "away_pitcher_whip",
+    "home_pitcher_ip",
+    "away_pitcher_ip",
+    "home_rest_days",
+    "away_rest_days",
+    "h2h_avg_total_runs"
+  ],
+  "n_features": 26,
+  "goal_metric": "total_runs_mae",
+  "goal_value": 99.0,
+  "goal_met": true,
+  "goal_within_tolerance": true,
+  "goal_tolerance_pct": 0.05,
+  "metric_actual_value": 3.454,
+  "goal_gap_pct": 0.0,
+  "goal_note": null,
+  "status": "confirmed",
+  "created_at": "2026-06-07T01:04:14.624015+00:00",
+  "splits": {
+    "train": "seasons \u2264 2023",
+    "validation": "season 2024 (walk-forward, tuning allowed)",
+    "locked_test": "season 2025 (confirm only \u2014 no tuning)"
+  },
+  "preflight": {
+    "track": "totals",
+    "leakage": {
+      "passed": true,
+      "checks": [
+        "totals_rolling_excludes_current"
+      ]
+    },
+    "shuffle_labels": {
+      "passed": true,
+      "accuracy": 0.5527,
+      "log_loss": 0.6869,
+      "threshold_accuracy_max": 0.58,
+      "threshold_log_loss_min": 0.65
+    },
+    "passed": true
+  },
+  "learning_curve": [
+    {
+      "month": "2024-03",
+      "games": 55,
+      "log_loss_model": 0.9082,
+      "total_runs_mae": 3.77
+    },
+    {
+      "month": "2024-04",
+      "games": 397,
+      "log_loss_model": 0.7681,
+      "total_runs_mae": 3.505
+    },
+    {
+      "month": "2024-05",
+      "games": 409,
+      "log_loss_model": 0.7752,
+      "total_runs_mae": 3.425
+    },
+    {
+      "month": "2024-06",
+      "games": 401,
+      "log_loss_model": 0.7745,
+      "total_runs_mae": 3.551
+    },
+    {
+      "month": "2024-07",
+      "games": 369,
+      "log_loss_model": 0.6964,
+      "total_runs_mae": 3.378
+    },
+    {
+      "month": "2024-08",
+      "games": 413,
+      "log_loss_model": 0.7174,
+      "total_runs_mae": 3.463
+    },
+    {
+      "month": "2024-09",
+      "games": 385,
+      "log_loss_model": 0.7268,
+      "total_runs_mae": 3.347
+    }
+  ],
+  "validation_summary": {
+    "season": 2024,
+    "moneyline": {
+      "games_with_odds": 2429,
+      "winner_accuracy_pct": 59.0,
+      "plus_ev_picks": 0,
+      "plus_ev_accuracy_pct": 0.0,
+      "log_loss_model": 0.6759,
+      "log_loss_market": null,
+      "model_beats_market": null,
+      "min_edge": 0.08
+    },
+    "totals": {
+      "games_with_ou_line": 2083,
+      "ou_pick_accuracy_pct": 53.58,
+      "plus_ev_ou_picks": 1451,
+      "plus_ev_ou_accuracy_pct": 56.24,
+      "total_runs_mae": 3.454,
+      "total_runs_bias": 0.254,
+      "log_loss_model": 0.7467,
+      "log_loss_market": 0.6927,
+      "min_edge": 0.08,
+      "totals_beats_market": false
+    }
+  },
+  "test_confirm": {
+    "confirmed_at": "2026-06-07T01:05:03.623445+00:00",
+    "season": 2025,
+    "track": "totals",
+    "moneyline": {
+      "games_with_odds": 1758,
+      "winner_accuracy_pct": 58.23,
+      "plus_ev_picks": 608,
+      "plus_ev_accuracy_pct": 54.93,
+      "log_loss_model": 0.6673,
+      "log_loss_market": 0.677,
+      "model_beats_market": true,
+      "min_edge": 0.08
+    },
+    "totals": {
+      "games_with_ou_line": 1617,
+      "ou_pick_accuracy_pct": 52.88,
+      "plus_ev_ou_picks": 1028,
+      "plus_ev_ou_accuracy_pct": 52.82,
+      "total_runs_mae": 3.566,
+      "total_runs_bias": 0.063,
+      "log_loss_model": 0.7293,
+      "log_loss_market": 0.6928,
+      "min_edge": 0.08,
+      "totals_beats_market": false
+    },
+    "production_gate": {
+      "track": "totals",
+      "moneyline_rule": "log_loss < v1 AND log_loss <= market",
+      "totals_rule": "totals log_loss <= market",
+      "v1_log_loss": 0.672,
+      "market_log_loss": 0.677,
+      "candidate_log_loss": 0.6673,
+      "candidate_totals_log_loss": 0.7293,
+      "production_gate_passed": true,
+      "totals_gate_passed": false,
+      "active_gate_passed": false
+    },
+    "promoted": false,
+    "promotion_note": null,
+    "active_manifest": null
+  },
+  "promotion_allowed": false,
+  "campaign": {
+    "stopped_reason": "within_tolerance",
+    "tolerance_pct": 0.05,
+    "attempts_count": 1,
+    "attempts": [
+      {
+        "run_id": "bd2f1085-a99b-40e0-bc33-aa251a390559",
+        "feature_set": "totals_full",
+        "metric_actual_value": 3.454,
+        "goal_gap_pct": 0.0,
+        "goal_within_tolerance": true,
+        "goal_met": true,
+        "status": "completed"
+      }
+    ],
+    "feature_sets_tried": [
+      "totals_full"
+    ]
+  }
+}

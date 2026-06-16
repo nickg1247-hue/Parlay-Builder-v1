@@ -1,0 +1,194 @@
+{
+  "id": "99496835-1bb0-4dd9-b154-809986e1ddb3",
+  "track": "totals",
+  "experiment_id": "bad-totals-6",
+  "feature_set": "totals_season_pitcher",
+  "feature_columns": [
+    "home_season_runs_scored_pg",
+    "home_season_runs_allowed_pg",
+    "away_season_runs_scored_pg",
+    "away_season_runs_allowed_pg",
+    "home_pitcher_era",
+    "away_pitcher_era",
+    "home_pitcher_whip",
+    "away_pitcher_whip",
+    "home_pitcher_ip",
+    "away_pitcher_ip",
+    "park_factor_runs",
+    "home_rest_days",
+    "away_rest_days"
+  ],
+  "n_features": 13,
+  "goal_metric": "totals_log_loss_model",
+  "goal_value": 0.7,
+  "goal_met": false,
+  "goal_within_tolerance": true,
+  "goal_tolerance_pct": 0.05,
+  "metric_actual_value": 0.7289,
+  "goal_gap_pct": 0.0413,
+  "goal_note": "Within 5% of goal (actual=0.7289, goal=0.7, gap=4.1%)",
+  "status": "completed",
+  "created_at": "2026-06-05T06:47:18.679554+00:00",
+  "splits": {
+    "train": "seasons \u2264 2023",
+    "validation": "season 2024 (walk-forward, tuning allowed)",
+    "locked_test": "season 2025 (confirm only \u2014 no tuning)"
+  },
+  "preflight": {
+    "track": "totals",
+    "leakage": {
+      "passed": true,
+      "checks": [
+        "totals_rolling_excludes_current"
+      ]
+    },
+    "shuffle_labels": {
+      "passed": true,
+      "accuracy": 0.5362,
+      "log_loss": 0.6904,
+      "threshold_accuracy_max": 0.58,
+      "threshold_log_loss_min": 0.65
+    },
+    "passed": true
+  },
+  "learning_curve": [
+    {
+      "month": "2024-03",
+      "games": 55,
+      "log_loss_model": 0.684,
+      "total_runs_mae": 3.494
+    },
+    {
+      "month": "2024-04",
+      "games": 397,
+      "log_loss_model": 0.7607,
+      "total_runs_mae": 3.447
+    },
+    {
+      "month": "2024-05",
+      "games": 409,
+      "log_loss_model": 0.7454,
+      "total_runs_mae": 3.352
+    },
+    {
+      "month": "2024-06",
+      "games": 401,
+      "log_loss_model": 0.7346,
+      "total_runs_mae": 3.421
+    },
+    {
+      "month": "2024-07",
+      "games": 369,
+      "log_loss_model": 0.7084,
+      "total_runs_mae": 3.406
+    },
+    {
+      "month": "2024-08",
+      "games": 413,
+      "log_loss_model": 0.714,
+      "total_runs_mae": 3.477
+    },
+    {
+      "month": "2024-09",
+      "games": 385,
+      "log_loss_model": 0.7137,
+      "total_runs_mae": 3.288
+    }
+  ],
+  "validation_summary": {
+    "season": 2024,
+    "moneyline": {
+      "games_with_odds": 2429,
+      "winner_accuracy_pct": 59.2,
+      "plus_ev_picks": 0,
+      "plus_ev_accuracy_pct": 0.0,
+      "log_loss_model": 0.6939,
+      "log_loss_market": null,
+      "model_beats_market": null,
+      "min_edge": 0.08
+    },
+    "totals": {
+      "games_with_ou_line": 2083,
+      "ou_pick_accuracy_pct": 56.07,
+      "plus_ev_ou_picks": 1382,
+      "plus_ev_ou_accuracy_pct": 56.73,
+      "total_runs_mae": 3.401,
+      "total_runs_bias": 0.166,
+      "log_loss_model": 0.7289,
+      "log_loss_market": 0.6927,
+      "min_edge": 0.08,
+      "totals_beats_market": false
+    }
+  },
+  "test_confirm": null,
+  "promotion_allowed": false,
+  "campaign": {
+    "stopped_reason": "within_tolerance",
+    "tolerance_pct": 0.05,
+    "attempts_count": 6,
+    "attempts": [
+      {
+        "run_id": "c277baf1-74c3-476b-9a9d-45f87d7e43ed",
+        "feature_set": "totals_full",
+        "metric_actual_value": 0.7468,
+        "goal_gap_pct": 0.0669,
+        "goal_within_tolerance": false,
+        "goal_met": false,
+        "status": "completed"
+      },
+      {
+        "run_id": "808bbf40-d8d0-4fcd-a8dc-297d233b0e71",
+        "feature_set": "totals_no_h2h",
+        "metric_actual_value": 0.7441,
+        "goal_gap_pct": 0.063,
+        "goal_within_tolerance": false,
+        "goal_met": false,
+        "status": "completed"
+      },
+      {
+        "run_id": "652756c4-b5cd-4765-a17f-b0e479f3a7af",
+        "feature_set": "totals_no_last10",
+        "metric_actual_value": 0.7501,
+        "goal_gap_pct": 0.0716,
+        "goal_within_tolerance": false,
+        "goal_met": false,
+        "status": "completed"
+      },
+      {
+        "run_id": "75d5d75a-ff00-47f4-b2f9-ea005256990c",
+        "feature_set": "totals_no_last30",
+        "metric_actual_value": 0.7358,
+        "goal_gap_pct": 0.0511,
+        "goal_within_tolerance": false,
+        "goal_met": false,
+        "status": "completed"
+      },
+      {
+        "run_id": "3d3399dc-3a01-486a-a268-f1729773948a",
+        "feature_set": "totals_no_splits",
+        "metric_actual_value": 0.748,
+        "goal_gap_pct": 0.0686,
+        "goal_within_tolerance": false,
+        "goal_met": false,
+        "status": "completed"
+      },
+      {
+        "run_id": "99496835-1bb0-4dd9-b154-809986e1ddb3",
+        "feature_set": "totals_season_pitcher",
+        "metric_actual_value": 0.7289,
+        "goal_gap_pct": 0.0413,
+        "goal_within_tolerance": true,
+        "goal_met": false,
+        "status": "completed"
+      }
+    ],
+    "feature_sets_tried": [
+      "totals_full",
+      "totals_no_h2h",
+      "totals_no_last10",
+      "totals_no_last30",
+      "totals_no_splits",
+      "totals_season_pitcher"
+    ]
+  }
+}

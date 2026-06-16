@@ -1,0 +1,1902 @@
+date,home_team,away_team,ou_line,over_odds,under_odds,odds_line_type
+2025-02-20,Los Angeles Dodgers,Chicago Cubs,9.0,100,-120,currentLine_median
+2025-02-21,Arizona Diamondbacks,Colorado Rockies,10.5,-115,-105,currentLine_median
+2025-02-21,Chicago Cubs,Los Angeles Dodgers,10.5,-115,-105,currentLine_median
+2025-02-21,Kansas City Royals,Texas Rangers,10.5,-110,-110,currentLine_median
+2025-02-21,New York Yankees,Tampa Bay Rays,8.5,-110,-110,currentLine_median
+2025-02-21,San Diego Padres,Seattle Mariners,10.5,-120,100,currentLine_median
+2025-02-22,Baltimore Orioles,Pittsburgh Pirates,8.5,100,-120,currentLine_median
+2025-02-22,Chicago Cubs,Chicago White Sox,10.5,-110,-110,currentLine_median
+2025-02-22,Colorado Rockies,Arizona Diamondbacks,10.5,-124,100,currentLine_median
+2025-02-22,Detroit Tigers,Philadelphia Phillies,8.5,-105,-115,currentLine_median
+2025-02-22,Los Angeles Angels,Seattle Mariners,10.5,-110,-110,currentLine_median
+2025-02-22,Los Angeles Dodgers,Kansas City Royals,10.5,-110,-110,currentLine_median
+2025-02-22,Miami Marlins,St. Louis Cardinals,8.5,105,-125,currentLine_median
+2025-02-22,Minnesota Twins,Atlanta Braves,7.5,-115,-105,currentLine_median
+2025-02-22,San Diego Padres,Athletics,10.5,-110,-110,currentLine_median
+2025-02-22,Tampa Bay Rays,Boston Red Sox,8.5,-106,-118,currentLine_median
+2025-02-22,Texas Rangers,San Francisco Giants,10.5,-110,-110,currentLine_median
+2025-02-22,Toronto Blue Jays,New York Yankees,8.5,-110,-110,currentLine_median
+2025-02-23,Atlanta Braves,Tampa Bay Rays,8.5,-112,-110,currentLine_median
+2025-02-23,Boston Red Sox,Toronto Blue Jays,7.0,-120,100,currentLine_median
+2025-02-23,Chicago Cubs,Texas Rangers,10.5,-110,-110,currentLine_median
+2025-02-23,Cleveland Guardians,Los Angeles Angels,10.0,-110,-110,currentLine_median
+2025-02-23,Kansas City Royals,Chicago White Sox,10.5,-110,-110,currentLine_median
+2025-02-23,Los Angeles Dodgers,San Diego Padres,10.0,-110,-110,currentLine_median
+2025-02-23,New York Yankees,Detroit Tigers,9.5,-110,-110,currentLine_median
+2025-02-23,Philadelphia Phillies,Baltimore Orioles,8.0,-110,-110,currentLine_median
+2025-02-23,Pittsburgh Pirates,Minnesota Twins,8.0,100,-120,currentLine_median
+2025-02-23,San Francisco Giants,Cincinnati Reds,10.0,-110,-110,currentLine_median
+2025-02-23,Seattle Mariners,Arizona Diamondbacks,10.5,-110,-110,currentLine_median
+2025-02-23,St. Louis Cardinals,Houston Astros,7.5,-115,-105,currentLine_median
+2025-02-24,Arizona Diamondbacks,Cleveland Guardians,10.5,-105,-115,currentLine_median
+2025-02-24,Chicago White Sox,Texas Rangers,10.0,-115,-105,currentLine_median
+2025-02-24,Cincinnati Reds,Los Angeles Dodgers,10.0,-112,-110,currentLine_median
+2025-02-24,Kansas City Royals,Athletics,10.0,-115,-105,currentLine_median
+2025-02-24,Milwaukee Brewers,Seattle Mariners,10.0,-115,-105,currentLine_median
+2025-02-24,San Diego Padres,Chicago Cubs,10.0,-115,-105,currentLine_median
+2025-02-24,St. Louis Cardinals,New York Mets,8.5,-120,100,currentLine_median
+2025-02-25,Athletics,San Francisco Giants,10.0,-115,-105,currentLine_median
+2025-02-25,Baltimore Orioles,Detroit Tigers,10.5,-120,100,currentLine_median
+2025-02-25,Chicago Cubs,Arizona Diamondbacks,10.5,-115,-105,currentLine_median
+2025-02-25,Cleveland Guardians,Milwaukee Brewers,10.0,-105,-115,currentLine_median
+2025-02-25,Colorado Rockies,Chicago White Sox,10.0,-105,-115,currentLine_median
+2025-02-25,Houston Astros,New York Mets,8.5,100,-120,currentLine_median
+2025-02-25,Los Angeles Dodgers,Seattle Mariners,10.0,-115,-105,currentLine_median
+2025-02-25,Miami Marlins,Washington Nationals,7.5,-115,-105,currentLine_median
+2025-02-25,Minnesota Twins,New York Yankees,8.5,-110,-110,currentLine_median
+2025-02-25,San Diego Padres,Los Angeles Angels,10.0,-115,-105,currentLine_median
+2025-02-25,Tampa Bay Rays,Philadelphia Phillies,7.0,-110,-110,currentLine_median
+2025-02-25,Texas Rangers,Kansas City Royals,10.0,-115,-105,currentLine_median
+2025-02-25,Toronto Blue Jays,St. Louis Cardinals,9.5,-110,-110,currentLine_median
+2025-02-26,Boston Red Sox,Tampa Bay Rays,9.0,-115,-105,currentLine_median
+2025-02-26,Chicago White Sox,San Diego Padres,10.5,-110,-110,currentLine_median
+2025-02-26,Cleveland Guardians,Texas Rangers,10.5,-110,-110,currentLine_median
+2025-02-26,Detroit Tigers,Minnesota Twins,8.5,-105,-115,currentLine_median
+2025-02-26,Kansas City Royals,Colorado Rockies,10.5,-110,-110,currentLine_median
+2025-02-26,Los Angeles Angels,Cincinnati Reds,11.0,-110,-110,currentLine_median
+2025-02-26,Miami Marlins,New York Mets,8.0,-110,-110,currentLine_median
+2025-02-26,New York Yankees,St. Louis Cardinals,9.5,-110,-110,currentLine_median
+2025-02-26,San Francisco Giants,Chicago Cubs,10.5,-110,-112,currentLine_median
+2025-02-26,Seattle Mariners,Athletics,10.5,-112,-110,currentLine_median
+2025-02-26,Toronto Blue Jays,Philadelphia Phillies,9.0,-118,-102,currentLine_median
+2025-02-26,Washington Nationals,Houston Astros,7.5,-120,100,currentLine_median
+2025-02-27,Athletics,San Diego Padres,9.5,-110,-112,currentLine_median
+2025-02-27,Baltimore Orioles,Toronto Blue Jays,9.5,-102,-118,currentLine_median
+2025-02-27,Chicago Cubs,Los Angeles Angels,10.5,-115,-106,currentLine_median
+2025-02-27,Chicago White Sox,Cleveland Guardians,10.0,-110,-112,currentLine_median
+2025-02-27,Cincinnati Reds,Arizona Diamondbacks,10.5,-115,-105,currentLine_median
+2025-02-27,Colorado Rockies,Los Angeles Dodgers,11.0,-105,-115,currentLine_median
+2025-02-27,Milwaukee Brewers,Kansas City Royals,10.5,-120,100,currentLine_median
+2025-02-27,Minnesota Twins,Pittsburgh Pirates,9.0,-120,100,currentLine_median
+2025-02-27,New York Mets,Houston Astros,9.0,100,-120,currentLine_median
+2025-02-27,Philadelphia Phillies,New York Yankees,7.5,-110,-110,currentLine_median
+2025-02-27,St. Louis Cardinals,Miami Marlins,8.5,100,-120,currentLine_median
+2025-02-27,Washington Nationals,Atlanta Braves,9.5,-105,-115,currentLine_median
+2025-02-28,Arizona Diamondbacks,Kansas City Royals,10.5,-105,-115,currentLine_median
+2025-02-28,Athletics,Cincinnati Reds,10.0,-115,-105,currentLine_median
+2025-02-28,Cleveland Guardians,Colorado Rockies,10.5,-110,-110,currentLine_median
+2025-02-28,Houston Astros,St. Louis Cardinals,8.0,100,-120,currentLine_median
+2025-02-28,Miami Marlins,Atlanta Braves,7.0,-120,100,currentLine_median
+2025-02-28,Minnesota Twins,Baltimore Orioles,8.5,100,-120,currentLine_median
+2025-02-28,New York Mets,Washington Nationals,9.0,100,-120,currentLine_median
+2025-02-28,Philadelphia Phillies,Boston Red Sox,7.5,-110,-110,currentLine_median
+2025-02-28,Pittsburgh Pirates,Tampa Bay Rays,8.0,100,-120,currentLine_median
+2025-02-28,San Diego Padres,Seattle Mariners,10.5,-110,-110,currentLine_median
+2025-02-28,San Francisco Giants,Milwaukee Brewers,9.0,-115,-105,currentLine_median
+2025-02-28,Texas Rangers,Chicago Cubs,10.5,-105,-115,currentLine_median
+2025-03-01,Atlanta Braves,Toronto Blue Jays,9.5,-110,-110,currentLine_median
+2025-03-01,Baltimore Orioles,Pittsburgh Pirates,8.0,-105,-115,currentLine_median
+2025-03-01,Boston Red Sox,Minnesota Twins,7.5,-110,-110,currentLine_median
+2025-03-01,Cincinnati Reds,San Diego Padres,15.0,-115,-105,currentLine_median
+2025-03-01,Detroit Tigers,Philadelphia Phillies,7.5,100,-120,currentLine_median
+2025-03-01,Los Angeles Angels,Athletics,15.0,-110,-112,currentLine_median
+2025-03-01,Los Angeles Dodgers,San Francisco Giants,9.5,100,-120,currentLine_median
+2025-03-01,Milwaukee Brewers,Texas Rangers,14.5,-120,-102,currentLine_median
+2025-03-01,New York Yankees,Houston Astros,9.5,-110,-110,currentLine_median
+2025-03-01,Seattle Mariners,Chicago White Sox,13.5,-115,-105,currentLine_median
+2025-03-01,Tampa Bay Rays,New York Mets,9.0,-110,-110,currentLine_median
+2025-03-02,Atlanta Braves,New York Yankees,8.0,-105,-115,currentLine_median
+2025-03-02,Boston Red Sox,New York Mets,8.0,-115,-105,currentLine_median
+2025-03-02,Chicago Cubs,Cincinnati Reds,10.5,-110,-110,currentLine_median
+2025-03-02,Cleveland Guardians,Milwaukee Brewers,11.0,-120,100,currentLine_median
+2025-03-02,Colorado Rockies,Seattle Mariners,11.0,-109,-111,currentLine_median
+2025-03-02,Miami Marlins,St. Louis Cardinals,8.0,-110,-110,currentLine_median
+2025-03-02,Minnesota Twins,Tampa Bay Rays,8.0,-110,-110,currentLine_median
+2025-03-02,Pittsburgh Pirates,Detroit Tigers,7.5,-105,-115,currentLine_median
+2025-03-02,San Diego Padres,Kansas City Royals,10.5,100,-120,currentLine_median
+2025-03-02,Texas Rangers,Arizona Diamondbacks,10.5,-110,-110,currentLine_median
+2025-03-03,Arizona Diamondbacks,Chicago Cubs,12.5,-115,-105,currentLine_median
+2025-03-03,Baltimore Orioles,Boston Red Sox,8.5,-120,100,currentLine_median
+2025-03-03,Chicago White Sox,Athletics,10.5,-110,-110,currentLine_median
+2025-03-03,Cincinnati Reds,Milwaukee Brewers,12.0,-115,-105,currentLine_median
+2025-03-03,Detroit Tigers,Toronto Blue Jays,7.0,-120,100,currentLine_median
+2025-03-03,Kansas City Royals,Texas Rangers,13.5,-112,-110,currentLine_median
+2025-03-03,Los Angeles Angels,Colorado Rockies,12.5,-115,-105,currentLine_median
+2025-03-03,New York Yankees,Pittsburgh Pirates,8.5,100,-120,currentLine_median
+2025-03-03,Seattle Mariners,Cleveland Guardians,11.0,-115,-105,currentLine_median
+2025-03-03,Tampa Bay Rays,Atlanta Braves,7.5,-106,-115,currentLine_median
+2025-03-04,Atlanta Braves,Minnesota Twins,8.5,100,-120,currentLine_median
+2025-03-04,Cleveland Guardians,Los Angeles Angels,10.5,-112,-108,currentLine_median
+2025-03-04,Philadelphia Phillies,New York Yankees,9.0,-105,-115,currentLine_median
+2025-03-04,Pittsburgh Pirates,Boston Red Sox,9.5,-110,-110,currentLine_median
+2025-03-04,Tampa Bay Rays,Detroit Tigers,9.5,100,-120,currentLine_median
+2025-03-04,Texas Rangers,Athletics,11.0,-115,-105,currentLine_median
+2025-03-05,Arizona Diamondbacks,San Francisco Giants,10.5,-115,-106,currentLine_median
+2025-03-05,Boston Red Sox,Tampa Bay Rays,13.5,-114,-110,currentLine_median
+2025-03-05,Cincinnati Reds,Texas Rangers,9.5,-110,-110,currentLine_median
+2025-03-05,Detroit Tigers,Philadelphia Phillies,10.5,-120,100,currentLine_median
+2025-03-05,Houston Astros,St. Louis Cardinals,14.0,-106,-115,currentLine_median
+2025-03-05,Kansas City Royals,Seattle Mariners,10.5,-120,100,currentLine_median
+2025-03-05,Los Angeles Angels,Los Angeles Dodgers,10.0,-120,100,currentLine_median
+2025-03-05,Miami Marlins,Washington Nationals,14.0,-110,-112,currentLine_median
+2025-03-05,Minnesota Twins,Baltimore Orioles,14.0,-115,-105,currentLine_median
+2025-03-05,Pittsburgh Pirates,Toronto Blue Jays,12.5,-120,-104,currentLine_median
+2025-03-05,San Diego Padres,Colorado Rockies,11.0,-115,-105,currentLine_median
+2025-03-06,Athletics,Milwaukee Brewers,12.5,-110,-112,currentLine_median
+2025-03-06,Atlanta Braves,Miami Marlins,8.5,-110,-110,currentLine_median
+2025-03-06,Baltimore Orioles,Pittsburgh Pirates,9.0,-110,-110,currentLine_median
+2025-03-06,Chicago Cubs,Kansas City Royals,11.5,-104,-120,currentLine_median
+2025-03-06,New York Mets,Houston Astros,9.5,-110,-110,currentLine_median
+2025-03-06,New York Yankees,Minnesota Twins,7.5,-115,-105,currentLine_median
+2025-03-06,Philadelphia Phillies,Tampa Bay Rays,7.5,-120,-102,currentLine_median
+2025-03-06,San Francisco Giants,Chicago White Sox,14.5,-108,-112,currentLine_median
+2025-03-06,St. Louis Cardinals,Washington Nationals,8.0,-120,100,currentLine_median
+2025-03-06,Toronto Blue Jays,Boston Red Sox,13.5,-110,-110,currentLine_median
+2025-03-07,Athletics,Cleveland Guardians,10.0,-115,-105,currentLine_median
+2025-03-07,Boston Red Sox,Miami Marlins,7.5,-120,100,currentLine_median
+2025-03-07,Detroit Tigers,Baltimore Orioles,8.0,-115,-105,currentLine_median
+2025-03-07,New York Yankees,Toronto Blue Jays,9.0,-112,-107,currentLine_median
+2025-03-07,Pittsburgh Pirates,Philadelphia Phillies,7.0,-110,-110,currentLine_median
+2025-03-07,St. Louis Cardinals,Houston Astros,9.0,100,-120,currentLine_median
+2025-03-07,Washington Nationals,New York Mets,9.0,-110,-110,currentLine_median
+2025-03-08,Atlanta Braves,Pittsburgh Pirates,9.5,-120,100,currentLine_median
+2025-03-08,Baltimore Orioles,Tampa Bay Rays,7.5,-120,100,currentLine_median
+2025-03-08,Chicago Cubs,Seattle Mariners,10.5,-115,-105,currentLine_median
+2025-03-08,Chicago White Sox,Los Angeles Dodgers,11.0,-115,-105,currentLine_median
+2025-03-08,Houston Astros,New York Yankees,9.5,100,-120,currentLine_median
+2025-03-08,Miami Marlins,New York Mets,7.5,-120,100,currentLine_median
+2025-03-08,Milwaukee Brewers,Los Angeles Angels,12.0,-110,-110,currentLine_median
+2025-03-08,Minnesota Twins,Boston Red Sox,10.0,-110,-110,currentLine_median
+2025-03-08,San Diego Padres,Cleveland Guardians,10.0,-110,-110,currentLine_median
+2025-03-08,Washington Nationals,St. Louis Cardinals,8.0,-118,-102,currentLine_median
+2025-03-09,Boston Red Sox,Atlanta Braves,11.0,-115,-105,currentLine_median
+2025-03-09,Cleveland Guardians,Chicago White Sox,9.5,-110,-110,currentLine_median
+2025-03-09,Detroit Tigers,Pittsburgh Pirates,9.5,-110,-110,currentLine_median
+2025-03-09,Houston Astros,Miami Marlins,10.5,-115,-105,currentLine_median
+2025-03-09,Kansas City Royals,Milwaukee Brewers,10.5,100,-120,currentLine_median
+2025-03-09,Los Angeles Angels,Cincinnati Reds,11.0,-105,-115,currentLine_median
+2025-03-09,New York Mets,Washington Nationals,11.0,-105,-115,currentLine_median
+2025-03-09,Seattle Mariners,Colorado Rockies,11.0,-105,-115,currentLine_median
+2025-03-09,St. Louis Cardinals,New York Yankees,11.5,-105,-115,currentLine_median
+2025-03-09,Tampa Bay Rays,Toronto Blue Jays,11.0,-105,-115,currentLine_median
+2025-03-10,Athletics,Chicago White Sox,10.5,100,-120,currentLine_median
+2025-03-10,Atlanta Braves,Tampa Bay Rays,12.5,-110,-110,currentLine_median
+2025-03-10,Los Angeles Dodgers,Arizona Diamondbacks,11.0,-115,-105,currentLine_median
+2025-03-10,Milwaukee Brewers,Seattle Mariners,11.5,-105,-115,currentLine_median
+2025-03-10,Minnesota Twins,Philadelphia Phillies,12.5,-110,-110,currentLine_median
+2025-03-10,New York Mets,St. Louis Cardinals,13.0,-110,-110,currentLine_median
+2025-03-10,New York Yankees,Detroit Tigers,12.5,-105,-115,currentLine_median
+2025-03-10,Pittsburgh Pirates,Baltimore Orioles,11.5,-108,-112,currentLine_median
+2025-03-10,San Diego Padres,Cincinnati Reds,11.0,-115,-105,currentLine_median
+2025-03-10,Toronto Blue Jays,Houston Astros,12.5,-108,-115,currentLine_median
+2025-03-11,Arizona Diamondbacks,Kansas City Royals,10.5,-102,-118,currentLine_median
+2025-03-11,Atlanta Braves,Detroit Tigers,8.0,-110,-110,currentLine_median
+2025-03-11,Boston Red Sox,Philadelphia Phillies,9.0,-120,100,currentLine_median
+2025-03-11,Chicago Cubs,Milwaukee Brewers,11.5,-115,-105,currentLine_median
+2025-03-11,Cincinnati Reds,Colorado Rockies,14.0,-110,-110,currentLine_median
+2025-03-11,Houston Astros,New York Mets,7.5,-102,-118,currentLine_median
+2025-03-11,Los Angeles Dodgers,Cleveland Guardians,9.5,-105,-115,currentLine_median
+2025-03-11,San Diego Padres,Chicago White Sox,10.5,-115,-105,currentLine_median
+2025-03-11,San Francisco Giants,Athletics,10.5,-108,-112,currentLine_median
+2025-03-11,St. Louis Cardinals,Miami Marlins,8.0,-110,-110,currentLine_median
+2025-03-11,Texas Rangers,Los Angeles Angels,13.5,-102,-118,currentLine_median
+2025-03-11,Toronto Blue Jays,Minnesota Twins,9.0,-120,100,currentLine_median
+2025-03-12,Athletics,Arizona Diamondbacks,11.5,-105,-115,currentLine_median
+2025-03-12,Baltimore Orioles,Atlanta Braves,8.5,-105,-115,currentLine_median
+2025-03-12,Boston Red Sox,Minnesota Twins,7.5,-120,100,currentLine_median
+2025-03-12,Chicago White Sox,Los Angeles Angels,11.0,-105,-115,currentLine_median
+2025-03-12,Cleveland Guardians,San Francisco Giants,11.0,-110,-110,currentLine_median
+2025-03-12,Colorado Rockies,San Diego Padres,11.0,-115,-105,currentLine_median
+2025-03-12,Detroit Tigers,Tampa Bay Rays,7.5,-110,-110,currentLine_median
+2025-03-12,Seattle Mariners,Kansas City Royals,11.0,-105,-115,currentLine_median
+2025-03-12,St. Louis Cardinals,New York Mets,9.5,-105,-115,currentLine_median
+2025-03-12,Texas Rangers,Cincinnati Reds,11.5,-105,-115,currentLine_median
+2025-03-12,Washington Nationals,Houston Astros,7.5,-115,-105,currentLine_median
+2025-03-13,Chicago White Sox,Milwaukee Brewers,10.5,-115,-105,currentLine_median
+2025-03-13,Cincinnati Reds,Athletics,13.5,100,-120,currentLine_median
+2025-03-13,Colorado Rockies,Cleveland Guardians,13.5,-105,-115,currentLine_median
+2025-03-13,Detroit Tigers,New York Yankees,8.5,-110,-110,currentLine_median
+2025-03-13,Kansas City Royals,San Diego Padres,13.5,-110,-110,currentLine_median
+2025-03-13,Minnesota Twins,Pittsburgh Pirates,7.5,100,-120,currentLine_median
+2025-03-13,New York Mets,Boston Red Sox,8.5,100,-120,currentLine_median
+2025-03-13,Philadelphia Phillies,Atlanta Braves,8.0,-105,-115,currentLine_median
+2025-03-13,San Francisco Giants,Texas Rangers,13.5,-110,-110,currentLine_median
+2025-03-13,Tampa Bay Rays,Washington Nationals,9.0,-120,100,currentLine_median
+2025-03-13,Toronto Blue Jays,Baltimore Orioles,8.5,-105,-115,currentLine_median
+2025-03-14,Arizona Diamondbacks,Cincinnati Reds,10.5,-115,-115,currentLine_median
+2025-03-14,Atlanta Braves,Washington Nationals,8.5,-115,-105,currentLine_median
+2025-03-14,Cleveland Guardians,Seattle Mariners,11.5,-110,-110,currentLine_median
+2025-03-14,Houston Astros,Toronto Blue Jays,8.0,-110,-110,currentLine_median
+2025-03-14,Miami Marlins,Boston Red Sox,7.5,100,-120,currentLine_median
+2025-03-14,Milwaukee Brewers,San Francisco Giants,11.0,-105,-115,currentLine_median
+2025-03-14,New York Mets,St. Louis Cardinals,7.5,-110,-110,currentLine_median
+2025-03-14,New York Yankees,Philadelphia Phillies,8.5,-105,-115,currentLine_median
+2025-03-14,Pittsburgh Pirates,Detroit Tigers,8.5,-110,-112,currentLine_median
+2025-03-15,Houston Astros,Miami Marlins,7.0,-120,100,currentLine_median
+2025-03-15,Philadelphia Phillies,Detroit Tigers,8.5,-105,-115,currentLine_median
+2025-03-15,Pittsburgh Pirates,Baltimore Orioles,13.5,-110,-110,currentLine_median
+2025-03-15,St. Louis Cardinals,Toronto Blue Jays,8.5,-105,-115,currentLine_median
+2025-03-15,Tampa Bay Rays,New York Yankees,11.5,-110,-112,currentLine_median
+2025-03-15,Washington Nationals,New York Mets,7.5,-115,-105,currentLine_median
+2025-03-16,Cincinnati Reds,Seattle Mariners,10.0,-110,-110,currentLine_median
+2025-03-16,Colorado Rockies,Kansas City Royals,10.0,-115,-105,currentLine_median
+2025-03-16,Miami Marlins,St. Louis Cardinals,9.0,-110,-110,currentLine_median
+2025-03-16,Milwaukee Brewers,Cleveland Guardians,10.5,100,-120,currentLine_median
+2025-03-16,Minnesota Twins,Boston Red Sox,12.5,-105,-115,currentLine_median
+2025-03-16,New York Mets,Houston Astros,13.5,-110,-110,currentLine_median
+2025-03-16,San Francisco Giants,Athletics,10.5,100,-120,currentLine_median
+2025-03-16,Texas Rangers,Chicago White Sox,10.0,-115,-105,currentLine_median
+2025-03-16,Toronto Blue Jays,Atlanta Braves,7.5,-110,-110,currentLine_median
+2025-03-17,Athletics,Seattle Mariners,12.0,-105,-115,currentLine_median
+2025-03-17,Chicago White Sox,San Francisco Giants,9.5,-105,-115,currentLine_median
+2025-03-17,Cleveland Guardians,Cincinnati Reds,10.5,-102,-120,currentLine_median
+2025-03-17,San Diego Padres,Milwaukee Brewers,11.5,-110,-110,currentLine_median
+2025-03-17,Washington Nationals,St. Louis Cardinals,8.0,100,-120,currentLine_median
+2025-03-18,Baltimore Orioles,Toronto Blue Jays,9.5,-115,-105,currentLine_median
+2025-03-18,Chicago Cubs,Los Angeles Dodgers,7.5,-113,-107,currentLine_median
+2025-03-18,Cincinnati Reds,Los Angeles Angels,11.0,-110,-110,currentLine_median
+2025-03-18,Houston Astros,Washington Nationals,7.5,-105,-115,currentLine_median
+2025-03-18,Minnesota Twins,Detroit Tigers,7.5,-105,-115,currentLine_median
+2025-03-18,New York Yankees,Boston Red Sox,7.0,-120,100,currentLine_median
+2025-03-18,Pittsburgh Pirates,Philadelphia Phillies,7.5,-120,-104,currentLine_median
+2025-03-18,Seattle Mariners,Milwaukee Brewers,11.0,-115,-105,currentLine_median
+2025-03-18,St. Louis Cardinals,Miami Marlins,8.0,-105,-115,currentLine_median
+2025-03-18,Texas Rangers,Cleveland Guardians,11.5,-110,-110,currentLine_median
+2025-03-19,Arizona Diamondbacks,Colorado Rockies,12.0,-105,-115,currentLine_median
+2025-03-19,Boston Red Sox,Detroit Tigers,8.5,-115,-105,currentLine_median
+2025-03-19,Chicago Cubs,Los Angeles Dodgers,8.0,-105,-115,currentLine_median
+2025-03-19,Houston Astros,New York Mets,9.0,100,-120,currentLine_median
+2025-03-19,Kansas City Royals,San Francisco Giants,10.5,-110,-110,currentLine_median
+2025-03-19,Milwaukee Brewers,Chicago White Sox,11.0,-115,-105,currentLine_median
+2025-03-19,Seattle Mariners,Texas Rangers,11.0,-110,-110,currentLine_median
+2025-03-19,St. Louis Cardinals,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-03-19,Tampa Bay Rays,Pittsburgh Pirates,9.0,-110,-110,currentLine_median
+2025-03-20,Arizona Diamondbacks,Athletics,9.0,100,-120,currentLine_median
+2025-03-20,Atlanta Braves,Philadelphia Phillies,11.5,-105,-115,currentLine_median
+2025-03-20,Baltimore Orioles,New York Yankees,11.5,-115,-105,currentLine_median
+2025-03-20,Chicago White Sox,Los Angeles Angels,11.0,-105,-115,currentLine_median
+2025-03-20,Cincinnati Reds,Kansas City Royals,11.0,-105,-115,currentLine_median
+2025-03-20,Miami Marlins,Houston Astros,11.5,-105,-115,currentLine_median
+2025-03-20,Minnesota Twins,Boston Red Sox,11.0,-115,-105,currentLine_median
+2025-03-20,Toronto Blue Jays,Tampa Bay Rays,7.5,-115,-105,currentLine_median
+2025-03-20,Washington Nationals,New York Mets,11.5,-105,-115,currentLine_median
+2025-03-21,Boston Red Sox,Pittsburgh Pirates,7.0,-120,100,currentLine_median
+2025-03-21,Chicago Cubs,San Diego Padres,8.5,100,-120,currentLine_median
+2025-03-21,Milwaukee Brewers,Arizona Diamondbacks,9.0,-105,-115,currentLine_median
+2025-03-21,San Francisco Giants,Cleveland Guardians,8.5,-120,100,currentLine_median
+2025-03-21,Tampa Bay Rays,Atlanta Braves,7.5,100,-120,currentLine_median
+2025-03-21,Washington Nationals,Miami Marlins,8.5,-104,-118,currentLine_median
+2025-03-22,Athletics,Milwaukee Brewers,10.0,-115,-105,currentLine_median
+2025-03-22,Detroit Tigers,Atlanta Braves,6.5,-115,-105,currentLine_median
+2025-03-22,Minnesota Twins,Toronto Blue Jays,8.0,-115,-105,currentLine_median
+2025-03-22,New York Mets,Washington Nationals,7.5,-110,-110,currentLine_median
+2025-03-22,New York Yankees,Philadelphia Phillies,9.5,-120,100,currentLine_median
+2025-03-22,Pittsburgh Pirates,Baltimore Orioles,6.5,-120,100,currentLine_median
+2025-03-22,San Francisco Giants,Arizona Diamondbacks,9.0,-105,-115,currentLine_median
+2025-03-22,Tampa Bay Rays,Boston Red Sox,7.0,-105,-115,currentLine_median
+2025-03-22,Texas Rangers,Kansas City Royals,10.5,-110,-110,currentLine_median
+2025-03-23,Atlanta Braves,Baltimore Orioles,8.0,-112,-108,currentLine_median
+2025-03-23,Boston Red Sox,Minnesota Twins,8.0,100,-120,currentLine_median
+2025-03-23,Chicago Cubs,Athletics,10.5,-115,-105,currentLine_median
+2025-03-23,Cincinnati Reds,Cleveland Guardians,10.5,-115,-105,currentLine_median
+2025-03-23,Los Angeles Dodgers,Los Angeles Angels,9.5,-105,-115,currentLine_median
+2025-03-23,New York Mets,Miami Marlins,8.0,-110,-110,currentLine_median
+2025-03-23,New York Yankees,Tampa Bay Rays,7.5,-125,105,currentLine_median
+2025-03-23,Philadelphia Phillies,Detroit Tigers,7.5,-110,-112,currentLine_median
+2025-03-23,Toronto Blue Jays,Pittsburgh Pirates,8.5,-115,-105,currentLine_median
+2025-03-24,Chicago White Sox,Athletics,10.5,-105,-115,currentLine_median
+2025-03-24,Colorado Rockies,Milwaukee Brewers,11.0,-115,-105,currentLine_median
+2025-03-24,Los Angeles Angels,Los Angeles Dodgers,9.0,-115,-105,currentLine_median
+2025-03-24,Minnesota Twins,Pittsburgh Pirates,7.5,-118,-102,currentLine_median
+2025-03-24,New York Mets,New York Yankees,9.0,-110,-110,currentLine_median
+2025-03-24,Philadelphia Phillies,Tampa Bay Rays,9.5,105,-125,currentLine_median
+2025-03-24,San Diego Padres,Seattle Mariners,10.5,-110,-110,currentLine_median
+2025-03-25,Arizona Diamondbacks,Cleveland Guardians,9.0,-110,-110,currentLine_median
+2025-03-25,Chicago Cubs,Atlanta Braves,11.5,-106,-115,currentLine_median
+2025-03-25,Miami Marlins,New York Yankees,8.5,-104,-120,currentLine_median
+2025-03-25,Minnesota Twins,Colorado Rockies,8.5,100,-120,currentLine_median
+2025-03-25,Texas Rangers,Kansas City Royals,8.5,100,-120,currentLine_median
+2025-03-27,Chicago White Sox,Los Angeles Angels,8.0,-114,-113,currentLine_median
+2025-03-27,Cincinnati Reds,San Francisco Giants,7.5,-115,-105,currentLine_median
+2025-03-27,Houston Astros,New York Mets,8.0,-105,-115,currentLine_median
+2025-03-27,Kansas City Royals,Cleveland Guardians,8.5,-112,-108,currentLine_median
+2025-03-27,Los Angeles Dodgers,Detroit Tigers,6.5,-120,100,currentLine_median
+2025-03-27,Miami Marlins,Pittsburgh Pirates,6.5,-111,-109,currentLine_median
+2025-03-27,New York Yankees,Milwaukee Brewers,7.75,-116,-109,currentLine_median
+2025-03-27,Seattle Mariners,Athletics,7.0,-105,-115,currentLine_median
+2025-03-27,St. Louis Cardinals,Minnesota Twins,7.5,-103,-116,currentLine_median
+2025-03-27,Texas Rangers,Boston Red Sox,8.0,-110,-110,currentLine_median
+2025-03-27,Toronto Blue Jays,Baltimore Orioles,8.5,-103,-116,currentLine_median
+2025-03-27,Washington Nationals,Philadelphia Phillies,7.0,-123,103,currentLine_median
+2025-03-28,Arizona Diamondbacks,Chicago Cubs,9.0,-106,-113,currentLine_median
+2025-03-28,Houston Astros,New York Mets,8.0,-119,-102,currentLine_median
+2025-03-28,Los Angeles Dodgers,Detroit Tigers,7.0,-125,103,currentLine_median
+2025-03-28,Miami Marlins,Pittsburgh Pirates,8.0,-116,-104,currentLine_median
+2025-03-28,San Diego Padres,Atlanta Braves,7.0,-120,100,currentLine_median
+2025-03-28,Seattle Mariners,Athletics,7.0,-110,-110,currentLine_median
+2025-03-28,Tampa Bay Rays,Colorado Rockies,8.0,-106,-114,currentLine_median
+2025-03-28,Texas Rangers,Boston Red Sox,9.0,-105,-115,currentLine_median
+2025-03-28,Toronto Blue Jays,Baltimore Orioles,8.5,-115,-105,currentLine_median
+2025-03-29,Arizona Diamondbacks,Chicago Cubs,9.0,-105,-115,currentLine_median
+2025-03-29,Chicago White Sox,Los Angeles Angels,8.0,-115,-105,currentLine_median
+2025-03-29,Cincinnati Reds,San Francisco Giants,8.5,-115,-105,currentLine_median
+2025-03-29,Houston Astros,New York Mets,8.5,-120,100,currentLine_median
+2025-03-29,Los Angeles Dodgers,Detroit Tigers,7.5,-105,-115,currentLine_median
+2025-03-29,Miami Marlins,Pittsburgh Pirates,8.5,-116,-103,currentLine_median
+2025-03-29,New York Yankees,Milwaukee Brewers,9.0,-110,-110,currentLine_median
+2025-03-29,San Diego Padres,Atlanta Braves,8.0,-106,-113,currentLine_median
+2025-03-29,Seattle Mariners,Athletics,7.0,-112,-108,currentLine_median
+2025-03-29,St. Louis Cardinals,Minnesota Twins,7.5,-115,-105,currentLine_median
+2025-03-29,Texas Rangers,Boston Red Sox,9.0,-107,-115,currentLine_median
+2025-03-29,Toronto Blue Jays,Baltimore Orioles,8.5,-113,-106,currentLine_median
+2025-03-29,Washington Nationals,Philadelphia Phillies,9.0,-106,-113,currentLine_median
+2025-03-30,Arizona Diamondbacks,Chicago Cubs,9.0,-113,-115,currentLine_median
+2025-03-30,Chicago White Sox,Los Angeles Angels,8.5,-105,-115,currentLine_median
+2025-03-30,Cincinnati Reds,San Francisco Giants,8.0,-115,-105,currentLine_median
+2025-03-30,Kansas City Royals,Cleveland Guardians,7.0,-115,-105,currentLine_median
+2025-03-30,Miami Marlins,Pittsburgh Pirates,7.5,-116,-105,currentLine_median
+2025-03-30,New York Yankees,Milwaukee Brewers,8.5,-105,-116,currentLine_median
+2025-03-30,San Diego Padres,Atlanta Braves,8.0,-111,-109,currentLine_median
+2025-03-30,Seattle Mariners,Athletics,7.5,104,-125,currentLine_median
+2025-03-30,Tampa Bay Rays,Colorado Rockies,7.5,-115,-105,currentLine_median
+2025-03-30,Washington Nationals,Philadelphia Phillies,9.0,-105,-115,currentLine_median
+2025-03-31,Athletics,Chicago Cubs,8.5,-117,-107,currentLine_median
+2025-03-31,Baltimore Orioles,Boston Red Sox,9.5,-115,-105,currentLine_median
+2025-03-31,Cincinnati Reds,Texas Rangers,8.5,-116,-104,currentLine_median
+2025-03-31,Houston Astros,San Francisco Giants,8.0,-106,-114,currentLine_median
+2025-03-31,Los Angeles Dodgers,Atlanta Braves,8.0,-103,-118,currentLine_median
+2025-03-31,Miami Marlins,New York Mets,8.5,-112,-107,currentLine_median
+2025-03-31,Milwaukee Brewers,Kansas City Royals,8.5,-115,-106,currentLine_median
+2025-03-31,Philadelphia Phillies,Colorado Rockies,8.5,-123,-103,currentLine_median
+2025-03-31,San Diego Padres,Cleveland Guardians,8.0,-105,-115,currentLine_median
+2025-03-31,Seattle Mariners,Detroit Tigers,7.0,-115,-105,currentLine_median
+2025-03-31,St. Louis Cardinals,Los Angeles Angels,8.0,-105,-115,currentLine_median
+2025-03-31,Tampa Bay Rays,Pittsburgh Pirates,8.0,-116,-104,currentLine_median
+2025-03-31,Toronto Blue Jays,Washington Nationals,8.5,-115,-105,currentLine_median
+2025-04-01,Athletics,Chicago Cubs,8.0,-107,-112,currentLine_median
+2025-04-01,Chicago White Sox,Minnesota Twins,7.5,100,-120,currentLine_median
+2025-04-01,Cincinnati Reds,Texas Rangers,8.5,-115,-105,currentLine_median
+2025-04-01,Houston Astros,San Francisco Giants,8.0,-113,-106,currentLine_median
+2025-04-01,Los Angeles Dodgers,Atlanta Braves,7.5,100,-120,currentLine_median
+2025-04-01,Miami Marlins,New York Mets,7.5,-115,-105,currentLine_median
+2025-04-01,Milwaukee Brewers,Kansas City Royals,8.5,-115,-105,currentLine_median
+2025-04-01,New York Yankees,Arizona Diamondbacks,8.5,-105,-115,currentLine_median
+2025-04-01,San Diego Padres,Cleveland Guardians,7.5,-105,-117,currentLine_median
+2025-04-01,Seattle Mariners,Detroit Tigers,6.5,-123,101,currentLine_median
+2025-04-01,St. Louis Cardinals,Los Angeles Angels,8.0,-110,-110,currentLine_median
+2025-04-01,Tampa Bay Rays,Pittsburgh Pirates,9.0,-105,-115,currentLine_median
+2025-04-01,Toronto Blue Jays,Washington Nationals,8.5,-115,-107,currentLine_median
+2025-04-02,Athletics,Chicago Cubs,8.5,-105,-115,currentLine_median
+2025-04-02,Baltimore Orioles,Boston Red Sox,7.5,-116,-104,currentLine_median
+2025-04-02,Cincinnati Reds,Texas Rangers,8.5,-107,-112,currentLine_median
+2025-04-02,Miami Marlins,New York Mets,8.5,-111,-109,currentLine_median
+2025-04-02,Milwaukee Brewers,Kansas City Royals,7.5,-115,-105,currentLine_median
+2025-04-02,New York Yankees,Arizona Diamondbacks,7.75,-111,-110,currentLine_median
+2025-04-02,Philadelphia Phillies,Colorado Rockies,7.0,-117,-105,currentLine_median
+2025-04-02,San Diego Padres,Cleveland Guardians,7.5,-115,-110,currentLine_median
+2025-04-02,Seattle Mariners,Detroit Tigers,6.5,-105,-115,currentLine_median
+2025-04-02,St. Louis Cardinals,Los Angeles Angels,8.5,-115,-105,currentLine_median
+2025-04-02,Tampa Bay Rays,Pittsburgh Pirates,7.0,-115,-105,currentLine_median
+2025-04-02,Toronto Blue Jays,Washington Nationals,8.5,-108,-117,currentLine_median
+2025-04-03,Baltimore Orioles,Boston Red Sox,9.5,-102,-118,currentLine_median
+2025-04-03,Milwaukee Brewers,Cincinnati Reds,8.0,-113,-106,currentLine_median
+2025-04-03,Minnesota Twins,Houston Astros,7.0,-117,-103,currentLine_median
+2025-04-03,New York Yankees,Arizona Diamondbacks,9.5,100,-120,currentLine_median
+2025-04-03,Philadelphia Phillies,Colorado Rockies,10.0,-110,-110,currentLine_median
+2025-04-04,Atlanta Braves,Miami Marlins,7.5,-117,-104,currentLine_median
+2025-04-04,Boston Red Sox,St. Louis Cardinals,9.5,-110,-110,currentLine_median
+2025-04-04,Chicago Cubs,San Diego Padres,7.0,-106,-113,currentLine_median
+2025-04-04,Colorado Rockies,Athletics,9.25,-111,-110,currentLine_median
+2025-04-04,Detroit Tigers,Chicago White Sox,7.0,-119,-102,currentLine_median
+2025-04-04,Kansas City Royals,Baltimore Orioles,7.5,-115,-105,currentLine_median
+2025-04-04,Los Angeles Angels,Cleveland Guardians,8.0,-105,-115,currentLine_median
+2025-04-04,New York Mets,Toronto Blue Jays,7.5,-105,-117,currentLine_median
+2025-04-04,Philadelphia Phillies,Los Angeles Dodgers,8.0,-110,-110,currentLine_median
+2025-04-04,Pittsburgh Pirates,New York Yankees,7.5,-122,-103,currentLine_median
+2025-04-04,San Francisco Giants,Seattle Mariners,8.0,-105,-115,currentLine_median
+2025-04-04,Texas Rangers,Tampa Bay Rays,8.5,-110,-110,currentLine_median
+2025-04-04,Washington Nationals,Arizona Diamondbacks,8.5,-105,-115,currentLine_median
+2025-04-05,Atlanta Braves,Miami Marlins,8.5,-120,100,currentLine_median
+2025-04-05,Chicago Cubs,San Diego Padres,6.5,-120,100,currentLine_median
+2025-04-05,Colorado Rockies,Athletics,9.5,-103,-116,currentLine_median
+2025-04-05,Detroit Tigers,Chicago White Sox,7.5,100,-120,currentLine_median
+2025-04-05,Kansas City Royals,Baltimore Orioles,8.0,-105,-114,currentLine_median
+2025-04-05,Milwaukee Brewers,Cincinnati Reds,8.0,-115,-105,currentLine_median
+2025-04-05,Minnesota Twins,Houston Astros,7.5,-115,-105,currentLine_median
+2025-04-05,New York Mets,Toronto Blue Jays,7.5,-113,-106,currentLine_median
+2025-04-05,Philadelphia Phillies,Los Angeles Dodgers,8.5,-105,-115,currentLine_median
+2025-04-05,Pittsburgh Pirates,New York Yankees,9.5,-112,-108,currentLine_median
+2025-04-05,San Francisco Giants,Seattle Mariners,7.5,-105,-115,currentLine_median
+2025-04-05,Texas Rangers,Tampa Bay Rays,7.5,-106,-115,currentLine_median
+2025-04-05,Washington Nationals,Arizona Diamondbacks,9.0,-115,-105,currentLine_median
+2025-04-06,Boston Red Sox,St. Louis Cardinals,9.5,-102,-118,currentLine_median
+2025-04-06,Chicago Cubs,San Diego Padres,7.5,100,-120,currentLine_median
+2025-04-06,Colorado Rockies,Athletics,11.0,-111,-110,currentLine_median
+2025-04-06,Detroit Tigers,Chicago White Sox,7.5,-105,-115,currentLine_median
+2025-04-06,Kansas City Royals,Baltimore Orioles,7.5,-103,-122,currentLine_median
+2025-04-06,Los Angeles Angels,Cleveland Guardians,9.5,-113,-117,currentLine_median
+2025-04-06,Milwaukee Brewers,Cincinnati Reds,8.5,-115,-109,currentLine_median
+2025-04-06,Minnesota Twins,Houston Astros,8.5,-110,-110,currentLine_median
+2025-04-06,New York Mets,Toronto Blue Jays,7.0,-111,-109,currentLine_median
+2025-04-06,Philadelphia Phillies,Los Angeles Dodgers,7.75,-128,102,currentLine_median
+2025-04-06,Pittsburgh Pirates,New York Yankees,8.5,-120,-106,currentLine_median
+2025-04-06,San Francisco Giants,Seattle Mariners,7.5,101,-122,currentLine_median
+2025-04-06,Texas Rangers,Tampa Bay Rays,7.75,-110,-115,currentLine_median
+2025-04-06,Washington Nationals,Arizona Diamondbacks,7.5,-115,-105,currentLine_median
+2025-04-07,Arizona Diamondbacks,Baltimore Orioles,8.5,-105,-115,currentLine_median
+2025-04-07,Athletics,San Diego Padres,8.5,-105,-115,currentLine_median
+2025-04-07,Boston Red Sox,Toronto Blue Jays,8.0,-115,-105,currentLine_median
+2025-04-07,Detroit Tigers,New York Yankees,8.5,-108,-112,currentLine_median
+2025-04-07,Kansas City Royals,Minnesota Twins,8.0,-111,-109,currentLine_median
+2025-04-07,New York Mets,Miami Marlins,7.0,-120,100,currentLine_median
+2025-04-07,Pittsburgh Pirates,St. Louis Cardinals,8.5,-110,-114,currentLine_median
+2025-04-07,San Francisco Giants,Cincinnati Reds,6.5,-120,100,currentLine_median
+2025-04-07,Seattle Mariners,Houston Astros,7.0,-115,-105,currentLine_median
+2025-04-08,Arizona Diamondbacks,Baltimore Orioles,10.0,-116,-110,currentLine_median
+2025-04-08,Athletics,San Diego Padres,8.0,-115,-105,currentLine_median
+2025-04-08,Atlanta Braves,Philadelphia Phillies,7.0,-105,-117,currentLine_median
+2025-04-08,Boston Red Sox,Toronto Blue Jays,7.75,-122,-111,currentLine_median
+2025-04-08,Chicago Cubs,Texas Rangers,8.0,-108,-112,currentLine_median
+2025-04-08,Cleveland Guardians,Chicago White Sox,7.5,100,-128,currentLine_median
+2025-04-08,Colorado Rockies,Milwaukee Brewers,9.5,-105,-115,currentLine_median
+2025-04-08,Detroit Tigers,New York Yankees,7.5,100,-120,currentLine_median
+2025-04-08,New York Mets,Miami Marlins,7.0,-115,-105,currentLine_median
+2025-04-08,Pittsburgh Pirates,St. Louis Cardinals,6.25,-111,-109,currentLine_median
+2025-04-08,San Francisco Giants,Cincinnati Reds,7.5,100,-120,currentLine_median
+2025-04-08,Seattle Mariners,Houston Astros,7.0,-112,-114,currentLine_median
+2025-04-08,Tampa Bay Rays,Los Angeles Angels,8.5,-109,-111,currentLine_median
+2025-04-08,Washington Nationals,Los Angeles Dodgers,8.5,-110,-110,currentLine_median
+2025-04-09,Athletics,San Diego Padres,10.0,-110,-110,currentLine_median
+2025-04-09,Boston Red Sox,Toronto Blue Jays,8.25,-111,-109,currentLine_median
+2025-04-09,Chicago Cubs,Texas Rangers,7.5,-115,-105,currentLine_median
+2025-04-09,Cleveland Guardians,Chicago White Sox,7.5,-102,-118,currentLine_median
+2025-04-09,Detroit Tigers,New York Yankees,7.0,-105,-115,currentLine_median
+2025-04-09,Kansas City Royals,Minnesota Twins,7.5,-116,-104,currentLine_median
+2025-04-09,New York Mets,Miami Marlins,7.0,-112,-108,currentLine_median
+2025-04-09,San Francisco Giants,Cincinnati Reds,7.5,-116,-105,currentLine_median
+2025-04-09,Seattle Mariners,Houston Astros,7.5,100,-120,currentLine_median
+2025-04-09,Tampa Bay Rays,Los Angeles Angels,7.75,-109,-111,currentLine_median
+2025-04-09,Washington Nationals,Los Angeles Dodgers,9.0,-111,-108,currentLine_median
+2025-04-10,Atlanta Braves,Philadelphia Phillies,7.5,-105,-114,currentLine_median
+2025-04-10,Boston Red Sox,Toronto Blue Jays,8.0,-115,-105,currentLine_median
+2025-04-10,Cleveland Guardians,Chicago White Sox,7.5,100,-120,currentLine_median
+2025-04-10,Colorado Rockies,Milwaukee Brewers,10.5,-105,-115,currentLine_median
+2025-04-10,Kansas City Royals,Minnesota Twins,8.5,-105,-115,currentLine_median
+2025-04-10,Tampa Bay Rays,Los Angeles Angels,8.25,-113,-111,currentLine_median
+2025-04-11,Arizona Diamondbacks,Milwaukee Brewers,9.0,-120,100,currentLine_median
+2025-04-11,Athletics,New York Mets,9.75,-112,-108,currentLine_median
+2025-04-11,Chicago White Sox,Boston Red Sox,7.75,-111,-111,currentLine_median
+2025-04-11,Cincinnati Reds,Pittsburgh Pirates,8.0,-111,-109,currentLine_median
+2025-04-11,Cleveland Guardians,Kansas City Royals,6.5,-112,-116,currentLine_median
+2025-04-11,Houston Astros,Los Angeles Angels,8.5,-120,100,currentLine_median
+2025-04-11,Los Angeles Dodgers,Chicago Cubs,8.5,-107,-113,currentLine_median
+2025-04-11,Miami Marlins,Washington Nationals,8.0,-115,-105,currentLine_median
+2025-04-11,Minnesota Twins,Detroit Tigers,7.75,-109,-110,currentLine_median
+2025-04-11,New York Yankees,San Francisco Giants,8.0,-105,-115,currentLine_median
+2025-04-11,San Diego Padres,Colorado Rockies,7.5,-105,-115,currentLine_median
+2025-04-11,St. Louis Cardinals,Philadelphia Phillies,7.5,-105,-115,currentLine_median
+2025-04-11,Tampa Bay Rays,Atlanta Braves,9.0,-115,-105,currentLine_median
+2025-04-12,Arizona Diamondbacks,Milwaukee Brewers,9.0,-105,-115,currentLine_median
+2025-04-12,Baltimore Orioles,Toronto Blue Jays,8.5,-115,-107,currentLine_median
+2025-04-12,Chicago White Sox,Boston Red Sox,7.5,-115,-105,currentLine_median
+2025-04-12,Cincinnati Reds,Pittsburgh Pirates,8.0,-115,-105,currentLine_median
+2025-04-12,Cleveland Guardians,Kansas City Royals,7.75,-110,-112,currentLine_median
+2025-04-12,Houston Astros,Los Angeles Angels,9.0,100,-120,currentLine_median
+2025-04-12,Los Angeles Dodgers,Chicago Cubs,9.0,-105,-115,currentLine_median
+2025-04-12,Miami Marlins,Washington Nationals,7.5,-115,-105,currentLine_median
+2025-04-12,Minnesota Twins,Detroit Tigers,8.5,-109,-111,currentLine_median
+2025-04-12,New York Yankees,San Francisco Giants,8.0,-110,-110,currentLine_median
+2025-04-12,San Diego Padres,Colorado Rockies,8.0,-111,-109,currentLine_median
+2025-04-12,Seattle Mariners,Texas Rangers,7.0,-111,-109,currentLine_median
+2025-04-12,St. Louis Cardinals,Philadelphia Phillies,8.0,-110,-110,currentLine_median
+2025-04-12,Tampa Bay Rays,Atlanta Braves,8.5,-120,100,currentLine_median
+2025-04-13,Arizona Diamondbacks,Milwaukee Brewers,8.0,-116,-109,currentLine_median
+2025-04-13,Athletics,New York Mets,8.75,-112,-108,currentLine_median
+2025-04-13,Baltimore Orioles,Toronto Blue Jays,8.5,-105,-115,currentLine_median
+2025-04-13,Chicago White Sox,Boston Red Sox,7.0,-105,-114,currentLine_median
+2025-04-13,Cincinnati Reds,Pittsburgh Pirates,7.5,103,-124,currentLine_median
+2025-04-13,Cleveland Guardians,Kansas City Royals,7.0,-111,-108,currentLine_median
+2025-04-13,Houston Astros,Los Angeles Angels,8.5,-118,-103,currentLine_median
+2025-04-13,Los Angeles Dodgers,Chicago Cubs,9.0,-104,-116,currentLine_median
+2025-04-13,Miami Marlins,Washington Nationals,8.0,-112,-107,currentLine_median
+2025-04-13,Minnesota Twins,Detroit Tigers,8.5,-106,-113,currentLine_median
+2025-04-13,New York Yankees,San Francisco Giants,8.0,-110,-110,currentLine_median
+2025-04-13,San Diego Padres,Colorado Rockies,7.0,-115,-105,currentLine_median
+2025-04-13,Seattle Mariners,Texas Rangers,6.5,-114,-106,currentLine_median
+2025-04-13,St. Louis Cardinals,Philadelphia Phillies,8.0,-111,-109,currentLine_median
+2025-04-13,Tampa Bay Rays,Atlanta Braves,8.5,-114,-106,currentLine_median
+2025-04-14,Los Angeles Dodgers,Colorado Rockies,8.5,-116,-103,currentLine_median
+2025-04-14,Minnesota Twins,New York Mets,8.0,-104,-116,currentLine_median
+2025-04-14,New York Yankees,Kansas City Royals,9.0,-107,-116,currentLine_median
+2025-04-14,Philadelphia Phillies,San Francisco Giants,9.0,-107,-112,currentLine_median
+2025-04-14,St. Louis Cardinals,Houston Astros,7.0,-117,-104,currentLine_median
+2025-04-14,Tampa Bay Rays,Boston Red Sox,8.5,-116,-104,currentLine_median
+2025-04-14,Toronto Blue Jays,Atlanta Braves,8.5,-117,-105,currentLine_median
+2025-04-15,Baltimore Orioles,Cleveland Guardians,9.0,100,-120,currentLine_median
+2025-04-15,Chicago White Sox,Athletics,7.75,-112,-119,currentLine_median
+2025-04-15,Los Angeles Dodgers,Colorado Rockies,8.5,-105,-115,currentLine_median
+2025-04-15,Miami Marlins,Arizona Diamondbacks,9.0,-105,-115,currentLine_median
+2025-04-15,Milwaukee Brewers,Detroit Tigers,8.0,-109,-111,currentLine_median
+2025-04-15,Minnesota Twins,New York Mets,8.0,-110,-110,currentLine_median
+2025-04-15,New York Yankees,Kansas City Royals,8.5,-117,-106,currentLine_median
+2025-04-15,Philadelphia Phillies,San Francisco Giants,8.0,-115,-105,currentLine_median
+2025-04-15,San Diego Padres,Chicago Cubs,8.5,-107,-116,currentLine_median
+2025-04-15,St. Louis Cardinals,Houston Astros,7.5,-104,-116,currentLine_median
+2025-04-15,Texas Rangers,Los Angeles Angels,8.75,-120,-105,currentLine_median
+2025-04-15,Toronto Blue Jays,Atlanta Braves,7.5,-109,-113,currentLine_median
+2025-04-16,Baltimore Orioles,Cleveland Guardians,8.0,-109,-111,currentLine_median
+2025-04-16,Chicago White Sox,Athletics,7.5,-111,-109,currentLine_median
+2025-04-16,Cincinnati Reds,Seattle Mariners,8.5,-122,100,currentLine_median
+2025-04-16,Los Angeles Dodgers,Colorado Rockies,8.5,-120,100,currentLine_median
+2025-04-16,Miami Marlins,Arizona Diamondbacks,8.5,-115,-105,currentLine_median
+2025-04-16,Milwaukee Brewers,Detroit Tigers,8.0,-112,-107,currentLine_median
+2025-04-16,Minnesota Twins,New York Mets,8.0,-115,-105,currentLine_median
+2025-04-16,New York Yankees,Kansas City Royals,8.0,-106,-113,currentLine_median
+2025-04-16,Philadelphia Phillies,San Francisco Giants,8.0,-110,-110,currentLine_median
+2025-04-16,Pittsburgh Pirates,Washington Nationals,8.5,-106,-120,currentLine_median
+2025-04-16,San Diego Padres,Chicago Cubs,7.5,-110,-110,currentLine_median
+2025-04-16,Tampa Bay Rays,Boston Red Sox,8.75,100,-120,currentLine_median
+2025-04-16,Toronto Blue Jays,Atlanta Braves,7.0,-115,-106,currentLine_median
+2025-04-17,Baltimore Orioles,Cleveland Guardians,8.0,-111,-109,currentLine_median
+2025-04-17,Chicago White Sox,Athletics,8.0,-103,-116,currentLine_median
+2025-04-17,Cincinnati Reds,Seattle Mariners,8.5,-122,100,currentLine_median
+2025-04-17,Detroit Tigers,Kansas City Royals,7.5,-110,-109,currentLine_median
+2025-04-17,Miami Marlins,Arizona Diamondbacks,8.5,-105,-115,currentLine_median
+2025-04-17,New York Mets,St. Louis Cardinals,8.0,-102,-120,currentLine_median
+2025-04-17,Philadelphia Phillies,San Francisco Giants,7.5,-114,-117,currentLine_median
+2025-04-17,Pittsburgh Pirates,Washington Nationals,8.0,-108,-112,currentLine_median
+2025-04-17,Tampa Bay Rays,New York Yankees,9.0,-110,-110,currentLine_median
+2025-04-17,Texas Rangers,Los Angeles Angels,9.5,100,-120,currentLine_median
+2025-04-18,Atlanta Braves,Minnesota Twins,8.0,-114,-105,currentLine_median
+2025-04-18,Baltimore Orioles,Cincinnati Reds,9.0,-120,100,currentLine_median
+2025-04-18,Boston Red Sox,Chicago White Sox,9.5,100,-120,currentLine_median
+2025-04-18,Detroit Tigers,Kansas City Royals,7.5,-110,-110,currentLine_median
+2025-04-18,Los Angeles Angels,San Francisco Giants,8.0,-105,-115,currentLine_median
+2025-04-18,Milwaukee Brewers,Athletics,8.0,-112,-107,currentLine_median
+2025-04-18,New York Mets,St. Louis Cardinals,8.0,-114,-106,currentLine_median
+2025-04-18,Philadelphia Phillies,Miami Marlins,8.0,-110,-109,currentLine_median
+2025-04-18,Tampa Bay Rays,New York Yankees,8.0,-110,-110,currentLine_median
+2025-04-18,Texas Rangers,Los Angeles Dodgers,7.5,100,-120,currentLine_median
+2025-04-18,Toronto Blue Jays,Seattle Mariners,8.0,-115,-105,currentLine_median
+2025-04-19,Atlanta Braves,Minnesota Twins,7.5,-111,-109,currentLine_median
+2025-04-19,Baltimore Orioles,Cincinnati Reds,9.0,-115,-105,currentLine_median
+2025-04-19,Boston Red Sox,Chicago White Sox,9.0,-115,-105,currentLine_median
+2025-04-19,Chicago Cubs,Arizona Diamondbacks,7.5,-112,-107,currentLine_median
+2025-04-19,Colorado Rockies,Washington Nationals,9.0,-125,105,currentLine_median
+2025-04-19,Detroit Tigers,Kansas City Royals,8.0,-104,-116,currentLine_median
+2025-04-19,Houston Astros,San Diego Padres,7.5,-115,-105,currentLine_median
+2025-04-19,Los Angeles Angels,San Francisco Giants,8.5,-124,102,currentLine_median
+2025-04-19,Milwaukee Brewers,Athletics,8.5,-117,-103,currentLine_median
+2025-04-19,New York Mets,St. Louis Cardinals,9.0,-105,-115,currentLine_median
+2025-04-19,Philadelphia Phillies,Miami Marlins,10.5,-109,-111,currentLine_median
+2025-04-19,Pittsburgh Pirates,Cleveland Guardians,8.0,-115,-105,currentLine_median
+2025-04-19,Tampa Bay Rays,New York Yankees,8.5,-105,-115,currentLine_median
+2025-04-19,Texas Rangers,Los Angeles Dodgers,8.5,-105,-116,currentLine_median
+2025-04-19,Toronto Blue Jays,Seattle Mariners,7.5,-105,-115,currentLine_median
+2025-04-20,Atlanta Braves,Minnesota Twins,7.75,-108,-120,currentLine_median
+2025-04-20,Baltimore Orioles,Cincinnati Reds,9.0,-105,-114,currentLine_median
+2025-04-20,Boston Red Sox,Chicago White Sox,9.5,-110,-110,currentLine_median
+2025-04-20,Chicago Cubs,Arizona Diamondbacks,7.5,100,-120,currentLine_median
+2025-04-20,Colorado Rockies,Washington Nationals,8.5,-115,-105,currentLine_median
+2025-04-20,Detroit Tigers,Kansas City Royals,7.0,-105,-115,currentLine_median
+2025-04-20,Houston Astros,San Diego Padres,7.5,100,-120,currentLine_median
+2025-04-20,Los Angeles Angels,San Francisco Giants,9.0,-109,-115,currentLine_median
+2025-04-20,Milwaukee Brewers,Athletics,8.5,-109,-111,currentLine_median
+2025-04-20,Philadelphia Phillies,Miami Marlins,8.0,-105,-115,currentLine_median
+2025-04-20,Pittsburgh Pirates,Cleveland Guardians,8.0,-116,-105,currentLine_median
+2025-04-20,Tampa Bay Rays,New York Yankees,8.0,-116,-104,currentLine_median
+2025-04-20,Texas Rangers,Los Angeles Dodgers,8.5,-116,-104,currentLine_median
+2025-04-20,Toronto Blue Jays,Seattle Mariners,8.5,-116,-105,currentLine_median
+2025-04-21,Atlanta Braves,St. Louis Cardinals,8.5,-111,-109,currentLine_median
+2025-04-21,Boston Red Sox,Chicago White Sox,9.0,-115,-105,currentLine_median
+2025-04-21,Detroit Tigers,San Diego Padres,8.5,-105,-115,currentLine_median
+2025-04-21,Houston Astros,Toronto Blue Jays,7.5,-105,-115,currentLine_median
+2025-04-21,Miami Marlins,Cincinnati Reds,8.25,-110,-115,currentLine_median
+2025-04-21,New York Mets,Philadelphia Phillies,8.0,-105,-115,currentLine_median
+2025-04-21,San Francisco Giants,Milwaukee Brewers,8.0,-112,-107,currentLine_median
+2025-04-22,Arizona Diamondbacks,Tampa Bay Rays,9.0,-115,-105,currentLine_median
+2025-04-22,Athletics,Texas Rangers,10.0,-107,-112,currentLine_median
+2025-04-22,Atlanta Braves,St. Louis Cardinals,9.0,-103,-116,currentLine_median
+2025-04-22,Chicago Cubs,Los Angeles Dodgers,9.0,-105,-115,currentLine_median
+2025-04-22,Cleveland Guardians,New York Yankees,8.5,-104,-116,currentLine_median
+2025-04-22,Detroit Tigers,San Diego Padres,7.5,102,-122,currentLine_median
+2025-04-22,Houston Astros,Toronto Blue Jays,8.0,-110,-110,currentLine_median
+2025-04-22,Kansas City Royals,Colorado Rockies,8.0,-115,-105,currentLine_median
+2025-04-22,Los Angeles Angels,Pittsburgh Pirates,8.5,-120,100,currentLine_median
+2025-04-22,Minnesota Twins,Chicago White Sox,8.5,-120,-110,currentLine_median
+2025-04-22,New York Mets,Philadelphia Phillies,8.0,-104,-116,currentLine_median
+2025-04-22,San Francisco Giants,Milwaukee Brewers,8.0,-110,-110,currentLine_median
+2025-04-22,Washington Nationals,Baltimore Orioles,9.0,-105,-115,currentLine_median
+2025-04-23,Athletics,Texas Rangers,9.5,-104,-116,currentLine_median
+2025-04-23,Atlanta Braves,St. Louis Cardinals,9.0,-115,-105,currentLine_median
+2025-04-23,Boston Red Sox,Seattle Mariners,9.5,-111,-109,currentLine_median
+2025-04-23,Chicago Cubs,Los Angeles Dodgers,9.0,-106,-115,currentLine_median
+2025-04-23,Detroit Tigers,San Diego Padres,8.25,-112,-108,currentLine_median
+2025-04-23,Houston Astros,Toronto Blue Jays,8.5,-104,-116,currentLine_median
+2025-04-23,Los Angeles Angels,Pittsburgh Pirates,9.0,-105,-115,currentLine_median
+2025-04-23,Miami Marlins,Cincinnati Reds,8.0,-114,-106,currentLine_median
+2025-04-23,Minnesota Twins,Chicago White Sox,8.5,-111,-109,currentLine_median
+2025-04-23,San Francisco Giants,Milwaukee Brewers,6.5,-110,-110,currentLine_median
+2025-04-23,Washington Nationals,Baltimore Orioles,9.5,-105,-115,currentLine_median
+2025-04-24,Arizona Diamondbacks,Tampa Bay Rays,8.5,-107,-112,currentLine_median
+2025-04-24,Athletics,Texas Rangers,8.5,-116,-104,currentLine_median
+2025-04-24,Boston Red Sox,Seattle Mariners,8.0,-105,-115,currentLine_median
+2025-04-24,Kansas City Royals,Colorado Rockies,9.0,-104,-116,currentLine_median
+2025-04-24,Los Angeles Angels,Pittsburgh Pirates,9.75,-110,-119,currentLine_median
+2025-04-24,San Francisco Giants,Milwaukee Brewers,7.5,-104,-116,currentLine_median
+2025-04-24,Washington Nationals,Baltimore Orioles,8.5,-117,-111,currentLine_median
+2025-04-25,Arizona Diamondbacks,Atlanta Braves,8.5,-112,-115,currentLine_median
+2025-04-25,Athletics,Chicago White Sox,9.5,-105,-115,currentLine_median
+2025-04-25,Chicago Cubs,Philadelphia Phillies,8.0,-105,-116,currentLine_median
+2025-04-25,Colorado Rockies,Cincinnati Reds,9.5,-103,-116,currentLine_median
+2025-04-25,Kansas City Royals,Houston Astros,8.0,-105,-115,currentLine_median
+2025-04-25,Los Angeles Dodgers,Pittsburgh Pirates,7.0,100,-120,currentLine_median
+2025-04-25,Minnesota Twins,Los Angeles Angels,7.75,-114,-112,currentLine_median
+2025-04-25,New York Yankees,Toronto Blue Jays,9.0,-107,-112,currentLine_median
+2025-04-25,Seattle Mariners,Miami Marlins,7.5,-103,-116,currentLine_median
+2025-04-25,St. Louis Cardinals,Milwaukee Brewers,8.0,-110,-110,currentLine_median
+2025-04-26,Arizona Diamondbacks,Atlanta Braves,9.0,-115,-105,currentLine_median
+2025-04-26,Athletics,Chicago White Sox,9.0,-116,-103,currentLine_median
+2025-04-26,Chicago Cubs,Philadelphia Phillies,7.0,-103,-117,currentLine_median
+2025-04-26,Cleveland Guardians,Boston Red Sox,8.5,-112,-112,currentLine_median
+2025-04-26,Colorado Rockies,Cincinnati Reds,10.5,-110,-110,currentLine_median
+2025-04-26,Detroit Tigers,Baltimore Orioles,9.0,-105,-115,currentLine_median
+2025-04-26,Kansas City Royals,Houston Astros,8.0,-115,-110,currentLine_median
+2025-04-26,Los Angeles Dodgers,Pittsburgh Pirates,9.0,-102,-118,currentLine_median
+2025-04-26,Minnesota Twins,Los Angeles Angels,8.0,-109,-111,currentLine_median
+2025-04-26,San Diego Padres,Tampa Bay Rays,6.75,-113,-111,currentLine_median
+2025-04-26,San Francisco Giants,Texas Rangers,7.5,-120,-102,currentLine_median
+2025-04-26,Seattle Mariners,Miami Marlins,7.5,-115,-106,currentLine_median
+2025-04-26,St. Louis Cardinals,Milwaukee Brewers,7.0,-116,-107,currentLine_median
+2025-04-27,Arizona Diamondbacks,Atlanta Braves,8.5,-115,-105,currentLine_median
+2025-04-27,Chicago Cubs,Philadelphia Phillies,8.0,-114,-106,currentLine_median
+2025-04-27,Colorado Rockies,Cincinnati Reds,11.5,-114,-105,currentLine_median
+2025-04-27,Kansas City Royals,Houston Astros,7.5,100,-120,currentLine_median
+2025-04-27,Los Angeles Dodgers,Pittsburgh Pirates,8.5,-115,-105,currentLine_median
+2025-04-27,Minnesota Twins,Los Angeles Angels,7.75,-110,-110,currentLine_median
+2025-04-27,New York Yankees,Toronto Blue Jays,8.5,-115,-105,currentLine_median
+2025-04-27,San Diego Padres,Tampa Bay Rays,8.0,-108,-117,currentLine_median
+2025-04-27,San Francisco Giants,Texas Rangers,7.5,-112,-107,currentLine_median
+2025-04-27,St. Louis Cardinals,Milwaukee Brewers,8.0,-110,-110,currentLine_median
+2025-04-28,Baltimore Orioles,New York Yankees,9.5,-105,-115,currentLine_median
+2025-04-28,Cincinnati Reds,St. Louis Cardinals,9.5,-114,-106,currentLine_median
+2025-04-28,Cleveland Guardians,Minnesota Twins,8.0,-115,-105,currentLine_median
+2025-04-28,Colorado Rockies,Atlanta Braves,10.5,-105,-115,currentLine_median
+2025-04-28,Houston Astros,Detroit Tigers,7.5,100,-125,currentLine_median
+2025-04-28,Washington Nationals,New York Mets,9.5,-112,-108,currentLine_median
+2025-04-29,Baltimore Orioles,New York Yankees,9.5,-113,-106,currentLine_median
+2025-04-29,Chicago White Sox,Milwaukee Brewers,8.0,-105,-115,currentLine_median
+2025-04-29,Cleveland Guardians,Minnesota Twins,8.0,-110,-110,currentLine_median
+2025-04-29,Colorado Rockies,Atlanta Braves,11.0,-107,-112,currentLine_median
+2025-04-29,Houston Astros,Detroit Tigers,8.0,-114,-105,currentLine_median
+2025-04-29,Los Angeles Dodgers,Miami Marlins,8.5,-116,-104,currentLine_median
+2025-04-29,New York Mets,Arizona Diamondbacks,8.5,-105,-115,currentLine_median
+2025-04-29,Philadelphia Phillies,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-04-29,Pittsburgh Pirates,Chicago Cubs,8.5,-122,101,currentLine_median
+2025-04-29,Seattle Mariners,Los Angeles Angels,7.5,-111,-109,currentLine_median
+2025-04-29,Tampa Bay Rays,Kansas City Royals,8.5,-110,-110,currentLine_median
+2025-04-29,Texas Rangers,Athletics,8.5,-110,-110,currentLine_median
+2025-04-29,Toronto Blue Jays,Boston Red Sox,7.5,-115,-105,currentLine_median
+2025-04-30,Baltimore Orioles,New York Yankees,9.5,-107,-113,currentLine_median
+2025-04-30,Chicago White Sox,Milwaukee Brewers,7.5,-113,-107,currentLine_median
+2025-04-30,Cleveland Guardians,Minnesota Twins,7.0,-120,-102,currentLine_median
+2025-04-30,Colorado Rockies,Atlanta Braves,10.0,-112,-107,currentLine_median
+2025-04-30,Houston Astros,Detroit Tigers,8.0,-115,-105,currentLine_median
+2025-04-30,Los Angeles Dodgers,Miami Marlins,10.0,-107,-112,currentLine_median
+2025-04-30,New York Mets,Arizona Diamondbacks,8.5,-109,-111,currentLine_median
+2025-04-30,Philadelphia Phillies,Washington Nationals,8.0,-108,-112,currentLine_median
+2025-04-30,Pittsburgh Pirates,Chicago Cubs,9.0,-105,-115,currentLine_median
+2025-04-30,San Diego Padres,San Francisco Giants,7.0,-105,-115,currentLine_median
+2025-04-30,Seattle Mariners,Los Angeles Angels,8.5,-105,-117,currentLine_median
+2025-04-30,Tampa Bay Rays,Kansas City Royals,8.0,-105,-115,currentLine_median
+2025-04-30,Texas Rangers,Athletics,8.5,-116,-103,currentLine_median
+2025-04-30,Toronto Blue Jays,Boston Red Sox,9.5,-105,-115,currentLine_median
+2025-05-01,Chicago White Sox,Milwaukee Brewers,8.5,-121,100,currentLine_median
+2025-05-01,Cincinnati Reds,St. Louis Cardinals,9.0,-106,-113,currentLine_median
+2025-05-01,Cleveland Guardians,Minnesota Twins,9.0,-119,-102,currentLine_median
+2025-05-01,Los Angeles Angels,Detroit Tigers,8.5,-104,-118,currentLine_median
+2025-05-01,New York Mets,Arizona Diamondbacks,8.0,-115,-105,currentLine_median
+2025-05-01,Philadelphia Phillies,Washington Nationals,10.0,-105,-115,currentLine_median
+2025-05-01,Pittsburgh Pirates,Chicago Cubs,8.0,-106,-113,currentLine_median
+2025-05-01,San Francisco Giants,Colorado Rockies,7.5,-105,-115,currentLine_median
+2025-05-01,Tampa Bay Rays,Kansas City Royals,8.5,-108,-112,currentLine_median
+2025-05-01,Toronto Blue Jays,Boston Red Sox,8.5,-120,-103,currentLine_median
+2025-05-02,Atlanta Braves,Los Angeles Dodgers,9.0,-103,-117,currentLine_median
+2025-05-02,Boston Red Sox,Minnesota Twins,9.0,-110,-109,currentLine_median
+2025-05-02,Chicago White Sox,Houston Astros,7.75,-107,-115,currentLine_median
+2025-05-02,Cincinnati Reds,Washington Nationals,8.5,-119,-113,currentLine_median
+2025-05-02,Los Angeles Angels,Detroit Tigers,7.75,-109,-111,currentLine_median
+2025-05-02,Miami Marlins,Athletics,9.5,-105,-115,currentLine_median
+2025-05-02,Milwaukee Brewers,Chicago Cubs,8.75,-117,-112,currentLine_median
+2025-05-02,New York Yankees,Tampa Bay Rays,8.5,-120,100,currentLine_median
+2025-05-02,Philadelphia Phillies,Arizona Diamondbacks,9.5,-119,-113,currentLine_median
+2025-05-02,Pittsburgh Pirates,San Diego Padres,8.0,-116,-104,currentLine_median
+2025-05-02,San Francisco Giants,Colorado Rockies,8.0,-112,-110,currentLine_median
+2025-05-02,St. Louis Cardinals,New York Mets,7.5,-115,-105,currentLine_median
+2025-05-02,Texas Rangers,Seattle Mariners,8.5,-105,-115,currentLine_median
+2025-05-02,Toronto Blue Jays,Cleveland Guardians,8.5,-105,-115,currentLine_median
+2025-05-03,Atlanta Braves,Los Angeles Dodgers,8.5,-114,-107,currentLine_median
+2025-05-03,Baltimore Orioles,Kansas City Royals,8.75,-116,-113,currentLine_median
+2025-05-03,Boston Red Sox,Minnesota Twins,9.5,-105,-115,currentLine_median
+2025-05-03,Chicago White Sox,Houston Astros,7.5,-110,-110,currentLine_median
+2025-05-03,Cincinnati Reds,Washington Nationals,9.0,-103,-116,currentLine_median
+2025-05-03,Los Angeles Angels,Detroit Tigers,8.5,-120,100,currentLine_median
+2025-05-03,Miami Marlins,Athletics,9.0,-105,-114,currentLine_median
+2025-05-03,Milwaukee Brewers,Chicago Cubs,8.5,-114,-112,currentLine_median
+2025-05-03,New York Yankees,Tampa Bay Rays,9.75,-111,-108,currentLine_median
+2025-05-03,Philadelphia Phillies,Arizona Diamondbacks,9.5,-120,-106,currentLine_median
+2025-05-03,Pittsburgh Pirates,San Diego Padres,9.25,-111,-110,currentLine_median
+2025-05-03,San Francisco Giants,Colorado Rockies,8.25,-117,-110,currentLine_median
+2025-05-03,Texas Rangers,Seattle Mariners,9.0,-112,-108,currentLine_median
+2025-05-03,Toronto Blue Jays,Cleveland Guardians,7.5,-115,-105,currentLine_median
+2025-05-04,Atlanta Braves,Los Angeles Dodgers,9.5,-110,-110,currentLine_median
+2025-05-04,Baltimore Orioles,Kansas City Royals,9.0,-120,100,currentLine_median
+2025-05-04,Boston Red Sox,Minnesota Twins,9.0,-120,-107,currentLine_median
+2025-05-04,Cincinnati Reds,Washington Nationals,8.5,-110,-110,currentLine_median
+2025-05-04,Los Angeles Angels,Detroit Tigers,8.5,-120,100,currentLine_median
+2025-05-04,Miami Marlins,Athletics,9.0,-116,-105,currentLine_median
+2025-05-04,Milwaukee Brewers,Chicago Cubs,7.5,-124,-108,currentLine_median
+2025-05-04,Philadelphia Phillies,Arizona Diamondbacks,9.0,-105,-115,currentLine_median
+2025-05-04,Pittsburgh Pirates,San Diego Padres,9.0,-103,-119,currentLine_median
+2025-05-04,San Francisco Giants,Colorado Rockies,7.5,-105,-115,currentLine_median
+2025-05-04,St. Louis Cardinals,New York Mets,7.5,-107,-112,currentLine_median
+2025-05-04,Texas Rangers,Seattle Mariners,8.5,-112,-110,currentLine_median
+2025-05-04,Toronto Blue Jays,Cleveland Guardians,8.5,-105,-115,currentLine_median
+2025-05-05,Arizona Diamondbacks,New York Mets,10.0,-110,-110,currentLine_median
+2025-05-05,Atlanta Braves,Cincinnati Reds,8.5,-115,-105,currentLine_median
+2025-05-05,Kansas City Royals,Chicago White Sox,7.5,-115,-105,currentLine_median
+2025-05-05,Miami Marlins,Los Angeles Dodgers,9.5,-110,-115,currentLine_median
+2025-05-05,Milwaukee Brewers,Houston Astros,8.5,-109,-120,currentLine_median
+2025-05-05,New York Yankees,San Diego Padres,7.5,-115,-105,currentLine_median
+2025-05-05,St. Louis Cardinals,Pittsburgh Pirates,8.5,-111,-119,currentLine_median
+2025-05-06,Athletics,Seattle Mariners,10.25,-109,-110,currentLine_median
+2025-05-06,Atlanta Braves,Cincinnati Reds,8.25,-120,-106,currentLine_median
+2025-05-06,Boston Red Sox,Texas Rangers,8.5,-115,-105,currentLine_median
+2025-05-06,Chicago Cubs,San Francisco Giants,8.25,-107,-113,currentLine_median
+2025-05-06,Kansas City Royals,Chicago White Sox,8.5,-110,-110,currentLine_median
+2025-05-06,Los Angeles Angels,Toronto Blue Jays,9.0,-109,-111,currentLine_median
+2025-05-06,Miami Marlins,Los Angeles Dodgers,10.25,-110,-115,currentLine_median
+2025-05-06,Milwaukee Brewers,Houston Astros,8.0,-117,-110,currentLine_median
+2025-05-06,Minnesota Twins,Baltimore Orioles,9.0,-110,-112,currentLine_median
+2025-05-06,New York Yankees,San Diego Padres,8.0,-105,-115,currentLine_median
+2025-05-06,Tampa Bay Rays,Philadelphia Phillies,8.0,-106,-113,currentLine_median
+2025-05-06,Washington Nationals,Cleveland Guardians,9.5,-105,-115,currentLine_median
+2025-05-07,Arizona Diamondbacks,New York Mets,9.0,-120,100,currentLine_median
+2025-05-07,Athletics,Seattle Mariners,9.5,-110,-110,currentLine_median
+2025-05-07,Atlanta Braves,Cincinnati Reds,7.5,-116,-103,currentLine_median
+2025-05-07,Boston Red Sox,Texas Rangers,9.25,-106,-114,currentLine_median
+2025-05-07,Chicago Cubs,San Francisco Giants,7.5,-105,-114,currentLine_median
+2025-05-07,Colorado Rockies,Detroit Tigers,10.0,-109,-111,currentLine_median
+2025-05-07,Kansas City Royals,Chicago White Sox,8.0,-120,100,currentLine_median
+2025-05-07,Los Angeles Angels,Toronto Blue Jays,8.5,-120,100,currentLine_median
+2025-05-07,Miami Marlins,Los Angeles Dodgers,10.0,-116,-105,currentLine_median
+2025-05-07,Minnesota Twins,Baltimore Orioles,9.0,-105,-115,currentLine_median
+2025-05-07,New York Yankees,San Diego Padres,8.0,-110,-110,currentLine_median
+2025-05-07,St. Louis Cardinals,Pittsburgh Pirates,7.5,-116,-111,currentLine_median
+2025-05-07,Tampa Bay Rays,Philadelphia Phillies,8.0,-115,-110,currentLine_median
+2025-05-07,Washington Nationals,Cleveland Guardians,9.0,-112,-108,currentLine_median
+2025-05-08,Arizona Diamondbacks,Los Angeles Dodgers,9.0,-110,-110,currentLine_median
+2025-05-08,Atlanta Braves,Cincinnati Reds,8.0,-105,-115,currentLine_median
+2025-05-08,Colorado Rockies,Detroit Tigers,11.0,-117,-105,currentLine_median
+2025-05-08,Kansas City Royals,Chicago White Sox,8.5,-108,-112,currentLine_median
+2025-05-08,Los Angeles Angels,Toronto Blue Jays,8.0,-115,-105,currentLine_median
+2025-05-08,Minnesota Twins,Baltimore Orioles,8.5,-105,-115,currentLine_median
+2025-05-08,Tampa Bay Rays,Philadelphia Phillies,8.5,-123,100,currentLine_median
+2025-05-09,Cleveland Guardians,Philadelphia Phillies,7.5,-106,-117,currentLine_median
+2025-05-09,Colorado Rockies,San Diego Padres,11.5,-110,-110,currentLine_median
+2025-05-09,Houston Astros,Cincinnati Reds,7.5,100,-120,currentLine_median
+2025-05-09,Kansas City Royals,Boston Red Sox,9.0,-102,-119,currentLine_median
+2025-05-09,Los Angeles Angels,Baltimore Orioles,9.5,-115,-105,currentLine_median
+2025-05-09,Minnesota Twins,San Francisco Giants,8.75,-112,-112,currentLine_median
+2025-05-09,New York Mets,Chicago Cubs,8.0,-102,-119,currentLine_median
+2025-05-09,Pittsburgh Pirates,Atlanta Braves,8.5,-120,100,currentLine_median
+2025-05-09,Seattle Mariners,Toronto Blue Jays,7.25,-110,-117,currentLine_median
+2025-05-09,Washington Nationals,St. Louis Cardinals,8.5,-120,-107,currentLine_median
+2025-05-10,Arizona Diamondbacks,Los Angeles Dodgers,9.5,-111,-109,currentLine_median
+2025-05-10,Athletics,New York Yankees,10.0,-103,-116,currentLine_median
+2025-05-10,Chicago White Sox,Miami Marlins,8.25,-112,-111,currentLine_median
+2025-05-10,Cleveland Guardians,Philadelphia Phillies,8.0,-111,-112,currentLine_median
+2025-05-10,Colorado Rockies,San Diego Padres,12.0,-112,-111,currentLine_median
+2025-05-10,Detroit Tigers,Texas Rangers,7.5,-112,-114,currentLine_median
+2025-05-10,Houston Astros,Cincinnati Reds,8.0,-107,-113,currentLine_median
+2025-05-10,Kansas City Royals,Boston Red Sox,7.0,-120,100,currentLine_median
+2025-05-10,Los Angeles Angels,Baltimore Orioles,10.0,-111,-108,currentLine_median
+2025-05-10,Minnesota Twins,San Francisco Giants,7.0,-105,-115,currentLine_median
+2025-05-10,New York Mets,Chicago Cubs,8.5,-120,-107,currentLine_median
+2025-05-10,Pittsburgh Pirates,Atlanta Braves,9.0,-105,-115,currentLine_median
+2025-05-10,Seattle Mariners,Toronto Blue Jays,8.0,-110,-117,currentLine_median
+2025-05-10,Tampa Bay Rays,Milwaukee Brewers,9.5,-106,-113,currentLine_median
+2025-05-11,Arizona Diamondbacks,Los Angeles Dodgers,9.5,-110,-120,currentLine_median
+2025-05-11,Athletics,New York Yankees,10.75,-115,-109,currentLine_median
+2025-05-11,Chicago White Sox,Miami Marlins,8.0,-109,-115,currentLine_median
+2025-05-11,Cleveland Guardians,Philadelphia Phillies,7.5,-110,-121,currentLine_median
+2025-05-11,Colorado Rockies,San Diego Padres,11.5,-109,-111,currentLine_median
+2025-05-11,Detroit Tigers,Texas Rangers,7.0,-120,100,currentLine_median
+2025-05-11,Houston Astros,Cincinnati Reds,8.5,-107,-116,currentLine_median
+2025-05-11,Kansas City Royals,Boston Red Sox,8.5,-125,-104,currentLine_median
+2025-05-11,Los Angeles Angels,Baltimore Orioles,9.0,-109,-110,currentLine_median
+2025-05-11,Minnesota Twins,San Francisco Giants,8.5,-105,-116,currentLine_median
+2025-05-11,New York Mets,Chicago Cubs,8.0,-116,-112,currentLine_median
+2025-05-11,Pittsburgh Pirates,Atlanta Braves,8.0,-105,-115,currentLine_median
+2025-05-11,Seattle Mariners,Toronto Blue Jays,8.0,-112,-107,currentLine_median
+2025-05-11,Tampa Bay Rays,Milwaukee Brewers,9.0,-103,-117,currentLine_median
+2025-05-12,Atlanta Braves,Washington Nationals,8.5,-115,-105,currentLine_median
+2025-05-12,Chicago Cubs,Miami Marlins,8.0,-115,-105,currentLine_median
+2025-05-12,Cleveland Guardians,Milwaukee Brewers,8.5,-115,-105,currentLine_median
+2025-05-12,Detroit Tigers,Boston Red Sox,9.0,-106,-118,currentLine_median
+2025-05-12,Houston Astros,Kansas City Royals,8.0,-113,-106,currentLine_median
+2025-05-12,Philadelphia Phillies,St. Louis Cardinals,8.5,-113,-108,currentLine_median
+2025-05-12,San Francisco Giants,Arizona Diamondbacks,8.0,-113,-106,currentLine_median
+2025-05-12,Seattle Mariners,New York Yankees,8.0,-120,-105,currentLine_median
+2025-05-12,Texas Rangers,Colorado Rockies,8.5,-117,-105,currentLine_median
+2025-05-13,Chicago Cubs,Miami Marlins,8.0,-110,-110,currentLine_median
+2025-05-13,Cincinnati Reds,Chicago White Sox,9.0,-117,-111,currentLine_median
+2025-05-13,Cleveland Guardians,Milwaukee Brewers,9.0,-105,-115,currentLine_median
+2025-05-13,Detroit Tigers,Boston Red Sox,8.5,-110,-117,currentLine_median
+2025-05-13,Houston Astros,Kansas City Royals,7.5,-116,-105,currentLine_median
+2025-05-13,New York Mets,Pittsburgh Pirates,7.5,-112,-112,currentLine_median
+2025-05-13,San Diego Padres,Los Angeles Angels,8.0,-115,-113,currentLine_median
+2025-05-13,San Francisco Giants,Arizona Diamondbacks,7.5,-115,-105,currentLine_median
+2025-05-13,Texas Rangers,Colorado Rockies,8.5,-110,-111,currentLine_median
+2025-05-13,Toronto Blue Jays,Tampa Bay Rays,8.0,-106,-114,currentLine_median
+2025-05-14,Atlanta Braves,Washington Nationals,9.0,-117,-103,currentLine_median
+2025-05-14,Baltimore Orioles,Minnesota Twins,8.5,-121,100,currentLine_median
+2025-05-14,Chicago Cubs,Miami Marlins,7.5,-109,-110,currentLine_median
+2025-05-14,Cincinnati Reds,Chicago White Sox,8.25,-116,-108,currentLine_median
+2025-05-14,Cleveland Guardians,Milwaukee Brewers,8.25,-114,-114,currentLine_median
+2025-05-14,Detroit Tigers,Boston Red Sox,7.0,-110,-110,currentLine_median
+2025-05-14,Houston Astros,Kansas City Royals,8.5,-115,-106,currentLine_median
+2025-05-14,Los Angeles Dodgers,Athletics,8.5,-119,-102,currentLine_median
+2025-05-14,New York Mets,Pittsburgh Pirates,7.5,-105,-115,currentLine_median
+2025-05-14,Philadelphia Phillies,St. Louis Cardinals,8.0,-110,-110,currentLine_median
+2025-05-14,San Diego Padres,Los Angeles Angels,8.5,-120,100,currentLine_median
+2025-05-14,San Francisco Giants,Arizona Diamondbacks,8.5,-105,-115,currentLine_median
+2025-05-14,Seattle Mariners,New York Yankees,8.0,-110,-110,currentLine_median
+2025-05-14,Texas Rangers,Colorado Rockies,9.0,100,-120,currentLine_median
+2025-05-14,Toronto Blue Jays,Tampa Bay Rays,8.0,-110,-110,currentLine_median
+2025-05-15,Atlanta Braves,Washington Nationals,8.5,-115,-105,currentLine_median
+2025-05-15,Baltimore Orioles,Minnesota Twins,9.0,-115,-105,currentLine_median
+2025-05-15,Cincinnati Reds,Chicago White Sox,9.0,-120,100,currentLine_median
+2025-05-15,Los Angeles Dodgers,Athletics,9.5,-103,-122,currentLine_median
+2025-05-15,Texas Rangers,Houston Astros,6.5,-121,100,currentLine_median
+2025-05-15,Toronto Blue Jays,Tampa Bay Rays,8.0,-112,-107,currentLine_median
+2025-05-16,Arizona Diamondbacks,Colorado Rockies,9.0,-107,-115,currentLine_median
+2025-05-16,Baltimore Orioles,Washington Nationals,9.0,100,-120,currentLine_median
+2025-05-16,Boston Red Sox,Atlanta Braves,8.0,-111,-110,currentLine_median
+2025-05-16,Chicago Cubs,Chicago White Sox,11.5,-105,-115,currentLine_median
+2025-05-16,Kansas City Royals,St. Louis Cardinals,8.5,-115,-105,currentLine_median
+2025-05-16,Los Angeles Dodgers,Los Angeles Angels,9.5,-110,-111,currentLine_median
+2025-05-16,Miami Marlins,Tampa Bay Rays,8.5,-110,-114,currentLine_median
+2025-05-16,Milwaukee Brewers,Minnesota Twins,7.5,-116,-110,currentLine_median
+2025-05-16,New York Yankees,New York Mets,9.0,-110,-110,currentLine_median
+2025-05-16,Philadelphia Phillies,Pittsburgh Pirates,9.0,-110,-110,currentLine_median
+2025-05-16,San Francisco Giants,Athletics,7.0,-110,-110,currentLine_median
+2025-05-16,Texas Rangers,Houston Astros,8.0,-115,-105,currentLine_median
+2025-05-17,Arizona Diamondbacks,Colorado Rockies,10.25,-115,-110,currentLine_median
+2025-05-17,Baltimore Orioles,Washington Nationals,10.5,-114,-106,currentLine_median
+2025-05-17,Boston Red Sox,Atlanta Braves,10.0,-108,-115,currentLine_median
+2025-05-17,Chicago Cubs,Chicago White Sox,10.25,-121,-108,currentLine_median
+2025-05-17,Cincinnati Reds,Cleveland Guardians,10.25,-111,-115,currentLine_median
+2025-05-17,Kansas City Royals,St. Louis Cardinals,9.0,-115,-105,currentLine_median
+2025-05-17,Los Angeles Dodgers,Los Angeles Angels,9.0,-103,-116,currentLine_median
+2025-05-17,Miami Marlins,Tampa Bay Rays,8.0,-115,-105,currentLine_median
+2025-05-17,Milwaukee Brewers,Minnesota Twins,7.5,-111,-115,currentLine_median
+2025-05-17,New York Yankees,New York Mets,10.0,-115,-105,currentLine_median
+2025-05-17,Philadelphia Phillies,Pittsburgh Pirates,9.0,-115,-105,currentLine_median
+2025-05-17,San Diego Padres,Seattle Mariners,8.5,-107,-116,currentLine_median
+2025-05-17,San Francisco Giants,Athletics,8.5,-114,-106,currentLine_median
+2025-05-17,Toronto Blue Jays,Detroit Tigers,8.5,-110,-110,currentLine_median
+2025-05-18,Arizona Diamondbacks,Colorado Rockies,9.0,-111,-109,currentLine_median
+2025-05-18,Baltimore Orioles,Washington Nationals,9.5,-105,-116,currentLine_median
+2025-05-18,Boston Red Sox,Atlanta Braves,9.5,-118,-103,currentLine_median
+2025-05-18,Chicago Cubs,Chicago White Sox,7.5,-110,-110,currentLine_median
+2025-05-18,Kansas City Royals,St. Louis Cardinals,8.0,-110,-110,currentLine_median
+2025-05-18,Los Angeles Dodgers,Los Angeles Angels,9.0,-116,-103,currentLine_median
+2025-05-18,Miami Marlins,Tampa Bay Rays,9.0,-112,-118,currentLine_median
+2025-05-18,New York Yankees,New York Mets,9.0,-115,-111,currentLine_median
+2025-05-18,Philadelphia Phillies,Pittsburgh Pirates,8.5,-113,-120,currentLine_median
+2025-05-18,San Diego Padres,Seattle Mariners,7.5,-105,-115,currentLine_median
+2025-05-18,San Francisco Giants,Athletics,9.0,-105,-115,currentLine_median
+2025-05-18,Texas Rangers,Houston Astros,7.75,-112,-111,currentLine_median
+2025-05-19,Athletics,Los Angeles Angels,9.5,-115,-105,currentLine_median
+2025-05-19,Boston Red Sox,New York Mets,9.0,-110,-110,currentLine_median
+2025-05-19,Chicago White Sox,Seattle Mariners,7.75,-115,-110,currentLine_median
+2025-05-19,Colorado Rockies,Philadelphia Phillies,10.0,-116,-104,currentLine_median
+2025-05-19,Los Angeles Dodgers,Arizona Diamondbacks,10.5,-109,-111,currentLine_median
+2025-05-19,Milwaukee Brewers,Baltimore Orioles,8.5,-110,-110,currentLine_median
+2025-05-19,Pittsburgh Pirates,Cincinnati Reds,8.5,-105,-115,currentLine_median
+2025-05-19,San Francisco Giants,Kansas City Royals,7.5,100,-120,currentLine_median
+2025-05-19,St. Louis Cardinals,Detroit Tigers,8.0,-105,-115,currentLine_median
+2025-05-19,Tampa Bay Rays,Houston Astros,9.0,-103,-116,currentLine_median
+2025-05-20,Athletics,Los Angeles Angels,10.5,-115,-105,currentLine_median
+2025-05-20,Boston Red Sox,New York Mets,8.5,-115,-108,currentLine_median
+2025-05-20,Chicago White Sox,Seattle Mariners,8.5,-105,-115,currentLine_median
+2025-05-20,Colorado Rockies,Philadelphia Phillies,12.5,-112,-115,currentLine_median
+2025-05-20,Los Angeles Dodgers,Arizona Diamondbacks,9.0,-113,-106,currentLine_median
+2025-05-20,Milwaukee Brewers,Baltimore Orioles,8.5,-115,-105,currentLine_median
+2025-05-20,Pittsburgh Pirates,Cincinnati Reds,8.0,-103,-117,currentLine_median
+2025-05-20,San Francisco Giants,Kansas City Royals,7.5,-110,-110,currentLine_median
+2025-05-20,St. Louis Cardinals,Detroit Tigers,7.5,-105,-115,currentLine_median
+2025-05-20,Toronto Blue Jays,San Diego Padres,7.5,-115,-105,currentLine_median
+2025-05-21,Athletics,Los Angeles Angels,10.25,-110,-111,currentLine_median
+2025-05-21,Boston Red Sox,New York Mets,7.0,-120,100,currentLine_median
+2025-05-21,Chicago White Sox,Seattle Mariners,8.5,-109,-111,currentLine_median
+2025-05-21,Miami Marlins,Chicago Cubs,9.0,-112,-113,currentLine_median
+2025-05-21,Milwaukee Brewers,Baltimore Orioles,8.5,-118,-103,currentLine_median
+2025-05-21,Minnesota Twins,Cleveland Guardians,7.5,100,-122,currentLine_median
+2025-05-21,Pittsburgh Pirates,Cincinnati Reds,8.0,-104,-118,currentLine_median
+2025-05-21,San Francisco Giants,Kansas City Royals,7.5,100,-120,currentLine_median
+2025-05-21,St. Louis Cardinals,Detroit Tigers,8.25,-116,-111,currentLine_median
+2025-05-21,Tampa Bay Rays,Houston Astros,8.5,-110,-110,currentLine_median
+2025-05-22,Athletics,Los Angeles Angels,10.0,-113,-116,currentLine_median
+2025-05-22,Colorado Rockies,Philadelphia Phillies,11.5,-105,-114,currentLine_median
+2025-05-22,Detroit Tigers,Cleveland Guardians,8.0,-105,-115,currentLine_median
+2025-05-22,Houston Astros,Seattle Mariners,8.0,-110,-110,currentLine_median
+2025-05-22,New York Yankees,Texas Rangers,7.0,100,-120,currentLine_median
+2025-05-22,Washington Nationals,Atlanta Braves,8.5,-110,-110,currentLine_median
+2025-05-23,Athletics,Philadelphia Phillies,9.5,-105,-120,currentLine_median
+2025-05-23,Atlanta Braves,San Diego Padres,8.0,-110,-110,currentLine_median
+2025-05-23,Boston Red Sox,Baltimore Orioles,9.5,-107,-120,currentLine_median
+2025-05-23,Chicago White Sox,Texas Rangers,7.5,-109,-111,currentLine_median
+2025-05-23,Colorado Rockies,New York Yankees,11.5,-105,-114,currentLine_median
+2025-05-23,Detroit Tigers,Cleveland Guardians,8.5,-105,-115,currentLine_median
+2025-05-23,Los Angeles Angels,Miami Marlins,8.5,-103,-116,currentLine_median
+2025-05-23,Minnesota Twins,Kansas City Royals,8.0,-115,-109,currentLine_median
+2025-05-23,Pittsburgh Pirates,Milwaukee Brewers,7.0,-110,-110,currentLine_median
+2025-05-23,St. Louis Cardinals,Arizona Diamondbacks,8.0,-116,-103,currentLine_median
+2025-05-23,Tampa Bay Rays,Toronto Blue Jays,8.5,-112,-107,currentLine_median
+2025-05-24,Athletics,Philadelphia Phillies,10.0,-114,-105,currentLine_median
+2025-05-24,Atlanta Braves,San Diego Padres,9.0,-115,-105,currentLine_median
+2025-05-24,Boston Red Sox,Baltimore Orioles,9.25,-114,-112,currentLine_median
+2025-05-24,Chicago White Sox,Texas Rangers,8.5,-105,-115,currentLine_median
+2025-05-24,Cincinnati Reds,Chicago Cubs,9.0,-120,100,currentLine_median
+2025-05-24,Colorado Rockies,New York Yankees,10.5,-108,-115,currentLine_median
+2025-05-24,Detroit Tigers,Cleveland Guardians,8.0,-117,-104,currentLine_median
+2025-05-24,Houston Astros,Seattle Mariners,7.0,-121,100,currentLine_median
+2025-05-24,Minnesota Twins,Kansas City Royals,7.5,-106,-120,currentLine_median
+2025-05-24,New York Mets,Los Angeles Dodgers,8.5,-113,-109,currentLine_median
+2025-05-24,St. Louis Cardinals,Arizona Diamondbacks,7.5,-106,-114,currentLine_median
+2025-05-24,Tampa Bay Rays,Toronto Blue Jays,8.5,-110,-119,currentLine_median
+2025-05-24,Washington Nationals,San Francisco Giants,8.5,-106,-113,currentLine_median
+2025-05-25,Athletics,Philadelphia Phillies,10.0,-105,-115,currentLine_median
+2025-05-25,Atlanta Braves,San Diego Padres,8.0,-110,-110,currentLine_median
+2025-05-25,Boston Red Sox,Baltimore Orioles,9.0,-111,-109,currentLine_median
+2025-05-25,Chicago White Sox,Texas Rangers,8.0,-110,-110,currentLine_median
+2025-05-25,Cincinnati Reds,Chicago Cubs,8.5,-115,-109,currentLine_median
+2025-05-25,Colorado Rockies,New York Yankees,10.5,-122,100,currentLine_median
+2025-05-25,Detroit Tigers,Cleveland Guardians,7.0,100,-120,currentLine_median
+2025-05-25,Houston Astros,Seattle Mariners,8.5,-108,-115,currentLine_median
+2025-05-25,Los Angeles Angels,Miami Marlins,9.0,-115,-105,currentLine_median
+2025-05-25,Minnesota Twins,Kansas City Royals,7.5,-112,-112,currentLine_median
+2025-05-25,New York Mets,Los Angeles Dodgers,8.5,-119,-108,currentLine_median
+2025-05-25,Pittsburgh Pirates,Milwaukee Brewers,8.0,-114,-105,currentLine_median
+2025-05-25,St. Louis Cardinals,Arizona Diamondbacks,7.5,102,-128,currentLine_median
+2025-05-25,Tampa Bay Rays,Toronto Blue Jays,8.5,-120,100,currentLine_median
+2025-05-25,Washington Nationals,San Francisco Giants,7.5,-113,-106,currentLine_median
+2025-05-26,Arizona Diamondbacks,Pittsburgh Pirates,9.0,-122,102,currentLine_median
+2025-05-26,Baltimore Orioles,St. Louis Cardinals,9.0,100,-120,currentLine_median
+2025-05-26,Cleveland Guardians,Los Angeles Dodgers,8.0,100,-120,currentLine_median
+2025-05-26,Detroit Tigers,San Francisco Giants,8.5,-105,-115,currentLine_median
+2025-05-26,Kansas City Royals,Cincinnati Reds,7.5,-110,-112,currentLine_median
+2025-05-26,Los Angeles Angels,New York Yankees,10.0,-105,-115,currentLine_median
+2025-05-26,Milwaukee Brewers,Boston Red Sox,7.0,-120,100,currentLine_median
+2025-05-26,New York Mets,Chicago White Sox,8.5,-105,-115,currentLine_median
+2025-05-26,San Diego Padres,Miami Marlins,7.5,-120,-102,currentLine_median
+2025-05-26,Tampa Bay Rays,Minnesota Twins,9.0,-110,-110,currentLine_median
+2025-05-26,Texas Rangers,Toronto Blue Jays,7.0,-104,-116,currentLine_median
+2025-05-27,Baltimore Orioles,St. Louis Cardinals,8.5,-116,-107,currentLine_median
+2025-05-27,Chicago Cubs,Colorado Rockies,7.0,-120,100,currentLine_median
+2025-05-27,Cleveland Guardians,Los Angeles Dodgers,9.0,-106,-117,currentLine_median
+2025-05-27,Detroit Tigers,San Francisco Giants,7.5,102,-124,currentLine_median
+2025-05-27,Houston Astros,Athletics,8.0,-115,-105,currentLine_median
+2025-05-27,Kansas City Royals,Cincinnati Reds,8.0,-105,-115,currentLine_median
+2025-05-27,Los Angeles Angels,New York Yankees,8.5,-111,-109,currentLine_median
+2025-05-27,Milwaukee Brewers,Boston Red Sox,8.5,-105,-115,currentLine_median
+2025-05-27,New York Mets,Chicago White Sox,8.0,-115,-105,currentLine_median
+2025-05-27,Philadelphia Phillies,Atlanta Braves,9.0,-115,-107,currentLine_median
+2025-05-27,San Diego Padres,Miami Marlins,8.0,-105,-115,currentLine_median
+2025-05-27,Seattle Mariners,Washington Nationals,8.5,-115,-113,currentLine_median
+2025-05-27,Tampa Bay Rays,Minnesota Twins,8.5,-108,-113,currentLine_median
+2025-05-27,Texas Rangers,Toronto Blue Jays,7.5,-119,-104,currentLine_median
+2025-05-28,Arizona Diamondbacks,Pittsburgh Pirates,7.5,-110,-109,currentLine_median
+2025-05-28,Chicago Cubs,Colorado Rockies,7.5,-109,-116,currentLine_median
+2025-05-28,Cleveland Guardians,Los Angeles Dodgers,8.5,-110,-110,currentLine_median
+2025-05-28,Detroit Tigers,San Francisco Giants,7.75,-113,-107,currentLine_median
+2025-05-28,Kansas City Royals,Cincinnati Reds,7.75,-110,-110,currentLine_median
+2025-05-28,Los Angeles Angels,New York Yankees,8.5,-110,-110,currentLine_median
+2025-05-28,Milwaukee Brewers,Boston Red Sox,7.5,-110,-114,currentLine_median
+2025-05-28,New York Mets,Chicago White Sox,7.75,-111,-110,currentLine_median
+2025-05-28,San Diego Padres,Miami Marlins,8.5,-116,-105,currentLine_median
+2025-05-28,Seattle Mariners,Washington Nationals,8.0,-112,-110,currentLine_median
+2025-05-28,Tampa Bay Rays,Minnesota Twins,8.0,-111,-112,currentLine_median
+2025-05-28,Texas Rangers,Toronto Blue Jays,8.5,-103,-120,currentLine_median
+2025-05-29,Philadelphia Phillies,Atlanta Braves,7.5,-103,-121,currentLine_median
+2025-05-29,Seattle Mariners,Washington Nationals,7.5,-115,-115,currentLine_median
+2025-05-30,Atlanta Braves,Boston Red Sox,9.25,-110,-114,currentLine_median
+2025-05-30,Baltimore Orioles,Chicago White Sox,9.0,-119,-104,currentLine_median
+2025-05-30,Chicago Cubs,Cincinnati Reds,9.0,-115,-105,currentLine_median
+2025-05-30,Cleveland Guardians,Los Angeles Angels,8.5,-103,-120,currentLine_median
+2025-05-30,Houston Astros,Tampa Bay Rays,7.5,-110,-110,currentLine_median
+2025-05-30,Kansas City Royals,Detroit Tigers,8.5,-106,-113,currentLine_median
+2025-05-30,Los Angeles Dodgers,New York Yankees,9.0,100,-120,currentLine_median
+2025-05-30,New York Mets,Colorado Rockies,7.75,-117,-105,currentLine_median
+2025-05-30,Philadelphia Phillies,Milwaukee Brewers,9.5,-113,-109,currentLine_median
+2025-05-30,San Diego Padres,Pittsburgh Pirates,7.5,100,-120,currentLine_median
+2025-05-30,Seattle Mariners,Minnesota Twins,7.0,-107,-117,currentLine_median
+2025-05-30,Texas Rangers,St. Louis Cardinals,8.5,-116,-105,currentLine_median
+2025-05-30,Toronto Blue Jays,Athletics,8.5,-105,-115,currentLine_median
+2025-05-31,Arizona Diamondbacks,Washington Nationals,9.5,-115,-110,currentLine_median
+2025-05-31,Baltimore Orioles,Chicago White Sox,8.5,-116,-111,currentLine_median
+2025-05-31,Chicago Cubs,Cincinnati Reds,7.0,-120,100,currentLine_median
+2025-05-31,Cleveland Guardians,Los Angeles Angels,7.75,-119,-109,currentLine_median
+2025-05-31,Houston Astros,Tampa Bay Rays,8.5,-115,-111,currentLine_median
+2025-05-31,Kansas City Royals,Detroit Tigers,8.0,-108,-112,currentLine_median
+2025-05-31,Los Angeles Dodgers,New York Yankees,9.5,-110,-114,currentLine_median
+2025-05-31,New York Mets,Colorado Rockies,8.5,-110,-113,currentLine_median
+2025-05-31,Philadelphia Phillies,Milwaukee Brewers,8.0,-105,-115,currentLine_median
+2025-05-31,San Diego Padres,Pittsburgh Pirates,7.5,-115,-107,currentLine_median
+2025-05-31,Seattle Mariners,Minnesota Twins,7.0,-115,-105,currentLine_median
+2025-05-31,Texas Rangers,St. Louis Cardinals,8.5,-115,-105,currentLine_median
+2025-05-31,Toronto Blue Jays,Athletics,9.0,-107,-115,currentLine_median
+2025-06-01,Arizona Diamondbacks,Washington Nationals,9.0,-115,-108,currentLine_median
+2025-06-01,Atlanta Braves,Boston Red Sox,8.0,-117,-105,currentLine_median
+2025-06-01,Baltimore Orioles,Chicago White Sox,8.5,-123,-107,currentLine_median
+2025-06-01,Chicago Cubs,Cincinnati Reds,7.0,-122,-105,currentLine_median
+2025-06-01,Cleveland Guardians,Los Angeles Angels,8.5,-107,-122,currentLine_median
+2025-06-01,Houston Astros,Tampa Bay Rays,7.5,-116,-107,currentLine_median
+2025-06-01,Kansas City Royals,Detroit Tigers,8.5,-110,-114,currentLine_median
+2025-06-01,Los Angeles Dodgers,New York Yankees,8.5,-120,100,currentLine_median
+2025-06-01,Miami Marlins,San Francisco Giants,8.0,-112,-112,currentLine_median
+2025-06-01,New York Mets,Colorado Rockies,8.5,-104,-116,currentLine_median
+2025-06-01,Philadelphia Phillies,Milwaukee Brewers,8.0,-119,-102,currentLine_median
+2025-06-01,San Diego Padres,Pittsburgh Pirates,8.5,-117,-105,currentLine_median
+2025-06-01,Seattle Mariners,Minnesota Twins,7.5,-105,-115,currentLine_median
+2025-06-01,Texas Rangers,St. Louis Cardinals,7.5,-105,-115,currentLine_median
+2025-06-01,Toronto Blue Jays,Athletics,8.5,-108,-122,currentLine_median
+2025-06-02,Athletics,Minnesota Twins,9.0,-108,-117,currentLine_median
+2025-06-02,Boston Red Sox,Los Angeles Angels,9.5,-116,-104,currentLine_median
+2025-06-02,Chicago White Sox,Detroit Tigers,8.5,-120,-105,currentLine_median
+2025-06-02,Cincinnati Reds,Milwaukee Brewers,8.75,-120,-109,currentLine_median
+2025-06-02,Miami Marlins,Colorado Rockies,8.0,-114,-106,currentLine_median
+2025-06-02,San Francisco Giants,San Diego Padres,7.5,100,-123,currentLine_median
+2025-06-03,Athletics,Minnesota Twins,10.0,-105,-115,currentLine_median
+2025-06-03,Atlanta Braves,Arizona Diamondbacks,8.5,-114,-120,currentLine_median
+2025-06-03,Boston Red Sox,Los Angeles Angels,9.5,-105,-115,currentLine_median
+2025-06-03,Chicago White Sox,Detroit Tigers,8.25,-115,-105,currentLine_median
+2025-06-03,Los Angeles Dodgers,New York Mets,9.0,-120,100,currentLine_median
+2025-06-03,Miami Marlins,Colorado Rockies,8.5,-113,-112,currentLine_median
+2025-06-03,New York Yankees,Cleveland Guardians,8.0,-105,-116,currentLine_median
+2025-06-03,Pittsburgh Pirates,Houston Astros,7.0,-113,-107,currentLine_median
+2025-06-03,Seattle Mariners,Baltimore Orioles,7.5,-112,-113,currentLine_median
+2025-06-03,St. Louis Cardinals,Kansas City Royals,9.0,-113,-115,currentLine_median
+2025-06-03,Tampa Bay Rays,Texas Rangers,7.25,-116,-109,currentLine_median
+2025-06-03,Toronto Blue Jays,Philadelphia Phillies,8.5,-115,-105,currentLine_median
+2025-06-03,Washington Nationals,Chicago Cubs,9.25,-112,-109,currentLine_median
+2025-06-04,Athletics,Minnesota Twins,10.0,-110,-110,currentLine_median
+2025-06-04,Atlanta Braves,Arizona Diamondbacks,7.5,-110,-112,currentLine_median
+2025-06-04,Boston Red Sox,Los Angeles Angels,12.5,-110,-115,currentLine_median
+2025-06-04,Chicago White Sox,Detroit Tigers,8.0,-103,-116,currentLine_median
+2025-06-04,Los Angeles Dodgers,New York Mets,10.25,-107,-116,currentLine_median
+2025-06-04,Miami Marlins,Colorado Rockies,8.0,-115,-105,currentLine_median
+2025-06-04,New York Yankees,Cleveland Guardians,9.0,-105,-115,currentLine_median
+2025-06-04,Pittsburgh Pirates,Houston Astros,9.0,-110,-110,currentLine_median
+2025-06-04,San Francisco Giants,San Diego Padres,7.0,-115,-105,currentLine_median
+2025-06-04,Seattle Mariners,Baltimore Orioles,8.5,-105,-116,currentLine_median
+2025-06-04,Tampa Bay Rays,Texas Rangers,8.5,-110,-110,currentLine_median
+2025-06-04,Toronto Blue Jays,Philadelphia Phillies,9.0,-116,-104,currentLine_median
+2025-06-04,Washington Nationals,Chicago Cubs,8.0,-115,-105,currentLine_median
+2025-06-05,Athletics,Minnesota Twins,9.5,-110,-112,currentLine_median
+2025-06-05,Atlanta Braves,Arizona Diamondbacks,9.0,-112,-108,currentLine_median
+2025-06-05,Chicago White Sox,Detroit Tigers,8.0,-110,-115,currentLine_median
+2025-06-05,Los Angeles Dodgers,New York Mets,9.5,-105,-115,currentLine_median
+2025-06-05,New York Yankees,Cleveland Guardians,8.5,-105,-116,currentLine_median
+2025-06-05,Pittsburgh Pirates,Houston Astros,7.5,100,-120,currentLine_median
+2025-06-05,San Francisco Giants,San Diego Padres,7.0,-112,-111,currentLine_median
+2025-06-05,Seattle Mariners,Baltimore Orioles,7.25,-113,-117,currentLine_median
+2025-06-05,St. Louis Cardinals,Kansas City Royals,7.0,-113,-106,currentLine_median
+2025-06-05,Toronto Blue Jays,Philadelphia Phillies,8.5,-105,-115,currentLine_median
+2025-06-06,Athletics,Baltimore Orioles,10.25,-115,-110,currentLine_median
+2025-06-06,Chicago White Sox,Kansas City Royals,8.0,-114,-105,currentLine_median
+2025-06-06,Colorado Rockies,New York Mets,10.5,-120,-109,currentLine_median
+2025-06-06,Los Angeles Angels,Seattle Mariners,9.0,-110,-110,currentLine_median
+2025-06-06,Minnesota Twins,Toronto Blue Jays,8.5,-110,-110,currentLine_median
+2025-06-06,New York Yankees,Boston Red Sox,9.0,100,-120,currentLine_median
+2025-06-06,Tampa Bay Rays,Miami Marlins,8.5,-119,-106,currentLine_median
+2025-06-06,Washington Nationals,Texas Rangers,9.0,-109,-111,currentLine_median
+2025-06-07,Athletics,Baltimore Orioles,10.5,-111,-110,currentLine_median
+2025-06-07,Chicago White Sox,Kansas City Royals,8.0,-111,-109,currentLine_median
+2025-06-07,Cincinnati Reds,Arizona Diamondbacks,9.25,-110,-114,currentLine_median
+2025-06-07,Colorado Rockies,New York Mets,11.0,-111,-109,currentLine_median
+2025-06-07,Detroit Tigers,Chicago Cubs,8.5,-105,-115,currentLine_median
+2025-06-07,Los Angeles Angels,Seattle Mariners,9.0,-110,-110,currentLine_median
+2025-06-07,Milwaukee Brewers,San Diego Padres,8.0,-105,-115,currentLine_median
+2025-06-07,Minnesota Twins,Toronto Blue Jays,7.5,-119,-105,currentLine_median
+2025-06-07,New York Yankees,Boston Red Sox,7.5,-109,-117,currentLine_median
+2025-06-07,Pittsburgh Pirates,Philadelphia Phillies,8.0,-115,-106,currentLine_median
+2025-06-07,St. Louis Cardinals,Los Angeles Dodgers,8.0,-123,-103,currentLine_median
+2025-06-07,Tampa Bay Rays,Miami Marlins,8.5,-110,-110,currentLine_median
+2025-06-07,Washington Nationals,Texas Rangers,8.0,-115,-105,currentLine_median
+2025-06-08,Athletics,Baltimore Orioles,10.5,-121,-105,currentLine_median
+2025-06-08,Chicago White Sox,Kansas City Royals,8.75,-105,-116,currentLine_median
+2025-06-08,Cincinnati Reds,Arizona Diamondbacks,9.5,-112,-110,currentLine_median
+2025-06-08,Cleveland Guardians,Houston Astros,7.5,-104,-117,currentLine_median
+2025-06-08,Colorado Rockies,New York Mets,11.0,-105,-116,currentLine_median
+2025-06-08,Detroit Tigers,Chicago Cubs,8.5,-110,-110,currentLine_median
+2025-06-08,Los Angeles Angels,Seattle Mariners,9.0,-115,-105,currentLine_median
+2025-06-08,Milwaukee Brewers,San Diego Padres,8.5,-116,-108,currentLine_median
+2025-06-08,New York Yankees,Boston Red Sox,7.5,-115,-108,currentLine_median
+2025-06-08,Pittsburgh Pirates,Philadelphia Phillies,6.5,-120,100,currentLine_median
+2025-06-08,San Francisco Giants,Atlanta Braves,7.5,100,-121,currentLine_median
+2025-06-08,Tampa Bay Rays,Miami Marlins,8.5,-120,100,currentLine_median
+2025-06-08,Washington Nationals,Texas Rangers,8.5,-118,-112,currentLine_median
+2025-06-09,Boston Red Sox,Tampa Bay Rays,8.0,-115,-105,currentLine_median
+2025-06-09,Cleveland Guardians,Cincinnati Reds,9.0,-107,-113,currentLine_median
+2025-06-09,Los Angeles Angels,Athletics,9.0,-102,-119,currentLine_median
+2025-06-09,Milwaukee Brewers,Atlanta Braves,7.5,-112,-112,currentLine_median
+2025-06-09,Philadelphia Phillies,Chicago Cubs,7.5,-105,-123,currentLine_median
+2025-06-09,Pittsburgh Pirates,Miami Marlins,8.0,-114,-110,currentLine_median
+2025-06-09,San Diego Padres,Los Angeles Dodgers,8.5,-108,-123,currentLine_median
+2025-06-09,St. Louis Cardinals,Toronto Blue Jays,8.5,-117,-106,currentLine_median
+2025-06-10,Arizona Diamondbacks,Seattle Mariners,9.5,-122,100,currentLine_median
+2025-06-10,Boston Red Sox,Tampa Bay Rays,9.0,-105,-115,currentLine_median
+2025-06-10,Cleveland Guardians,Cincinnati Reds,8.25,-115,-112,currentLine_median
+2025-06-10,Colorado Rockies,San Francisco Giants,11.0,-119,-103,currentLine_median
+2025-06-10,Houston Astros,Chicago White Sox,7.5,-111,-109,currentLine_median
+2025-06-10,Kansas City Royals,New York Yankees,8.5,-114,-109,currentLine_median
+2025-06-10,Los Angeles Angels,Athletics,9.0,-110,-109,currentLine_median
+2025-06-10,Milwaukee Brewers,Atlanta Braves,8.0,-108,-117,currentLine_median
+2025-06-10,Minnesota Twins,Texas Rangers,9.0,-105,-115,currentLine_median
+2025-06-10,New York Mets,Washington Nationals,7.75,-117,-108,currentLine_median
+2025-06-10,Philadelphia Phillies,Chicago Cubs,9.5,-105,-118,currentLine_median
+2025-06-10,Pittsburgh Pirates,Miami Marlins,7.75,-110,-112,currentLine_median
+2025-06-10,San Diego Padres,Los Angeles Dodgers,8.5,-113,-110,currentLine_median
+2025-06-11,Arizona Diamondbacks,Seattle Mariners,8.75,-111,-113,currentLine_median
+2025-06-11,Baltimore Orioles,Detroit Tigers,9.0,-112,-112,currentLine_median
+2025-06-11,Boston Red Sox,Tampa Bay Rays,9.5,-115,-107,currentLine_median
+2025-06-11,Cleveland Guardians,Cincinnati Reds,8.5,-117,-103,currentLine_median
+2025-06-11,Colorado Rockies,San Francisco Giants,10.5,-108,-113,currentLine_median
+2025-06-11,Houston Astros,Chicago White Sox,8.0,-120,100,currentLine_median
+2025-06-11,Kansas City Royals,New York Yankees,8.5,-118,-105,currentLine_median
+2025-06-11,Los Angeles Angels,Athletics,9.5,-105,-115,currentLine_median
+2025-06-11,Milwaukee Brewers,Atlanta Braves,7.5,-105,-116,currentLine_median
+2025-06-11,Minnesota Twins,Texas Rangers,8.5,-103,-118,currentLine_median
+2025-06-11,New York Mets,Washington Nationals,8.5,-116,-104,currentLine_median
+2025-06-11,Philadelphia Phillies,Chicago Cubs,8.75,-118,-108,currentLine_median
+2025-06-11,Pittsburgh Pirates,Miami Marlins,8.5,-114,-112,currentLine_median
+2025-06-11,San Diego Padres,Los Angeles Dodgers,9.5,-115,-108,currentLine_median
+2025-06-11,St. Louis Cardinals,Toronto Blue Jays,8.5,-111,-112,currentLine_median
+2025-06-12,Baltimore Orioles,Detroit Tigers,7.5,-106,-115,currentLine_median
+2025-06-12,Chicago Cubs,Pittsburgh Pirates,7.5,100,-120,currentLine_median
+2025-06-12,Colorado Rockies,San Francisco Giants,11.0,-107,-112,currentLine_median
+2025-06-12,Houston Astros,Chicago White Sox,7.5,-105,-115,currentLine_median
+2025-06-12,Kansas City Royals,New York Yankees,8.5,-110,-111,currentLine_median
+2025-06-12,Milwaukee Brewers,St. Louis Cardinals,7.5,-105,-115,currentLine_median
+2025-06-12,Minnesota Twins,Texas Rangers,8.25,-110,-110,currentLine_median
+2025-06-12,New York Mets,Washington Nationals,8.5,-110,-110,currentLine_median
+2025-06-13,Arizona Diamondbacks,San Diego Padres,9.5,-105,-115,currentLine_median
+2025-06-13,Atlanta Braves,Colorado Rockies,8.5,-117,-103,currentLine_median
+2025-06-13,Baltimore Orioles,Los Angeles Angels,9.5,-117,-104,currentLine_median
+2025-06-13,Boston Red Sox,New York Yankees,8.0,-112,-110,currentLine_median
+2025-06-13,Chicago Cubs,Pittsburgh Pirates,6.5,-117,-103,currentLine_median
+2025-06-13,Detroit Tigers,Cincinnati Reds,8.0,-111,-109,currentLine_median
+2025-06-13,Houston Astros,Minnesota Twins,8.0,-105,-115,currentLine_median
+2025-06-13,Kansas City Royals,Athletics,8.5,-107,-115,currentLine_median
+2025-06-13,Los Angeles Dodgers,San Francisco Giants,7.5,-115,-105,currentLine_median
+2025-06-13,Milwaukee Brewers,St. Louis Cardinals,7.5,-110,-110,currentLine_median
+2025-06-13,New York Mets,Tampa Bay Rays,8.0,-115,-105,currentLine_median
+2025-06-13,Philadelphia Phillies,Toronto Blue Jays,7.75,-117,-112,currentLine_median
+2025-06-13,Seattle Mariners,Cleveland Guardians,7.5,-102,-119,currentLine_median
+2025-06-13,Texas Rangers,Chicago White Sox,8.0,-114,-107,currentLine_median
+2025-06-13,Washington Nationals,Miami Marlins,8.5,-120,100,currentLine_median
+2025-06-14,Arizona Diamondbacks,San Diego Padres,9.5,-105,-115,currentLine_median
+2025-06-14,Atlanta Braves,Colorado Rockies,8.5,-118,-103,currentLine_median
+2025-06-14,Baltimore Orioles,Los Angeles Angels,9.0,-115,-107,currentLine_median
+2025-06-14,Boston Red Sox,New York Yankees,8.5,-105,-115,currentLine_median
+2025-06-14,Chicago Cubs,Pittsburgh Pirates,7.0,-110,-110,currentLine_median
+2025-06-14,Detroit Tigers,Cincinnati Reds,8.0,-105,-115,currentLine_median
+2025-06-14,Houston Astros,Minnesota Twins,6.75,100,-120,currentLine_median
+2025-06-14,Kansas City Royals,Athletics,9.5,-105,-118,currentLine_median
+2025-06-14,Los Angeles Dodgers,San Francisco Giants,9.0,-117,-106,currentLine_median
+2025-06-14,Milwaukee Brewers,St. Louis Cardinals,8.25,-115,-105,currentLine_median
+2025-06-14,New York Mets,Tampa Bay Rays,7.0,-108,-111,currentLine_median
+2025-06-14,Philadelphia Phillies,Toronto Blue Jays,8.0,-110,-110,currentLine_median
+2025-06-14,Texas Rangers,Chicago White Sox,7.5,100,-120,currentLine_median
+2025-06-14,Washington Nationals,Miami Marlins,9.0,-114,-106,currentLine_median
+2025-06-15,Arizona Diamondbacks,San Diego Padres,8.5,-116,-106,currentLine_median
+2025-06-15,Atlanta Braves,Colorado Rockies,9.0,-115,-105,currentLine_median
+2025-06-15,Baltimore Orioles,Los Angeles Angels,8.5,-111,-111,currentLine_median
+2025-06-15,Boston Red Sox,New York Yankees,8.5,-107,-116,currentLine_median
+2025-06-15,Chicago Cubs,Pittsburgh Pirates,7.25,-105,-122,currentLine_median
+2025-06-15,Detroit Tigers,Cincinnati Reds,8.5,-115,-105,currentLine_median
+2025-06-15,Houston Astros,Minnesota Twins,8.0,-120,-103,currentLine_median
+2025-06-15,Kansas City Royals,Athletics,8.5,-116,-105,currentLine_median
+2025-06-15,Los Angeles Dodgers,San Francisco Giants,9.0,-107,-112,currentLine_median
+2025-06-15,Milwaukee Brewers,St. Louis Cardinals,8.0,-115,-105,currentLine_median
+2025-06-15,New York Mets,Tampa Bay Rays,8.0,-102,-118,currentLine_median
+2025-06-15,Seattle Mariners,Cleveland Guardians,8.0,-109,-111,currentLine_median
+2025-06-15,Texas Rangers,Chicago White Sox,8.0,-113,-107,currentLine_median
+2025-06-15,Washington Nationals,Miami Marlins,7.5,-110,-110,currentLine_median
+2025-06-16,Athletics,Houston Astros,9.5,-111,-114,currentLine_median
+2025-06-16,Los Angeles Dodgers,San Diego Padres,9.0,-107,-112,currentLine_median
+2025-06-16,Miami Marlins,Philadelphia Phillies,8.5,-110,-109,currentLine_median
+2025-06-16,New York Yankees,Los Angeles Angels,8.0,-107,-113,currentLine_median
+2025-06-16,Seattle Mariners,Boston Red Sox,7.0,-104,-116,currentLine_median
+2025-06-16,Tampa Bay Rays,Baltimore Orioles,8.5,-115,-105,currentLine_median
+2025-06-16,Washington Nationals,Colorado Rockies,8.5,-117,-103,currentLine_median
+2025-06-17,Athletics,Houston Astros,11.0,-107,-114,currentLine_median
+2025-06-17,Atlanta Braves,New York Mets,8.5,-105,-115,currentLine_median
+2025-06-17,Chicago Cubs,Milwaukee Brewers,9.5,-109,-112,currentLine_median
+2025-06-17,Chicago White Sox,St. Louis Cardinals,9.0,-115,-105,currentLine_median
+2025-06-17,Cincinnati Reds,Minnesota Twins,8.5,-110,-111,currentLine_median
+2025-06-17,Detroit Tigers,Pittsburgh Pirates,8.0,-113,-107,currentLine_median
+2025-06-17,Los Angeles Dodgers,San Diego Padres,10.0,-115,-105,currentLine_median
+2025-06-17,Miami Marlins,Philadelphia Phillies,8.5,-105,-116,currentLine_median
+2025-06-17,New York Yankees,Los Angeles Angels,9.0,-105,-115,currentLine_median
+2025-06-17,San Francisco Giants,Cleveland Guardians,7.0,-120,100,currentLine_median
+2025-06-17,Seattle Mariners,Boston Red Sox,7.0,-115,-105,currentLine_median
+2025-06-17,Tampa Bay Rays,Baltimore Orioles,9.5,100,-121,currentLine_median
+2025-06-17,Texas Rangers,Kansas City Royals,8.0,-113,-107,currentLine_median
+2025-06-17,Toronto Blue Jays,Arizona Diamondbacks,8.5,-122,100,currentLine_median
+2025-06-17,Washington Nationals,Colorado Rockies,9.0,-102,-119,currentLine_median
+2025-06-18,Athletics,Houston Astros,9.5,-105,-116,currentLine_median
+2025-06-18,Atlanta Braves,New York Mets,7.5,-110,-110,currentLine_median
+2025-06-18,Cincinnati Reds,Minnesota Twins,9.0,-111,-109,currentLine_median
+2025-06-18,Los Angeles Dodgers,San Diego Padres,9.5,-114,-106,currentLine_median
+2025-06-18,Miami Marlins,Philadelphia Phillies,8.5,-110,-110,currentLine_median
+2025-06-18,New York Yankees,Los Angeles Angels,9.5,-110,-111,currentLine_median
+2025-06-18,San Francisco Giants,Cleveland Guardians,8.5,-105,-116,currentLine_median
+2025-06-18,Seattle Mariners,Boston Red Sox,6.5,-110,-110,currentLine_median
+2025-06-18,Tampa Bay Rays,Baltimore Orioles,8.5,-120,100,currentLine_median
+2025-06-18,Texas Rangers,Kansas City Royals,8.0,-113,-110,currentLine_median
+2025-06-18,Toronto Blue Jays,Arizona Diamondbacks,8.5,-120,100,currentLine_median
+2025-06-18,Washington Nationals,Colorado Rockies,9.5,100,-121,currentLine_median
+2025-06-19,Chicago Cubs,Milwaukee Brewers,8.5,-105,-115,currentLine_median
+2025-06-19,Chicago White Sox,St. Louis Cardinals,9.0,-106,-114,currentLine_median
+2025-06-19,Cincinnati Reds,Minnesota Twins,9.5,-110,-111,currentLine_median
+2025-06-19,Detroit Tigers,Pittsburgh Pirates,7.0,-116,-104,currentLine_median
+2025-06-19,Los Angeles Dodgers,San Diego Padres,8.5,-115,-105,currentLine_median
+2025-06-19,Miami Marlins,Philadelphia Phillies,7.5,-110,-112,currentLine_median
+2025-06-19,New York Yankees,Los Angeles Angels,10.0,-115,-105,currentLine_median
+2025-06-19,Tampa Bay Rays,Baltimore Orioles,8.0,-113,-107,currentLine_median
+2025-06-19,Texas Rangers,Kansas City Royals,8.0,-105,-115,currentLine_median
+2025-06-19,Toronto Blue Jays,Arizona Diamondbacks,8.5,-115,-105,currentLine_median
+2025-06-19,Washington Nationals,Colorado Rockies,9.75,-112,-109,currentLine_median
+2025-06-20,Athletics,Cleveland Guardians,9.0,-116,-104,currentLine_median
+2025-06-20,Chicago Cubs,Seattle Mariners,10.0,-118,-103,currentLine_median
+2025-06-20,Colorado Rockies,Arizona Diamondbacks,11.5,-115,-108,currentLine_median
+2025-06-20,Los Angeles Angels,Houston Astros,8.0,-112,-110,currentLine_median
+2025-06-20,Los Angeles Dodgers,Washington Nationals,8.0,-115,-105,currentLine_median
+2025-06-20,Miami Marlins,Atlanta Braves,9.0,-115,-110,currentLine_median
+2025-06-20,Minnesota Twins,Milwaukee Brewers,7.5,-112,-109,currentLine_median
+2025-06-20,New York Yankees,Baltimore Orioles,9.0,-105,-115,currentLine_median
+2025-06-20,Pittsburgh Pirates,Texas Rangers,7.5,-105,-115,currentLine_median
+2025-06-20,San Diego Padres,Kansas City Royals,8.0,-107,-115,currentLine_median
+2025-06-20,San Francisco Giants,Boston Red Sox,7.5,101,-123,currentLine_median
+2025-06-20,St. Louis Cardinals,Cincinnati Reds,8.5,-119,-113,currentLine_median
+2025-06-20,Tampa Bay Rays,Detroit Tigers,8.0,-105,-116,currentLine_median
+2025-06-20,Toronto Blue Jays,Chicago White Sox,8.5,-120,-103,currentLine_median
+2025-06-21,Athletics,Cleveland Guardians,9.5,100,-121,currentLine_median
+2025-06-21,Chicago Cubs,Seattle Mariners,12.5,-114,-106,currentLine_median
+2025-06-21,Colorado Rockies,Arizona Diamondbacks,12.5,-109,-111,currentLine_median
+2025-06-21,Los Angeles Angels,Houston Astros,8.0,-110,-109,currentLine_median
+2025-06-21,Los Angeles Dodgers,Washington Nationals,10.0,-115,-105,currentLine_median
+2025-06-21,Miami Marlins,Atlanta Braves,8.5,-110,-110,currentLine_median
+2025-06-21,Minnesota Twins,Milwaukee Brewers,10.0,-113,-107,currentLine_median
+2025-06-21,New York Yankees,Baltimore Orioles,9.5,-108,-116,currentLine_median
+2025-06-21,Pittsburgh Pirates,Texas Rangers,8.5,-105,-116,currentLine_median
+2025-06-21,San Diego Padres,Kansas City Royals,7.5,100,-120,currentLine_median
+2025-06-21,San Francisco Giants,Boston Red Sox,7.5,-110,-110,currentLine_median
+2025-06-21,St. Louis Cardinals,Cincinnati Reds,9.0,-115,-105,currentLine_median
+2025-06-21,Tampa Bay Rays,Detroit Tigers,8.5,-102,-118,currentLine_median
+2025-06-21,Toronto Blue Jays,Chicago White Sox,8.0,-119,-104,currentLine_median
+2025-06-22,Athletics,Cleveland Guardians,9.0,-116,-105,currentLine_median
+2025-06-22,Chicago Cubs,Seattle Mariners,11.5,-111,-109,currentLine_median
+2025-06-22,Colorado Rockies,Arizona Diamondbacks,12.25,-109,-112,currentLine_median
+2025-06-22,Los Angeles Angels,Houston Astros,8.0,-114,-114,currentLine_median
+2025-06-22,Los Angeles Dodgers,Washington Nationals,9.5,-105,-116,currentLine_median
+2025-06-22,Miami Marlins,Atlanta Braves,8.5,-105,-115,currentLine_median
+2025-06-22,Minnesota Twins,Milwaukee Brewers,9.5,-104,-117,currentLine_median
+2025-06-22,New York Yankees,Baltimore Orioles,10.0,-116,-105,currentLine_median
+2025-06-22,Philadelphia Phillies,New York Mets,8.25,-117,-106,currentLine_median
+2025-06-22,Pittsburgh Pirates,Texas Rangers,9.5,-109,-110,currentLine_median
+2025-06-22,San Diego Padres,Kansas City Royals,8.5,-114,-112,currentLine_median
+2025-06-22,San Francisco Giants,Boston Red Sox,7.0,-121,100,currentLine_median
+2025-06-22,St. Louis Cardinals,Cincinnati Reds,9.5,100,-120,currentLine_median
+2025-06-22,Tampa Bay Rays,Detroit Tigers,8.0,-116,-105,currentLine_median
+2025-06-23,Chicago White Sox,Arizona Diamondbacks,9.5,-120,-110,currentLine_median
+2025-06-23,Cincinnati Reds,New York Yankees,10.0,-119,-102,currentLine_median
+2025-06-23,Los Angeles Angels,Boston Red Sox,9.0,-101,-120,currentLine_median
+2025-06-23,Milwaukee Brewers,Pittsburgh Pirates,8.5,-109,-111,currentLine_median
+2025-06-23,Minnesota Twins,Seattle Mariners,8.5,-112,-108,currentLine_median
+2025-06-23,San Diego Padres,Washington Nationals,8.5,-116,-108,currentLine_median
+2025-06-23,St. Louis Cardinals,Chicago Cubs,8.5,-120,100,currentLine_median
+2025-06-24,Baltimore Orioles,Texas Rangers,9.0,-109,-110,currentLine_median
+2025-06-24,Chicago White Sox,Arizona Diamondbacks,8.5,-110,-110,currentLine_median
+2025-06-24,Cincinnati Reds,New York Yankees,9.5,-108,-117,currentLine_median
+2025-06-24,Cleveland Guardians,Toronto Blue Jays,9.0,-113,-107,currentLine_median
+2025-06-24,Colorado Rockies,Los Angeles Dodgers,11.5,-117,-107,currentLine_median
+2025-06-24,Detroit Tigers,Athletics,7.5,-108,-112,currentLine_median
+2025-06-24,Kansas City Royals,Tampa Bay Rays,8.5,-115,-105,currentLine_median
+2025-06-24,Los Angeles Angels,Boston Red Sox,7.5,-114,-107,currentLine_median
+2025-06-24,Milwaukee Brewers,Pittsburgh Pirates,7.5,-110,-112,currentLine_median
+2025-06-24,Minnesota Twins,Seattle Mariners,8.5,-115,-114,currentLine_median
+2025-06-24,New York Mets,Atlanta Braves,9.0,-105,-115,currentLine_median
+2025-06-24,San Diego Padres,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-06-24,San Francisco Giants,Miami Marlins,7.75,-110,-114,currentLine_median
+2025-06-25,Baltimore Orioles,Texas Rangers,8.0,-115,-114,currentLine_median
+2025-06-25,Chicago White Sox,Arizona Diamondbacks,8.0,-114,-106,currentLine_median
+2025-06-25,Cincinnati Reds,New York Yankees,9.0,-115,-105,currentLine_median
+2025-06-25,Cleveland Guardians,Toronto Blue Jays,8.0,-109,-112,currentLine_median
+2025-06-25,Colorado Rockies,Los Angeles Dodgers,11.0,-116,-104,currentLine_median
+2025-06-25,Detroit Tigers,Athletics,8.5,-117,-103,currentLine_median
+2025-06-25,Houston Astros,Philadelphia Phillies,7.5,101,-123,currentLine_median
+2025-06-25,Los Angeles Angels,Boston Red Sox,8.5,-121,100,currentLine_median
+2025-06-25,Milwaukee Brewers,Pittsburgh Pirates,6.5,-115,-108,currentLine_median
+2025-06-25,Minnesota Twins,Seattle Mariners,7.5,-105,-115,currentLine_median
+2025-06-25,New York Mets,Atlanta Braves,9.0,-105,-115,currentLine_median
+2025-06-25,San Francisco Giants,Miami Marlins,6.5,-115,-105,currentLine_median
+2025-06-25,St. Louis Cardinals,Chicago Cubs,8.75,-110,-110,currentLine_median
+2025-06-26,Cleveland Guardians,Toronto Blue Jays,7.5,-106,-115,currentLine_median
+2025-06-26,Colorado Rockies,Los Angeles Dodgers,12.5,-106,-115,currentLine_median
+2025-06-26,Detroit Tigers,Athletics,8.5,-115,-105,currentLine_median
+2025-06-26,Houston Astros,Philadelphia Phillies,7.0,-115,-105,currentLine_median
+2025-06-26,Kansas City Royals,Tampa Bay Rays,10.0,-115,-105,currentLine_median
+2025-06-26,Minnesota Twins,Seattle Mariners,8.5,-120,100,currentLine_median
+2025-06-26,New York Mets,Atlanta Braves,8.5,-106,-113,currentLine_median
+2025-06-26,San Francisco Giants,Miami Marlins,7.5,-117,-107,currentLine_median
+2025-06-26,St. Louis Cardinals,Chicago Cubs,9.0,-107,-112,currentLine_median
+2025-06-27,Arizona Diamondbacks,Miami Marlins,7.75,-124,-109,currentLine_median
+2025-06-27,Atlanta Braves,Philadelphia Phillies,9.5,-101,-119,currentLine_median
+2025-06-27,Baltimore Orioles,Tampa Bay Rays,8.5,-121,100,currentLine_median
+2025-06-27,Boston Red Sox,Toronto Blue Jays,8.5,-119,-102,currentLine_median
+2025-06-27,Chicago White Sox,San Francisco Giants,9.0,-117,-104,currentLine_median
+2025-06-27,Cincinnati Reds,San Diego Padres,9.0,-108,-112,currentLine_median
+2025-06-27,Cleveland Guardians,St. Louis Cardinals,8.5,-115,-105,currentLine_median
+2025-06-27,Detroit Tigers,Minnesota Twins,9.0,-102,-120,currentLine_median
+2025-06-27,Houston Astros,Chicago Cubs,8.0,-113,-114,currentLine_median
+2025-06-27,Kansas City Royals,Los Angeles Dodgers,9.5,-115,-106,currentLine_median
+2025-06-27,Los Angeles Angels,Washington Nationals,8.5,-120,-102,currentLine_median
+2025-06-27,Milwaukee Brewers,Colorado Rockies,8.5,-105,-115,currentLine_median
+2025-06-27,New York Yankees,Athletics,8.5,-114,-106,currentLine_median
+2025-06-27,Pittsburgh Pirates,New York Mets,8.0,-121,100,currentLine_median
+2025-06-27,Texas Rangers,Seattle Mariners,7.0,-108,-112,currentLine_median
+2025-06-28,Arizona Diamondbacks,Miami Marlins,9.0,-102,-120,currentLine_median
+2025-06-28,Atlanta Braves,Philadelphia Phillies,7.5,-118,-108,currentLine_median
+2025-06-28,Baltimore Orioles,Tampa Bay Rays,9.5,-116,-104,currentLine_median
+2025-06-28,Boston Red Sox,Toronto Blue Jays,8.75,-120,-109,currentLine_median
+2025-06-28,Chicago White Sox,San Francisco Giants,7.5,-115,-105,currentLine_median
+2025-06-28,Cincinnati Reds,San Diego Padres,9.5,-112,-107,currentLine_median
+2025-06-28,Cleveland Guardians,St. Louis Cardinals,8.5,-104,-116,currentLine_median
+2025-06-28,Detroit Tigers,Minnesota Twins,9.0,-115,-105,currentLine_median
+2025-06-28,Houston Astros,Chicago Cubs,8.5,-102,-119,currentLine_median
+2025-06-28,Los Angeles Angels,Washington Nationals,9.0,-108,-112,currentLine_median
+2025-06-28,Milwaukee Brewers,Colorado Rockies,8.5,-116,-104,currentLine_median
+2025-06-28,New York Yankees,Athletics,9.5,100,-122,currentLine_median
+2025-06-28,Pittsburgh Pirates,New York Mets,9.5,-108,-117,currentLine_median
+2025-06-29,Arizona Diamondbacks,Miami Marlins,8.75,-116,-113,currentLine_median
+2025-06-29,Atlanta Braves,Philadelphia Phillies,8.0,-110,-110,currentLine_median
+2025-06-29,Boston Red Sox,Toronto Blue Jays,9.5,-115,-105,currentLine_median
+2025-06-29,Cleveland Guardians,St. Louis Cardinals,8.0,-116,-104,currentLine_median
+2025-06-29,Detroit Tigers,Minnesota Twins,7.5,-104,-117,currentLine_median
+2025-06-29,Houston Astros,Chicago Cubs,7.5,-107,-112,currentLine_median
+2025-06-29,Kansas City Royals,Los Angeles Dodgers,9.0,-115,-105,currentLine_median
+2025-06-29,Los Angeles Angels,Washington Nationals,10.0,-105,-114,currentLine_median
+2025-06-29,Milwaukee Brewers,Colorado Rockies,8.5,-115,-105,currentLine_median
+2025-06-29,New York Yankees,Athletics,10.5,-115,-106,currentLine_median
+2025-06-29,Pittsburgh Pirates,New York Mets,9.0,-115,-108,currentLine_median
+2025-06-29,Texas Rangers,Seattle Mariners,8.5,-105,-115,currentLine_median
+2025-06-30,Arizona Diamondbacks,San Francisco Giants,8.0,-111,-109,currentLine_median
+2025-06-30,Boston Red Sox,Cincinnati Reds,7.5,-119,-103,currentLine_median
+2025-06-30,Philadelphia Phillies,San Diego Padres,8.75,-115,-114,currentLine_median
+2025-06-30,Pittsburgh Pirates,St. Louis Cardinals,8.5,-120,100,currentLine_median
+2025-06-30,Tampa Bay Rays,Athletics,8.0,-117,-104,currentLine_median
+2025-06-30,Texas Rangers,Baltimore Orioles,8.0,-114,-105,currentLine_median
+2025-06-30,Toronto Blue Jays,New York Yankees,8.5,-113,-112,currentLine_median
+2025-07-01,Arizona Diamondbacks,San Francisco Giants,9.0,-120,100,currentLine_median
+2025-07-01,Atlanta Braves,Los Angeles Angels,9.5,-105,-116,currentLine_median
+2025-07-01,Chicago Cubs,Cleveland Guardians,8.5,-105,-114,currentLine_median
+2025-07-01,Colorado Rockies,Houston Astros,11.5,-108,-113,currentLine_median
+2025-07-01,Los Angeles Dodgers,Chicago White Sox,8.5,-116,-104,currentLine_median
+2025-07-01,Miami Marlins,Minnesota Twins,7.5,-104,-117,currentLine_median
+2025-07-01,Seattle Mariners,Kansas City Royals,8.0,-115,-105,currentLine_median
+2025-07-01,Tampa Bay Rays,Athletics,9.0,-105,-115,currentLine_median
+2025-07-01,Texas Rangers,Baltimore Orioles,7.5,-115,-105,currentLine_median
+2025-07-01,Toronto Blue Jays,New York Yankees,7.5,-105,-115,currentLine_median
+2025-07-02,Arizona Diamondbacks,San Francisco Giants,8.5,-110,-110,currentLine_median
+2025-07-02,Atlanta Braves,Los Angeles Angels,9.5,-110,-111,currentLine_median
+2025-07-02,Boston Red Sox,Cincinnati Reds,9.5,-110,-110,currentLine_median
+2025-07-02,Chicago Cubs,Cleveland Guardians,8.25,-108,-112,currentLine_median
+2025-07-02,Colorado Rockies,Houston Astros,11.0,-113,-108,currentLine_median
+2025-07-02,Los Angeles Dodgers,Chicago White Sox,9.25,-110,-111,currentLine_median
+2025-07-02,New York Mets,Milwaukee Brewers,8.5,-112,-109,currentLine_median
+2025-07-02,Philadelphia Phillies,San Diego Padres,7.5,-112,-110,currentLine_median
+2025-07-02,Pittsburgh Pirates,St. Louis Cardinals,8.0,-114,-114,currentLine_median
+2025-07-02,Seattle Mariners,Kansas City Royals,7.0,-114,-110,currentLine_median
+2025-07-02,Tampa Bay Rays,Athletics,9.0,-104,-116,currentLine_median
+2025-07-02,Texas Rangers,Baltimore Orioles,8.0,-114,-105,currentLine_median
+2025-07-02,Toronto Blue Jays,New York Yankees,8.5,-117,-104,currentLine_median
+2025-07-02,Washington Nationals,Detroit Tigers,8.0,-116,-112,currentLine_median
+2025-07-03,Arizona Diamondbacks,San Francisco Giants,8.5,-109,-111,currentLine_median
+2025-07-03,Atlanta Braves,Los Angeles Angels,9.0,-118,-102,currentLine_median
+2025-07-03,Chicago Cubs,Cleveland Guardians,8.5,-103,-119,currentLine_median
+2025-07-03,Los Angeles Dodgers,Chicago White Sox,9.0,-115,-105,currentLine_median
+2025-07-03,Miami Marlins,Minnesota Twins,8.0,-106,-114,currentLine_median
+2025-07-03,New York Mets,Milwaukee Brewers,8.0,-112,-108,currentLine_median
+2025-07-03,Toronto Blue Jays,New York Yankees,8.5,-105,-115,currentLine_median
+2025-07-04,Arizona Diamondbacks,Kansas City Royals,8.5,-112,-112,currentLine_median
+2025-07-04,Athletics,San Francisco Giants,10.0,-115,-104,currentLine_median
+2025-07-04,Chicago Cubs,St. Louis Cardinals,9.5,-103,-118,currentLine_median
+2025-07-04,Cleveland Guardians,Detroit Tigers,8.5,-119,-111,currentLine_median
+2025-07-04,Colorado Rockies,Chicago White Sox,11.0,-115,-105,currentLine_median
+2025-07-04,Los Angeles Dodgers,Houston Astros,9.0,-110,-110,currentLine_median
+2025-07-04,Miami Marlins,Milwaukee Brewers,8.0,-107,-113,currentLine_median
+2025-07-04,Minnesota Twins,Tampa Bay Rays,10.0,-115,-105,currentLine_median
+2025-07-04,New York Mets,New York Yankees,9.5,-113,-112,currentLine_median
+2025-07-04,Philadelphia Phillies,Cincinnati Reds,8.0,-115,-105,currentLine_median
+2025-07-04,San Diego Padres,Texas Rangers,8.5,-105,-116,currentLine_median
+2025-07-04,Toronto Blue Jays,Los Angeles Angels,9.0,-110,-110,currentLine_median
+2025-07-04,Washington Nationals,Boston Red Sox,8.0,-113,-108,currentLine_median
+2025-07-05,Arizona Diamondbacks,Kansas City Royals,9.0,-107,-113,currentLine_median
+2025-07-05,Athletics,San Francisco Giants,9.0,-119,-103,currentLine_median
+2025-07-05,Atlanta Braves,Baltimore Orioles,8.75,-113,-112,currentLine_median
+2025-07-05,Chicago Cubs,St. Louis Cardinals,11.5,-105,-115,currentLine_median
+2025-07-05,Cleveland Guardians,Detroit Tigers,9.0,-105,-116,currentLine_median
+2025-07-05,Colorado Rockies,Chicago White Sox,11.0,-112,-110,currentLine_median
+2025-07-05,Los Angeles Dodgers,Houston Astros,8.5,-116,-104,currentLine_median
+2025-07-05,Miami Marlins,Milwaukee Brewers,8.5,-105,-115,currentLine_median
+2025-07-05,Minnesota Twins,Tampa Bay Rays,10.0,-107,-113,currentLine_median
+2025-07-05,Philadelphia Phillies,Cincinnati Reds,8.5,-117,-111,currentLine_median
+2025-07-05,San Diego Padres,Texas Rangers,8.25,-120,-105,currentLine_median
+2025-07-05,Seattle Mariners,Pittsburgh Pirates,7.0,-120,100,currentLine_median
+2025-07-05,Toronto Blue Jays,Los Angeles Angels,9.5,-110,-113,currentLine_median
+2025-07-05,Washington Nationals,Boston Red Sox,10.0,-104,-116,currentLine_median
+2025-07-06,Arizona Diamondbacks,Kansas City Royals,9.5,-111,-117,currentLine_median
+2025-07-06,Athletics,San Francisco Giants,10.0,-118,-103,currentLine_median
+2025-07-06,Atlanta Braves,Baltimore Orioles,8.5,-108,-116,currentLine_median
+2025-07-06,Chicago Cubs,St. Louis Cardinals,7.0,-114,-105,currentLine_median
+2025-07-06,Cleveland Guardians,Detroit Tigers,7.5,-121,-112,currentLine_median
+2025-07-06,Colorado Rockies,Chicago White Sox,11.0,-110,-110,currentLine_median
+2025-07-06,Miami Marlins,Milwaukee Brewers,7.5,-106,-114,currentLine_median
+2025-07-06,Minnesota Twins,Tampa Bay Rays,8.5,-105,-116,currentLine_median
+2025-07-06,New York Mets,New York Yankees,8.75,-109,-115,currentLine_median
+2025-07-06,Philadelphia Phillies,Cincinnati Reds,9.0,-112,-112,currentLine_median
+2025-07-06,San Diego Padres,Texas Rangers,8.5,-102,-119,currentLine_median
+2025-07-06,Seattle Mariners,Pittsburgh Pirates,6.0,-112,-114,currentLine_median
+2025-07-06,Toronto Blue Jays,Los Angeles Angels,9.0,-110,-110,currentLine_median
+2025-07-06,Washington Nationals,Boston Red Sox,8.25,-109,-112,currentLine_median
+2025-07-07,Boston Red Sox,Colorado Rockies,10.5,-120,-105,currentLine_median
+2025-07-07,Chicago White Sox,Toronto Blue Jays,8.5,-105,-120,currentLine_median
+2025-07-07,Cincinnati Reds,Miami Marlins,9.25,-112,-112,currentLine_median
+2025-07-07,Detroit Tigers,Tampa Bay Rays,8.5,-111,-109,currentLine_median
+2025-07-07,Houston Astros,Cleveland Guardians,7.5,101,-123,currentLine_median
+2025-07-07,Kansas City Royals,Pittsburgh Pirates,8.5,-115,-105,currentLine_median
+2025-07-07,Los Angeles Angels,Texas Rangers,7.5,-102,-120,currentLine_median
+2025-07-07,Milwaukee Brewers,Los Angeles Dodgers,7.5,-102,-119,currentLine_median
+2025-07-07,San Diego Padres,Arizona Diamondbacks,7.75,-121,-105,currentLine_median
+2025-07-07,San Francisco Giants,Philadelphia Phillies,7.5,100,-120,currentLine_median
+2025-07-08,Athletics,Atlanta Braves,10.5,-114,-111,currentLine_median
+2025-07-08,Baltimore Orioles,New York Mets,10.0,-107,-112,currentLine_median
+2025-07-08,Boston Red Sox,Colorado Rockies,8.5,-115,-108,currentLine_median
+2025-07-08,Chicago White Sox,Toronto Blue Jays,7.5,-116,-105,currentLine_median
+2025-07-08,Cincinnati Reds,Miami Marlins,9.0,-105,-115,currentLine_median
+2025-07-08,Detroit Tigers,Tampa Bay Rays,8.0,-105,-115,currentLine_median
+2025-07-08,Houston Astros,Cleveland Guardians,7.0,-115,-105,currentLine_median
+2025-07-08,Kansas City Royals,Pittsburgh Pirates,7.5,-115,-105,currentLine_median
+2025-07-08,Milwaukee Brewers,Los Angeles Dodgers,8.5,-105,-115,currentLine_median
+2025-07-08,New York Yankees,Seattle Mariners,8.75,-107,-114,currentLine_median
+2025-07-08,San Diego Padres,Arizona Diamondbacks,7.5,-115,-112,currentLine_median
+2025-07-08,San Francisco Giants,Philadelphia Phillies,8.0,-110,-110,currentLine_median
+2025-07-08,St. Louis Cardinals,Washington Nationals,8.0,-105,-115,currentLine_median
+2025-07-09,Boston Red Sox,Colorado Rockies,8.75,-105,-115,currentLine_median
+2025-07-09,Chicago White Sox,Toronto Blue Jays,8.0,-107,-112,currentLine_median
+2025-07-09,Cincinnati Reds,Miami Marlins,9.0,-105,-115,currentLine_median
+2025-07-09,Detroit Tigers,Tampa Bay Rays,8.0,-113,-106,currentLine_median
+2025-07-09,Houston Astros,Cleveland Guardians,7.5,100,-121,currentLine_median
+2025-07-09,Kansas City Royals,Pittsburgh Pirates,8.5,-107,-112,currentLine_median
+2025-07-09,Los Angeles Angels,Texas Rangers,9.5,-104,-118,currentLine_median
+2025-07-09,Milwaukee Brewers,Los Angeles Dodgers,8.5,-110,-114,currentLine_median
+2025-07-09,New York Yankees,Seattle Mariners,10.0,-105,-115,currentLine_median
+2025-07-09,San Diego Padres,Arizona Diamondbacks,7.5,-109,-124,currentLine_median
+2025-07-09,San Francisco Giants,Philadelphia Phillies,8.0,-113,-107,currentLine_median
+2025-07-09,St. Louis Cardinals,Washington Nationals,8.5,-116,-105,currentLine_median
+2025-07-10,Athletics,Atlanta Braves,10.0,-117,-107,currentLine_median
+2025-07-10,Boston Red Sox,Tampa Bay Rays,9.0,-123,100,currentLine_median
+2025-07-10,Cincinnati Reds,Miami Marlins,9.0,-115,-108,currentLine_median
+2025-07-10,Los Angeles Angels,Texas Rangers,10.0,-111,-109,currentLine_median
+2025-07-10,Minnesota Twins,Chicago Cubs,9.5,-112,-111,currentLine_median
+2025-07-10,New York Yankees,Seattle Mariners,9.5,-108,-114,currentLine_median
+2025-07-10,San Diego Padres,Arizona Diamondbacks,8.5,-121,100,currentLine_median
+2025-07-10,St. Louis Cardinals,Washington Nationals,9.0,-105,-114,currentLine_median
+2025-07-11,Athletics,Toronto Blue Jays,10.5,-110,-110,currentLine_median
+2025-07-11,Baltimore Orioles,Miami Marlins,9.0,-107,-115,currentLine_median
+2025-07-11,Boston Red Sox,Tampa Bay Rays,9.25,-105,-115,currentLine_median
+2025-07-11,Chicago White Sox,Cleveland Guardians,8.0,-115,-105,currentLine_median
+2025-07-11,Cincinnati Reds,Colorado Rockies,9.5,-102,-118,currentLine_median
+2025-07-11,Detroit Tigers,Seattle Mariners,7.0,-120,100,currentLine_median
+2025-07-11,Houston Astros,Texas Rangers,8.0,-112,-107,currentLine_median
+2025-07-11,Kansas City Royals,New York Mets,9.25,-114,-112,currentLine_median
+2025-07-11,Los Angeles Angels,Arizona Diamondbacks,9.0,-120,100,currentLine_median
+2025-07-11,Minnesota Twins,Pittsburgh Pirates,7.0,-115,-105,currentLine_median
+2025-07-11,San Diego Padres,Philadelphia Phillies,8.0,-112,-114,currentLine_median
+2025-07-11,San Francisco Giants,Los Angeles Dodgers,7.5,-110,-111,currentLine_median
+2025-07-11,St. Louis Cardinals,Atlanta Braves,8.5,-120,100,currentLine_median
+2025-07-12,Athletics,Toronto Blue Jays,10.25,-107,-113,currentLine_median
+2025-07-12,Boston Red Sox,Tampa Bay Rays,8.0,-110,-112,currentLine_median
+2025-07-12,Cincinnati Reds,Colorado Rockies,10.5,-118,-110,currentLine_median
+2025-07-12,Detroit Tigers,Seattle Mariners,8.0,-108,-112,currentLine_median
+2025-07-12,Houston Astros,Texas Rangers,6.0,-121,-102,currentLine_median
+2025-07-12,Kansas City Royals,New York Mets,9.0,-110,-110,currentLine_median
+2025-07-12,Los Angeles Angels,Arizona Diamondbacks,9.0,-118,-106,currentLine_median
+2025-07-12,Milwaukee Brewers,Washington Nationals,9.0,-106,-115,currentLine_median
+2025-07-12,Minnesota Twins,Pittsburgh Pirates,9.5,-108,-114,currentLine_median
+2025-07-12,New York Yankees,Chicago Cubs,8.0,-111,-109,currentLine_median
+2025-07-12,San Diego Padres,Philadelphia Phillies,7.0,-118,-104,currentLine_median
+2025-07-12,San Francisco Giants,Los Angeles Dodgers,8.5,-105,-115,currentLine_median
+2025-07-12,St. Louis Cardinals,Atlanta Braves,9.0,-112,-108,currentLine_median
+2025-07-13,Athletics,Toronto Blue Jays,10.5,-105,-115,currentLine_median
+2025-07-13,Baltimore Orioles,Miami Marlins,9.0,-110,-110,currentLine_median
+2025-07-13,Boston Red Sox,Tampa Bay Rays,8.5,-108,-115,currentLine_median
+2025-07-13,Cincinnati Reds,Colorado Rockies,9.5,-103,-126,currentLine_median
+2025-07-13,Detroit Tigers,Seattle Mariners,8.25,-111,-116,currentLine_median
+2025-07-13,Kansas City Royals,New York Mets,8.5,-115,-105,currentLine_median
+2025-07-13,Milwaukee Brewers,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-07-13,Minnesota Twins,Pittsburgh Pirates,9.0,-102,-120,currentLine_median
+2025-07-13,New York Yankees,Chicago Cubs,9.0,-105,-115,currentLine_median
+2025-07-13,San Diego Padres,Philadelphia Phillies,7.25,-113,-111,currentLine_median
+2025-07-13,San Francisco Giants,Los Angeles Dodgers,7.5,-110,-110,currentLine_median
+2025-07-13,St. Louis Cardinals,Atlanta Braves,8.0,-116,-110,currentLine_median
+2025-07-18,Atlanta Braves,New York Yankees,8.5,-117,-105,currentLine_median
+2025-07-18,Chicago Cubs,Boston Red Sox,7.5,-105,-115,currentLine_median
+2025-07-18,Cleveland Guardians,Athletics,8.0,-104,-117,currentLine_median
+2025-07-18,Colorado Rockies,Minnesota Twins,11.0,-105,-115,currentLine_median
+2025-07-18,Los Angeles Dodgers,Milwaukee Brewers,8.5,-106,-114,currentLine_median
+2025-07-18,Miami Marlins,Kansas City Royals,7.5,-110,-110,currentLine_median
+2025-07-18,New York Mets,Cincinnati Reds,7.5,-105,-122,currentLine_median
+2025-07-18,Philadelphia Phillies,Los Angeles Angels,8.75,-119,-105,currentLine_median
+2025-07-18,Pittsburgh Pirates,Chicago White Sox,8.5,-110,-110,currentLine_median
+2025-07-18,Seattle Mariners,Houston Astros,7.0,-110,-110,currentLine_median
+2025-07-18,Tampa Bay Rays,Baltimore Orioles,9.0,-110,-110,currentLine_median
+2025-07-18,Texas Rangers,Detroit Tigers,8.5,-110,-110,currentLine_median
+2025-07-18,Toronto Blue Jays,San Francisco Giants,8.5,-115,-105,currentLine_median
+2025-07-18,Washington Nationals,San Diego Padres,8.5,-110,-110,currentLine_median
+2025-07-19,Arizona Diamondbacks,St. Louis Cardinals,8.5,-105,-115,currentLine_median
+2025-07-19,Atlanta Braves,New York Yankees,9.5,-105,-115,currentLine_median
+2025-07-19,Chicago Cubs,Boston Red Sox,9.0,-105,-115,currentLine_median
+2025-07-19,Cleveland Guardians,Athletics,8.75,-105,-115,currentLine_median
+2025-07-19,Colorado Rockies,Minnesota Twins,12.0,-109,-111,currentLine_median
+2025-07-19,Los Angeles Dodgers,Milwaukee Brewers,7.5,-108,-119,currentLine_median
+2025-07-19,Miami Marlins,Kansas City Royals,8.0,-117,-107,currentLine_median
+2025-07-19,New York Mets,Cincinnati Reds,8.5,-112,-107,currentLine_median
+2025-07-19,Philadelphia Phillies,Los Angeles Angels,9.5,-113,-108,currentLine_median
+2025-07-19,Pittsburgh Pirates,Chicago White Sox,8.0,-105,-114,currentLine_median
+2025-07-19,Seattle Mariners,Houston Astros,8.0,-115,-105,currentLine_median
+2025-07-19,Tampa Bay Rays,Baltimore Orioles,9.0,-102,-118,currentLine_median
+2025-07-19,Texas Rangers,Detroit Tigers,8.5,-109,-118,currentLine_median
+2025-07-19,Toronto Blue Jays,San Francisco Giants,7.5,-112,-107,currentLine_median
+2025-07-19,Washington Nationals,San Diego Padres,9.0,-115,-105,currentLine_median
+2025-07-20,Arizona Diamondbacks,St. Louis Cardinals,9.0,-105,-119,currentLine_median
+2025-07-20,Atlanta Braves,New York Yankees,10.5,-114,-106,currentLine_median
+2025-07-20,Chicago Cubs,Boston Red Sox,6.5,-108,-112,currentLine_median
+2025-07-20,Colorado Rockies,Minnesota Twins,10.5,-104,-116,currentLine_median
+2025-07-20,Los Angeles Dodgers,Milwaukee Brewers,9.0,-115,-107,currentLine_median
+2025-07-20,New York Mets,Cincinnati Reds,8.0,-115,-105,currentLine_median
+2025-07-20,Philadelphia Phillies,Los Angeles Angels,9.0,-107,-112,currentLine_median
+2025-07-20,Pittsburgh Pirates,Chicago White Sox,9.5,100,-120,currentLine_median
+2025-07-20,Toronto Blue Jays,San Francisco Giants,8.5,-113,-111,currentLine_median
+2025-07-20,Washington Nationals,San Diego Padres,8.0,-110,-109,currentLine_median
+2025-07-21,Arizona Diamondbacks,Houston Astros,9.0,-105,-116,currentLine_median
+2025-07-21,Atlanta Braves,San Francisco Giants,9.5,-102,-119,currentLine_median
+2025-07-21,Chicago Cubs,Kansas City Royals,7.5,100,-121,currentLine_median
+2025-07-21,Cleveland Guardians,Baltimore Orioles,8.5,-105,-114,currentLine_median
+2025-07-21,Colorado Rockies,St. Louis Cardinals,11.75,-110,-110,currentLine_median
+2025-07-21,Los Angeles Dodgers,Minnesota Twins,9.0,-103,-118,currentLine_median
+2025-07-21,Miami Marlins,San Diego Padres,8.0,-116,-104,currentLine_median
+2025-07-21,New York Mets,Los Angeles Angels,8.5,-110,-115,currentLine_median
+2025-07-21,Philadelphia Phillies,Boston Red Sox,8.0,-105,-115,currentLine_median
+2025-07-21,Pittsburgh Pirates,Detroit Tigers,7.0,-117,-111,currentLine_median
+2025-07-21,Tampa Bay Rays,Chicago White Sox,9.0,-104,-116,currentLine_median
+2025-07-21,Texas Rangers,Athletics,8.25,-110,-110,currentLine_median
+2025-07-21,Toronto Blue Jays,New York Yankees,8.5,-111,-110,currentLine_median
+2025-07-21,Washington Nationals,Cincinnati Reds,9.0,-118,-103,currentLine_median
+2025-07-22,Arizona Diamondbacks,Houston Astros,8.5,-108,-111,currentLine_median
+2025-07-22,Atlanta Braves,San Francisco Giants,9.0,-120,-104,currentLine_median
+2025-07-22,Chicago Cubs,Kansas City Royals,9.0,-103,-116,currentLine_median
+2025-07-22,Cleveland Guardians,Baltimore Orioles,7.75,-116,-109,currentLine_median
+2025-07-22,Colorado Rockies,St. Louis Cardinals,12.0,-105,-115,currentLine_median
+2025-07-22,Los Angeles Dodgers,Minnesota Twins,8.0,-105,-115,currentLine_median
+2025-07-22,Miami Marlins,San Diego Padres,8.0,-101,-119,currentLine_median
+2025-07-22,Philadelphia Phillies,Boston Red Sox,8.5,-107,-117,currentLine_median
+2025-07-22,Pittsburgh Pirates,Detroit Tigers,8.0,-110,-110,currentLine_median
+2025-07-22,Texas Rangers,Athletics,7.5,100,-122,currentLine_median
+2025-07-22,Toronto Blue Jays,New York Yankees,9.0,-110,-112,currentLine_median
+2025-07-22,Washington Nationals,Cincinnati Reds,9.0,-105,-115,currentLine_median
+2025-07-23,Arizona Diamondbacks,Houston Astros,8.5,-114,-110,currentLine_median
+2025-07-23,Atlanta Braves,San Francisco Giants,7.5,-111,-109,currentLine_median
+2025-07-23,Chicago Cubs,Kansas City Royals,9.75,-111,-109,currentLine_median
+2025-07-23,Cleveland Guardians,Baltimore Orioles,8.5,-117,-102,currentLine_median
+2025-07-23,Colorado Rockies,St. Louis Cardinals,11.0,-111,-108,currentLine_median
+2025-07-23,Los Angeles Dodgers,Minnesota Twins,9.0,-105,-115,currentLine_median
+2025-07-23,Miami Marlins,San Diego Padres,7.5,-115,-105,currentLine_median
+2025-07-23,New York Mets,Los Angeles Angels,9.0,-115,-105,currentLine_median
+2025-07-23,Philadelphia Phillies,Boston Red Sox,8.5,-110,-110,currentLine_median
+2025-07-23,Pittsburgh Pirates,Detroit Tigers,9.0,-107,-114,currentLine_median
+2025-07-23,Texas Rangers,Athletics,8.5,-111,-109,currentLine_median
+2025-07-23,Toronto Blue Jays,New York Yankees,8.5,-110,-122,currentLine_median
+2025-07-23,Washington Nationals,Cincinnati Reds,8.5,-108,-111,currentLine_median
+2025-07-24,Cleveland Guardians,Baltimore Orioles,8.5,-115,-105,currentLine_median
+2025-07-24,Detroit Tigers,Toronto Blue Jays,8.5,-115,-105,currentLine_median
+2025-07-24,Houston Astros,Athletics,9.0,-102,-118,currentLine_median
+2025-07-24,Los Angeles Angels,Seattle Mariners,9.0,-115,-105,currentLine_median
+2025-07-24,St. Louis Cardinals,San Diego Padres,7.75,-113,-107,currentLine_median
+2025-07-25,Boston Red Sox,Los Angeles Dodgers,9.5,-114,-106,currentLine_median
+2025-07-25,Chicago White Sox,Chicago Cubs,8.0,-111,-109,currentLine_median
+2025-07-25,Detroit Tigers,Toronto Blue Jays,9.0,-105,-115,currentLine_median
+2025-07-25,Milwaukee Brewers,Miami Marlins,8.0,-107,-116,currentLine_median
+2025-07-25,Minnesota Twins,Washington Nationals,8.5,-116,-104,currentLine_median
+2025-07-25,New York Yankees,Philadelphia Phillies,10.5,-110,-110,currentLine_median
+2025-07-25,Pittsburgh Pirates,Arizona Diamondbacks,9.0,-107,-115,currentLine_median
+2025-07-25,San Francisco Giants,New York Mets,7.25,-120,100,currentLine_median
+2025-07-25,St. Louis Cardinals,San Diego Padres,8.5,-114,-105,currentLine_median
+2025-07-25,Texas Rangers,Atlanta Braves,8.0,-105,-115,currentLine_median
+2025-07-26,Baltimore Orioles,Colorado Rockies,9.5,-105,-115,currentLine_median
+2025-07-26,Boston Red Sox,Los Angeles Dodgers,8.5,-105,-115,currentLine_median
+2025-07-26,Chicago White Sox,Chicago Cubs,9.0,-110,-110,currentLine_median
+2025-07-26,Cincinnati Reds,Tampa Bay Rays,9.0,-115,-105,currentLine_median
+2025-07-26,Detroit Tigers,Toronto Blue Jays,7.0,-104,-117,currentLine_median
+2025-07-26,Houston Astros,Athletics,7.5,-110,-110,currentLine_median
+2025-07-26,Kansas City Royals,Cleveland Guardians,8.0,-108,-113,currentLine_median
+2025-07-26,Milwaukee Brewers,Miami Marlins,8.5,-115,-105,currentLine_median
+2025-07-26,Minnesota Twins,Washington Nationals,9.0,-103,-119,currentLine_median
+2025-07-26,New York Yankees,Philadelphia Phillies,9.0,-104,-119,currentLine_median
+2025-07-26,Pittsburgh Pirates,Arizona Diamondbacks,9.0,-108,-112,currentLine_median
+2025-07-26,San Francisco Giants,New York Mets,7.5,-114,-106,currentLine_median
+2025-07-26,Texas Rangers,Atlanta Braves,8.5,-107,-114,currentLine_median
+2025-07-27,Baltimore Orioles,Colorado Rockies,10.0,-105,-115,currentLine_median
+2025-07-27,Boston Red Sox,Los Angeles Dodgers,9.75,-120,-105,currentLine_median
+2025-07-27,Cincinnati Reds,Tampa Bay Rays,9.5,-105,-115,currentLine_median
+2025-07-27,Detroit Tigers,Toronto Blue Jays,8.5,-115,-105,currentLine_median
+2025-07-27,Houston Astros,Athletics,8.0,-115,-105,currentLine_median
+2025-07-27,Kansas City Royals,Cleveland Guardians,8.75,-115,-113,currentLine_median
+2025-07-27,Los Angeles Angels,Seattle Mariners,8.5,-120,-103,currentLine_median
+2025-07-27,Milwaukee Brewers,Miami Marlins,7.5,-122,-109,currentLine_median
+2025-07-27,Minnesota Twins,Washington Nationals,9.5,-115,-105,currentLine_median
+2025-07-27,New York Yankees,Philadelphia Phillies,7.5,-116,-105,currentLine_median
+2025-07-27,Pittsburgh Pirates,Arizona Diamondbacks,7.5,-110,-110,currentLine_median
+2025-07-27,San Francisco Giants,New York Mets,8.0,-112,-107,currentLine_median
+2025-07-27,Texas Rangers,Atlanta Braves,9.0,-108,-112,currentLine_median
+2025-07-28,Athletics,Seattle Mariners,10.5,-110,-110,currentLine_median
+2025-07-28,Baltimore Orioles,Toronto Blue Jays,9.5,-105,-115,currentLine_median
+2025-07-28,Chicago White Sox,Philadelphia Phillies,8.0,-114,-106,currentLine_median
+2025-07-28,Cincinnati Reds,Los Angeles Dodgers,9.0,-115,-105,currentLine_median
+2025-07-28,Houston Astros,Washington Nationals,7.0,-122,101,currentLine_median
+2025-07-28,Kansas City Royals,Atlanta Braves,9.25,-106,-117,currentLine_median
+2025-07-28,Milwaukee Brewers,Chicago Cubs,7.5,-109,-112,currentLine_median
+2025-07-28,Minnesota Twins,Boston Red Sox,9.0,-116,-104,currentLine_median
+2025-07-28,New York Yankees,Tampa Bay Rays,8.5,-111,-110,currentLine_median
+2025-07-28,San Diego Padres,New York Mets,8.0,-110,-110,currentLine_median
+2025-07-28,San Francisco Giants,Pittsburgh Pirates,7.75,-109,-114,currentLine_median
+2025-07-28,St. Louis Cardinals,Miami Marlins,8.0,-110,-110,currentLine_median
+2025-07-29,Athletics,Seattle Mariners,11.0,-104,-115,currentLine_median
+2025-07-29,Baltimore Orioles,Toronto Blue Jays,9.5,-107,-113,currentLine_median
+2025-07-29,Chicago White Sox,Philadelphia Phillies,9.0,-103,-117,currentLine_median
+2025-07-29,Cincinnati Reds,Los Angeles Dodgers,8.75,-114,-109,currentLine_median
+2025-07-29,Cleveland Guardians,Colorado Rockies,8.5,-115,-105,currentLine_median
+2025-07-29,Detroit Tigers,Arizona Diamondbacks,8.5,-115,-105,currentLine_median
+2025-07-29,Houston Astros,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-07-29,Kansas City Royals,Atlanta Braves,9.5,-105,-114,currentLine_median
+2025-07-29,Los Angeles Angels,Texas Rangers,9.0,-105,-116,currentLine_median
+2025-07-29,Minnesota Twins,Boston Red Sox,9.0,100,-120,currentLine_median
+2025-07-29,New York Yankees,Tampa Bay Rays,8.5,-116,-103,currentLine_median
+2025-07-29,San Diego Padres,New York Mets,8.0,-120,100,currentLine_median
+2025-07-29,San Francisco Giants,Pittsburgh Pirates,8.0,-110,-110,currentLine_median
+2025-07-29,St. Louis Cardinals,Miami Marlins,7.5,100,-126,currentLine_median
+2025-07-30,Athletics,Seattle Mariners,9.5,-115,-105,currentLine_median
+2025-07-30,Baltimore Orioles,Toronto Blue Jays,9.5,-114,-112,currentLine_median
+2025-07-30,Cincinnati Reds,Los Angeles Dodgers,9.5,-105,-120,currentLine_median
+2025-07-30,Cleveland Guardians,Colorado Rockies,8.0,-109,-111,currentLine_median
+2025-07-30,Detroit Tigers,Arizona Diamondbacks,9.0,-120,100,currentLine_median
+2025-07-30,Houston Astros,Washington Nationals,8.0,-113,-107,currentLine_median
+2025-07-30,Kansas City Royals,Atlanta Braves,9.5,-102,-119,currentLine_median
+2025-07-30,Los Angeles Angels,Texas Rangers,8.0,-115,-111,currentLine_median
+2025-07-30,Milwaukee Brewers,Chicago Cubs,7.0,-116,-105,currentLine_median
+2025-07-30,Minnesota Twins,Boston Red Sox,8.0,-107,-112,currentLine_median
+2025-07-30,New York Yankees,Tampa Bay Rays,9.0,-115,-105,currentLine_median
+2025-07-30,San Diego Padres,New York Mets,8.5,-105,-115,currentLine_median
+2025-07-30,San Francisco Giants,Pittsburgh Pirates,7.0,-106,-114,currentLine_median
+2025-07-30,St. Louis Cardinals,Miami Marlins,8.5,-104,-116,currentLine_median
+2025-07-31,New York Yankees,Tampa Bay Rays,8.5,-116,-105,currentLine_median
+2025-07-31,Seattle Mariners,Texas Rangers,7.5,-109,-111,currentLine_median
+2025-08-01,Athletics,Arizona Diamondbacks,10.0,-110,-110,currentLine_median
+2025-08-01,Boston Red Sox,Houston Astros,8.0,-110,-110,currentLine_median
+2025-08-01,Chicago Cubs,Baltimore Orioles,7.0,-103,-118,currentLine_median
+2025-08-01,Cincinnati Reds,Atlanta Braves,9.0,-117,-103,currentLine_median
+2025-08-01,Cleveland Guardians,Minnesota Twins,7.0,-105,-117,currentLine_median
+2025-08-01,Colorado Rockies,Pittsburgh Pirates,11.5,-117,-105,currentLine_median
+2025-08-01,Miami Marlins,New York Yankees,7.5,-115,-106,currentLine_median
+2025-08-01,New York Mets,San Francisco Giants,8.0,-110,-110,currentLine_median
+2025-08-01,Philadelphia Phillies,Detroit Tigers,7.5,-110,-109,currentLine_median
+2025-08-01,San Diego Padres,St. Louis Cardinals,7.5,-105,-123,currentLine_median
+2025-08-01,Seattle Mariners,Texas Rangers,7.5,-106,-114,currentLine_median
+2025-08-01,Tampa Bay Rays,Los Angeles Dodgers,9.0,-110,-110,currentLine_median
+2025-08-01,Toronto Blue Jays,Kansas City Royals,7.5,-115,-105,currentLine_median
+2025-08-01,Washington Nationals,Milwaukee Brewers,8.5,-115,-105,currentLine_median
+2025-08-02,Athletics,Arizona Diamondbacks,9.75,-112,-109,currentLine_median
+2025-08-02,Boston Red Sox,Houston Astros,9.25,-106,-125,currentLine_median
+2025-08-02,Cleveland Guardians,Minnesota Twins,7.0,-117,-104,currentLine_median
+2025-08-02,Colorado Rockies,Pittsburgh Pirates,10.0,-115,-105,currentLine_median
+2025-08-02,Los Angeles Angels,Chicago White Sox,9.0,-106,-114,currentLine_median
+2025-08-02,Miami Marlins,New York Yankees,7.5,-118,-105,currentLine_median
+2025-08-02,New York Mets,San Francisco Giants,8.5,-106,-116,currentLine_median
+2025-08-02,Philadelphia Phillies,Detroit Tigers,6.5,-113,-115,currentLine_median
+2025-08-02,Seattle Mariners,Texas Rangers,7.5,-105,-118,currentLine_median
+2025-08-02,Tampa Bay Rays,Los Angeles Dodgers,8.0,-110,-109,currentLine_median
+2025-08-02,Toronto Blue Jays,Kansas City Royals,8.0,-105,-117,currentLine_median
+2025-08-02,Washington Nationals,Milwaukee Brewers,8.5,-110,-110,currentLine_median
+2025-08-03,Athletics,Arizona Diamondbacks,9.75,-111,-110,currentLine_median
+2025-08-03,Boston Red Sox,Houston Astros,8.0,-115,-105,currentLine_median
+2025-08-03,Chicago Cubs,Baltimore Orioles,8.0,-107,-112,currentLine_median
+2025-08-03,Cincinnati Reds,Atlanta Braves,8.0,-115,-105,currentLine_median
+2025-08-03,Cleveland Guardians,Minnesota Twins,9.25,-121,-108,currentLine_median
+2025-08-03,Colorado Rockies,Pittsburgh Pirates,11.0,-115,-105,currentLine_median
+2025-08-03,Los Angeles Angels,Chicago White Sox,9.5,-110,-110,currentLine_median
+2025-08-03,Miami Marlins,New York Yankees,7.5,-111,-115,currentLine_median
+2025-08-03,Philadelphia Phillies,Detroit Tigers,8.5,-119,-102,currentLine_median
+2025-08-03,San Diego Padres,St. Louis Cardinals,7.5,-114,-115,currentLine_median
+2025-08-03,Toronto Blue Jays,Kansas City Royals,7.75,-115,-105,currentLine_median
+2025-08-03,Washington Nationals,Milwaukee Brewers,8.5,-120,-105,currentLine_median
+2025-08-04,Atlanta Braves,Milwaukee Brewers,8.0,-120,-101,currentLine_median
+2025-08-04,Boston Red Sox,Kansas City Royals,9.25,-116,-114,currentLine_median
+2025-08-04,Chicago Cubs,Cincinnati Reds,7.0,-122,102,currentLine_median
+2025-08-04,Colorado Rockies,Toronto Blue Jays,12.0,-121,-105,currentLine_median
+2025-08-04,Detroit Tigers,Minnesota Twins,8.5,-120,100,currentLine_median
+2025-08-04,Los Angeles Angels,Tampa Bay Rays,8.5,-104,-119,currentLine_median
+2025-08-04,Los Angeles Dodgers,St. Louis Cardinals,8.0,-115,-105,currentLine_median
+2025-08-04,Miami Marlins,Houston Astros,8.0,-109,-111,currentLine_median
+2025-08-04,New York Mets,Cleveland Guardians,8.0,-110,-110,currentLine_median
+2025-08-04,Philadelphia Phillies,Baltimore Orioles,9.0,-120,100,currentLine_median
+2025-08-04,Pittsburgh Pirates,San Francisco Giants,8.5,-105,-116,currentLine_median
+2025-08-04,Texas Rangers,New York Yankees,7.5,-105,-115,currentLine_median
+2025-08-05,Atlanta Braves,Milwaukee Brewers,7.5,-102,-120,currentLine_median
+2025-08-05,Colorado Rockies,Toronto Blue Jays,11.5,-112,-107,currentLine_median
+2025-08-05,Detroit Tigers,Minnesota Twins,8.0,-111,-109,currentLine_median
+2025-08-05,Los Angeles Angels,Tampa Bay Rays,8.25,-107,-119,currentLine_median
+2025-08-05,Los Angeles Dodgers,St. Louis Cardinals,9.0,-120,100,currentLine_median
+2025-08-05,Miami Marlins,Houston Astros,8.5,-103,-118,currentLine_median
+2025-08-05,New York Mets,Cleveland Guardians,8.5,-110,-110,currentLine_median
+2025-08-05,Pittsburgh Pirates,San Francisco Giants,7.5,100,-120,currentLine_median
+2025-08-05,Seattle Mariners,Chicago White Sox,7.5,-115,-105,currentLine_median
+2025-08-05,Texas Rangers,New York Yankees,8.0,-110,-112,currentLine_median
+2025-08-06,Arizona Diamondbacks,San Diego Padres,9.5,-104,-117,currentLine_median
+2025-08-06,Atlanta Braves,Milwaukee Brewers,8.0,-106,-113,currentLine_median
+2025-08-06,Boston Red Sox,Kansas City Royals,8.5,-111,-109,currentLine_median
+2025-08-06,Colorado Rockies,Toronto Blue Jays,11.5,-106,-118,currentLine_median
+2025-08-06,Detroit Tigers,Minnesota Twins,9.0,-110,-110,currentLine_median
+2025-08-06,Los Angeles Dodgers,St. Louis Cardinals,9.5,-105,-115,currentLine_median
+2025-08-06,Miami Marlins,Houston Astros,8.0,-115,-105,currentLine_median
+2025-08-06,New York Mets,Cleveland Guardians,7.5,-110,-113,currentLine_median
+2025-08-06,Philadelphia Phillies,Baltimore Orioles,7.5,-115,-110,currentLine_median
+2025-08-06,Pittsburgh Pirates,San Francisco Giants,8.0,-110,-112,currentLine_median
+2025-08-06,Seattle Mariners,Chicago White Sox,7.5,-105,-115,currentLine_median
+2025-08-06,Texas Rangers,New York Yankees,8.0,-104,-116,currentLine_median
+2025-08-07,Atlanta Braves,Miami Marlins,8.0,-110,-110,currentLine_median
+2025-08-07,Pittsburgh Pirates,Cincinnati Reds,7.0,100,-120,currentLine_median
+2025-08-07,Washington Nationals,Athletics,8.5,-117,-103,currentLine_median
+2025-08-08,Arizona Diamondbacks,Colorado Rockies,9.0,-116,-104,currentLine_median
+2025-08-08,Atlanta Braves,Miami Marlins,7.75,-110,-118,currentLine_median
+2025-08-08,Baltimore Orioles,Athletics,9.75,-105,-115,currentLine_median
+2025-08-08,Chicago White Sox,Cleveland Guardians,8.0,-115,-105,currentLine_median
+2025-08-08,Detroit Tigers,Los Angeles Angels,7.5,-105,-115,currentLine_median
+2025-08-08,Los Angeles Dodgers,Toronto Blue Jays,9.0,-103,-117,currentLine_median
+2025-08-08,Milwaukee Brewers,New York Mets,8.0,-115,-105,currentLine_median
+2025-08-08,Minnesota Twins,Kansas City Royals,8.5,-110,-116,currentLine_median
+2025-08-08,Pittsburgh Pirates,Cincinnati Reds,7.5,-105,-116,currentLine_median
+2025-08-08,San Diego Padres,Boston Red Sox,8.0,-120,100,currentLine_median
+2025-08-08,San Francisco Giants,Washington Nationals,8.5,-105,-115,currentLine_median
+2025-08-08,Seattle Mariners,Tampa Bay Rays,7.0,-105,-115,currentLine_median
+2025-08-08,St. Louis Cardinals,Chicago Cubs,8.25,-109,-115,currentLine_median
+2025-08-08,Texas Rangers,Philadelphia Phillies,7.5,-102,-120,currentLine_median
+2025-08-09,Arizona Diamondbacks,Colorado Rockies,9.0,-117,-105,currentLine_median
+2025-08-09,Atlanta Braves,Miami Marlins,8.5,-106,-114,currentLine_median
+2025-08-09,Chicago White Sox,Cleveland Guardians,8.5,-115,-105,currentLine_median
+2025-08-09,Detroit Tigers,Los Angeles Angels,8.5,-116,-104,currentLine_median
+2025-08-09,Milwaukee Brewers,New York Mets,9.0,-120,100,currentLine_median
+2025-08-09,Minnesota Twins,Kansas City Royals,9.0,-105,-115,currentLine_median
+2025-08-09,New York Yankees,Houston Astros,8.5,-105,-115,currentLine_median
+2025-08-09,Pittsburgh Pirates,Cincinnati Reds,8.0,-115,-105,currentLine_median
+2025-08-09,San Diego Padres,Boston Red Sox,7.5,-118,-103,currentLine_median
+2025-08-09,San Francisco Giants,Washington Nationals,8.0,-115,-105,currentLine_median
+2025-08-09,Seattle Mariners,Tampa Bay Rays,7.5,-114,-106,currentLine_median
+2025-08-09,St. Louis Cardinals,Chicago Cubs,9.25,-112,-115,currentLine_median
+2025-08-09,Texas Rangers,Philadelphia Phillies,7.0,-123,102,currentLine_median
+2025-08-10,Arizona Diamondbacks,Colorado Rockies,9.0,-111,-109,currentLine_median
+2025-08-10,Atlanta Braves,Miami Marlins,8.5,-112,-111,currentLine_median
+2025-08-10,Baltimore Orioles,Athletics,9.5,100,-120,currentLine_median
+2025-08-10,Detroit Tigers,Los Angeles Angels,9.5,-105,-115,currentLine_median
+2025-08-10,Los Angeles Dodgers,Toronto Blue Jays,8.5,-120,100,currentLine_median
+2025-08-10,Milwaukee Brewers,New York Mets,8.5,-117,-111,currentLine_median
+2025-08-10,Minnesota Twins,Kansas City Royals,9.25,-111,-114,currentLine_median
+2025-08-10,New York Yankees,Houston Astros,9.0,-108,-112,currentLine_median
+2025-08-10,Pittsburgh Pirates,Cincinnati Reds,7.75,-109,-118,currentLine_median
+2025-08-10,San Diego Padres,Boston Red Sox,7.5,-115,-105,currentLine_median
+2025-08-10,San Francisco Giants,Washington Nationals,8.0,-107,-112,currentLine_median
+2025-08-10,Seattle Mariners,Tampa Bay Rays,7.5,-115,-107,currentLine_median
+2025-08-10,St. Louis Cardinals,Chicago Cubs,7.5,-106,-114,currentLine_median
+2025-08-11,Athletics,Tampa Bay Rays,10.0,-105,-115,currentLine_median
+2025-08-11,Chicago White Sox,Detroit Tigers,9.0,-105,-115,currentLine_median
+2025-08-11,Cincinnati Reds,Philadelphia Phillies,9.5,-114,-105,currentLine_median
+2025-08-11,Houston Astros,Boston Red Sox,8.5,-113,-110,currentLine_median
+2025-08-11,Kansas City Royals,Washington Nationals,9.0,-104,-116,currentLine_median
+2025-08-11,Los Angeles Angels,Los Angeles Dodgers,8.5,-105,-118,currentLine_median
+2025-08-11,Milwaukee Brewers,Pittsburgh Pirates,9.0,-109,-111,currentLine_median
+2025-08-11,New York Yankees,Minnesota Twins,8.5,-120,100,currentLine_median
+2025-08-11,St. Louis Cardinals,Colorado Rockies,8.5,-107,-118,currentLine_median
+2025-08-11,Texas Rangers,Arizona Diamondbacks,7.5,-105,-117,currentLine_median
+2025-08-12,Athletics,Tampa Bay Rays,9.5,-105,-115,currentLine_median
+2025-08-12,Baltimore Orioles,Seattle Mariners,9.0,-115,-105,currentLine_median
+2025-08-12,Cincinnati Reds,Philadelphia Phillies,9.5,100,-120,currentLine_median
+2025-08-12,Houston Astros,Boston Red Sox,7.75,-105,-116,currentLine_median
+2025-08-12,Kansas City Royals,Washington Nationals,10.0,-117,-104,currentLine_median
+2025-08-12,Los Angeles Angels,Los Angeles Dodgers,10.0,-105,-115,currentLine_median
+2025-08-12,Milwaukee Brewers,Pittsburgh Pirates,8.0,-105,-115,currentLine_median
+2025-08-12,New York Mets,Atlanta Braves,12.75,-106,-121,currentLine_median
+2025-08-12,New York Yankees,Minnesota Twins,9.0,-115,-105,currentLine_median
+2025-08-12,San Francisco Giants,San Diego Padres,7.5,-115,-105,currentLine_median
+2025-08-12,Texas Rangers,Arizona Diamondbacks,8.0,-115,-108,currentLine_median
+2025-08-12,Toronto Blue Jays,Chicago Cubs,9.0,-110,-110,currentLine_median
+2025-08-13,Baltimore Orioles,Seattle Mariners,8.5,-105,-115,currentLine_median
+2025-08-13,Chicago White Sox,Detroit Tigers,8.25,-109,-112,currentLine_median
+2025-08-13,Cincinnati Reds,Philadelphia Phillies,8.0,-109,-110,currentLine_median
+2025-08-13,Cleveland Guardians,Miami Marlins,8.0,-109,-112,currentLine_median
+2025-08-13,Houston Astros,Boston Red Sox,8.0,-110,-110,currentLine_median
+2025-08-13,Kansas City Royals,Washington Nationals,9.0,-102,-118,currentLine_median
+2025-08-13,Milwaukee Brewers,Pittsburgh Pirates,7.0,-115,-107,currentLine_median
+2025-08-13,New York Yankees,Minnesota Twins,8.5,-115,-105,currentLine_median
+2025-08-13,San Francisco Giants,San Diego Padres,8.0,-104,-117,currentLine_median
+2025-08-13,St. Louis Cardinals,Colorado Rockies,8.25,-114,-114,currentLine_median
+2025-08-13,Texas Rangers,Arizona Diamondbacks,7.75,-114,-113,currentLine_median
+2025-08-13,Toronto Blue Jays,Chicago Cubs,8.5,-112,-112,currentLine_median
+2025-08-14,Baltimore Orioles,Seattle Mariners,9.5,-105,-115,currentLine_median
+2025-08-14,Colorado Rockies,Arizona Diamondbacks,13.0,-116,-105,currentLine_median
+2025-08-14,Minnesota Twins,Detroit Tigers,7.5,-118,-103,currentLine_median
+2025-08-14,New York Mets,Atlanta Braves,8.0,-112,-118,currentLine_median
+2025-08-14,Toronto Blue Jays,Chicago Cubs,7.5,-119,-103,currentLine_median
+2025-08-14,Washington Nationals,Philadelphia Phillies,8.0,-105,-119,currentLine_median
+2025-08-15,Athletics,Los Angeles Angels,10.0,-106,-114,currentLine_median
+2025-08-15,Boston Red Sox,Miami Marlins,8.5,-120,100,currentLine_median
+2025-08-15,Chicago Cubs,Pittsburgh Pirates,8.5,-115,-105,currentLine_median
+2025-08-15,Cincinnati Reds,Milwaukee Brewers,8.5,-112,-111,currentLine_median
+2025-08-15,Cleveland Guardians,Atlanta Braves,8.5,-115,-105,currentLine_median
+2025-08-15,Colorado Rockies,Arizona Diamondbacks,12.0,-116,-105,currentLine_median
+2025-08-15,Houston Astros,Baltimore Orioles,7.25,-114,-110,currentLine_median
+2025-08-15,Kansas City Royals,Chicago White Sox,9.0,-115,-105,currentLine_median
+2025-08-15,Minnesota Twins,Detroit Tigers,9.5,-115,-105,currentLine_median
+2025-08-15,New York Mets,Seattle Mariners,8.5,-123,100,currentLine_median
+2025-08-15,San Francisco Giants,Tampa Bay Rays,8.0,-110,-110,currentLine_median
+2025-08-15,St. Louis Cardinals,New York Yankees,8.75,-113,-110,currentLine_median
+2025-08-15,Toronto Blue Jays,Texas Rangers,7.5,-105,-115,currentLine_median
+2025-08-15,Washington Nationals,Philadelphia Phillies,8.0,-105,-115,currentLine_median
+2025-08-16,Athletics,Los Angeles Angels,11.0,-110,-110,currentLine_median
+2025-08-16,Boston Red Sox,Miami Marlins,9.0,-110,-110,currentLine_median
+2025-08-16,Chicago Cubs,Pittsburgh Pirates,8.5,-122,100,currentLine_median
+2025-08-16,Cincinnati Reds,Milwaukee Brewers,9.0,-104,-117,currentLine_median
+2025-08-16,Cleveland Guardians,Atlanta Braves,8.5,-120,100,currentLine_median
+2025-08-16,Colorado Rockies,Arizona Diamondbacks,11.5,-107,-113,currentLine_median
+2025-08-16,Houston Astros,Baltimore Orioles,8.5,-120,100,currentLine_median
+2025-08-16,Kansas City Royals,Chicago White Sox,9.5,-104,-116,currentLine_median
+2025-08-16,Los Angeles Dodgers,San Diego Padres,7.5,-116,-105,currentLine_median
+2025-08-16,Minnesota Twins,Detroit Tigers,8.5,-122,100,currentLine_median
+2025-08-16,New York Mets,Seattle Mariners,8.5,-110,-110,currentLine_median
+2025-08-16,San Francisco Giants,Tampa Bay Rays,8.0,-105,-115,currentLine_median
+2025-08-16,Toronto Blue Jays,Texas Rangers,8.5,-110,-110,currentLine_median
+2025-08-16,Washington Nationals,Philadelphia Phillies,9.75,-112,-109,currentLine_median

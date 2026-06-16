@@ -1,0 +1,23 @@
+{
+  "model_version": "test_v1",
+  "holdout_season_end": 2026,
+  "holdout_season_label": "2025-26",
+  "holdout_games": 2,
+  "matched_games": 2,
+  "match_rate_pct": 100.0,
+  "odds_sources": [
+    "test_csv"
+  ],
+  "edge_threshold": 0.05,
+  "log_loss_model": 0.099,
+  "log_loss_market": 0.5781,
+  "model_beats_market_log_loss": true,
+  "plus_ev_picks": 2,
+  "paper_trade_roi": 0.7179,
+  "paper_trade_profit_units": 1.44,
+  "plus_ev_hit_rate": 1.0,
+  "ev_signal": true,
+  "clv_required": true,
+  "betting_ready": false,
+  "advisor_note": "Paper-trade ROI on matched holdout is not betting-ready. Forward CLV (NBA-CLV) required before any real-money claim."
+}
