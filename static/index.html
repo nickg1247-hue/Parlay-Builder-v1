@@ -78,6 +78,11 @@
       </div>
 
       <div class="home-props-tools">
+        <label class="home-props-tools-label" for="prop-book-select">Sportsbook lines</label>
+        <div class="home-props-tools-row home-props-book-row">
+          <select id="prop-book-select" class="home-props-select" aria-label="Sportsbook for player props"></select>
+          <button type="button" id="prop-book-refresh" class="home-props-fill-btn">Refresh props</button>
+        </div>
         <label class="home-props-tools-label" for="prop-auto-count">Auto-build prop parlay</label>
         <div class="home-props-tools-row">
           <select id="prop-auto-count" class="home-props-select" aria-label="Number of prop legs">
@@ -130,7 +135,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260617d"></script>
+  <script src="/static/app.js?v=20260617f"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -145,12 +150,13 @@
       const heroChips = document.getElementById("hero-chips");
       const autoFillBtn = document.getElementById("prop-auto-fill");
       const autoCountEl = document.getElementById("prop-auto-count");
+      const propBookSelect = document.getElementById("prop-book-select");
+      const propBookRefreshBtn = document.getElementById("prop-book-refresh");
       let homePropsPool = [];
 
-      async function loadHomeProps({ scan = false } = {}) {
-        const url = scan
-          ? "/api/daily/props?limit=25&scan=true"
-          : "/api/daily/props?limit=25";
+      async function loadHomeProps({ scan = false, refresh = false } = {}) {
+        const params = buildPropBookQuery({ limit: 25, scan, refresh });
+        const url = `/api/daily/props?${params.toString()}`;
         let propsData = { top_props: [], total_actionable: 0 };
         try {
           const res = await fetch(url);
@@ -175,13 +181,28 @@
         renderBestProps(propsEl, homePropsPool.slice(0, 10), {
           emptyMessage: homePropsPool.length
             ? undefined
-            : scan
+            : scan || refresh
               ? `No actionable props found after scanning today's slate.${hint}`
               : propsData.total_actionable
                 ? undefined
                 : `No cached props yet — scanning slate…${hint}`,
         });
         return propsData;
+      }
+
+      await initPropBookSelect(propBookSelect, () => loadHomeProps({ scan: false }));
+      if (propBookRefreshBtn) {
+        propBookRefreshBtn.onclick = async () => {
+          propBookRefreshBtn.disabled = true;
+          const prev = propBookRefreshBtn.textContent;
+          propBookRefreshBtn.textContent = "Refreshing…";
+          try {
+            await loadHomeProps({ scan: true, refresh: true });
+          } finally {
+            propBookRefreshBtn.disabled = false;
+            propBookRefreshBtn.textContent = prev;
+          }
+        };
       }
 
       try {
@@ -227,7 +248,7 @@
             try {
               if (homePropsPool.length < 10) {
                 addTop10Btn.textContent = "Scanning…";
-                await loadHomeProps({ scan: true });
+                await loadHomeProps({ scan: true, refresh: false });
               }
               const added = populatePropSlipFromProps(homePropsPool, 10, { replace: true });
               addTop10Btn.textContent = added ? `Added ${added} legs` : "No props found";
@@ -250,7 +271,7 @@
             try {
               if (homePropsPool.length < n) {
                 autoFillBtn.textContent = "Scanning slate…";
-                await loadHomeProps({ scan: true });
+                await loadHomeProps({ scan: true, refresh: false });
               }
               const added = populatePropSlipFromProps(homePropsPool, n, { replace: true });
               autoFillBtn.textContent = added ? `Added ${added} legs` : "No props found";

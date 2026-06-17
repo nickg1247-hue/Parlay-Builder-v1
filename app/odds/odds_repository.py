@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pandas as pd
+import httpx
 
 from app.config import PROJECT_ROOT
 from app.odds.live_odds import live_odds_enabled
@@ -827,6 +828,7 @@ def fetch_mlb_events_if_allowed() -> ApiFetchResult:
 def fetch_mlb_event_props_if_allowed(
     event_id: str,
     markets: str = DEFAULT_MLB_PROP_MARKETS,
+    bookmakers: str | None = None,
 ) -> ApiFetchResult:
     """Quota-gated player props for one MLB event."""
     if not live_odds_enabled():
@@ -835,11 +837,27 @@ def fetch_mlb_event_props_if_allowed(
     if not allowed:
         return ApiFetchResult(denied=True, denied_reason=deny_reason)
     try:
-        event = fetch_mlb_event_odds(event_id, markets=markets)
+        event = fetch_mlb_event_odds(
+            event_id, markets=markets, bookmakers=bookmakers
+        )
         if not event:
             _release_quota_slot()
             return ApiFetchResult(error="empty_response")
         return ApiFetchResult(events=[event], source="the_odds_api_live")
+    except httpx.HTTPStatusError as exc:
+        _release_quota_slot()
+        detail = exc.response.text[:200] if exc.response is not None else str(exc)
+        logger.warning(
+            "Odds API event props HTTP %s for %s: %s",
+            exc.response.status_code if exc.response else "?",
+            event_id,
+            detail,
+        )
+        if exc.response is not None and exc.response.status_code == 422:
+            return ApiFetchResult(
+                error="Invalid sportsbook key for Odds API — pick another book."
+            )
+        return ApiFetchResult(error=f"odds_api_http_{exc.response.status_code}")
     except Exception as exc:
         _release_quota_slot()
         logger.warning("Odds API event props failed for %s: %s", event_id, exc)

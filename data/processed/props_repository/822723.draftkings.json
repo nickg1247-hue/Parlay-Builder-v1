@@ -1,0 +1,17 @@
+{
+  "game_id": "822723",
+  "date": "2026-06-16",
+  "matchup": "Kansas City Royals @ Washington Nationals",
+  "home_team": "Washington Nationals",
+  "away_team": "Kansas City Royals",
+  "props": [],
+  "top_picks": [],
+  "fetched_at": "2026-06-17T01:02:34.752783+00:00",
+  "source": "the_odds_api_live",
+  "status": "empty",
+  "message": "No player prop markets returned",
+  "markets_requested": "batter_hits,batter_total_bases,batter_runs_scored,batter_home_runs,batter_rbis,pitcher_strikeouts",
+  "bookmaker": "draftkings",
+  "bookmaker_label": "DraftKings",
+  "event_id": "178ad6f5e07c35eef67b4cff64ff1934"
+}

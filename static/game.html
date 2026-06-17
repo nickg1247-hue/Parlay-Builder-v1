@@ -105,10 +105,13 @@
 
           <div class="props-section-head">
             <h2>Player props</h2>
-            <button type="button" id="props-refresh" class="btn-ghost hidden">Refresh props</button>
+            <div class="props-head-controls">
+              <select id="prop-book-select" class="home-props-select" aria-label="Sportsbook for player props"></select>
+              <button type="button" id="props-refresh" class="btn-ghost">Refresh</button>
+            </div>
           </div>
 
-          <p class="section-sub">Lines from US sportsbooks, ranked by recent form and matchup context — not a guarantee.</p>
+          <p class="section-sub">Lines from your selected sportsbook (or median across books), ranked by recent form and matchup context — not a guarantee.</p>
 
           <div id="props-loading" class="empty-state">Loading props…</div>
           <div id="props-error" class="error-state hidden"></div>
@@ -132,9 +135,9 @@
 
   </div>
 
-  <script src="/static/app.js?v=20260617d"></script>
+  <script src="/static/app.js?v=20260617f"></script>
 
-  <script src="/static/game.js?v=20260617d"></script>
+  <script src="/static/game.js?v=20260617f"></script>
 
 </body>
 

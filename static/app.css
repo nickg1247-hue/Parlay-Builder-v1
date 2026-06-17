@@ -1114,6 +1114,23 @@ body.slate-mlb .app-main > * {
   filter: brightness(1.08);
 }
 
+.home-props-book-row {
+  margin-bottom: 0.75rem;
+}
+
+.props-head-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.props-book-label {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .home-props-tools-note {
   margin: 0.5rem 0 0;
   font-size: 0.75rem;

@@ -80,6 +80,35 @@ def test_parse_event_props_median_odds():
     assert judge["under_odds"] == -105
 
 
+def test_parse_event_props_single_book():
+    rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    assert len(rows) == 2
+    rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="fanduel")
+    assert rows == []
+
+
+def test_normalize_bookmaker_aliases():
+    assert props_mlb._normalize_bookmaker("caesars") == "williamhill_us"
+    assert props_mlb._normalize_bookmaker("pointsbetus") == "consensus"
+    assert props_mlb._bookmaker_label("williamhill_us") == "Caesars"
+
+
+def test_books_with_prop_markets():
+    assert props_mlb._books_with_prop_markets(FAKE_EVENT) == ["draftkings"]
+
+
+def test_filter_prop_markets_excludes_runs_by_default():
+    from app.odds.the_odds_api import DEFAULT_MLB_PROP_MARKETS
+
+    rows = [
+        {"market_type": "batter_runs_scored", "player": "A"},
+        {"market_type": "batter_hits", "player": "B"},
+    ]
+    out = props_mlb._filter_prop_markets(rows, markets_requested=DEFAULT_MLB_PROP_MARKETS)
+    assert len(out) == 1
+    assert out[0]["market_type"] == "batter_hits"
+
+
 def test_prop_rank_key_hit_rate_first():
     lower_l10 = {
         "recommended_side": "over",
@@ -210,12 +239,28 @@ def test_build_game_props_fetches_and_caches(
     assert payload is not None
     assert payload["status"] == "ok"
     assert len(payload["props"]) == 2
-    assert (isolated_props / "777001.json").exists()
+    assert payload["bookmaker"] == "consensus"
+    assert (isolated_props / "777001.consensus.json").exists()
 
     mock_props.reset_mock()
     cached = props_mlb.build_game_props("777001", game_date=date(2026, 6, 16), refresh=False)
     assert cached["props"]
     mock_props.assert_not_called()
+
+    mock_props.return_value = repo.ApiFetchResult(
+        events=[FAKE_EVENT],
+        source="the_odds_api_live",
+    )
+    dk_payload = props_mlb.build_game_props(
+        "777001",
+        game_date=date(2026, 6, 16),
+        refresh=True,
+        bookmaker="draftkings",
+    )
+    assert dk_payload["bookmaker"] == "draftkings"
+    assert (isolated_props / "777001.draftkings.json").exists()
+    mock_props.assert_called_once()
+    assert mock_props.call_args.kwargs.get("bookmakers") == "draftkings"
 
 
 @patch("app.services.prop_scoring._search_player_id", return_value=592450)

@@ -1,6 +1,6 @@
 {
   "date": "2026-06-16",
-  "fetched_at": "2026-06-16T07:53:15.830155+00:00",
+  "fetched_at": "2026-06-17T01:03:09.574425+00:00",
   "events": [
     {
       "id": "551b1013a4b92bb548f0b5287c15e7d1",
@@ -14,7 +14,7 @@
       "id": "91665afcba863c3c8347ba9ee65ac461",
       "sport_key": "baseball_mlb",
       "sport_title": "MLB",
-      "commence_time": "2026-06-16T22:45:00Z",
+      "commence_time": "2026-06-16T22:45:33Z",
       "home_team": "Boston Red Sox",
       "away_team": "Toronto Blue Jays"
     },
@@ -46,7 +46,7 @@
       "id": "4437949903758512e22e061e7d49dc48",
       "sport_key": "baseball_mlb",
       "sport_title": "MLB",
-      "commence_time": "2026-06-16T23:16:00Z",
+      "commence_time": "2026-06-16T23:16:45Z",
       "home_team": "Atlanta Braves",
       "away_team": "San Francisco Giants"
     },
@@ -121,6 +121,110 @@
       "commence_time": "2026-06-17T02:11:00Z",
       "home_team": "Los Angeles Dodgers",
       "away_team": "Tampa Bay Rays"
+    },
+    {
+      "id": "93a412d9ba2735490b741d924fea7ef1",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T16:41:00Z",
+      "home_team": "Cincinnati Reds",
+      "away_team": "New York Mets"
+    },
+    {
+      "id": "bab3782d628eabfc050d79656a55fa50",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T17:06:00Z",
+      "home_team": "Washington Nationals",
+      "away_team": "Kansas City Royals"
+    },
+    {
+      "id": "70301ecea46dd4e6c12d0c003013a4ee",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T17:06:00Z",
+      "home_team": "Philadelphia Phillies",
+      "away_team": "Miami Marlins"
+    },
+    {
+      "id": "db80e9d6153bc82e7a3612d55fd10ece",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T18:11:00Z",
+      "home_team": "Houston Astros",
+      "away_team": "Detroit Tigers"
+    },
+    {
+      "id": "a75cee44d2cbdcedb356612df99cd692",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T19:11:00Z",
+      "home_team": "Los Angeles Dodgers",
+      "away_team": "Tampa Bay Rays"
+    },
+    {
+      "id": "44a3fa0a32ffae8dd220f1a4d54ae239",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T19:41:00Z",
+      "home_team": "Arizona Diamondbacks",
+      "away_team": "Los Angeles Angels"
+    },
+    {
+      "id": "1b3b5ac473b471165355ca855853dbb2",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T22:46:00Z",
+      "home_team": "Boston Red Sox",
+      "away_team": "Toronto Blue Jays"
+    },
+    {
+      "id": "9cfb18a4e0091ae6c9ccb03c48deb277",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T23:06:00Z",
+      "home_team": "New York Yankees",
+      "away_team": "Chicago White Sox"
+    },
+    {
+      "id": "a834545628bda1d53eb52e89728b336f",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T23:16:00Z",
+      "home_team": "Atlanta Braves",
+      "away_team": "San Francisco Giants"
+    },
+    {
+      "id": "4d8279537f3ea7c4d1d53160da26d2c6",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-17T23:41:00Z",
+      "home_team": "Milwaukee Brewers",
+      "away_team": "Cleveland Guardians"
+    },
+    {
+      "id": "3c667b5e84c7e18c7697c0f83852679a",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-18T00:06:00Z",
+      "home_team": "Chicago Cubs",
+      "away_team": "Colorado Rockies"
+    },
+    {
+      "id": "ab9ae62c321b17a5d765118cc9bb3fbf",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-18T01:41:00Z",
+      "home_team": "Athletics",
+      "away_team": "Pittsburgh Pirates"
+    },
+    {
+      "id": "1d049adfd45ba69776089a9846e60034",
+      "sport_key": "baseball_mlb",
+      "sport_title": "MLB",
+      "commence_time": "2026-06-18T01:41:00Z",
+      "home_team": "Seattle Mariners",
+      "away_team": "Baltimore Orioles"
     }
   ]
 }

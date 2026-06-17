@@ -38,7 +38,12 @@ from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
 from app.services.game_insights import build_game_insights
-from app.services.props_mlb import build_daily_top_props, build_game_props, evaluate_prop_parlay
+from app.services.props_mlb import (
+    build_daily_top_props,
+    build_game_props,
+    evaluate_prop_parlay,
+    list_prop_bookmakers,
+)
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.cfb_daily_board import build_cfb_daily_board
@@ -487,14 +492,28 @@ async def mlb_game_props(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
+    bookmaker: str | None = Query(
+        None,
+        description="Sportsbook key (consensus = median across books).",
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    payload = build_game_props(game_id, game_date=game_date, refresh=refresh)
+    payload = build_game_props(
+        game_id,
+        game_date=game_date,
+        refresh=refresh,
+        bookmaker=bookmaker,
+    )
     if payload is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return payload
+
+
+@app.get("/api/props/bookmakers")
+async def prop_bookmakers():
+    return {"bookmakers": list_prop_bookmakers()}
 
 
 @app.post("/api/parlay/props/eval")
@@ -511,13 +530,32 @@ async def daily_top_props(
         False,
         description="Scan slate for props (uses cache; fetches missing games up to cap).",
     ),
+    refresh: bool = Query(
+        False,
+        description="Force refresh props for the selected sportsbook.",
+    ),
+    bookmaker: str | None = Query(
+        None,
+        description="Sportsbook key (consensus = median across books).",
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    result = build_daily_top_props(game_date, limit=limit, scan=scan)
-    if not result.get("top_props") and not scan:
-        result = build_daily_top_props(game_date, limit=limit, scan=True)
+    result = build_daily_top_props(
+        game_date,
+        limit=limit,
+        scan=scan,
+        refresh=refresh,
+        bookmaker=bookmaker,
+    )
+    if not result.get("top_props") and not scan and not refresh:
+        result = build_daily_top_props(
+            game_date,
+            limit=limit,
+            scan=True,
+            bookmaker=bookmaker,
+        )
         result["auto_scanned"] = True
     return result
 

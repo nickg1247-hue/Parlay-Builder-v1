@@ -1099,6 +1099,85 @@ function renderBestProps(el, topProps, options = {}) {
   });
 }
 
+const PROP_BOOK_STORAGE_KEY = "pb-prop-bookmaker";
+const PROP_BOOK_ALIASES = {
+  caesars: "williamhill_us",
+  williamhill: "williamhill_us",
+  thescore: "espnbet",
+  pointsbetus: "consensus",
+  pointsbet: "consensus",
+};
+const DEFAULT_PROP_BOOKMAKERS = [
+  { key: "consensus", label: "Best line (median)" },
+  { key: "draftkings", label: "DraftKings" },
+  { key: "fanduel", label: "FanDuel" },
+  { key: "betmgm", label: "BetMGM" },
+  { key: "betrivers", label: "BetRivers" },
+  { key: "williamhill_us", label: "Caesars" },
+  { key: "bovada", label: "Bovada" },
+  { key: "betonlineag", label: "BetOnline" },
+  { key: "espnbet", label: "theScore Bet" },
+  { key: "fanatics", label: "Fanatics" },
+];
+
+let propBookmakersCache = null;
+
+async function loadPropBookmakers() {
+  if (propBookmakersCache) return propBookmakersCache;
+  try {
+    const data = await fetchJSON("/api/props/bookmakers");
+    propBookmakersCache = data.bookmakers || DEFAULT_PROP_BOOKMAKERS;
+  } catch (_) {
+    propBookmakersCache = DEFAULT_PROP_BOOKMAKERS;
+  }
+  return propBookmakersCache;
+}
+
+function getSelectedPropBookmaker() {
+  let stored = localStorage.getItem(PROP_BOOK_STORAGE_KEY);
+  if (stored && PROP_BOOK_ALIASES[stored]) {
+    stored = PROP_BOOK_ALIASES[stored];
+    setSelectedPropBookmaker(stored);
+  }
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  return stored && list.some((b) => b.key === stored) ? stored : "consensus";
+}
+
+function setSelectedPropBookmaker(key) {
+  localStorage.setItem(PROP_BOOK_STORAGE_KEY, key);
+}
+
+async function initPropBookSelect(selectEl, onChange) {
+  if (!selectEl) return;
+  await loadPropBookmakers();
+  const current = getSelectedPropBookmaker();
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  selectEl.innerHTML = list
+    .map(
+      (b) =>
+        `<option value="${b.key}"${b.key === current ? " selected" : ""}>${b.label}</option>`
+    )
+    .join("");
+  selectEl.addEventListener("change", () => {
+    setSelectedPropBookmaker(selectEl.value);
+    if (onChange) onChange();
+  });
+}
+
+function buildPropBookQuery(extra = {}) {
+  const params = new URLSearchParams();
+  params.set("bookmaker", getSelectedPropBookmaker());
+  if (extra.limit != null) params.set("limit", String(extra.limit));
+  if (extra.scan) params.set("scan", "true");
+  if (extra.refresh) params.set("refresh", "true");
+  if (extra.date) params.set("date", extra.date);
+  return params;
+}
+
+window.getSelectedPropBookmaker = getSelectedPropBookmaker;
+window.initPropBookSelect = initPropBookSelect;
+window.buildPropBookQuery = buildPropBookQuery;
+
 function populatePropSlipFromProps(props, count, { replace = true } = {}) {
   const pool = (props || []).slice(0, count);
   const legs = pool

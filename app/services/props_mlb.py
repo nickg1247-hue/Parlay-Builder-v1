@@ -33,6 +33,149 @@ PROPS_DIR = PROJECT_ROOT / "data" / "processed" / "props_repository"
 EVENTS_DIR = PROPS_DIR / "events"
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
 MAX_PROP_LINES_TO_SCORE = int(os.getenv("MAX_PROP_LINES_TO_SCORE", "80"))
+RUNS_PROP_MARKET = "batter_runs_scored"
+DEFAULT_PROP_BOOKMAKER = "consensus"
+# Keys must match The Odds API bookmaker keys (see the-odds-api.com bookmaker list).
+PROP_BOOKMAKERS: dict[str, str] = {
+    "consensus": "Best line (median)",
+    "draftkings": "DraftKings",
+    "fanduel": "FanDuel",
+    "betmgm": "BetMGM",
+    "betrivers": "BetRivers",
+    "williamhill_us": "Caesars",
+    "bovada": "Bovada",
+    "betonlineag": "BetOnline",
+    "espnbet": "theScore Bet",
+    "fanatics": "Fanatics",
+}
+# Legacy/wrong keys from early UI — map to valid API keys.
+BOOKMAKER_ALIASES: dict[str, str] = {
+    "caesars": "williamhill_us",
+    "williamhill": "williamhill_us",
+    "thescore": "espnbet",
+    "pointsbetus": DEFAULT_PROP_BOOKMAKER,
+    "pointsbet": DEFAULT_PROP_BOOKMAKER,
+}
+
+
+def _discover_cached_prop_bookmakers() -> set[str]:
+    books: set[str] = set()
+    if not PROPS_DIR.exists():
+        return books
+    for path in PROPS_DIR.glob("*.*.json"):
+        stem = path.stem
+        if "." not in stem:
+            continue
+        _, book = stem.rsplit(".", 1)
+        if book == DEFAULT_PROP_BOOKMAKER:
+            continue
+        payload = _load_json(path)
+        if payload and payload.get("props"):
+            books.add(book)
+    return books
+
+
+def list_prop_bookmakers() -> list[dict[str, Any]]:
+    cached = _discover_cached_prop_bookmakers()
+    return [
+        {
+            "key": key,
+            "label": label,
+            "has_cache": key == DEFAULT_PROP_BOOKMAKER or key in cached,
+        }
+        for key, label in PROP_BOOKMAKERS.items()
+    ]
+
+
+def _normalize_bookmaker(raw: str | None) -> str:
+    key = (raw or DEFAULT_PROP_BOOKMAKER).strip().lower()
+    if not key:
+        return DEFAULT_PROP_BOOKMAKER
+    key = BOOKMAKER_ALIASES.get(key, key)
+    if key == DEFAULT_PROP_BOOKMAKER or key in PROP_BOOKMAKERS:
+        return key
+    if key.replace("_", "").isalnum():
+        return key
+    return DEFAULT_PROP_BOOKMAKER
+
+
+def _bookmaker_label(bookmaker: str) -> str:
+    return PROP_BOOKMAKERS.get(bookmaker, bookmaker.replace("_", " ").title())
+
+
+def _books_with_prop_markets(event: dict[str, Any]) -> list[str]:
+    keys: list[str] = []
+    for book in event.get("bookmakers") or []:
+        book_key = str(book.get("key") or "")
+        if not book_key:
+            continue
+        for market in book.get("markets") or []:
+            market_key = str(market.get("key") or "")
+            if market_key.startswith(("batter_", "pitcher_")):
+                keys.append(book_key)
+                break
+    return sorted(set(keys))
+
+
+def _empty_book_message(
+    book: str,
+    *,
+    available: list[str],
+    parsed_count: int,
+) -> str:
+    label = _bookmaker_label(book)
+    if book == DEFAULT_PROP_BOOKMAKER:
+        if not available:
+            return "No sportsbooks returned player prop markets for this game yet."
+        if parsed_count == 0:
+            return "Prop markets were returned but no lines could be parsed."
+        return "No player prop markets returned"
+
+    if book not in available:
+        if available:
+            alt = ", ".join(_bookmaker_label(k) for k in available[:5])
+            return f"{label} has no MLB player props for this game. Books with props: {alt}."
+        return f"{label} has no MLB player props for this game yet."
+
+    if parsed_count == 0:
+        return f"{label} returned prop markets but no lines could be parsed."
+    return f"{label} props did not pass scoring filters."
+
+
+def _include_runs_props(markets_requested: str) -> bool:
+    if RUNS_PROP_MARKET in markets_requested:
+        return True
+    return os.getenv("PROP_INCLUDE_RUNS", "").strip().lower() in ("1", "true", "yes")
+
+
+def _filter_prop_markets(
+    props: list[dict[str, Any]],
+    *,
+    markets_requested: str,
+) -> list[dict[str, Any]]:
+    if _include_runs_props(markets_requested):
+        return props
+    return [row for row in props if row.get("market_type") != RUNS_PROP_MARKET]
+
+
+def _trim_props_payload(payload: dict[str, Any], markets_requested: str) -> dict[str, Any]:
+    props = _filter_prop_markets(payload.get("props") or [], markets_requested=markets_requested)
+    top_picks = [
+        p
+        for p in props
+        if p.get("actionable") and p.get("score") is not None and p.get("score", 0) >= 60
+    ][:12]
+    total_actionable = sum(
+        1
+        for p in props
+        if p.get("actionable")
+        and p.get("recommended_hit_rate") is not None
+        and p.get("recommended_odds") is not None
+    )
+    out = {**payload, "props": props, "top_picks": top_picks}
+    if "total_actionable" in payload:
+        out["total_actionable"] = total_actionable
+    return out
 
 
 def _max_slate_prop_fetch(games_on_slate: int) -> int:
@@ -63,19 +206,26 @@ def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
     return (-l10, -l5, -season)
 
 
-def prop_slip_leg(prop: dict[str, Any], *, game_id: str, matchup: str | None) -> dict[str, Any]:
+def prop_slip_leg(
+    prop: dict[str, Any],
+    *,
+    game_id: str,
+    matchup: str | None,
+    bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+) -> dict[str, Any]:
     """Normalize a ranked prop row for the client bet slip."""
     side = prop.get("recommended_side") or "over"
+    leg_parts = [
+        str(game_id),
+        str(prop.get("player", "")),
+        str(prop.get("market_type", "")),
+        str(prop.get("line", "")),
+        side,
+    ]
+    if bookmaker and bookmaker != DEFAULT_PROP_BOOKMAKER:
+        leg_parts.append(bookmaker)
     return {
-        "id": "|".join(
-            [
-                str(game_id),
-                str(prop.get("player", "")),
-                str(prop.get("market_type", "")),
-                str(prop.get("line", "")),
-                side,
-            ]
-        ),
+        "id": "|".join(leg_parts),
         "game_id": str(game_id),
         "matchup": matchup,
         "player": prop.get("player"),
@@ -86,13 +236,20 @@ def prop_slip_leg(prop: dict[str, Any], *, game_id: str, matchup: str | None) ->
         "american_odds": prop.get("recommended_odds"),
         "hit_rate": prop.get("recommended_hit_rate"),
         "score": prop.get("score"),
+        "bookmaker": bookmaker,
+        "bookmaker_label": _bookmaker_label(bookmaker),
     }
 
 
 def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     matchup = payload.get("matchup")
-    for prop in payload.get("props") or []:
+    bookmaker = _normalize_bookmaker(payload.get("bookmaker"))
+    markets_requested = str(payload.get("markets_requested") or DEFAULT_MLB_PROP_MARKETS)
+    for prop in _filter_prop_markets(
+        payload.get("props") or [],
+        markets_requested=markets_requested,
+    ):
         if not prop.get("actionable") or prop.get("recommended_hit_rate") is None:
             continue
         if prop.get("recommended_odds") is None:
@@ -102,7 +259,11 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
                 **prop,
                 "game_id": game_id,
                 "matchup": matchup,
-                "slip_leg": prop_slip_leg(prop, game_id=game_id, matchup=matchup),
+                "bookmaker": bookmaker,
+                "bookmaker_label": payload.get("bookmaker_label") or _bookmaker_label(bookmaker),
+                "slip_leg": prop_slip_leg(
+                    prop, game_id=game_id, matchup=matchup, bookmaker=bookmaker
+                ),
             }
         )
     return rows
@@ -119,16 +280,18 @@ def _cache_age_seconds(path: Path) -> float | None:
     return (_clock() - mtime).total_seconds()
 
 
-def _props_cache_path(game_id: str) -> Path:
-    return PROPS_DIR / f"{game_id}.json"
+def _props_cache_path(game_id: str, bookmaker: str = DEFAULT_PROP_BOOKMAKER) -> Path:
+    book = _normalize_bookmaker(bookmaker)
+    return PROPS_DIR / f"{game_id}.{book}.json"
 
 
 def _events_cache_path(game_date: date) -> Path:
     return EVENTS_DIR / f"{game_date.isoformat()}.json"
 
 
-def _slate_cache_path(game_date: date) -> Path:
-    return PROPS_DIR / f"slate_{game_date.isoformat()}.json"
+def _slate_cache_path(game_date: date, bookmaker: str = DEFAULT_PROP_BOOKMAKER) -> Path:
+    book = _normalize_bookmaker(bookmaker)
+    return PROPS_DIR / f"slate_{game_date.isoformat()}.{book}.json"
 
 
 def _median_int(values: list[int]) -> int | None:
@@ -158,10 +321,18 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def _parse_event_props(event: dict[str, Any]) -> list[dict[str, Any]]:
+def _parse_event_props(
+    event: dict[str, Any],
+    bookmaker_key: str | None = None,
+) -> list[dict[str, Any]]:
     """Normalize Odds API event-odds response to prop rows."""
+    bookmaker_key = _normalize_bookmaker(bookmaker_key)
+    books = event.get("bookmakers") or []
+    if bookmaker_key != DEFAULT_PROP_BOOKMAKER:
+        books = [book for book in books if book.get("key") == bookmaker_key]
+
     grouped: dict[tuple[str, str, float, str], list[int]] = {}
-    for book in event.get("bookmakers") or []:
+    for book in books:
         for market in book.get("markets") or []:
             market_key = str(market.get("key") or "")
             if not market_key.startswith(("batter_", "pitcher_")):
@@ -381,9 +552,11 @@ def build_game_props(
     *,
     refresh: bool = False,
     markets: str = DEFAULT_MLB_PROP_MARKETS,
+    bookmaker: str | None = None,
 ) -> dict[str, Any] | None:
     """Fetch + score player props for one MLB game."""
     game_date = game_date or date.today()
+    book = _normalize_bookmaker(bookmaker)
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
         return None
@@ -392,12 +565,13 @@ def build_game_props(
     home_team = game["home_team"]
     away_team = game["away_team"]
     season = game_date.year
-    cache_path = _props_cache_path(game_id)
+    cache_path = _props_cache_path(game_id, book)
     age = _cache_age_seconds(cache_path)
 
     if not refresh:
-        cached = _load_cached_game_props(str(game_id))
+        cached = _load_cached_game_props(str(game_id), book)
         if cached:
+            cached = _trim_props_payload(cached, markets)
             if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
                 cached = {**cached, "stale_cache": True}
             return cached
@@ -415,6 +589,8 @@ def build_game_props(
         "status": "empty",
         "message": None,
         "markets_requested": markets,
+        "bookmaker": book,
+        "bookmaker_label": _bookmaker_label(book),
     }
 
     event_id, event_err = _resolve_event_id(
@@ -425,7 +601,10 @@ def build_game_props(
         empty_payload["message"] = msg
         return empty_payload
 
-    result = fetch_mlb_event_props_if_allowed(event_id, markets=markets)
+    api_books = None if book == DEFAULT_PROP_BOOKMAKER else book
+    result = fetch_mlb_event_props_if_allowed(
+        event_id, markets=markets, bookmakers=api_books
+    )
     if result.denied:
         empty_payload["message"] = _status_message(result.denied_reason)
         cached = _load_json(cache_path)
@@ -438,7 +617,11 @@ def build_game_props(
         return empty_payload
 
     event = result.events[0]
-    props = _parse_event_props(event)
+    available_books = _books_with_prop_markets(event)
+    props = _filter_prop_markets(
+        _parse_event_props(event, bookmaker_key=book),
+        markets_requested=markets,
+    )
     away_p, home_p = _probable_pitchers(game_date, game_id)
     enriched = _enrich_props(
         props,
@@ -461,8 +644,19 @@ def build_game_props(
         "fetched_at": _clock().isoformat(),
         "source": result.source,
         "status": "ok" if enriched else "empty",
-        "message": None if enriched else "No player prop markets returned",
+        "message": (
+            None
+            if enriched
+            else _empty_book_message(
+                book,
+                available=available_books,
+                parsed_count=len(props),
+            )
+        ),
         "event_id": event_id,
+        "available_bookmakers": [
+            {"key": key, "label": _bookmaker_label(key)} for key in available_books
+        ],
     }
     _write_json(cache_path, payload)
     return payload
@@ -523,24 +717,44 @@ def evaluate_prop_parlay(legs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _load_cached_game_props(game_id: str) -> dict[str, Any] | None:
+def _load_cached_game_props(
+    game_id: str,
+    bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+) -> dict[str, Any] | None:
     """Return on-disk game props whenever present (git-deployed cache may be older than TTL)."""
-    payload = _load_json(_props_cache_path(game_id))
+    book = _normalize_bookmaker(bookmaker)
+    payload = _load_json(_props_cache_path(game_id, book))
     if payload and payload.get("props"):
         return payload
+    if book == DEFAULT_PROP_BOOKMAKER:
+        legacy = _load_json(PROPS_DIR / f"{game_id}.json")
+        if legacy and legacy.get("props"):
+            return legacy
     return None
 
 
 def _load_best_slate_props(
     game_date: date,
+    bookmaker: str = DEFAULT_PROP_BOOKMAKER,
 ) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
     """Today's slate aggregate, else newest slate_*.json in the repository."""
-    cached = _load_json(_slate_cache_path(game_date))
+    book = _normalize_bookmaker(bookmaker)
+    cached = _load_json(_slate_cache_path(game_date, book))
     if cached and cached.get("all_props") is not None:
         return cached["all_props"] or [], "slate_cache", cached
+    if book == DEFAULT_PROP_BOOKMAKER:
+        legacy = _load_json(PROPS_DIR / f"slate_{game_date.isoformat()}.json")
+        if legacy and legacy.get("all_props") is not None:
+            return legacy["all_props"] or [], "slate_cache", legacy
 
+    suffix = f".{book}.json"
     candidates = sorted(
-        PROPS_DIR.glob("slate_*.json"),
+        (
+            path
+            for path in PROPS_DIR.glob("slate_*.json")
+            if path.name.endswith(suffix)
+            or (book == DEFAULT_PROP_BOOKMAKER and path.name.count(".") == 1)
+        ),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -551,18 +765,34 @@ def _load_best_slate_props(
     return [], "none", None
 
 
-def _aggregate_repo_game_props() -> list[dict[str, Any]]:
+def _aggregate_repo_game_props(
+    bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+) -> list[dict[str, Any]]:
     """Last resort: merge actionable props from all per-game JSON files in the repo."""
+    book = _normalize_bookmaker(bookmaker)
     picks: list[dict[str, Any]] = []
     if not PROPS_DIR.exists():
         return picks
+    seen: set[str] = set()
     for path in PROPS_DIR.glob("*.json"):
-        if not path.stem.isdigit():
+        stem = path.stem
+        if stem.isdigit():
+            if book != DEFAULT_PROP_BOOKMAKER:
+                continue
+            game_id = stem
+        elif "." in stem:
+            game_id, cached_book = stem.rsplit(".", 1)
+            if not game_id.isdigit() or cached_book != book:
+                continue
+        else:
+            continue
+        if game_id in seen:
             continue
         payload = _load_json(path)
         if not payload:
             continue
-        picks.extend(_collect_actionable_props(payload, path.stem))
+        seen.add(game_id)
+        picks.extend(_collect_actionable_props(payload, game_id))
     picks.sort(key=prop_rank_key)
     return picks
 
@@ -580,11 +810,15 @@ def _daily_props_payload(
     cached_at: str | None = None,
     hint: str | None = None,
     auto_scanned: bool = False,
+    bookmaker: str = DEFAULT_PROP_BOOKMAKER,
 ) -> dict[str, Any]:
     from app.odds.live_odds import live_odds_enabled
 
+    book = _normalize_bookmaker(bookmaker)
     out: dict[str, Any] = {
         "date": game_date.isoformat(),
+        "bookmaker": book,
+        "bookmaker_label": _bookmaker_label(book),
         "games_on_slate": games_on_slate,
         "games_scanned": games_scanned,
         "games_fetched": games_fetched,
@@ -610,6 +844,8 @@ def build_daily_top_props(
     *,
     limit: int = 12,
     scan: bool = False,
+    refresh: bool = False,
+    bookmaker: str | None = None,
 ) -> dict[str, Any]:
     """
     Aggregate actionable props across today's slate.
@@ -618,10 +854,14 @@ def build_daily_top_props(
     Serves git-deployed cache even when older than TTL so VPS deploys work offline.
     """
     game_date = game_date or date.today()
+    book = _normalize_bookmaker(bookmaker)
+    if refresh:
+        scan = True
 
-    if not scan:
-        picks, source, meta = _load_best_slate_props(game_date)
+    if not scan and not refresh:
+        picks, source, meta = _load_best_slate_props(game_date, book)
         if picks:
+            picks = _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
             picks.sort(key=prop_rank_key)
             return _daily_props_payload(
                 game_date=game_date,
@@ -631,6 +871,7 @@ def build_daily_top_props(
                 games_on_slate=meta.get("games_on_slate", 0) if meta else 0,
                 games_scanned=meta.get("games_scanned", 0) if meta else 0,
                 cached_at=meta.get("cached_at") if meta else None,
+                bookmaker=book,
                 hint=(
                     "Showing cached slate props from repository."
                     if source == "slate_cache_repo"
@@ -654,14 +895,21 @@ def build_daily_top_props(
         gid = str(game.get("game_id"))
         if not gid:
             continue
-        cached_payload = _load_cached_game_props(gid)
+        cached_payload = None if refresh else _load_cached_game_props(gid, book)
+        if cached_payload:
+            cached_payload = _trim_props_payload(cached_payload, DEFAULT_MLB_PROP_MARKETS)
         payload = cached_payload
 
-        if scan and not cached_payload:
+        if scan and (refresh or not cached_payload):
             if games_fetched >= fetch_limit:
                 fetch_cap_hit = True
                 continue
-            built = build_game_props(gid, game_date=game_date, refresh=True)
+            built = build_game_props(
+                gid,
+                game_date=game_date,
+                refresh=True,
+                bookmaker=book,
+            )
             if built:
                 payload = built
                 games_fetched += 1
@@ -678,7 +926,7 @@ def build_daily_top_props(
     hint: str | None = None
 
     if not picks:
-        picks = _aggregate_repo_game_props()
+        picks = _aggregate_repo_game_props(book)
         if picks:
             source = "repo_game_cache"
             hint = "Using props from on-disk game cache (schedule date may differ from cache)."
@@ -692,9 +940,10 @@ def build_daily_top_props(
     picks.sort(key=prop_rank_key)
     if picks and scan:
         _write_json(
-            _slate_cache_path(game_date),
+            _slate_cache_path(game_date, book),
             {
                 "date": game_date.isoformat(),
+                "bookmaker": book,
                 "cached_at": _clock().isoformat(),
                 "games_on_slate": len(games),
                 "games_scanned": games_scanned,
@@ -713,4 +962,5 @@ def build_daily_top_props(
         games_fetched=games_fetched,
         fetch_cap_hit=fetch_cap_hit,
         hint=hint,
+        bookmaker=book,
     )
