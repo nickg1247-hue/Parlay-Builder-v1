@@ -28,31 +28,9 @@
 
         <a class="app-brand" href="/">NTG <span>Sports</span></a>
 
-        <nav class="app-nav-links" aria-label="Sections">
-
-          <a href="/mlb">← Slate</a>
-
-        </nav>
-
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
       </div>
-
-      <div class="sport-pills" aria-label="Sports">
-
-        <a class="sport-pill sport-pill-active" href="/mlb">
-          <svg class="sport-pill-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M5 5c1 2 1 4 0 6M11 5c-1 2-1 4 0 6"/></svg>MLB
-        </a>
-
-        <a class="sport-pill" href="/nba">
-          <svg class="sport-pill-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2 3 4 3 6s-1 4-3 6M8 2c-2 2-3 4-3 6s1 4 3 6"/></svg>NBA
-        </a>
-
-        <span class="sport-pill sport-pill-disabled">NFL</span>
-
-        <span class="sport-pill sport-pill-disabled">NHL</span>
-
-        <a class="sport-pill" href="/cfb">CFB</a>
-
-      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
 
     </header>
 
@@ -105,10 +83,13 @@
 
           <div class="props-section-head">
             <h2>Player props</h2>
-            <button type="button" id="props-refresh" class="btn-ghost hidden">Refresh props</button>
+            <div class="props-head-controls">
+              <select id="prop-book-select" class="home-props-select" aria-label="Sportsbook for player props"></select>
+              <button type="button" id="props-refresh" class="btn-ghost">Refresh</button>
+            </div>
           </div>
 
-          <p class="section-sub">Lines from US sportsbooks, ranked by recent form and matchup context — not a guarantee.</p>
+          <p class="section-sub">Lines from your selected sportsbook (or median across books), ranked by recent form and matchup context — not a guarantee.</p>
 
           <div id="props-loading" class="empty-state">Loading props…</div>
           <div id="props-error" class="error-state hidden"></div>
@@ -132,9 +113,9 @@
 
   </div>
 
-  <script src="/static/app.js?v=20260613e"></script>
+  <script src="/static/app.js?v=20260618c"></script>
 
-  <script src="/static/game.js?v=20260617d"></script>
+  <script src="/static/game.js?v=20260617f"></script>
 
 </body>
 

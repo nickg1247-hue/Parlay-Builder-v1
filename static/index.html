@@ -19,22 +19,9 @@
     <header class="app-topbar">
       <div class="app-nav-row">
         <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Sections">
-          <a href="/mlb" class="active">MLB</a>
-          <a href="/nba">NBA</a>
-        </nav>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports">
-        <a class="sport-pill sport-pill-active" href="/mlb">
-          <svg class="sport-pill-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M5 5c1 2 1 4 0 6M11 5c-1 2-1 4 0 6"/></svg>MLB
-        </a>
-        <a class="sport-pill" href="/nba">
-          <svg class="sport-pill-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2 3 4 3 6s-1 4-3 6M8 2c-2 2-3 4-3 6s1 4 3 6"/></svg>NBA
-        </a>
-        <span class="sport-pill sport-pill-disabled" title="Coming soon">NFL</span>
-        <span class="sport-pill sport-pill-disabled" title="Coming soon">NHL</span>
-        <a class="sport-pill" href="/cfb" title="College Football">CFB</a>
-      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
     <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
@@ -69,38 +56,12 @@
         <div class="home-picks-col">
           <div class="home-picks-col-head">
             <h3 class="home-picks-col-title">Best player props</h3>
-            <button type="button" id="prop-add-top10" class="home-props-fill-btn home-props-fill-btn--compact">Add top 10 to slip</button>
+            <a href="/mlb/props" class="home-props-more-link">Explore all →</a>
           </div>
           <div id="best-props" class="home-picks-list">
             <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
           </div>
         </div>
-      </div>
-
-      <div class="home-props-tools">
-        <label class="home-props-tools-label" for="prop-auto-count">Auto-build prop parlay</label>
-        <div class="home-props-tools-row">
-          <select id="prop-auto-count" class="home-props-select" aria-label="Number of prop legs">
-            <option value="10" selected>10 legs</option>
-            <option value="11">11 legs</option>
-            <option value="12">12 legs</option>
-            <option value="13">13 legs</option>
-            <option value="14">14 legs</option>
-            <option value="15">15 legs</option>
-            <option value="16">16 legs</option>
-            <option value="17">17 legs</option>
-            <option value="18">18 legs</option>
-            <option value="19">19 legs</option>
-            <option value="20">20 legs</option>
-            <option value="21">21 legs</option>
-            <option value="22">22 legs</option>
-            <option value="23">23 legs</option>
-            <option value="24">24 legs</option>
-            <option value="25">25 legs</option>
-          </select>
-          <button type="button" id="prop-auto-fill" class="home-props-fill-btn">Add to slip</button>
-        </div>
-        <p class="home-props-tools-note">Scans today's MLB slate for top props by hit rate (L10, then L5, then season). One leg per player.</p>
       </div>
 
       <div id="watched-section" class="hidden"></div>
@@ -109,6 +70,10 @@
 
       <p class="app-section-title">Explore</p>
       <div class="home-links">
+        <a class="home-link-card" href="/mlb/props">
+          <span>MLB player props</span>
+          <span class="arrow">→</span>
+        </a>
         <a class="home-link-card" href="/mlb">
           <span>MLB game slate</span>
           <span class="arrow">→</span>
@@ -130,7 +95,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260613e"></script>
+  <script src="/static/app.js?v=20260618c"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -143,14 +108,9 @@
       const watched = document.getElementById("watched-section");
       const refreshEl = document.getElementById("refresh-line");
       const heroChips = document.getElementById("hero-chips");
-      const autoFillBtn = document.getElementById("prop-auto-fill");
-      const autoCountEl = document.getElementById("prop-auto-count");
-      let homePropsPool = [];
 
       async function loadHomeProps({ scan = false } = {}) {
-        const url = scan
-          ? "/api/daily/props?limit=25&scan=true"
-          : "/api/daily/props?limit=25";
+        const url = scan ? "/api/daily/props?limit=25&scan=true" : "/api/daily/props?limit=25";
         let propsData = { top_props: [], total_actionable: 0 };
         try {
           const res = await fetch(url);
@@ -170,10 +130,9 @@
           });
           return propsData;
         }
-        homePropsPool = propsData.top_props || [];
         const hint = propsData.hint ? ` ${propsData.hint}` : "";
-        renderBestProps(propsEl, homePropsPool.slice(0, 10), {
-          emptyMessage: homePropsPool.length
+        renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
+          emptyMessage: (propsData.top_props || []).length
             ? undefined
             : scan
               ? `No actionable props found after scanning today's slate.${hint}`
@@ -219,52 +178,6 @@
           if ((cached.total_actionable || 0) > 0) return;
           return loadHomeProps({ scan: true });
         });
-
-        const addTop10Btn = document.getElementById("prop-add-top10");
-        if (addTop10Btn) {
-          addTop10Btn.onclick = async () => {
-            addTop10Btn.disabled = true;
-            const prev = addTop10Btn.textContent;
-            try {
-              if (homePropsPool.length < 10) {
-                addTop10Btn.textContent = "Scanning…";
-                await loadHomeProps({ scan: true });
-              }
-              const added = populatePropSlipFromProps(homePropsPool, 10, { replace: true });
-              addTop10Btn.textContent = added ? `Added ${added} legs` : "No props found";
-            } catch (_) {
-              addTop10Btn.textContent = "Add failed";
-            } finally {
-              addTop10Btn.disabled = false;
-              window.setTimeout(() => {
-                addTop10Btn.textContent = prev;
-              }, 2500);
-            }
-          };
-        }
-
-        if (autoFillBtn && autoCountEl) {
-          autoFillBtn.onclick = async () => {
-            const n = Number(autoCountEl.value) || 10;
-            autoFillBtn.disabled = true;
-            const prev = autoFillBtn.textContent;
-            try {
-              if (homePropsPool.length < n) {
-                autoFillBtn.textContent = "Scanning slate…";
-                await loadHomeProps({ scan: true });
-              }
-              const added = populatePropSlipFromProps(homePropsPool, n, { replace: true });
-              autoFillBtn.textContent = added ? `Added ${added} legs` : "No props found";
-            } catch (_) {
-              autoFillBtn.textContent = "Scan failed";
-            } finally {
-              autoFillBtn.disabled = false;
-              window.setTimeout(() => {
-                autoFillBtn.textContent = prev;
-              }, 2500);
-            }
-          };
-        }
       } catch (e) {
         renderHomeHeroChips(heroChips, { summary: null, scoreCounts: null, status: null });
         glance.innerHTML = `<div class="glance-card glance-muted"><span>Could not load today's summary.</span></div>`;

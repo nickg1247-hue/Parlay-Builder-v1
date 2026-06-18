@@ -1,0 +1,39 @@
+{
+  "version": "2026-06-19",
+  "title": "What's new on NTG Sports",
+  "summary": [
+    "College football (CFB) — schedules, game pages, and model picks for FBS games.",
+    "MLB player props — browse props on game pages or open the Props tab next to CFB.",
+    "Sandbox — advanced boards and the model lab live behind sign-in (top-right link).",
+    "Home page — sport tabs no longer highlight MLB until you pick a league."
+  ],
+  "history": [
+    {
+      "date": "2026-06-19",
+      "title": "Navigation & updates",
+      "items": [
+        "Sport tabs (MLB, NBA, CFB, Props) sit below the header; Sandbox and Updates are top-right only.",
+        "First-visit popup explains recent changes; use Updates anytime for the full list.",
+        "Home no longer looks like the MLB section is already selected."
+      ]
+    },
+    {
+      "date": "2026-06-17",
+      "title": "CFB & player props",
+      "items": [
+        "CFB slate with live scores, game detail pages, and model leans.",
+        "MLB player props explorer and prop parlay slip on game pages.",
+        "Protected Sandbox for advanced MLB/NBA boards and the model lab."
+      ]
+    },
+    {
+      "date": "2026-06-10",
+      "title": "Site launch polish",
+      "items": [
+        "Sign-in for advanced boards and the model lab on the live site.",
+        "Hourly odds refresh and clearer “last updated” status on the home page.",
+        "MLB totals (O/U) model support on the advanced board."
+      ]
+    }
+  ]
+}

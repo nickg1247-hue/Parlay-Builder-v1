@@ -38,7 +38,14 @@ from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
 from app.services.game_insights import build_game_insights
-from app.services.props_mlb import build_daily_top_props, build_game_props, evaluate_prop_parlay
+from app.services.props_mlb import (
+    build_daily_top_props,
+    build_game_props,
+    evaluate_prop_parlay,
+    list_prop_bookmakers,
+    list_prop_market_types,
+    search_daily_props,
+)
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.cfb_daily_board import build_cfb_daily_board
@@ -487,14 +494,89 @@ async def mlb_game_props(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
+    bookmaker: str | None = Query(
+        None,
+        description="Sportsbook key (consensus = median across books).",
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    payload = build_game_props(game_id, game_date=game_date, refresh=refresh)
+    payload = build_game_props(
+        game_id,
+        game_date=game_date,
+        refresh=refresh,
+        bookmaker=bookmaker,
+    )
     if payload is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return payload
+
+
+@app.get("/api/props/bookmakers")
+async def prop_bookmakers():
+    return {"bookmakers": list_prop_bookmakers()}
+
+
+@app.get("/api/props/markets")
+async def prop_markets():
+    return {"markets": list_prop_market_types()}
+
+
+@app.get("/api/props/search")
+async def props_search(
+    date_param: str | None = Query(None, alias="date"),
+    bookmaker: str | None = Query(None),
+    market_type: str | None = Query(None),
+    min_odds: int | None = Query(
+        None,
+        description="Minimum American odds on the recommended side (e.g. -200).",
+    ),
+    line_kind: str | None = Query(
+        None,
+        description="main, alternate, or both (default both).",
+    ),
+    line_value: float | None = Query(
+        None,
+        description="Exact line value filter (e.g. 2.0).",
+    ),
+    actionable_only: bool = Query(False),
+    include_alternates: bool = Query(False),
+    limit: int = Query(100, ge=1, le=200),
+    scan: bool = Query(False),
+    refresh: bool = Query(False),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    result = search_daily_props(
+        game_date,
+        bookmaker=bookmaker,
+        market_type=market_type,
+        min_odds=min_odds,
+        line_kind=line_kind,
+        line_value=line_value,
+        actionable_only=actionable_only,
+        limit=limit,
+        scan=scan,
+        refresh=refresh,
+        include_alternates=include_alternates,
+    )
+    if not result.get("props") and not scan and not refresh:
+        result = search_daily_props(
+            game_date,
+            bookmaker=bookmaker,
+            market_type=market_type,
+            min_odds=min_odds,
+            line_kind=line_kind,
+            line_value=line_value,
+            actionable_only=actionable_only,
+            limit=limit,
+            scan=True,
+            include_alternates=include_alternates,
+        )
+        result["auto_scanned"] = True
+    return result
 
 
 @app.post("/api/parlay/props/eval")
@@ -511,13 +593,32 @@ async def daily_top_props(
         False,
         description="Scan slate for props (uses cache; fetches missing games up to cap).",
     ),
+    refresh: bool = Query(
+        False,
+        description="Force refresh props for the selected sportsbook.",
+    ),
+    bookmaker: str | None = Query(
+        None,
+        description="Sportsbook key (consensus = median across books).",
+    ),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    result = build_daily_top_props(game_date, limit=limit, scan=scan)
-    if not result.get("top_props") and not scan:
-        result = build_daily_top_props(game_date, limit=limit, scan=True)
+    result = build_daily_top_props(
+        game_date,
+        limit=limit,
+        scan=scan,
+        refresh=refresh,
+        bookmaker=bookmaker,
+    )
+    if not result.get("top_props") and not scan and not refresh:
+        result = build_daily_top_props(
+            game_date,
+            limit=limit,
+            scan=True,
+            bookmaker=bookmaker,
+        )
         result["auto_scanned"] = True
     return result
 
@@ -678,6 +779,11 @@ async def sandbox_page():
     return FileResponse(STATIC_DIR / "sandbox.html")
 
 
+@app.get("/updates")
+async def updates_page():
+    return FileResponse(STATIC_DIR / "updates.html")
+
+
 @app.get("/nba/board")
 async def nba_board():
     return FileResponse(STATIC_DIR / "nba.html")
@@ -686,6 +792,11 @@ async def nba_board():
 @app.get("/nba/board/factors")
 async def nba_board_factors():
     return FileResponse(STATIC_DIR / "nba_factors.html")
+
+
+@app.get("/mlb/props")
+async def mlb_props_page():
+    return _html_page("mlb_props.html")
 
 
 @app.get("/mlb/board")

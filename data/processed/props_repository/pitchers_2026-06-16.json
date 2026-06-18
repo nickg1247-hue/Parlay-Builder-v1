@@ -1,0 +1,80 @@
+{
+  "date": "2026-06-16",
+  "games": [
+    {
+      "game_id": "823451",
+      "away": "Tyler Phillips",
+      "home": "Jes\u00fas Luzardo"
+    },
+    {
+      "game_id": "822723",
+      "away": "Michael Wacha",
+      "home": "Foster Griffin"
+    },
+    {
+      "game_id": "824750",
+      "away": "Dylan Cease",
+      "home": "Payton Tolle"
+    },
+    {
+      "game_id": "823535",
+      "away": "Davis Martin",
+      "home": "Gerrit Cole"
+    },
+    {
+      "game_id": "824504",
+      "away": "Kodai Senga",
+      "home": "Brady Singer"
+    },
+    {
+      "game_id": "824912",
+      "away": "Adrian Houser",
+      "home": "Grant Holmes"
+    },
+    {
+      "game_id": "823775",
+      "away": "Slade Cecconi",
+      "home": "Robert Gasser"
+    },
+    {
+      "game_id": "823045",
+      "away": "Michael King",
+      "home": "Andre Pallante"
+    },
+    {
+      "game_id": "824667",
+      "away": "Ryan Feltner",
+      "home": "Edward Cabrera"
+    },
+    {
+      "game_id": "822888",
+      "away": "Zebby Matthews",
+      "home": "Kumar Rocker"
+    },
+    {
+      "game_id": "824182",
+      "away": "Framber Valdez",
+      "home": "Hunter Brown"
+    },
+    {
+      "game_id": "825070",
+      "away": "Reid Detmers",
+      "home": "Merrill Kelly"
+    },
+    {
+      "game_id": "824991",
+      "away": "Mitch Keller",
+      "home": "Jack Perkins"
+    },
+    {
+      "game_id": "823128",
+      "away": "Brandon Young",
+      "home": "Logan Gilbert"
+    },
+    {
+      "game_id": "823939",
+      "away": "Drew Rasmussen",
+      "home": "Justin Wrobleski"
+    }
+  ]
+}

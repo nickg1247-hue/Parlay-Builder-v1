@@ -28,9 +28,10 @@ def test_home_page():
     assert response.status_code == 200
     text = response.text
     assert "NTG Sports" in text
-    assert 'href="/mlb"' in text
-    assert 'href="/nba"' in text
-    assert 'href="/mlb/board"' not in text
+    assert 'class="sport-pills"' in text
+    assert 'Player props' not in text.split('app-nav-links')[1].split('sport-pills')[0]
+    assert 'class="active">MLB' not in text
+    assert 'sport-pill-active' not in text
     assert 'id="today-glance"' in text
     assert 'id="best-bets"' in text
     assert 'id="best-props"' in text
@@ -124,7 +125,8 @@ def test_nba_slate_page():
     text = response.text
     assert "NBA" in text
     assert "/api/scores/today" in text
-    assert 'href="/mlb"' in text
+    assert 'class="sport-pills"' in text
+    assert "app.js" in text
     assert 'href="/nba/board"' not in text
 
 
@@ -151,6 +153,23 @@ def test_sandbox_hub_page(auth_env):
     assert 'href="/mlb/lab"' in text
     assert 'href="/nba/board"' in text
     assert 'href="/nba/board/factors"' in text
+
+
+def test_updates_page():
+    response = client.get("/updates")
+    assert response.status_code == 200
+    text = response.text
+    assert "Site updates" in text
+    assert "site_updates.json" in text or "updates-list" in text
+    assert "app.js" in text
+
+
+def test_site_updates_json():
+    response = client.get("/static/site_updates.json")
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("version")
+    assert isinstance(data.get("history"), list)
 
 
 def test_nba_game_page():

@@ -377,17 +377,10 @@
 
 
   function propsUrl(refresh) {
-
-    const params = new URLSearchParams();
-
+    const params = buildPropBookQuery({ refresh: !!refresh });
     if (dateParam) params.set("date", dateParam);
-
-    if (refresh) params.set("refresh", "true");
-
     const q = params.toString();
-
     return `/api/games/mlb/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`;
-
   }
 
 
@@ -452,6 +445,10 @@
 
     const all = data.props || [];
 
+    const bookLabel = data.bookmaker_label
+      ? `<p class="props-book-label">Lines: ${data.bookmaker_label}</p>`
+      : "";
+
     const topBlock = top.length
 
       ? `<div class="props-block">
@@ -508,6 +505,8 @@
     bodyEl.classList.remove("hidden");
 
     bodyEl.innerHTML = `
+
+      ${bookLabel}
 
       ${topBlock}
 
@@ -603,14 +602,9 @@
 
     });
 
-    if (refreshBtn && data.source) {
-
-      refreshBtn.classList.remove("hidden");
-
+    if (refreshBtn) {
       refreshBtn.onclick = () => loadProps(true);
-
     }
-
   }
 
 
@@ -1106,6 +1100,10 @@
           errEl.classList.remove("hidden");
           errEl.textContent = e.message || "Could not load game insights";
         }
+      }
+      const propBookSelect = document.getElementById("prop-book-select");
+      if (typeof initPropBookSelect === "function") {
+        await initPropBookSelect(propBookSelect, () => loadProps(false));
       }
       try {
         await loadProps(false);

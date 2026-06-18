@@ -1,0 +1,17 @@
+{
+  "game_id": "823451",
+  "date": "2026-06-16",
+  "matchup": "Miami Marlins @ Philadelphia Phillies",
+  "home_team": "Philadelphia Phillies",
+  "away_team": "Miami Marlins",
+  "props": [],
+  "top_picks": [],
+  "fetched_at": "2026-06-17T01:02:32.986339+00:00",
+  "source": "the_odds_api_live",
+  "status": "empty",
+  "message": "No player prop markets returned",
+  "markets_requested": "batter_hits,batter_total_bases,batter_runs_scored,batter_home_runs,batter_rbis,pitcher_strikeouts",
+  "bookmaker": "draftkings",
+  "bookmaker_label": "DraftKings",
+  "event_id": "551b1013a4b92bb548f0b5287c15e7d1"
+}

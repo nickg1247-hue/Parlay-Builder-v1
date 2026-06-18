@@ -23,10 +23,18 @@ MARKETS_H2H_AND_TOTALS = f"{MARKET_H2H},{MARKET_TOTALS}"
 MARKETS_H2H_TOTALS_SPREADS = f"{MARKET_H2H},{MARKET_TOTALS},{MARKET_SPREADS}"
 
 # Core MLB player prop markets (one event-odds request; each market ≈ 1 API credit).
+# batter_runs_scored omitted by default — books post runs O/U for far fewer players than
+# hits/TB/HR/RBI/K. Set PROP_INCLUDE_RUNS=true or pass markets=…,batter_runs_scored to enable.
 DEFAULT_MLB_PROP_MARKETS = (
-    "batter_hits,batter_total_bases,batter_runs_scored,"
+    "batter_hits,batter_total_bases,"
     "batter_home_runs,batter_rbis,pitcher_strikeouts"
 )
+ALTERNATE_MLB_PROP_MARKETS = (
+    "batter_hits_alternate,batter_total_bases_alternate,"
+    "batter_home_runs_alternate,batter_rbis_alternate,pitcher_strikeouts_alternate"
+)
+OPTIONAL_MLB_PROP_MARKETS = "batter_runs_scored"
+DEFAULT_MLB_PROP_REGIONS = os.getenv("ODDS_PROP_REGIONS", "us,us2")
 
 
 def clear_odds_cache() -> None:
@@ -117,8 +125,9 @@ def fetch_mlb_events(
 def fetch_mlb_event_odds(
     event_id: str,
     api_key: str | None = None,
-    regions: str = "us",
+    regions: str = DEFAULT_MLB_PROP_REGIONS,
     markets: str = DEFAULT_MLB_PROP_MARKETS,
+    bookmakers: str | None = None,
 ) -> dict[str, Any] | None:
     """Player props and other markets for a single MLB event."""
     if not live_odds_enabled() and api_key is None:
@@ -133,6 +142,8 @@ def fetch_mlb_event_odds(
         "markets": markets,
         "oddsFormat": "american",
     }
+    if bookmakers:
+        params["bookmakers"] = bookmakers
     with httpx.Client(timeout=30.0) as client:
         response = client.get(url, params=params)
         response.raise_for_status()

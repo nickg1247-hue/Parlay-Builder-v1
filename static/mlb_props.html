@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB Player Props — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260618a">
+  <link rel="stylesheet" href="/static/app.css?v=20260618a">
+</head>
+<body class="slate-mlb">
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div class="props-explorer-head">
+        <div>
+          <h1>MLB player props</h1>
+          <p class="section-sub">Filter by sportsbook, market, odds, and line type. Strength and why explain each pick.</p>
+        </div>
+        <button type="button" id="props-search-refresh" class="home-props-fill-btn">Refresh lines</button>
+      </div>
+
+      <form id="props-search-form" class="props-search-filters" aria-label="Prop search filters">
+        <label class="props-filter-field">
+          <span>Sportsbook</span>
+          <select id="filter-book" class="home-props-select"></select>
+        </label>
+        <label class="props-filter-field">
+          <span>Prop type</span>
+          <select id="filter-market" class="home-props-select">
+            <option value="">All types</option>
+          </select>
+        </label>
+        <label class="props-filter-field">
+          <span>Min odds (American)</span>
+          <input id="filter-min-odds" type="number" step="1" placeholder="-200" class="home-props-select props-filter-input" />
+        </label>
+        <label class="props-filter-field">
+          <span>Line type</span>
+          <select id="filter-line-kind" class="home-props-select">
+            <option value="both">Main + alternate</option>
+            <option value="main" selected>Main line only</option>
+            <option value="alternate">Alternate lines only</option>
+          </select>
+        </label>
+        <label class="props-filter-field">
+          <span>Exact line (optional)</span>
+          <input id="filter-line-value" type="number" step="0.5" placeholder="e.g. 2.0" class="home-props-select props-filter-input" />
+        </label>
+        <label class="props-filter-check">
+          <input id="filter-actionable" type="checkbox" />
+          Actionable picks only
+        </label>
+        <label class="props-filter-check">
+          <input id="filter-alternates" type="checkbox" />
+          Include alternate lines (uses extra API credits on refresh)
+        </label>
+        <button type="submit" class="home-props-fill-btn">Apply filters</button>
+      </form>
+
+      <p id="props-search-meta" class="props-search-meta">Loading props…</p>
+      <div id="props-search-results" class="props-explorer-list"></div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260618b"></script>
+  <script src="/static/mlb_props.js?v=20260618a"></script>
+</body>
+</html>

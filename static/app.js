@@ -1094,6 +1094,7 @@ function renderBestProps(el, topProps, options = {}) {
       const line = `${p.market_label || p.market_type}: ${side} ${p.line}`;
       const form = propHitRatesHtml(p, side);
       const strength = lineStrengthHtml(p);
+      const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
       const insight = p.line_insight
         ? `<span class="best-bet-insight">${p.line_insight}</span>`
         : "";
@@ -1102,6 +1103,7 @@ function renderBestProps(el, topProps, options = {}) {
         <a class="best-prop-card-link" href="${gameHref}">
           <span class="best-bet-team">${p.player}</span>
           <span class="best-bet-meta">${p.matchup || ""}</span>
+          <span class="best-bet-meta best-prop-book">${bookLabel}</span>
           <span class="best-bet-meta">${line}</span>
           <span class="best-bet-edge">${odds}</span>
           <span class="best-bet-form">${form}</span>
@@ -1143,12 +1145,193 @@ function selectUniquePlayerPropLegs(props, count) {
     const playerKey = propSlipPlayerKey(p.player);
     if (!playerKey || usedPlayers.has(playerKey)) continue;
     const leg = propSlipLegFromProp(p);
-    if (leg.american_odds == null) continue;
+    if (!leg || leg.american_odds == null) continue;
     legs.push(leg);
     usedPlayers.add(playerKey);
   }
   return legs;
 }
+
+function renderPropExplorerList(el, props, options = {}) {
+  if (!el) return;
+  const rows = props || [];
+  if (!rows.length) {
+    el.innerHTML = `
+      <div class="best-bets-empty-card">
+        ${emptyStateIcon("no-bets")}
+        <p>${options.emptyMessage || "No props match your filters."}</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = rows
+    .map((p, i) => {
+      const side = p.recommended_side || "over";
+      const odds = fmtAmericanOdds(p.recommended_odds ?? (side === "over" ? p.over_odds : p.under_odds));
+      const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
+      const form = propHitRatesHtml(p, side);
+      const strength = lineStrengthHtml(p);
+      const lineKind = p.line_kind === "alternate" ? "Alternate line" : "Main line";
+      const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
+      const factors = (p.factors || [])
+        .slice(0, 4)
+        .map((f) => `<li>${f}</li>`)
+        .join("");
+      const why = p.line_insight
+        ? `<p class="prop-explorer-why"><strong>Why:</strong> ${p.line_insight}</p>`
+        : "";
+      const score = p.score != null ? Math.round(p.score) : "—";
+      const actionable = p.actionable
+        ? ""
+        : `<span class="prop-skip-tag">${p.actionable_reason || "Not recommended"}</span>`;
+      return `
+      <article class="prop-explorer-card ${p.actionable ? "" : "prop-explorer-card--skip"}">
+        <div class="prop-explorer-head">
+          <div>
+            <h3 class="prop-explorer-player">${p.player}</h3>
+            <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}</p>
+          </div>
+          <span class="prop-explorer-score" title="Form score">${score}</span>
+        </div>
+        <p class="prop-explorer-line">${p.market_label || p.market_type}: ${side} ${p.line} (${odds}) ${actionable}</p>
+        <p class="prop-explorer-tags">
+          <span class="prop-line-tag">${lineKind}</span>
+          ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}
+        </p>
+        <p class="prop-explorer-form">${form}</p>
+        ${why}
+        ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}
+        <div class="prop-explorer-actions">
+          <a class="btn-ghost" href="${gameHref}">Game</a>
+          ${
+            p.actionable && p.recommended_odds != null
+              ? `<button type="button" class="home-prop-add-btn" data-add-explorer-prop="${i}">+ Add to slip</button>`
+              : ""
+          }
+        </div>
+      </article>`;
+    })
+    .join("");
+
+  el.querySelectorAll("[data-add-explorer-prop]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.addExplorerProp);
+      const prop = rows[idx];
+      const leg = propSlipLegFromProp(prop);
+      if (!leg || !window.addPropToSlip) return;
+      window.addPropToSlip(leg);
+      btn.textContent = "Added";
+    });
+  });
+}
+
+window.renderPropExplorerList = renderPropExplorerList;
+
+function buildPropSearchQuery(filters = {}) {
+  const params = new URLSearchParams();
+  params.set("limit", String(filters.limit || 100));
+  if (filters.bookmaker) params.set("bookmaker", filters.bookmaker);
+  if (filters.market_type) params.set("market_type", filters.market_type);
+  if (filters.min_odds != null && filters.min_odds !== "") {
+    params.set("min_odds", String(filters.min_odds));
+  }
+  if (filters.line_kind && filters.line_kind !== "both") {
+    params.set("line_kind", filters.line_kind);
+  }
+  if (filters.line_value != null && filters.line_value !== "") {
+    params.set("line_value", String(filters.line_value));
+  }
+  if (filters.actionable_only) params.set("actionable_only", "true");
+  if (filters.include_alternates) params.set("include_alternates", "true");
+  if (filters.scan) params.set("scan", "true");
+  if (filters.refresh) params.set("refresh", "true");
+  if (filters.date) params.set("date", filters.date);
+  return params;
+}
+
+window.buildPropSearchQuery = buildPropSearchQuery;
+
+const PROP_BOOK_STORAGE_KEY = "pb-prop-bookmaker";
+const PROP_BOOK_ALIASES = {
+  caesars: "williamhill_us",
+  williamhill: "williamhill_us",
+  thescore: "espnbet",
+  pointsbetus: "consensus",
+  pointsbet: "consensus",
+};
+const DEFAULT_PROP_BOOKMAKERS = [
+  { key: "consensus", label: "Best line (median)" },
+  { key: "draftkings", label: "DraftKings" },
+  { key: "fanduel", label: "FanDuel" },
+  { key: "betmgm", label: "BetMGM" },
+  { key: "betrivers", label: "BetRivers" },
+  { key: "williamhill_us", label: "Caesars" },
+  { key: "bovada", label: "Bovada" },
+  { key: "betonlineag", label: "BetOnline" },
+  { key: "espnbet", label: "theScore Bet" },
+  { key: "fanatics", label: "Fanatics" },
+];
+
+let propBookmakersCache = null;
+
+async function loadPropBookmakers() {
+  if (propBookmakersCache) return propBookmakersCache;
+  try {
+    const data = await fetchJSON("/api/props/bookmakers");
+    propBookmakersCache = data.bookmakers || DEFAULT_PROP_BOOKMAKERS;
+  } catch (_) {
+    propBookmakersCache = DEFAULT_PROP_BOOKMAKERS;
+  }
+  return propBookmakersCache;
+}
+
+function getSelectedPropBookmaker() {
+  let stored = localStorage.getItem(PROP_BOOK_STORAGE_KEY);
+  if (stored && PROP_BOOK_ALIASES[stored]) {
+    stored = PROP_BOOK_ALIASES[stored];
+    setSelectedPropBookmaker(stored);
+  }
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  return stored && list.some((b) => b.key === stored) ? stored : "consensus";
+}
+
+function setSelectedPropBookmaker(key) {
+  localStorage.setItem(PROP_BOOK_STORAGE_KEY, key);
+}
+
+async function initPropBookSelect(selectEl, onChange) {
+  if (!selectEl) return;
+  await loadPropBookmakers();
+  const current = getSelectedPropBookmaker();
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  selectEl.innerHTML = list
+    .map((b) => {
+      const suffix = b.has_props === false ? " (no lines yet)" : "";
+      return `<option value="${b.key}"${b.key === current ? " selected" : ""}${b.has_props === false ? " disabled" : ""}>${b.label}${suffix}</option>`;
+    })
+    .join("");
+  if (!list.some((b) => b.key === current && b.has_props !== false)) {
+    setSelectedPropBookmaker("consensus");
+    selectEl.value = "consensus";
+  }
+  selectEl.addEventListener("change", () => {
+    setSelectedPropBookmaker(selectEl.value);
+    if (onChange) onChange();
+  });
+}
+
+function buildPropBookQuery(extra = {}) {
+  const params = new URLSearchParams();
+  params.set("bookmaker", getSelectedPropBookmaker());
+  if (extra.limit != null) params.set("limit", String(extra.limit));
+  if (extra.scan) params.set("scan", "true");
+  if (extra.refresh) params.set("refresh", "true");
+  if (extra.date) params.set("date", extra.date);
+  return params;
+}
+
+window.getSelectedPropBookmaker = getSelectedPropBookmaker;
+window.initPropBookSelect = initPropBookSelect;
+window.buildPropBookQuery = buildPropBookQuery;
 
 function populatePropSlipFromProps(props, count, { replace = true } = {}) {
   const legs = selectUniquePlayerPropLegs(props, count);
@@ -1351,19 +1534,190 @@ function shouldPlayNTGSplash() {
 }
 
 function initSandboxNav() {
-  const path = window.location.pathname || "";
-  document.querySelectorAll(".app-nav-links").forEach((nav) => {
-    if (nav.querySelector("[data-nav-sandbox]")) return;
-    const link = document.createElement("a");
-    link.href = "/sandbox";
-    link.dataset.navSandbox = "1";
-    link.textContent = "Sandbox";
-    link.classList.add("nav-sandbox");
-    if (path === "/sandbox") {
-      link.classList.add("active");
+  initSiteChrome();
+}
+
+const UPDATES_DISMISS_KEY = "pb_updates_dismissed_version";
+const UPDATES_SESSION_KEY = "pb_updates_session_dismissed";
+
+async function fetchSiteUpdates() {
+  const res = await fetch("/static/site_updates.json", { cache: "no-store" });
+  if (!res.ok) throw new Error("updates fetch failed");
+  return res.json();
+}
+
+function renderUpdatesHistory(el, data) {
+  if (!el || !data) return;
+  const entries = data.history || [];
+  if (!entries.length) {
+    el.innerHTML = "<p class=\"updates-loading\">No updates posted yet.</p>";
+    return;
+  }
+  el.innerHTML = entries
+    .map(
+      (entry) => `
+    <article class="updates-entry">
+      <h2>${entry.title || "Update"} <span class="updates-date">${entry.date || ""}</span></h2>
+      <ul>${(entry.items || []).map((item) => `<li>${item}</li>`).join("")}</ul>
+    </article>`
+    )
+    .join("");
+}
+
+function sportPillIsActive(href, path) {
+  if (href === "/mlb") {
+    return path === "/mlb" || path.startsWith("/mlb/game/");
+  }
+  if (href === "/nba") {
+    return path === "/nba" || path.startsWith("/nba/game/");
+  }
+  if (href === "/cfb") {
+    return path === "/cfb" || (path.startsWith("/cfb/") && !path.startsWith("/cfb/board"));
+  }
+  if (href === "/mlb/props") {
+    return path === "/mlb/props" || path.startsWith("/mlb/props/");
+  }
+  return path === href || path.startsWith(`${href}/`);
+}
+
+function renderSportPills(container, path) {
+  const specs = [
+    { href: "/mlb", label: "MLB" },
+    { href: "/nba", label: "NBA" },
+    { disabled: true, label: "NFL", title: "Coming soon" },
+    { disabled: true, label: "NHL", title: "Coming soon" },
+    { href: "/cfb", label: "CFB" },
+    { href: "/mlb/props", label: "Player props" },
+  ];
+  container.replaceChildren();
+  specs.forEach((spec) => {
+    if (spec.disabled) {
+      const span = document.createElement("span");
+      span.className = "sport-pill sport-pill-disabled";
+      span.title = spec.title || "Coming soon";
+      span.textContent = spec.label;
+      container.appendChild(span);
+      return;
     }
-    nav.appendChild(link);
+    const link = document.createElement("a");
+    link.className = "sport-pill";
+    link.href = spec.href;
+    link.textContent = spec.label;
+    if (sportPillIsActive(spec.href, path)) {
+      link.classList.add("sport-pill-active");
+    }
+    container.appendChild(link);
   });
+}
+
+function initUtilityNav(nav, path) {
+  nav.replaceChildren();
+  nav.setAttribute("aria-label", "Site tools");
+  nav.classList.add("app-nav-utility");
+
+  const updatesLink = document.createElement("a");
+  updatesLink.href = "/updates";
+  updatesLink.textContent = "Updates";
+  if (path === "/updates") updatesLink.classList.add("active");
+  nav.appendChild(updatesLink);
+
+  const sandboxLink = document.createElement("a");
+  sandboxLink.href = "/sandbox";
+  sandboxLink.textContent = "Sandbox";
+  sandboxLink.classList.add("nav-sandbox");
+  sandboxLink.dataset.navSandbox = "1";
+  if (path === "/sandbox") sandboxLink.classList.add("active");
+  nav.appendChild(sandboxLink);
+}
+
+function initSiteChrome() {
+  const path = window.location.pathname || "/";
+  document.querySelectorAll(".app-topbar").forEach((topbar) => {
+    const navRow = topbar.querySelector(".app-nav-row");
+    if (!navRow) return;
+
+    let nav = navRow.querySelector(".app-nav-links");
+    if (!nav) {
+      nav = document.createElement("nav");
+      nav.className = "app-nav-links";
+      navRow.appendChild(nav);
+    }
+    initUtilityNav(nav, path);
+
+    const pills = topbar.querySelector(".sport-pills");
+    if (pills) {
+      renderSportPills(pills, path);
+    }
+  });
+}
+
+function closeUpdatesModal(overlay) {
+  overlay.classList.add("hidden");
+  overlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("updates-modal-open");
+}
+
+async function initUpdatesModal() {
+  const path = window.location.pathname || "/";
+  if (path === "/login" || path === "/updates") return;
+
+  let data;
+  try {
+    data = await fetchSiteUpdates();
+  } catch {
+    return;
+  }
+  if (!data?.version) return;
+
+  const dismissed = localStorage.getItem(UPDATES_DISMISS_KEY);
+  if (dismissed === data.version) return;
+  if (sessionStorage.getItem(UPDATES_SESSION_KEY) === data.version) return;
+
+  let overlay = document.getElementById("site-updates-modal");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "site-updates-modal";
+    overlay.className = "site-updates-modal";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "site-updates-title");
+    overlay.innerHTML = `
+      <div class="site-updates-dialog">
+        <h2 id="site-updates-title"></h2>
+        <ul id="site-updates-summary"></ul>
+        <label class="site-updates-dismiss">
+          <input type="checkbox" id="site-updates-hide" />
+          Don't show again for this update
+        </label>
+        <div class="site-updates-actions">
+          <a href="/updates" class="site-updates-more">View all updates</a>
+          <button type="button" class="home-props-fill-btn" id="site-updates-ok">OK</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeUpdatesModal(overlay);
+    });
+    document.getElementById("site-updates-ok")?.addEventListener("click", () => {
+      const hide = document.getElementById("site-updates-hide")?.checked;
+      if (hide) {
+        localStorage.setItem(UPDATES_DISMISS_KEY, data.version);
+      } else {
+        sessionStorage.setItem(UPDATES_SESSION_KEY, data.version);
+      }
+      closeUpdatesModal(overlay);
+    });
+  }
+
+  overlay.querySelector("#site-updates-title").textContent = data.title || "What's new";
+  const summaryEl = overlay.querySelector("#site-updates-summary");
+  summaryEl.innerHTML = (data.summary || [])
+    .map((line) => `<li>${line}</li>`)
+    .join("");
+  overlay.classList.remove("hidden");
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("updates-modal-open");
 }
 
 const PROP_SLIP_KEY = "pb_prop_slip";
@@ -1548,7 +1902,8 @@ function showBuildBadge() {
 }
 
 function bootNTGSplash() {
-  initSandboxNav();
+  initSiteChrome();
+  initUpdatesModal().catch(() => {});
   initPropSlipUi();
   showBuildBadge();
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
