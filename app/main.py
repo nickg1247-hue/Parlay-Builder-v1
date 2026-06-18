@@ -26,6 +26,10 @@ from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
+from app.services.prop_pick_tracker import (
+    backfill_prop_results,
+    summarize_prop_tracker,
+)
 from app.services.nba_custom_weights import (
     default_weights_payload,
     load_custom_weights_config,
@@ -37,6 +41,10 @@ from app.odds.odds_repository import get_today_snapshot
 from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
+from app.services.prop_tracker_refresh import (
+    prop_tracker_auto_enabled,
+    run_prop_tracker_refresh,
+)
 from app.services.game_insights import build_game_insights
 from app.services.props_mlb import (
     build_daily_top_props,
@@ -98,19 +106,24 @@ class LabConfirmRequest(BaseModel):
 logger = logging.getLogger(__name__)
 
 
-async def _hourly_odds_loop() -> None:
+async def _maintenance_loop() -> None:
+    """Hourly odds refresh + prop tracker grading while the server is up."""
+    await asyncio.sleep(30)
     while True:
         try:
-            run_hourly_odds_refresh()
+            if hourly_refresh_enabled() and live_odds_enabled():
+                run_hourly_odds_refresh()
+            if prop_tracker_auto_enabled():
+                run_prop_tracker_refresh()
         except Exception as exc:
-            logger.warning("In-app hourly odds refresh error: %s", exc)
+            logger.warning("Background maintenance error: %s", exc)
         await asyncio.sleep(3600)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    hourly_task: asyncio.Task | None = None
+    maintenance_task: asyncio.Task | None = None
     try:
         import pandas as pd
 
@@ -122,9 +135,13 @@ async def lifespan(app: FastAPI):
         get_runs_tracker_before(today)
     except Exception:
         pass
-    if hourly_refresh_enabled() and live_odds_enabled():
-        hourly_task = asyncio.create_task(_hourly_odds_loop())
-        logger.info("Odds hourly refresh scheduler started (3600s)")
+    if (hourly_refresh_enabled() and live_odds_enabled()) or prop_tracker_auto_enabled():
+        maintenance_task = asyncio.create_task(_maintenance_loop())
+        logger.info(
+            "Background maintenance started (3600s): odds=%s props=%s",
+            hourly_refresh_enabled() and live_odds_enabled(),
+            prop_tracker_auto_enabled(),
+        )
     if auth_enabled():
         if auth_misconfigured():
             logger.error(
@@ -134,10 +151,10 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("Admin auth enabled for boards and model lab")
     yield
-    if hourly_task is not None:
-        hourly_task.cancel()
+    if maintenance_task is not None:
+        maintenance_task.cancel()
         try:
-            await hourly_task
+            await maintenance_task
         except asyncio.CancelledError:
             pass
 
@@ -287,6 +304,21 @@ async def clv_summary(
 
         return summarize_nba_clv(days=days)
     return summarize_mlb_clv(days=days)
+
+
+@app.get("/api/props/tracker/summary")
+async def props_tracker_summary(
+    days: int = Query(30, ge=1, le=365),
+):
+    return summarize_prop_tracker(days=days)
+
+
+@app.post("/api/props/tracker/backfill")
+async def props_tracker_backfill(
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    return backfill_prop_results(game_date)
 
 
 @app.get("/api/nba/daily")

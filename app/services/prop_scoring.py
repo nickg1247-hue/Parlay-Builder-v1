@@ -166,6 +166,43 @@ def clear_prop_scoring_cache() -> None:
     _search_player_id.cache_clear()
     _player_team_id.cache_clear()
     _season_game_log_values.cache_clear()
+    player_stat_on_date.cache_clear()
+
+
+@lru_cache(maxsize=512)
+def player_stat_on_date(
+    player_name: str,
+    market_type: str,
+    season: int,
+    game_date_iso: str,
+) -> float | None:
+    """Actual stat for one player on a calendar date (None if DNP or unknown market)."""
+    mapping = MARKET_STAT.get(market_type)
+    if mapping is None:
+        return None
+    player_id = _search_player_id(player_name)
+    if player_id is None:
+        return None
+    group, stat_key = mapping
+    url = f"{MLB_STATS_BASE}/people/{player_id}/stats"
+    params = {"stats": "gameLog", "group": group, "season": season}
+    try:
+        response = _http_client_get().get(url, params=params)
+        response.raise_for_status()
+        payload = response.json()
+    except (httpx.HTTPError, ValueError):
+        return None
+
+    stats_blocks = payload.get("stats") or []
+    if not stats_blocks:
+        return None
+    for split in stats_blocks[0].get("splits") or []:
+        raw_date = split.get("date") or (split.get("game") or {}).get("gameDate") or ""
+        if str(raw_date)[:10] != game_date_iso:
+            continue
+        stat = split.get("stat") or {}
+        return _stat_value(group, stat_key, stat)
+    return None
 
 
 @lru_cache(maxsize=256)

@@ -1019,6 +1019,7 @@ def _daily_props_payload(
     hint: str | None = None,
     auto_scanned: bool = False,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+    log_tracker: bool = True,
 ) -> dict[str, Any]:
     from app.odds.live_odds import live_odds_enabled
 
@@ -1044,6 +1045,15 @@ def _daily_props_payload(
     }
     if hint:
         out["hint"] = hint
+    if log_tracker and picks and live_odds_enabled():
+        from app.services.prop_pick_tracker import log_offered_props
+
+        logged = log_offered_props(
+            picks,
+            game_date.isoformat(),
+            source=f"daily_{source}",
+        )
+        out["props_logged_count"] = len(logged)
     return out
 
 

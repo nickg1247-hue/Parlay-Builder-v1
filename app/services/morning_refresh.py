@@ -99,6 +99,7 @@ def get_refresh_status() -> dict[str, Any]:
         hourly_refresh_enabled,
         load_hourly_refresh_status,
     )
+    from app.services.prop_tracker_refresh import load_prop_tracker_refresh_status
 
     snap = get_today_snapshot()
     status["odds_fetched_at"] = snap.get("fetched_at")
@@ -114,6 +115,10 @@ def get_refresh_status() -> dict[str, Any]:
     props_meta = get_props_refresh_meta(date.today())
     status["props_cached_at"] = props_meta.get("cached_at")
     status["props_actionable_count"] = props_meta.get("total_actionable", 0)
+
+    prop_tracker = load_prop_tracker_refresh_status()
+    if prop_tracker is not None:
+        status["prop_tracker_last"] = prop_tracker
 
     display_at, display_source = _display_refresh_timestamp(status)
     status["display_updated_at"] = display_at

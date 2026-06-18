@@ -1175,6 +1175,44 @@ body.slate-mlb .app-main > * {
   color: var(--muted);
 }
 
+.props-tracker-panel {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 0.95rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.props-tracker-note {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.props-tracker-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.props-tracker-stat {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.props-tracker-stat strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.15rem;
+}
+
+.props-tracker-stat span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 .props-explorer-list {
   display: grid;
   gap: 0.75rem;
