@@ -53,7 +53,29 @@ FAKE_EVENT = {
                     ],
                 },
             ],
-        }
+        },
+        {
+            "key": "fanduel",
+            "markets": [
+                {
+                    "key": "batter_hits",
+                    "outcomes": [
+                        {
+                            "name": "Over",
+                            "description": "Aaron Judge",
+                            "price": -120,
+                            "point": 1.5,
+                        },
+                        {
+                            "name": "Under",
+                            "description": "Aaron Judge",
+                            "price": -100,
+                            "point": 1.5,
+                        },
+                    ],
+                },
+            ],
+        },
     ],
 }
 
@@ -84,7 +106,8 @@ def test_parse_event_props_single_book():
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
     assert len(rows) == 2
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="fanduel")
-    assert rows == []
+    assert len(rows) == 1
+    assert rows[0]["over_odds"] == -120
 
 
 def test_normalize_bookmaker_aliases():
@@ -94,7 +117,7 @@ def test_normalize_bookmaker_aliases():
 
 
 def test_books_with_prop_markets():
-    assert props_mlb._books_with_prop_markets(FAKE_EVENT) == ["draftkings"]
+    assert props_mlb._books_with_prop_markets(FAKE_EVENT) == ["draftkings", "fanduel"]
 
 
 def test_filter_prop_markets_excludes_runs_by_default():
@@ -107,6 +130,66 @@ def test_filter_prop_markets_excludes_runs_by_default():
     out = props_mlb._filter_prop_markets(rows, markets_requested=DEFAULT_MLB_PROP_MARKETS)
     assert len(out) == 1
     assert out[0]["market_type"] == "batter_hits"
+
+
+def test_parse_event_props_alternate_line_kind():
+    event = {
+        **FAKE_EVENT,
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "markets": [
+                    {
+                        "key": "batter_hits_alternate",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Aaron Judge",
+                                "price": 150,
+                                "point": 2.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Aaron Judge",
+                                "price": -190,
+                                "point": 2.5,
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    rows = props_mlb._parse_event_props(event, bookmaker_key="draftkings")
+    alt = next(r for r in rows if r["player"] == "Aaron Judge" and r["line"] == 2.5)
+    assert alt["market_type"] == "batter_hits"
+    assert alt["line_kind"] == "alternate"
+
+
+def test_passes_prop_search_filters_min_odds_and_line_kind():
+    prop = {
+        "market_type": "batter_hits",
+        "line_kind": "main",
+        "line": 1.5,
+        "recommended_odds": -150,
+        "actionable": True,
+    }
+    assert props_mlb._passes_prop_search_filters(
+        prop,
+        market_type="batter_hits",
+        min_odds=-200,
+        line_kind="main",
+        line_value=None,
+        actionable_only=False,
+    )
+    assert not props_mlb._passes_prop_search_filters(
+        prop,
+        market_type="batter_hits",
+        min_odds=-100,
+        line_kind="main",
+        line_value=None,
+        actionable_only=False,
+    )
 
 
 def test_prop_rank_key_hit_rate_first():
@@ -259,8 +342,20 @@ def test_build_game_props_fetches_and_caches(
     )
     assert dk_payload["bookmaker"] == "draftkings"
     assert (isolated_props / "777001.draftkings.json").exists()
+    assert (isolated_props / "raw_events" / "777001.2026-06-16.json").exists()
     mock_props.assert_called_once()
-    assert mock_props.call_args.kwargs.get("bookmakers") == "draftkings"
+    assert mock_props.call_args.kwargs.get("bookmakers") is None
+
+    mock_props.reset_mock()
+    fd_payload = props_mlb.build_game_props(
+        "777001",
+        game_date=date(2026, 6, 16),
+        refresh=False,
+        bookmaker="fanduel",
+    )
+    assert fd_payload["bookmaker"] == "fanduel"
+    assert len(fd_payload["props"]) == 1
+    mock_props.assert_not_called()
 
 
 @patch("app.services.prop_scoring._search_player_id", return_value=592450)
