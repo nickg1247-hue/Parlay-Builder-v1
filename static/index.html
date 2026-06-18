@@ -100,7 +100,7 @@
           </select>
           <button type="button" id="prop-auto-fill" class="home-props-fill-btn">Add to slip</button>
         </div>
-        <p class="home-props-tools-note">Scans today's MLB slate for top props by hit rate (L10, then L5, then season).</p>
+        <p class="home-props-tools-note">Scans today's MLB slate for top props by hit rate (L10, then L5, then season). One leg per player.</p>
       </div>
 
       <div id="watched-section" class="hidden"></div>
@@ -130,7 +130,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260617d"></script>
+  <script src="/static/app.js?v=20260613e"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -194,8 +194,9 @@
 
         if (status) {
           refreshEl.textContent = formatRefreshStatus(status);
-          refreshEl.classList.toggle("ok", status.ok);
+          refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
         }
+        pollRefreshStatusLine(refreshEl, 60000);
 
         if (odds) recordOddsSnapshot(odds, scores.games);
 

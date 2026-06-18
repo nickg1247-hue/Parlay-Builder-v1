@@ -41,6 +41,40 @@ _DEFAULT_STATUS: dict[str, Any] = {
 }
 
 
+def _parse_iso_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        return ts
+    except (TypeError, ValueError):
+        return None
+
+
+def _display_refresh_timestamp(status: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Most recent refresh moment across board, odds, hourly job, and props cache."""
+    candidates: list[tuple[datetime, str]] = []
+    for key, label in (
+        ("ran_at", "board"),
+        ("odds_fetched_at", "odds"),
+        ("props_cached_at", "props"),
+    ):
+        ts = _parse_iso_utc(status.get(key))
+        if ts is not None:
+            candidates.append((ts, label))
+    hourly = status.get("hourly_last") or {}
+    if hourly.get("ok") and not hourly.get("skipped"):
+        ts = _parse_iso_utc(hourly.get("ran_at"))
+        if ts is not None:
+            candidates.append((ts, "hourly_odds"))
+    if not candidates:
+        return None, None
+    latest = max(candidates, key=lambda item: item[0])
+    return latest[0].isoformat(), latest[1]
+
+
 def _morning_skip_totals() -> bool:
     raw = os.getenv("MORNING_SKIP_TOTALS", "true").strip().lower()
     return raw not in ("0", "false", "no")
@@ -74,6 +108,16 @@ def get_refresh_status() -> dict[str, Any]:
     hourly = load_hourly_refresh_status()
     if hourly is not None:
         status["hourly_last"] = hourly
+
+    from app.services.props_mlb import get_props_refresh_meta
+
+    props_meta = get_props_refresh_meta(date.today())
+    status["props_cached_at"] = props_meta.get("cached_at")
+    status["props_actionable_count"] = props_meta.get("total_actionable", 0)
+
+    display_at, display_source = _display_refresh_timestamp(status)
+    status["display_updated_at"] = display_at
+    status["display_source"] = display_source
     return status
 
 

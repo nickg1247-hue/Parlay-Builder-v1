@@ -120,7 +120,39 @@ def test_prop_rank_key_tie_break_l5_then_season():
     assert ranked[1] is same_l10_a
 
 
-def test_load_best_slate_props_falls_back_to_repo(isolated_props):
+def test_prop_is_bettable_requires_listed_side_odds():
+    assert props_mlb.prop_is_bettable(
+        {
+            "actionable": True,
+            "recommended_side": "over",
+            "recommended_odds": -110,
+            "over_odds": -110,
+            "recommended_hit_rate": 0.7,
+        }
+    )
+    assert not props_mlb.prop_is_bettable(
+        {
+            "actionable": True,
+            "recommended_side": "over",
+            "recommended_odds": -110,
+            "over_odds": None,
+            "under_odds": -105,
+            "recommended_hit_rate": 0.7,
+        }
+    )
+    assert not props_mlb.prop_is_bettable(
+        {
+            "actionable": True,
+            "recommended_side": "under",
+            "recommended_odds": -110,
+            "over_odds": -110,
+            "recommended_hit_rate": 0.7,
+            "stale_cache": True,
+        }
+    )
+
+
+def test_load_best_slate_props_same_day_only(isolated_props):
     import json
     from datetime import date
 
@@ -132,6 +164,7 @@ def test_load_best_slate_props_falls_back_to_repo(isolated_props):
                     {
                         "recommended_hit_rate": 0.8,
                         "recommended_odds": -110,
+                        "over_odds": -110,
                         "rank_score": 80,
                         "actionable": True,
                         "game_id": "1",
@@ -146,22 +179,43 @@ def test_load_best_slate_props_falls_back_to_repo(isolated_props):
         encoding="utf-8",
     )
     picks, source, _ = props_mlb._load_best_slate_props(date(2026, 6, 17))
-    assert source == "slate_cache_repo"
-    assert len(picks) == 1
+    assert source == "none"
+    assert len(picks) == 0
+
+    picks_today, source_today, _ = props_mlb._load_best_slate_props(date(2026, 6, 16))
+    assert source_today == "slate_cache"
+    assert len(picks_today) == 1
 
 
-def test_build_daily_top_props_uses_repo_slate_without_scan(isolated_props):
+def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
     import json
     from datetime import date
 
-    (isolated_props / "slate_2026-06-16.json").write_text(
-        json.dumps({"all_props": [{"recommended_hit_rate": 0.75, "recommended_odds": 100, "rank_score": 75, "actionable": True, "game_id": "9", "player": "B", "market_type": "batter_hits", "line": 0.5, "recommended_side": "over"}]}),
+    (isolated_props / "slate_2026-06-17.json").write_text(
+        json.dumps(
+            {
+                "all_props": [
+                    {
+                        "recommended_hit_rate": 0.75,
+                        "recommended_odds": 100,
+                        "over_odds": 100,
+                        "rank_score": 75,
+                        "actionable": True,
+                        "game_id": "9",
+                        "player": "B",
+                        "market_type": "batter_hits",
+                        "line": 0.5,
+                        "recommended_side": "over",
+                    }
+                ]
+            }
+        ),
         encoding="utf-8",
     )
     with patch("app.services.props_mlb.get_mlb_schedule", return_value={"games": []}):
         out = props_mlb.build_daily_top_props(date(2026, 6, 17), limit=5, scan=False)
     assert out["total_actionable"] == 1
-    assert out["source"] == "slate_cache_repo"
+    assert out["source"] == "slate_cache"
 
 
 def test_evaluate_prop_parlay():

@@ -97,12 +97,27 @@ function formatLocalTimeShort(isoUtc) {
 function formatRefreshStatus(status) {
   if (!status) return "Not refreshed yet";
 
+  const displayWhen = status.display_updated_at
+    ? formatLocalTime(status.display_updated_at)
+    : null;
   const oddsWhen = status.odds_fetched_at
     ? formatLocalTime(status.odds_fetched_at)
     : null;
   const oddsFresh =
     status.odds_seconds_since_fetch != null &&
     status.odds_seconds_since_fetch < 7200;
+
+  if (displayWhen) {
+    const games =
+      status.games_on_slate != null ? ` · ${status.games_on_slate} games` : "";
+    const source =
+      status.display_source === "hourly_odds"
+        ? " · odds"
+        : status.display_source === "props"
+          ? " · props"
+          : "";
+    return `Updated ${displayWhen}${games}${source}`;
+  }
 
   if (status.ok && status.ran_at) {
     const when = formatLocalTime(status.ran_at);
@@ -124,6 +139,21 @@ function formatRefreshStatus(status) {
   }
 
   return status.error || "Not refreshed yet";
+}
+
+async function pollRefreshStatusLine(el, intervalMs = 60000) {
+  if (!el) return;
+  async function tick() {
+    try {
+      const status = await fetchJSON("/api/status/refresh");
+      el.textContent = formatRefreshStatus(status);
+      el.classList.toggle("ok", Boolean(status?.ok || status?.display_updated_at));
+    } catch (_) {
+      /* keep last line */
+    }
+  }
+  await tick();
+  window.setInterval(tick, intervalMs);
 }
 
 function formatRelativeShort(isoUtc) {
@@ -1027,6 +1057,7 @@ function renderBestBets(el, topSingles) {
 }
 
 function propSlipLegFromProp(p) {
+  if (!p || !p.actionable || p.recommended_odds == null) return null;
   if (p.slip_leg) return p.slip_leg;
   const side = p.recommended_side || "over";
   return {
@@ -1088,8 +1119,9 @@ function renderBestProps(el, topProps, options = {}) {
       e.stopPropagation();
       const idx = Number(btn.dataset.addHomeProp);
       const prop = props[idx];
-      if (!prop || !window.addPropToSlip) return;
-      window.addPropToSlip(propSlipLegFromProp(prop));
+      const leg = propSlipLegFromProp(prop);
+      if (!leg || !window.addPropToSlip) return;
+      window.addPropToSlip(leg);
       const prev = btn.textContent;
       btn.textContent = "Added";
       window.setTimeout(() => {
@@ -1099,22 +1131,40 @@ function renderBestProps(el, topProps, options = {}) {
   });
 }
 
+function propSlipPlayerKey(player) {
+  return String(player || "").trim().toLowerCase();
+}
+
+function selectUniquePlayerPropLegs(props, count) {
+  const legs = [];
+  const usedPlayers = new Set();
+  for (const p of props || []) {
+    if (legs.length >= count) break;
+    const playerKey = propSlipPlayerKey(p.player);
+    if (!playerKey || usedPlayers.has(playerKey)) continue;
+    const leg = propSlipLegFromProp(p);
+    if (leg.american_odds == null) continue;
+    legs.push(leg);
+    usedPlayers.add(playerKey);
+  }
+  return legs;
+}
+
 function populatePropSlipFromProps(props, count, { replace = true } = {}) {
-  const pool = (props || []).slice(0, count);
-  const legs = pool
-    .map((p) => propSlipLegFromProp(p))
-    .filter((leg) => leg.american_odds != null);
+  const legs = selectUniquePlayerPropLegs(props, count);
 
   if (replace) {
     savePropSlipLegs(legs);
   } else {
     const existing = getPropSlipLegs();
-    const seen = new Set(existing.map((l) => l.id));
+    const seenIds = new Set(existing.map((l) => l.id));
+    const seenPlayers = new Set(existing.map((l) => propSlipPlayerKey(l.player)));
     for (const leg of legs) {
-      if (!seen.has(leg.id)) {
-        existing.push(leg);
-        seen.add(leg.id);
-      }
+      const playerKey = propSlipPlayerKey(leg.player);
+      if (seenIds.has(leg.id) || (playerKey && seenPlayers.has(playerKey))) continue;
+      existing.push(leg);
+      seenIds.add(leg.id);
+      if (playerKey) seenPlayers.add(playerKey);
     }
     savePropSlipLegs(existing.slice(0, 30));
   }
@@ -1430,6 +1480,8 @@ function addPropToSlip(leg) {
   if (!leg?.id || leg.american_odds == null) return;
   const legs = getPropSlipLegs();
   if (legs.some((l) => l.id === leg.id)) return;
+  const playerKey = propSlipPlayerKey(leg.player);
+  if (playerKey && legs.some((l) => propSlipPlayerKey(l.player) === playerKey)) return;
   legs.push(leg);
   savePropSlipLegs(legs);
   renderPropSlipPanel();

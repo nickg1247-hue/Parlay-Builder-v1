@@ -83,8 +83,9 @@
         dateEl.textContent = slate.date || "";
         if (status) {
           refreshEl.textContent = formatRefreshStatus(status);
-          refreshEl.classList.toggle("ok", status.ok);
+          refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
         }
+        pollRefreshStatusLine(refreshEl, 60000);
 
         const boardMap = summary.slate_by_game_id || {};
         const renderOpts = {

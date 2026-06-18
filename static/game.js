@@ -569,6 +569,8 @@
 
         const odds = side === "over" ? prop.over_odds : prop.under_odds;
 
+        if (odds == null || prop.recommended_odds == null) return;
+
         window.addPropToSlip({
 
           id: propLegId(prop, side),

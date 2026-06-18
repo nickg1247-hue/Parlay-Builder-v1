@@ -147,6 +147,19 @@ def test_api_status_refresh_returns_json(isolated_refresh_paths):
     assert data["games_on_slate"] == 8
 
 
+def test_display_refresh_timestamp_picks_latest():
+    status = {
+        "ran_at": "2026-06-06T04:01:00+00:00",
+        "odds_fetched_at": "2026-06-06T05:30:00+00:00",
+        "props_cached_at": "2026-06-06T03:00:00+00:00",
+        "hourly_last": {"ok": True, "ran_at": "2026-06-06T06:00:00+00:00"},
+    }
+    display_at, source = mr._display_refresh_timestamp(status)
+    assert source == "hourly_odds"
+    assert display_at is not None
+    assert "06:00:00" in display_at
+
+
 def test_api_status_refresh_default_when_missing():
     with patch("app.main.get_refresh_status", return_value=mr._DEFAULT_STATUS):
         resp = client.get("/api/status/refresh")
