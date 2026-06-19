@@ -48,6 +48,7 @@ from app.services.prop_tracker_refresh import (
 from app.services.game_insights import build_game_insights
 from app.services.props_mlb import (
     build_daily_top_props,
+    DEFAULT_DISPLAY_BOOKMAKER,
     build_game_props,
     evaluate_prop_parlay,
     list_prop_bookmakers,
@@ -527,8 +528,8 @@ async def mlb_game_props(
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
     bookmaker: str | None = Query(
-        None,
-        description="Sportsbook key (consensus = median across books).",
+        DEFAULT_DISPLAY_BOOKMAKER,
+        description="Sportsbook key (default DraftKings; consensus = median across major books).",
     ),
 ):
     game_date = (
@@ -558,7 +559,7 @@ async def prop_markets():
 @app.get("/api/props/search")
 async def props_search(
     date_param: str | None = Query(None, alias="date"),
-    bookmaker: str | None = Query(None),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
     market_type: str | None = Query(None),
     min_odds: int | None = Query(
         None,
@@ -633,8 +634,8 @@ async def daily_top_props(
         description="Force refresh props for the selected sportsbook.",
     ),
     bookmaker: str | None = Query(
-        None,
-        description="Sportsbook key (consensus = median across books).",
+        DEFAULT_DISPLAY_BOOKMAKER,
+        description="Sportsbook key (default DraftKings; consensus = median across major books).",
     ),
 ):
     game_date = (

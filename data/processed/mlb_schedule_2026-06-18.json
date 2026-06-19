@@ -1,0 +1,20 @@
+{
+  "date": "2026-06-18",
+  "games": [
+    {
+      "game_id": "824989",
+      "home_team": "Athletics",
+      "away_team": "Los Angeles Angels",
+      "home_team_id": 133,
+      "away_team_id": 108,
+      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/133.svg",
+      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/108.svg",
+      "start_time_utc": "2026-06-19T01:40:00Z",
+      "status": "Live",
+      "home_score": 5,
+      "away_score": 0
+    }
+  ],
+  "games_count": 1,
+  "cached_at": "2026-06-19T03:12:53.999848+00:00"
+}

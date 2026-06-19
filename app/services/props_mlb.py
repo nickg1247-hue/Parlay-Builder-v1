@@ -42,10 +42,27 @@ EVENTS_DIR = PROPS_DIR / "events"
 
 def _raw_events_dir() -> Path:
     return PROPS_DIR / "raw_events"
+
+
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
 MAX_PROP_LINES_TO_SCORE = int(os.getenv("MAX_PROP_LINES_TO_SCORE", "80"))
 RUNS_PROP_MARKET = "batter_runs_scored"
 DEFAULT_PROP_BOOKMAKER = "consensus"
+DEFAULT_DISPLAY_BOOKMAKER = "draftkings"
+# Major US retail books only — excludes ladder-heavy books (Hard Rock, Fliff, etc.).
+CONSENSUS_PROP_BOOKS = frozenset(
+    {
+        "draftkings",
+        "fanduel",
+        "betmgm",
+        "betrivers",
+        "williamhill_us",
+        "bovada",
+        "betonlineag",
+        "espnbet",
+        "fanatics",
+    }
+)
 VERY_STRONG_LINE_STRENGTH = "very_strong"
 # Keys must match The Odds API bookmaker keys (see the-odds-api.com bookmaker list).
 PROP_BOOKMAKERS: dict[str, str] = {
@@ -128,6 +145,13 @@ def _normalize_bookmaker(raw: str | None) -> str:
     return DEFAULT_PROP_BOOKMAKER
 
 
+def _resolve_bookmaker(raw: str | None) -> str:
+    """Book used when the client omits bookmaker (display default: DraftKings)."""
+    if raw is None or not str(raw).strip():
+        return DEFAULT_DISPLAY_BOOKMAKER
+    return _normalize_bookmaker(raw)
+
+
 def _bookmaker_label(bookmaker: str) -> str:
     return PROP_BOOKMAKERS.get(bookmaker, bookmaker.replace("_", " ").title())
 
@@ -198,6 +222,8 @@ def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
     total_actionable = 0
     for prop in props:
         if not prop.get("actionable"):
+            continue
+        if not prop_is_bettable(prop):
             continue
         if prop.get("recommended_hit_rate") is None or prop.get("recommended_odds") is None:
             continue
@@ -375,6 +401,8 @@ def prop_is_bettable(prop: dict[str, Any], *, allow_stale: bool = False) -> bool
         return False
     if not is_valid_american_odds(listed_int):
         return False
+    if prop.get("complete_market") is not True:
+        return False
     if prop.get("stale_cache") and not allow_stale:
         return False
     return True
@@ -427,6 +455,13 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
         if stale:
             row["stale_cache"] = True
         if not prop_is_bettable(row):
+            continue
+        offered = row.get("offered_books") or []
+        if (
+            bookmaker not in (DEFAULT_PROP_BOOKMAKER, "consensus")
+            and offered
+            and bookmaker not in offered
+        ):
             continue
         if row.get("recommended_hit_rate") is None:
             continue
@@ -594,6 +629,40 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def _line_balance_score(over_odds: int, under_odds: int) -> float:
+    """Lower score = prices closer to a typical main line (-110/-110)."""
+    return abs(abs(over_odds) - 110) + abs(abs(under_odds) - 110)
+
+
+def _collapse_to_primary_lines(
+    store: dict[tuple[str, str, float, str], dict[str, Any]],
+) -> dict[tuple[str, str, float, str], dict[str, Any]]:
+    """Keep one real main line per player/market — both sides required."""
+    out: dict[tuple[str, str, float, str], dict[str, Any]] = {}
+    main_groups: dict[tuple[str, str], list[tuple[tuple[str, str, float, str], dict[str, Any]]]] = (
+        defaultdict(list)
+    )
+    for pk, row in store.items():
+        player, market, _line, line_kind = pk
+        if line_kind == "alternate":
+            if row.get("over_odds") is not None and row.get("under_odds") is not None:
+                out[pk] = {**row, "primary_line": False}
+            continue
+        if row.get("over_odds") is None or row.get("under_odds") is None:
+            continue
+        main_groups[(player, market)].append((pk, row))
+    for _key, candidates in main_groups.items():
+        best_pk, best_row = min(
+            candidates,
+            key=lambda item: (
+                _line_balance_score(int(item[1]["over_odds"]), int(item[1]["under_odds"])),
+                float(item[1]["line"]),
+            ),
+        )
+        out[best_pk] = {**best_row, "primary_line": True}
+    return out
+
+
 def _parse_event_props(
     event: dict[str, Any],
     bookmaker_key: str | None = None,
@@ -604,12 +673,19 @@ def _parse_event_props(
     Consensus mode: median odds only when at least one book posted both Over and Under
     at the same player/market/line — never stitch Over from book A with Under from book B.
     """
-    bookmaker_key = _normalize_bookmaker(bookmaker_key)
+    bookmaker_key = _normalize_bookmaker(
+        bookmaker_key if bookmaker_key is not None else DEFAULT_PROP_BOOKMAKER
+    )
     books = event.get("bookmakers") or []
     if bookmaker_key != DEFAULT_PROP_BOOKMAKER:
         books = [book for book in books if book.get("key") == bookmaker_key]
+    else:
+        books = [
+            book
+            for book in books
+            if str(book.get("key") or "") in CONSENSUS_PROP_BOOKS
+        ]
 
-  # book_key -> (player, market, line, line_kind) -> {over, under, meta}
     per_book: dict[str, dict[tuple[str, str, float, str], dict[str, Any]]] = {}
 
     for book in books:
@@ -656,6 +732,9 @@ def _parse_event_props(
                 else:
                     row["under_odds"] = american
 
+    for bk in list(per_book.keys()):
+        per_book[bk] = _collapse_to_primary_lines(per_book[bk])
+
     rows: list[dict[str, Any]] = []
 
     if bookmaker_key != DEFAULT_PROP_BOOKMAKER:
@@ -671,6 +750,7 @@ def _parse_event_props(
                         **row,
                         "complete_market": complete,
                         "offered_books": [bk],
+                        "primary_line": row.get("primary_line", True),
                     }
                 )
     else:
@@ -698,6 +778,7 @@ def _parse_event_props(
                     "over_odds": _median_int(overs),
                     "under_odds": _median_int(unders),
                     "complete_market": True,
+                    "primary_line": True,
                     "offered_books": [bk for bk, _ in complete_books],
                 }
             )
@@ -883,7 +964,7 @@ def build_game_props(
     """Fetch + score player props for one MLB game."""
     fetch_markets = markets or _markets_for_fetch(include_alternates=include_alternates)
     game_date = game_date or date.today()
-    book = _normalize_bookmaker(bookmaker)
+    book = _resolve_bookmaker(bookmaker)
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
         return None
@@ -1181,7 +1262,7 @@ def build_daily_top_props(
     Serves git-deployed cache even when older than TTL so VPS deploys work offline.
     """
     game_date = game_date or date.today()
-    book = _normalize_bookmaker(bookmaker)
+    book = _resolve_bookmaker(bookmaker)
     if refresh:
         scan = True
 
@@ -1386,7 +1467,7 @@ def search_daily_props(
 ) -> dict[str, Any]:
     """Filter scored props across the slate for the props explorer page."""
     game_date = game_date or date.today()
-    book = _normalize_bookmaker(bookmaker)
+    book = _resolve_bookmaker(bookmaker)
     if refresh:
         scan = True
     if include_alternates or line_kind == "alternate":

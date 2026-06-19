@@ -1352,7 +1352,7 @@ function getSelectedPropBookmaker() {
     setSelectedPropBookmaker(stored);
   }
   const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
-  return stored && list.some((b) => b.key === stored) ? stored : "consensus";
+  return stored && list.some((b) => b.key === stored) ? stored : "draftkings";
 }
 
 function setSelectedPropBookmaker(key) {
@@ -1371,8 +1371,8 @@ async function initPropBookSelect(selectEl, onChange) {
     })
     .join("");
   if (!list.some((b) => b.key === current && b.has_props !== false)) {
-    setSelectedPropBookmaker("consensus");
-    selectEl.value = "consensus";
+    setSelectedPropBookmaker("draftkings");
+    selectEl.value = "draftkings";
   }
   selectEl.addEventListener("change", () => {
     setSelectedPropBookmaker(selectEl.value);

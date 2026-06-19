@@ -11,8 +11,8 @@
   </script>
   <meta name="pb-build" content="2026-06-17-props-v4">
   <title>NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260619d">
-  <link rel="stylesheet" href="/static/app.css?v=20260619d">
+  <link rel="stylesheet" href="/static/style.css?v=20260620a">
+  <link rel="stylesheet" href="/static/app.css?v=20260620a">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -99,7 +99,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260619d"></script>
+  <script src="/static/app.js?v=20260620a"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -116,7 +116,9 @@
       const heroChips = document.getElementById("hero-chips");
 
       async function loadHomeProps({ scan = false } = {}) {
-        const url = scan ? "/api/daily/props?limit=25&scan=true" : "/api/daily/props?limit=25";
+        const url = scan
+          ? "/api/daily/props?limit=25&bookmaker=draftkings&scan=true"
+          : "/api/daily/props?limit=25&bookmaker=draftkings";
         let propsData = { top_props: [], very_strong_props: [], total_actionable: 0 };
         try {
           const res = await fetch(url);

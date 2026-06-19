@@ -1,8 +1,8 @@
 {
-  "ran_at": "2026-06-16T13:20:53.864345+00:00",
+  "ran_at": "2026-06-19T09:41:48.251277+00:00",
   "ok": true,
-  "date": "2026-06-16",
-  "skipped": null,
+  "date": "2026-06-19",
+  "skipped": "hour_limit",
   "error": null,
   "odds_source": null
 }

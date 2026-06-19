@@ -1,0 +1,18 @@
+{
+  "game_id": "824668",
+  "date": "2026-06-17",
+  "matchup": "Colorado Rockies @ Chicago Cubs",
+  "home_team": "Chicago Cubs",
+  "away_team": "Colorado Rockies",
+  "props": [],
+  "top_picks": [],
+  "fetched_at": "2026-06-18T01:41:34.032524+00:00",
+  "source": "the_odds_api_live",
+  "status": "empty",
+  "message": "FanDuel has no MLB player props for this game yet.",
+  "markets_requested": "batter_hits,batter_total_bases,batter_home_runs,batter_rbis,pitcher_strikeouts",
+  "bookmaker": "fanduel",
+  "bookmaker_label": "FanDuel",
+  "event_id": "3c667b5e84c7e18c7697c0f83852679a",
+  "available_bookmakers": []
+}

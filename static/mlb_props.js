@@ -14,7 +14,7 @@
 
   function readFilters(refresh) {
     return {
-      bookmaker: bookEl?.value || "consensus",
+      bookmaker: bookEl?.value || "draftkings",
       market_type: marketEl?.value || "",
       min_odds: minOddsEl?.value ?? "",
       line_kind: lineKindEl?.value || "both",

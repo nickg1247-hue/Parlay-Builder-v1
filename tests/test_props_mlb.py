@@ -151,10 +151,126 @@ def test_consensus_excludes_stitched_one_sided_books():
     }
     assert props_mlb._parse_event_props(event) == []
     dk_rows = props_mlb._parse_event_props(event, bookmaker_key="draftkings")
+    assert dk_rows == []
+
+
+def test_collapse_keeps_real_main_line_not_ladder():
+    """Odds API embeds ladder lines in batter_hits — keep only the real main line."""
+    event = {
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Carter Jensen",
+                                "price": -220,
+                                "point": 0.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Carter Jensen",
+                                "price": +170,
+                                "point": 0.5,
+                            },
+                            {
+                                "name": "Over",
+                                "description": "Carter Jensen",
+                                "price": +350,
+                                "point": 2.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+            {
+                "key": "hardrockbet",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Carter Jensen",
+                                "price": +125,
+                                "point": 2.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+    dk_rows = props_mlb._parse_event_props(event, bookmaker_key="draftkings")
     assert len(dk_rows) == 1
-    assert dk_rows[0]["over_odds"] == -115
-    assert dk_rows[0]["under_odds"] is None
-    assert dk_rows[0]["complete_market"] is False
+    assert dk_rows[0]["line"] == 0.5
+    assert dk_rows[0]["complete_market"] is True
+    consensus = props_mlb._parse_event_props(event)
+    assert len(consensus) == 1
+    assert consensus[0]["line"] == 0.5
+    assert all(r["line"] != 2.5 for r in consensus)
+
+
+def test_draftkings_excludes_obscure_book_total_bases_ladder():
+    event = {
+        "bookmakers": [
+            {
+                "key": "fliff",
+                "markets": [
+                    {
+                        "key": "batter_total_bases",
+                        "outcomes": [
+                            {
+                                "name": "Under",
+                                "description": "Nick Loftin",
+                                "price": -140,
+                                "point": 4.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+            {
+                "key": "draftkings",
+                "markets": [
+                    {
+                        "key": "batter_total_bases",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Nick Loftin",
+                                "price": -115,
+                                "point": 0.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Nick Loftin",
+                                "price": -105,
+                                "point": 0.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+    dk_rows = props_mlb._parse_event_props(event, bookmaker_key="draftkings")
+    assert len(dk_rows) == 1
+    assert dk_rows[0]["line"] == 0.5
+    assert all(r["line"] != 4.5 for r in dk_rows)
+    consensus = props_mlb._parse_event_props(event)
+    assert len(consensus) == 1
+    assert consensus[0]["line"] == 0.5
+    assert all(r["line"] != 4.5 for r in consensus)
+
+
+def test_resolve_bookmaker_defaults_to_draftkings():
+    assert props_mlb._resolve_bookmaker(None) == "draftkings"
+    assert props_mlb._resolve_bookmaker("") == "draftkings"
+    assert props_mlb._resolve_bookmaker("consensus") == "consensus"
 
 
 def test_normalize_bookmaker_aliases():
@@ -173,6 +289,10 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
             "actionable": True,
             "recommended_hit_rate": 1.0,
             "recommended_odds": -110,
+            "over_odds": -110,
+            "under_odds": -105,
+            "complete_market": True,
+            "recommended_side": "over",
             "line_strength": "very_strong",
             "score": 100,
         },
@@ -180,6 +300,9 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
             "actionable": True,
             "recommended_hit_rate": 0.7,
             "recommended_odds": -110,
+            "over_odds": -110,
+            "under_odds": -105,
+            "complete_market": True,
             "line_strength": "strong",
             "score": 70,
             "hit_rate_over_l10": 0.7,
@@ -333,6 +456,18 @@ def test_prop_is_bettable_requires_listed_side_odds():
             "recommended_side": "over",
             "recommended_odds": -110,
             "over_odds": -110,
+            "under_odds": -105,
+            "complete_market": True,
+            "recommended_hit_rate": 0.7,
+        }
+    )
+    assert not props_mlb.prop_is_bettable(
+        {
+            "actionable": True,
+            "recommended_side": "over",
+            "recommended_odds": -110,
+            "over_odds": -110,
+            "under_odds": -105,
             "recommended_hit_rate": 0.7,
         }
     )
@@ -343,6 +478,7 @@ def test_prop_is_bettable_requires_listed_side_odds():
             "recommended_odds": -110,
             "over_odds": None,
             "under_odds": -105,
+            "complete_market": True,
             "recommended_hit_rate": 0.7,
         }
     )
@@ -352,6 +488,8 @@ def test_prop_is_bettable_requires_listed_side_odds():
             "recommended_side": "under",
             "recommended_odds": -110,
             "over_odds": -110,
+            "under_odds": -105,
+            "complete_market": True,
             "recommended_hit_rate": 0.7,
             "stale_cache": True,
         }
@@ -378,6 +516,7 @@ def test_load_best_slate_props_same_day_only(isolated_props):
                         "market_type": "batter_hits",
                         "line": 1.5,
                         "recommended_side": "over",
+                        "complete_market": True,
                     }
                 ]
             }
@@ -397,7 +536,7 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
     import json
     from datetime import date
 
-    (isolated_props / "slate_2026-06-17.json").write_text(
+    (isolated_props / "slate_2026-06-17.draftkings.json").write_text(
         json.dumps(
             {
                 "all_props": [
@@ -405,6 +544,7 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
                         "recommended_hit_rate": 0.75,
                         "recommended_odds": 100,
                         "over_odds": 100,
+                        "under_odds": -120,
                         "rank_score": 75,
                         "actionable": True,
                         "game_id": "9",
@@ -412,6 +552,7 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
                         "market_type": "batter_hits",
                         "line": 0.5,
                         "recommended_side": "over",
+                        "complete_market": True,
                     }
                 ]
             }
@@ -422,6 +563,7 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
         out = props_mlb.build_daily_top_props(date(2026, 6, 17), limit=5, scan=False)
     assert out["total_actionable"] == 1
     assert out["source"] == "slate_cache"
+    assert out["bookmaker"] == "draftkings"
 
 
 def test_evaluate_prop_parlay():
@@ -470,8 +612,8 @@ def test_build_game_props_fetches_and_caches(
     assert payload is not None
     assert payload["status"] == "ok"
     assert len(payload["props"]) == 2
-    assert payload["bookmaker"] == "consensus"
-    assert (isolated_props / "777001.consensus.json").exists()
+    assert payload["bookmaker"] == "draftkings"
+    assert (isolated_props / "777001.draftkings.json").exists()
 
     mock_props.reset_mock()
     cached = props_mlb.build_game_props("777001", game_date=date(2026, 6, 16), refresh=False)

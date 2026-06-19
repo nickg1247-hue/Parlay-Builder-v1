@@ -1,0 +1,18 @@
+{
+  "game_id": "824913",
+  "date": "2026-06-17",
+  "matchup": "San Francisco Giants @ Atlanta Braves",
+  "home_team": "Atlanta Braves",
+  "away_team": "San Francisco Giants",
+  "props": [],
+  "top_picks": [],
+  "fetched_at": "2026-06-18T01:41:30.845386+00:00",
+  "source": "the_odds_api_live",
+  "status": "empty",
+  "message": "FanDuel has no MLB player props for this game yet.",
+  "markets_requested": "batter_hits,batter_total_bases,batter_home_runs,batter_rbis,pitcher_strikeouts",
+  "bookmaker": "fanduel",
+  "bookmaker_label": "FanDuel",
+  "event_id": "a834545628bda1d53eb52e89728b336f",
+  "available_bookmakers": []
+}
