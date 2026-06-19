@@ -11,8 +11,8 @@
   </script>
   <meta name="pb-build" content="2026-06-17-props-v4">
   <title>NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260617d">
-  <link rel="stylesheet" href="/static/app.css?v=20260617d">
+  <link rel="stylesheet" href="/static/style.css?v=20260619c">
+  <link rel="stylesheet" href="/static/app.css?v=20260619c">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -58,6 +58,10 @@
             <h3 class="home-picks-col-title">Best player props</h3>
             <a href="/mlb/props" class="home-props-more-link">Explore all →</a>
           </div>
+          <div id="very-strong-props-wrap" class="home-very-strong-wrap hidden">
+            <h4 class="home-very-strong-title">Very strong · 100% L5 / L10 / Season</h4>
+            <div id="very-strong-props" class="home-picks-list home-very-strong-list"></div>
+          </div>
           <div id="best-props" class="home-picks-list">
             <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
           </div>
@@ -95,7 +99,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260618b"></script>
+  <script src="/static/app.js?v=20260619c"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -105,13 +109,15 @@
       const glance = document.getElementById("today-glance");
       const bets = document.getElementById("best-bets");
       const propsEl = document.getElementById("best-props");
+      const veryStrongWrap = document.getElementById("very-strong-props-wrap");
+      const veryStrongEl = document.getElementById("very-strong-props");
       const watched = document.getElementById("watched-section");
       const refreshEl = document.getElementById("refresh-line");
       const heroChips = document.getElementById("hero-chips");
 
       async function loadHomeProps({ scan = false } = {}) {
         const url = scan ? "/api/daily/props?limit=25&scan=true" : "/api/daily/props?limit=25";
-        let propsData = { top_props: [], total_actionable: 0 };
+        let propsData = { top_props: [], very_strong_props: [], total_actionable: 0 };
         try {
           const res = await fetch(url);
           if (res.status === 401) {
@@ -131,6 +137,16 @@
           return propsData;
         }
         const hint = propsData.hint ? ` ${propsData.hint}` : "";
+        const veryStrong = (propsData.very_strong_props || []).slice(0, 10);
+        if (veryStrongWrap && veryStrongEl) {
+          if (veryStrong.length) {
+            veryStrongWrap.classList.remove("hidden");
+            renderBestProps(veryStrongEl, veryStrong);
+          } else {
+            veryStrongWrap.classList.add("hidden");
+            veryStrongEl.innerHTML = "";
+          }
+        }
         renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
           emptyMessage: (propsData.top_props || []).length
             ? undefined

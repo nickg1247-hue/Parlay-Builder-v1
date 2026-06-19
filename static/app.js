@@ -935,12 +935,40 @@ function renderTodayGlance(el, summary, scoreCounts) {
     </div>`;
 }
 
-function propHitRateTier(rate) {
+function propHitRateTier(rate, label) {
   if (rate == null || Number.isNaN(rate)) return null;
+  if (Math.round(rate * 100) >= 100) return "perfect";
   if (rate >= 0.9) return "high";
   if (rate >= 0.75) return "medium";
   if (rate <= 0.6) return "red";
   return null;
+}
+
+function propSideFormRates(prop, side) {
+  const over = side === "over";
+  return {
+    l5: over ? prop.hit_rate_over_l5 : prop.hit_rate_under_l5,
+    l10: over ? prop.hit_rate_over_l10 : prop.hit_rate_under_l10,
+    season: over ? prop.hit_rate_over_season : prop.hit_rate_under_season,
+  };
+}
+
+function propHasPerfectForm(prop, side) {
+  const pick = side || prop?.recommended_side || "over";
+  const { l5, l10, season } = propSideFormRates(prop, pick);
+  return [l5, l10, season].every((r) => r != null && Math.round(r * 100) >= 100);
+}
+
+function propEffectiveStrength(prop) {
+  if (!prop?.actionable) return prop;
+  if (prop.line_strength === "very_strong" || propHasPerfectForm(prop)) {
+    return {
+      ...prop,
+      line_strength: "very_strong",
+      line_strength_label: "Very strong",
+    };
+  }
+  return prop;
 }
 
 function hitRateTier(rate) {
@@ -959,7 +987,7 @@ function hitRateChip(label, rate) {
 }
 
 function propHitRateChip(label, rate) {
-  const tier = propHitRateTier(rate);
+  const tier = propHitRateTier(rate, label);
   const pct = rate != null ? `${Math.round(rate * 100)}%` : "—";
   const cls = tier ? `hit-rate-chip hit-rate-${tier}` : "hit-rate-chip";
   return `<span class="${cls}"><span class="hit-rate-lbl">${label}</span> ${pct}</span>`;
@@ -970,7 +998,8 @@ function propHitRatesHtml(prop, side) {
   const l5 = overKey ? prop.hit_rate_over_l5 : prop.hit_rate_under_l5;
   const l10 = overKey ? prop.hit_rate_over_l10 : prop.hit_rate_under_l10;
   const season = overKey ? prop.hit_rate_over_season : prop.hit_rate_under_season;
-  return `<span class="hit-rate-row">${propHitRateChip("L5", l5)}${propHitRateChip("L10", l10)}${propHitRateChip("Season", season)}</span>`;
+  const alltime = overKey ? prop.hit_rate_over_alltime : prop.hit_rate_under_alltime;
+  return `<span class="hit-rate-row">${propHitRateChip("L5", l5)}${propHitRateChip("L10", l10)}${propHitRateChip("Season", season)}${propHitRateChip("All-time", alltime)}</span>`;
 }
 
 function teamWinRatesHtml(pick) {
@@ -978,12 +1007,20 @@ function teamWinRatesHtml(pick) {
 }
 
 function lineStrengthHtml(item) {
+  item = propEffectiveStrength(item);
   const level = item?.line_strength;
   if (!level) return "";
   const label = item.line_strength_label || level;
   const insight = item.line_insight || "";
   const safeInsight = String(insight).replace(/"/g, "&quot;");
-  return `<span class="line-strength line-strength-${level}" title="${safeInsight}">${label}</span>`;
+  const cssLevel = String(level).replace(/_/g, "-");
+  return `<span class="line-strength line-strength-${cssLevel}" title="${safeInsight}">${label}</span>`;
+}
+
+function propVeryStrongClass(prop) {
+  return propEffectiveStrength(prop)?.line_strength === "very_strong"
+    ? " prop-card--very-strong"
+    : "";
 }
 
 window.hitRateChip = hitRateChip;
@@ -991,6 +1028,9 @@ window.propHitRateChip = propHitRateChip;
 window.propHitRatesHtml = propHitRatesHtml;
 window.teamWinRatesHtml = teamWinRatesHtml;
 window.lineStrengthHtml = lineStrengthHtml;
+window.propVeryStrongClass = propVeryStrongClass;
+window.propEffectiveStrength = propEffectiveStrength;
+window.propHasPerfectForm = propHasPerfectForm;
 
 function renderBestBets(el, topSingles) {
   if (!el) return;
@@ -1029,6 +1069,7 @@ function renderBestBets(el, topSingles) {
 function propSlipLegFromProp(p) {
   if (p.slip_leg) return p.slip_leg;
   const side = p.recommended_side || "over";
+  const alltimeKey = side === "over" ? "hit_rate_over_alltime" : "hit_rate_under_alltime";
   return {
     id: [p.game_id, p.player, p.market_type, p.line, side].join("|"),
     game_id: p.game_id,
@@ -1040,6 +1081,10 @@ function propSlipLegFromProp(p) {
     line: p.line,
     american_odds: p.recommended_odds,
     hit_rate: p.recommended_hit_rate,
+    hit_rate_alltime: p[alltimeKey],
+    line_strength: p.line_strength,
+    line_strength_label: p.line_strength_label,
+    line_insight: p.line_insight,
     score: p.rank_score ?? p.score,
   };
 }
@@ -1068,7 +1113,7 @@ function renderBestProps(el, topProps, options = {}) {
         ? `<span class="best-bet-insight">${p.line_insight}</span>`
         : "";
       return `
-      <div class="best-bet-card best-prop-card">
+      <div class="best-bet-card best-prop-card${propVeryStrongClass(p)}">
         <a class="best-prop-card-link" href="${gameHref}">
           <span class="best-bet-team">${p.player}</span>
           <span class="best-bet-meta">${p.matchup || ""}</span>
@@ -1133,7 +1178,7 @@ function renderPropExplorerList(el, props, options = {}) {
         ? ""
         : `<span class="prop-skip-tag">${p.actionable_reason || "Not recommended"}</span>`;
       return `
-      <article class="prop-explorer-card ${p.actionable ? "" : "prop-explorer-card--skip"}">
+      <article class="prop-explorer-card${propVeryStrongClass(p)} ${p.actionable ? "" : "prop-explorer-card--skip"}">
         <div class="prop-explorer-head">
           <div>
             <h3 class="prop-explorer-player">${p.player}</h3>
@@ -1189,6 +1234,7 @@ function buildPropSearchQuery(filters = {}) {
     params.set("line_value", String(filters.line_value));
   }
   if (filters.actionable_only) params.set("actionable_only", "true");
+  if (filters.very_strong_only) params.set("very_strong_only", "true");
   if (filters.include_alternates) params.set("include_alternates", "true");
   if (filters.scan) params.set("scan", "true");
   if (filters.refresh) params.set("refresh", "true");
@@ -1722,16 +1768,27 @@ function renderPropSlipPanel() {
   }
 
   legsEl.innerHTML = legs
-    .map(
-      (leg) => `
+    .map((leg) => {
+      const strength = leg.line_strength
+        ? lineStrengthHtml({
+            line_strength: leg.line_strength,
+            line_strength_label: leg.line_strength_label,
+            line_insight: leg.line_insight,
+          })
+        : "";
+      const alltime =
+        leg.hit_rate_alltime != null ? propHitRateChip("All-time", leg.hit_rate_alltime) : "";
+      const meta = [strength, alltime].filter(Boolean).join(" ");
+      return `
         <div class="prop-slip-leg">
           <div class="prop-slip-leg-text">
             <strong>${leg.matchup || "MLB"}</strong>
             <span>${propSlipLegLabel(leg)}</span>
+            ${meta ? `<span class="prop-slip-leg-meta">${meta}</span>` : ""}
           </div>
           <button type="button" class="prop-slip-remove" data-remove-prop="${leg.id}" aria-label="Remove">×</button>
-        </div>`
-    )
+        </div>`;
+    })
     .join("");
 
   legsEl.querySelectorAll("[data-remove-prop]").forEach((btn) => {
@@ -1824,6 +1881,7 @@ function initPropSlipUi() {
   });
 
   window.addPropToSlip = addPropToSlip;
+  window.propSlipLegFromProp = propSlipLegFromProp;
   renderPropSlipPanel();
 }
 

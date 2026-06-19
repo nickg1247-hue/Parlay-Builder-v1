@@ -8,6 +8,7 @@
   const lineKindEl = document.getElementById("filter-line-kind");
   const lineValueEl = document.getElementById("filter-line-value");
   const actionableEl = document.getElementById("filter-actionable");
+  const veryStrongEl = document.getElementById("filter-very-strong");
   const alternatesEl = document.getElementById("filter-alternates");
   const refreshBtn = document.getElementById("props-search-refresh");
 
@@ -19,6 +20,7 @@
       line_kind: lineKindEl?.value || "both",
       line_value: lineValueEl?.value ?? "",
       actionable_only: !!actionableEl?.checked,
+      very_strong_only: !!veryStrongEl?.checked,
       include_alternates: !!alternatesEl?.checked || lineKindEl?.value === "alternate",
       limit: 100,
       scan: !!refresh,
@@ -33,7 +35,7 @@
       const data = await fetchJSON(`/api/props/search?${params.toString()}`);
       const hint = data.hint ? ` ${data.hint}` : "";
       if (metaEl) {
-        metaEl.textContent = `${data.total_matched || 0} props · ${data.bookmaker_label || "Consensus"}${hint}`;
+        metaEl.textContent = `${data.total_matched || 0} props · ${data.total_very_strong || 0} very strong · ${data.bookmaker_label || "Consensus"}${hint}`;
       }
       renderPropExplorerList(resultsEl, data.props || [], {
         emptyMessage: data.hint || "No props match these filters. Try a different book or refresh lines.",

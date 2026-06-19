@@ -24,8 +24,11 @@ from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
 from app.services.prop_scoring import (
     _player_team_id,
     _search_player_id,
+    is_perfect_l5_l10_season,
     market_label,
+    refresh_prop_line_strength,
     score_prop,
+    side_form_hit_rates,
     warm_scoring_cache,
 )
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
@@ -42,6 +45,7 @@ DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
 MAX_PROP_LINES_TO_SCORE = int(os.getenv("MAX_PROP_LINES_TO_SCORE", "80"))
 RUNS_PROP_MARKET = "batter_runs_scored"
 DEFAULT_PROP_BOOKMAKER = "consensus"
+VERY_STRONG_LINE_STRENGTH = "very_strong"
 # Keys must match The Odds API bookmaker keys (see the-odds-api.com bookmaker list).
 PROP_BOOKMAKERS: dict[str, str] = {
     "consensus": "Best line (median)",
@@ -172,6 +176,55 @@ def _include_runs_props(markets_requested: str) -> bool:
     return os.getenv("PROP_INCLUDE_RUNS", "").strip().lower() in ("1", "true", "yes")
 
 
+def is_very_strong_prop(prop: dict[str, Any]) -> bool:
+    if prop.get("line_strength") == VERY_STRONG_LINE_STRENGTH:
+        return True
+    if not prop.get("actionable"):
+        return False
+    l5, l10, season = side_form_hit_rates(prop)
+    return is_perfect_l5_l10_season(l5, l10, season)
+
+
+def _normalize_scored_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Refresh very-strong labels from hit-rate fields (cached props may say 'Strong line')."""
+    return [refresh_prop_line_strength(dict(prop)) for prop in props]
+
+
+def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
+    """Split scored props into very-strong vs regular top picks."""
+    very_strong: list[dict[str, Any]] = []
+    top_picks: list[dict[str, Any]] = []
+    total_actionable = 0
+    for prop in props:
+        if not prop.get("actionable"):
+            continue
+        if prop.get("recommended_hit_rate") is None or prop.get("recommended_odds") is None:
+            continue
+        total_actionable += 1
+        if is_very_strong_prop(prop):
+            very_strong.append(prop)
+        elif prop.get("score") is not None and prop.get("score", 0) >= 60:
+            top_picks.append(prop)
+    very_strong.sort(key=prop_rank_key)
+    top_picks.sort(key=prop_rank_key)
+    return {
+        "very_strong_picks": very_strong[:12],
+        "top_picks": top_picks[:12],
+        "total_very_strong": len(very_strong),
+        "total_actionable": total_actionable,
+    }
+
+
+def _split_slate_props(
+    picks: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    very_strong = [p for p in picks if is_very_strong_prop(p)]
+    regular = [p for p in picks if not is_very_strong_prop(p)]
+    very_strong.sort(key=prop_rank_key)
+    regular.sort(key=prop_rank_key)
+    return very_strong, regular
+
+
 def _filter_prop_markets(
     props: list[dict[str, Any]],
     *,
@@ -183,22 +236,17 @@ def _filter_prop_markets(
 
 
 def _trim_props_payload(payload: dict[str, Any], markets_requested: str) -> dict[str, Any]:
-    props = _filter_prop_markets(payload.get("props") or [], markets_requested=markets_requested)
-    top_picks = [
-        p
-        for p in props
-        if p.get("actionable") and p.get("score") is not None and p.get("score", 0) >= 60
-    ][:12]
-    total_actionable = sum(
-        1
-        for p in props
-        if p.get("actionable")
-        and p.get("recommended_hit_rate") is not None
-        and p.get("recommended_odds") is not None
+    props = _normalize_scored_props(
+        _filter_prop_markets(payload.get("props") or [], markets_requested=markets_requested)
     )
-    out = {**payload, "props": props, "top_picks": top_picks}
+    pick_lists = _game_pick_lists(props)
+    out = {
+        **payload,
+        "props": props,
+        **pick_lists,
+    }
     if "total_actionable" in payload:
-        out["total_actionable"] = total_actionable
+        out["total_actionable"] = pick_lists["total_actionable"]
     return out
 
 
@@ -274,6 +322,7 @@ def prop_slip_leg(
     ]
     if bookmaker and bookmaker != DEFAULT_PROP_BOOKMAKER:
         leg_parts.append(bookmaker)
+    alltime_key = "hit_rate_over_alltime" if side == "over" else "hit_rate_under_alltime"
     return {
         "id": "|".join(leg_parts),
         "game_id": str(game_id),
@@ -285,6 +334,10 @@ def prop_slip_leg(
         "line": prop.get("line"),
         "american_odds": prop.get("recommended_odds"),
         "hit_rate": prop.get("recommended_hit_rate"),
+        "hit_rate_alltime": prop.get(alltime_key),
+        "line_strength": prop.get("line_strength"),
+        "line_strength_label": prop.get("line_strength_label"),
+        "line_insight": prop.get("line_insight"),
         "score": prop.get("score"),
         "bookmaker": bookmaker,
         "bookmaker_label": _bookmaker_label(bookmaker),
@@ -417,15 +470,11 @@ def _assemble_game_props_payload(
         away_team_id=game.get("away_team_id"),
         home_team_id=game.get("home_team_id"),
     )
-    top_picks = [
-        p
-        for p in enriched
-        if p.get("actionable") and p.get("score") is not None and p.get("score", 0) >= 60
-    ][:12]
+    pick_lists = _game_pick_lists(enriched)
     return {
         **empty_payload,
         "props": enriched,
-        "top_picks": top_picks,
+        **pick_lists,
         "fetched_at": _clock().isoformat(),
         "source": source,
         "status": "ok" if enriched else "empty",
@@ -686,7 +735,7 @@ def _enrich_props(
             season=season,
             opposing_pitcher=opposing,
         )
-        merged = {**row, **analysis}
+        merged = refresh_prop_line_strength({**row, **analysis})
         enriched.append(merged)
     enriched.sort(
         key=lambda r: (
@@ -731,6 +780,8 @@ def build_game_props(
         "away_team": away_team,
         "props": [],
         "top_picks": [],
+        "very_strong_picks": [],
+        "total_very_strong": 0,
         "fetched_at": None,
         "source": None,
         "status": "empty",
@@ -957,10 +1008,14 @@ def _daily_props_payload(
     hint: str | None = None,
     auto_scanned: bool = False,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+    very_strong_props: list[dict[str, Any]] | None = None,
+    top_props: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     from app.odds.live_odds import live_odds_enabled
 
     book = _normalize_bookmaker(bookmaker)
+    if very_strong_props is None or top_props is None:
+        very_strong_props, top_props = _split_slate_props(picks)
     out: dict[str, Any] = {
         "date": game_date.isoformat(),
         "bookmaker": book,
@@ -970,7 +1025,9 @@ def _daily_props_payload(
         "games_fetched": games_fetched,
         "fetch_cap_hit": fetch_cap_hit,
         "total_actionable": len(picks),
-        "top_props": picks[:limit],
+        "total_very_strong": len(very_strong_props),
+        "very_strong_props": very_strong_props[:limit],
+        "top_props": top_props[:limit],
         "source": source,
         "cached_at": cached_at,
         "disclaimer": (
@@ -1008,12 +1065,21 @@ def build_daily_top_props(
     if not scan and not refresh:
         picks, source, meta = _load_best_slate_props(game_date, book)
         if picks:
-            picks = _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
+            picks = _normalize_scored_props(
+                _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
+            )
             picks.sort(key=prop_rank_key)
+            very_strong = (meta or {}).get("very_strong_props")
+            if very_strong is None:
+                very_strong, regular = _split_slate_props(picks)
+            else:
+                _, regular = _split_slate_props(picks)
             return _daily_props_payload(
                 game_date=game_date,
                 limit=limit,
                 picks=picks,
+                very_strong_props=very_strong,
+                top_props=regular,
                 source=source,
                 games_on_slate=meta.get("games_on_slate", 0) if meta else 0,
                 games_scanned=meta.get("games_scanned", 0) if meta else 0,
@@ -1087,6 +1153,7 @@ def build_daily_top_props(
 
     picks.sort(key=prop_rank_key)
     if picks and scan:
+        very_strong, regular = _split_slate_props(picks)
         _write_json(
             _slate_cache_path(game_date, book),
             {
@@ -1097,6 +1164,10 @@ def build_daily_top_props(
                 "games_scanned": games_scanned,
                 "games_fetched": games_fetched,
                 "all_props": picks,
+                "very_strong_props": very_strong,
+                "top_props": regular,
+                "total_actionable": len(picks),
+                "total_very_strong": len(very_strong),
             },
         )
 
@@ -1149,7 +1220,10 @@ def _passes_prop_search_filters(
     line_kind: str | None,
     line_value: float | None,
     actionable_only: bool,
+    very_strong_only: bool = False,
 ) -> bool:
+    if very_strong_only and not is_very_strong_prop(prop):
+        return False
     if actionable_only and not prop.get("actionable"):
         return False
     if market_type and prop.get("market_type") != market_type:
@@ -1185,6 +1259,7 @@ def search_daily_props(
     line_kind: str | None = None,
     line_value: float | None = None,
     actionable_only: bool = False,
+    very_strong_only: bool = False,
     limit: int = 100,
     scan: bool = False,
     refresh: bool = False,
@@ -1232,7 +1307,9 @@ def search_daily_props(
 
     if not pool:
         picks, _, _ = _load_best_slate_props(game_date, book)
-        pool = picks or base.get("top_props") or []
+        pool = picks or (
+            (base.get("very_strong_props") or []) + (base.get("top_props") or [])
+        )
 
     filtered = [
         prop
@@ -1244,6 +1321,7 @@ def search_daily_props(
             line_kind=line_kind,
             line_value=line_value,
             actionable_only=actionable_only,
+            very_strong_only=very_strong_only,
         )
     ]
     filtered.sort(key=prop_rank_key)
@@ -1252,12 +1330,15 @@ def search_daily_props(
     if line_kind == "alternate" and not include_alternates:
         hint = "Alternate lines require a refresh with alternates enabled."
 
+    very_strong_matched = sum(1 for prop in filtered if is_very_strong_prop(prop))
+
     return {
         "date": game_date.isoformat(),
         "bookmaker": book,
         "bookmaker_label": _bookmaker_label(book),
         "market_types": list_prop_market_types(),
         "total_matched": len(filtered),
+        "total_very_strong": very_strong_matched,
         "props": filtered[:limit],
         "source": base.get("source"),
         "hint": hint,
@@ -1268,6 +1349,7 @@ def search_daily_props(
             "line_kind": line_kind or "both",
             "line_value": line_value,
             "actionable_only": actionable_only,
+            "very_strong_only": very_strong_only,
             "include_alternates": include_alternates,
         },
     }

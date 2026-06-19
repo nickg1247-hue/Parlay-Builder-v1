@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 MLB_STATS_BASE = "https://statsapi.mlb.com/api/v1"
 _http_client: httpx.Client | None = None
 MIN_GAMES_FOR_SCORE = 5
+MIN_ALLTIME_SEASON = 2018
+ALLTIME_SEASONS_BACK = 3
 MIN_ACTIONABLE_HIT_RATE = 0.55
 TRAP_UNOFFERED_GAP = 0.20
 TRAP_UNOFFERED_MIN = 0.70
@@ -73,7 +75,9 @@ def warm_scoring_cache(
             if mapping:
                 needed.add((pid, mapping[0], mapping[1]))
     for pid, group, stat_key in needed:
-        _season_game_log_values(pid, group, stat_key, season)
+        for yr in range(season - ALLTIME_SEASONS_BACK + 1, season + 1):
+            if yr >= MIN_ALLTIME_SEASON:
+                _season_game_log_values(pid, group, stat_key, yr)
 
 
 def _parse_innings_outs(ip_value: object) -> float | None:
@@ -119,6 +123,63 @@ def _hit_rates(values: list[float], line: float) -> tuple[float | None, float | 
     over = sum(1 for v in values if _side_hits(v, line, "over")) / n
     under = sum(1 for v in values if _side_hits(v, line, "under")) / n
     return round(over, 3), round(under, 3)
+
+
+def displays_as_perfect_pct(rate: float | None) -> bool:
+    """Match UI chips: Math.round(rate * 100) === 100."""
+    if rate is None:
+        return False
+    return round(rate * 100) >= 100
+
+
+def side_form_hit_rates(
+    prop: dict[str, Any],
+    side: str | None = None,
+) -> tuple[float | None, float | None, float | None]:
+    pick = side or prop.get("recommended_side") or "over"
+    if pick == "over":
+        return (
+            prop.get("hit_rate_over_l5"),
+            prop.get("hit_rate_over_l10"),
+            prop.get("hit_rate_over_season"),
+        )
+    return (
+        prop.get("hit_rate_under_l5"),
+        prop.get("hit_rate_under_l10"),
+        prop.get("hit_rate_under_season"),
+    )
+
+
+def is_perfect_l5_l10_season(
+    l5: float | None,
+    l10: float | None,
+    season: float | None,
+) -> bool:
+    return (
+        displays_as_perfect_pct(l5)
+        and displays_as_perfect_pct(l10)
+        and displays_as_perfect_pct(season)
+    )
+
+
+def refresh_prop_line_strength(prop: dict[str, Any]) -> dict[str, Any]:
+    """Re-derive very strong from stored L5/L10/season (fixes stale cached labels)."""
+    if not prop.get("actionable"):
+        return prop
+    side = prop.get("recommended_side")
+    if not side:
+        return prop
+    l5, l10, season = side_form_hit_rates(prop, side)
+    if not is_perfect_l5_l10_season(l5, l10, season):
+        return prop
+    odds = prop.get("recommended_odds")
+    odds_note = f" · Book {_format_american_odds(odds)}" if odds is not None else ""
+    return {
+        **prop,
+        "line_strength": "very_strong",
+        "line_strength_label": "Very strong",
+        "line_insight": f"100% L5 · L10 · Season{odds_note}",
+    }
 
 
 @lru_cache(maxsize=256)
@@ -190,6 +251,16 @@ def _season_game_log_values(player_id: int, group: str, stat_key: str, season: i
         if val is not None:
             values.append(val)
     return tuple(values)
+
+
+def _alltime_game_log_values(player_id: int, group: str, stat_key: str, season: int) -> tuple[float, ...]:
+    """Merge recent season game logs for all-time hit-rate context."""
+    merged: list[float] = []
+    for yr in range(season - ALLTIME_SEASONS_BACK + 1, season + 1):
+        if yr < MIN_ALLTIME_SEASON:
+            continue
+        merged.extend(_season_game_log_values(player_id, group, stat_key, yr))
+    return tuple(merged)
 
 
 def _matchup_rank_points(
@@ -348,8 +419,11 @@ def score_prop(
         "hit_rate_under_l10": None,
         "hit_rate_over_season": None,
         "hit_rate_under_season": None,
+        "hit_rate_over_alltime": None,
+        "hit_rate_under_alltime": None,
         "recent_avg_l10": None,
         "sample_games_season": 0,
+        "sample_games_alltime": 0,
         "factors": [],
         "market_label": market_label(market_type),
         "line_strength": None,
@@ -382,6 +456,9 @@ def score_prop(
     l10_over, l10_under = _hit_rates(l10, line)
     season_over, season_under = _hit_rates(values, line)
     recent_avg = sum(l10) / len(l10)
+
+    alltime_values = list(_alltime_game_log_values(player_id, group, stat_key, season))
+    alltime_over, alltime_under = _hit_rates(alltime_values, line)
 
     choice = _choose_actionable_side(
         line=line,
@@ -424,6 +501,9 @@ def score_prop(
         rank_score = _compute_rank_score(hit_rate=hit_rate)
         score = rank_score
 
+    side_l5 = l5_over if side == "over" else l5_under if side == "under" else None
+    side_l10 = l10_over if side == "over" else l10_under if side == "under" else None
+    side_season = season_over if side == "over" else season_under if side == "under" else None
     line_strength = _prop_line_strength(
         market_type=market_type,
         side=side,
@@ -433,6 +513,10 @@ def score_prop(
         actionable=choice["actionable"],
         actionable_reason=choice.get("actionable_reason"),
         matchup_notes=matchup_notes,
+        l5_rate=side_l5,
+        l10_rate=side_l10,
+        season_rate=side_season,
+        recommended_odds=choice["recommended_odds"],
     )
 
     return {
@@ -448,12 +532,15 @@ def score_prop(
         "hit_rate_under_l10": l10_under,
         "hit_rate_over_season": season_over,
         "hit_rate_under_season": season_under,
+        "hit_rate_over_alltime": alltime_over,
+        "hit_rate_under_alltime": alltime_under,
         "hit_rate_over": l10_over,
         "hit_rate_under": l10_under,
         "recent_avg": round(recent_avg, 2),
         "recent_avg_l10": round(recent_avg, 2),
         "sample_games": len(l10),
         "sample_games_season": len(values),
+        "sample_games_alltime": len(alltime_values),
         "factors": factors,
         "market_label": market_label(market_type),
         "rank_score": rank_score,
@@ -467,6 +554,12 @@ def _side_rate_label(side: str, over_rate: float | None, under_rate: float | Non
     return f"{rate:.0%}" if rate is not None else "—"
 
 
+def _format_american_odds(odds: int | None) -> str:
+    if odds is None:
+        return "—"
+    return f"+{odds}" if odds > 0 else str(odds)
+
+
 def _prop_line_strength(
     *,
     market_type: str,
@@ -477,12 +570,29 @@ def _prop_line_strength(
     actionable: bool,
     actionable_reason: str | None,
     matchup_notes: list[str],
+    l5_rate: float | None = None,
+    l10_rate: float | None = None,
+    season_rate: float | None = None,
+    recommended_odds: int | None = None,
 ) -> dict[str, str | None]:
     labels = {
+        "very_strong": "Very strong",
         "strong": "Strong line",
         "moderate": "Moderate line",
         "weak": "Weak line",
     }
+    if (
+        actionable
+        and side
+        and is_perfect_l5_l10_season(l5_rate, l10_rate, season_rate)
+    ):
+        odds_note = f" · Book {_format_american_odds(recommended_odds)}"
+        return {
+            "line_strength": "very_strong",
+            "line_strength_label": labels["very_strong"],
+            "line_insight": f"100% L5 · L10 · Season{odds_note}",
+        }
+
     if not actionable:
         reason = actionable_reason or "Not an actionable prop side"
         return {

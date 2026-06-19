@@ -541,6 +541,7 @@ async def props_search(
         description="Exact line value filter (e.g. 2.0).",
     ),
     actionable_only: bool = Query(False),
+    very_strong_only: bool = Query(False),
     include_alternates: bool = Query(False),
     limit: int = Query(100, ge=1, le=200),
     scan: bool = Query(False),
@@ -561,6 +562,7 @@ async def props_search(
         scan=scan,
         refresh=refresh,
         include_alternates=include_alternates,
+        very_strong_only=very_strong_only,
     )
     if not result.get("props") and not scan and not refresh:
         result = search_daily_props(
@@ -574,6 +576,7 @@ async def props_search(
             limit=limit,
             scan=True,
             include_alternates=include_alternates,
+            very_strong_only=very_strong_only,
         )
         result["auto_scanned"] = True
     return result

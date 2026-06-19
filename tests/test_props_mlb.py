@@ -98,8 +98,8 @@ def test_parse_event_props_median_odds():
     judge = next(r for r in rows if r["player"] == "Aaron Judge")
     assert judge["market_type"] == "batter_hits"
     assert judge["line"] == 1.5
-    assert judge["over_odds"] == -115
-    assert judge["under_odds"] == -105
+    assert judge["over_odds"] == -118
+    assert judge["under_odds"] == -102
 
 
 def test_parse_event_props_single_book():
@@ -118,6 +118,53 @@ def test_normalize_bookmaker_aliases():
 
 def test_books_with_prop_markets():
     assert props_mlb._books_with_prop_markets(FAKE_EVENT) == ["draftkings", "fanduel"]
+
+
+def test_game_pick_lists_splits_very_strong_from_top_picks():
+    props = [
+        {
+            "actionable": True,
+            "recommended_hit_rate": 1.0,
+            "recommended_odds": -110,
+            "line_strength": "very_strong",
+            "score": 100,
+        },
+        {
+            "actionable": True,
+            "recommended_hit_rate": 0.7,
+            "recommended_odds": -110,
+            "line_strength": "strong",
+            "score": 70,
+            "hit_rate_over_l10": 0.7,
+            "hit_rate_over_l5": 0.6,
+            "hit_rate_over_season": 0.65,
+            "recommended_side": "over",
+        },
+    ]
+    lists = props_mlb._game_pick_lists(props)
+    assert len(lists["very_strong_picks"]) == 1
+    assert len(lists["top_picks"]) == 1
+    assert lists["total_very_strong"] == 1
+
+
+def test_split_slate_props_and_daily_payload():
+    picks = [
+        {"line_strength": "very_strong", "recommended_side": "over", "hit_rate_over_l10": 1.0, "hit_rate_over_l5": 1.0, "hit_rate_over_season": 1.0},
+        {"line_strength": "strong", "recommended_side": "over", "hit_rate_over_l10": 0.8, "hit_rate_over_l5": 0.7, "hit_rate_over_season": 0.75},
+    ]
+    very, regular = props_mlb._split_slate_props(picks)
+    assert len(very) == 1
+    assert len(regular) == 1
+    payload = props_mlb._daily_props_payload(
+        game_date=date(2026, 6, 16),
+        limit=10,
+        picks=picks,
+        source="test",
+    )
+    assert payload["total_very_strong"] == 1
+    assert len(payload["very_strong_props"]) == 1
+    assert len(payload["top_props"]) == 1
+    assert payload["very_strong_props"][0]["line_strength"] == "very_strong"
 
 
 def test_filter_prop_markets_excludes_runs_by_default():
@@ -375,8 +422,64 @@ def test_score_prop_recommends_over_on_hot_form(mock_logs, _pid):
     assert result["score"] is not None
     assert result["hit_rate_over_l10"] >= 0.5
     assert result["sample_games_season"] == 10
-    assert result["line_strength"] in ("strong", "moderate", "weak")
+    assert result["line_strength"] in ("very_strong", "strong", "moderate", "weak")
     assert result["line_strength_label"]
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_very_strong_on_perfect_l5_l10_season(mock_logs, _pid):
+    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-115,
+        under_odds=+105,
+        season=2026,
+    )
+    assert result["actionable"] is True
+    assert result["hit_rate_over_l5"] == 1.0
+    assert result["hit_rate_over_l10"] == 1.0
+    assert result["hit_rate_over_season"] == 1.0
+    assert result["line_strength"] == "very_strong"
+    assert result["line_strength_label"] == "Very strong"
+    assert "L5" in (result["line_insight"] or "")
+    assert "-115" in (result["line_insight"] or "")
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_not_very_strong_when_l10_imperfect(mock_logs, _pid):
+    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 1, 2])
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-115,
+        under_odds=+105,
+        season=2026,
+    )
+    assert result["hit_rate_over_l10"] == 0.9
+    assert result["line_strength"] != "very_strong"
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_refresh_prop_line_strength_upgrades_stale_strong_label(mock_logs, _pid):
+    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    scored = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-115,
+        under_odds=+105,
+        season=2026,
+    )
+    stale = {**scored, "line_strength": "strong", "line_strength_label": "Strong line"}
+    fixed = prop_scoring.refresh_prop_line_strength(stale)
+    assert fixed["line_strength"] == "very_strong"
+    assert fixed["line_strength_label"] == "Very strong"
 
 
 def test_form_score_is_l10_hit_rate_percent():

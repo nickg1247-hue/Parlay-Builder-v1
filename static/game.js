@@ -442,11 +442,19 @@
     }
 
     const top = data.top_picks || [];
+    const veryStrong = data.very_strong_picks || [];
 
     const all = data.props || [];
 
     const bookLabel = data.bookmaker_label
       ? `<p class="props-book-label">Lines: ${data.bookmaker_label}</p>`
+      : "";
+
+    const veryStrongBlock = veryStrong.length
+      ? `<div class="props-block props-block-very-strong">
+          <h3>Very strong · 100% L5 / L10 / Season</h3>
+          <div class="props-cards">${veryStrong.map((p, i) => propCardHtml(p, data, i)).join("")}</div>
+        </div>`
       : "";
 
     const topBlock = top.length
@@ -508,9 +516,11 @@
 
       ${bookLabel}
 
+      ${veryStrongBlock}
+
       ${topBlock}
 
-      <details class="props-all-lines" ${top.length ? "open" : ""}>
+      <details class="props-all-lines" ${top.length || veryStrong.length ? "open" : ""}>
 
         <summary>All lines (${all.length})</summary>
 
@@ -568,29 +578,14 @@
 
         const odds = side === "over" ? prop.over_odds : prop.under_odds;
 
-        window.addPropToSlip({
-
-          id: propLegId(prop, side),
-
-          game_id: gameId,
-
-          matchup: data.matchup,
-
-          player: prop.player,
-
-          market_type: prop.market_type,
-
-          market_label: prop.market_label,
-
-          side,
-
-          line: prop.line,
-
-          american_odds: odds,
-
-          score: prop.score,
-
-        });
+        window.addPropToSlip(
+          window.propSlipLegFromProp({
+            ...prop,
+            game_id: gameId,
+            matchup: data.matchup,
+            recommended_odds: odds,
+          })
+        );
 
         btn.textContent = "Added";
 
@@ -619,7 +614,10 @@
       ? `<p class="prop-card-strength">${lineStrength}${prop.line_insight ? `<span class="prop-line-insight">${prop.line_insight}</span>` : ""}</p>`
       : "";
 
-    return `<article class="prop-card">
+    const veryStrong =
+      typeof window.propVeryStrongClass === "function" ? window.propVeryStrongClass(prop) : "";
+
+    return `<article class="prop-card${veryStrong}">
 
       <div class="prop-card-head">
 
