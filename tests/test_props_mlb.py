@@ -273,6 +273,49 @@ def test_resolve_bookmaker_defaults_to_draftkings():
     assert props_mlb._resolve_bookmaker("consensus") == "consensus"
 
 
+def test_revalidate_pick_list_drops_unpublished_cached_line():
+    import json
+    from datetime import date
+    from pathlib import Path
+
+    raw_path = Path("data/processed/props_repository/raw_events/824097.2026-06-19.json")
+    if not raw_path.exists():
+        pytest.skip("raw event fixture missing")
+    fake = {
+        "game_id": "824097",
+        "player": "Carter Jensen",
+        "market_type": "batter_hits",
+        "line": 2.5,
+        "recommended_side": "under",
+        "recommended_odds": -110,
+        "over_odds": 120,
+        "under_odds": -110,
+        "complete_market": True,
+        "offered_books": ["draftkings"],
+        "actionable": True,
+    }
+    real = {
+        "game_id": "824097",
+        "player": "Carter Jensen",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "recommended_side": "under",
+        "recommended_odds": 176,
+        "over_odds": -238,
+        "under_odds": 176,
+        "complete_market": True,
+        "offered_books": ["draftkings"],
+        "actionable": True,
+    }
+    out = props_mlb._revalidate_pick_list(
+        [fake, real],
+        "draftkings",
+        date(2026, 6, 19),
+    )
+    assert len(out) == 1
+    assert out[0]["line"] == 0.5
+
+
 def test_normalize_bookmaker_aliases():
     assert props_mlb._normalize_bookmaker("caesars") == "williamhill_us"
     assert props_mlb._normalize_bookmaker("pointsbetus") == "consensus"

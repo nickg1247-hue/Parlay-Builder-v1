@@ -1312,6 +1312,19 @@ function buildPropSearchQuery(filters = {}) {
 window.buildPropSearchQuery = buildPropSearchQuery;
 
 const PROP_BOOK_STORAGE_KEY = "pb-prop-bookmaker";
+const PROP_BOOK_DEFAULT_VERSION = "20260620b";
+const PROP_BOOK_DEFAULT_VERSION_KEY = "pb-prop-book-default-v";
+
+(function migratePropBookDefault() {
+  if (localStorage.getItem(PROP_BOOK_DEFAULT_VERSION_KEY) === PROP_BOOK_DEFAULT_VERSION) {
+    return;
+  }
+  const stored = localStorage.getItem(PROP_BOOK_STORAGE_KEY);
+  if (!stored || stored === "consensus") {
+    localStorage.setItem(PROP_BOOK_STORAGE_KEY, "draftkings");
+  }
+  localStorage.setItem(PROP_BOOK_DEFAULT_VERSION_KEY, PROP_BOOK_DEFAULT_VERSION);
+})();
 const PROP_BOOK_ALIASES = {
   caesars: "williamhill_us",
   williamhill: "williamhill_us",

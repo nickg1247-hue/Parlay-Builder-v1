@@ -403,6 +403,10 @@ def prop_is_bettable(prop: dict[str, Any], *, allow_stale: bool = False) -> bool
         return False
     if prop.get("complete_market") is not True:
         return False
+    if prop.get("line_kind") == "alternate":
+        return False
+    if prop.get("primary_line") is False:
+        return False
     if prop.get("stale_cache") and not allow_stale:
         return False
     return True
@@ -447,6 +451,14 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
     bookmaker = _normalize_bookmaker(payload.get("bookmaker"))
     markets_requested = str(payload.get("markets_requested") or DEFAULT_MLB_PROP_MARKETS)
     stale = bool(payload.get("stale_cache"))
+    game_date_str = payload.get("date")
+    try:
+        game_date = (
+            date.fromisoformat(str(game_date_str)) if game_date_str else date.today()
+        )
+    except ValueError:
+        game_date = date.today()
+    published = _load_published_index(str(game_id), game_date, bookmaker)
     for prop in _filter_prop_markets(
         payload.get("props") or [],
         markets_requested=markets_requested,
@@ -456,6 +468,13 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
             row["stale_cache"] = True
         if not prop_is_bettable(row):
             continue
+        published_key = _prop_published_key(row)
+        if published is not None:
+            if published_key is not None:
+                if published_key not in published:
+                    continue
+            elif not _prop_matches_published(row, published):
+                continue
         offered = row.get("offered_books") or []
         if (
             bookmaker not in (DEFAULT_PROP_BOOKMAKER, "consensus")
@@ -661,6 +680,131 @@ def _collapse_to_primary_lines(
         )
         out[best_pk] = {**best_row, "primary_line": True}
     return out
+
+
+def _published_lines_for_book(
+    event: dict[str, Any],
+    book: str,
+    *,
+    markets_requested: str = DEFAULT_MLB_PROP_MARKETS,
+) -> list[dict[str, Any]]:
+    return _filter_prop_markets(
+        _parse_event_props(event, bookmaker_key=book),
+        markets_requested=markets_requested,
+    )
+
+
+def _published_lines_index(
+    event: dict[str, Any],
+    book: str,
+    *,
+    markets_requested: str = DEFAULT_MLB_PROP_MARKETS,
+) -> set[tuple[str, str, float, str]]:
+    """Set of (player, market_type, line, side) the sportsbook actually posted."""
+    index: set[tuple[str, str, float, str]] = set()
+    for row in _published_lines_for_book(
+        event, book, markets_requested=markets_requested
+    ):
+        if row.get("complete_market") is not True:
+            continue
+        if row.get("primary_line") is False:
+            continue
+        if row.get("line_kind") == "alternate":
+            continue
+        player = str(row.get("player") or "")
+        market = str(row.get("market_type") or "")
+        line = row.get("line")
+        if not player or not market or line is None:
+            continue
+        line_f = float(line)
+        if row.get("over_odds") is not None:
+            index.add((player, market, line_f, "over"))
+        if row.get("under_odds") is not None:
+            index.add((player, market, line_f, "under"))
+    return index
+
+
+def _prop_published_key(prop: dict[str, Any]) -> tuple[str, str, float, str] | None:
+    side = str(prop.get("recommended_side") or "").lower()
+    if side not in ("over", "under"):
+        return None
+    player = str(prop.get("player") or "")
+    market = str(prop.get("market_type") or "")
+    line = prop.get("line")
+    if not player or not market or line is None:
+        return None
+    return (player, market, float(line), side)
+
+
+def _load_published_index(
+    game_id: str,
+    game_date: date,
+    book: str,
+) -> set[tuple[str, str, float, str]] | None:
+    raw = _load_raw_event(str(game_id), game_date)
+    if not raw or not raw.get("event"):
+        return None
+    return _published_lines_index(raw["event"], book)
+
+
+def _prop_matches_published(
+    prop: dict[str, Any],
+    published: set[tuple[str, str, float, str]],
+) -> bool:
+    key = _prop_published_key(prop)
+    if key is not None:
+        return key in published
+    player = str(prop.get("player") or "")
+    market = str(prop.get("market_type") or "")
+    line = prop.get("line")
+    if not player or not market or line is None:
+        return False
+    line_f = float(line)
+    return (
+        (player, market, line_f, "over") in published
+        and (player, market, line_f, "under") in published
+    )
+
+
+def _revalidate_pick_list(
+    picks: list[dict[str, Any]],
+    book: str,
+    game_date: date,
+) -> list[dict[str, Any]]:
+    """Drop cached picks that are not in the raw sportsbook feed for this book."""
+    index_cache: dict[str, set[tuple[str, str, float, str]] | None] = {}
+    kept: list[dict[str, Any]] = []
+    for prop in picks:
+        gid = str(prop.get("game_id") or "")
+        if not gid:
+            continue
+        if gid not in index_cache:
+            index_cache[gid] = _load_published_index(gid, game_date, book)
+        published = index_cache[gid]
+        if published is not None and not _prop_matches_published(prop, published):
+            continue
+        kept.append(prop)
+    return kept
+
+
+def _apply_published_line_filter(payload: dict[str, Any]) -> dict[str, Any]:
+    game_id = str(payload.get("game_id") or "")
+    game_date_str = payload.get("date")
+    book = _normalize_bookmaker(payload.get("bookmaker"))
+    markets_requested = str(payload.get("markets_requested") or DEFAULT_MLB_PROP_MARKETS)
+    if not game_id or not game_date_str:
+        return payload
+    try:
+        game_date = date.fromisoformat(str(game_date_str))
+    except ValueError:
+        return payload
+    published = _load_published_index(game_id, game_date, book)
+    props: list[dict[str, Any]] = []
+    for prop in payload.get("props") or []:
+        if published is not None and not _prop_matches_published(prop, published):
+            continue
+        props.append(prop)
+    return _trim_props_payload({**payload, "props": props}, markets_requested)
 
 
 def _parse_event_props(
@@ -999,6 +1143,7 @@ def build_game_props(
         cached = _load_cached_game_props(str(game_id), book)
         if cached:
             cached = _trim_props_payload(cached, fetch_markets)
+            cached = _apply_published_line_filter(cached)
             if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
                 cached = {**cached, "stale_cache": True}
             return _mark_stale_props(cached)
@@ -1015,6 +1160,7 @@ def build_game_props(
                 source="raw_event_cache",
                 empty_payload=empty_payload,
             )
+            payload = _apply_published_line_filter(payload)
             _write_json(cache_path, payload)
             return payload
 
@@ -1059,6 +1205,7 @@ def build_game_props(
         source=result.source or "the_odds_api_live",
         empty_payload=empty_payload,
     )
+    payload = _apply_published_line_filter(payload)
     _write_json(cache_path, payload)
     return payload
 
@@ -1273,12 +1420,9 @@ def build_daily_top_props(
                 _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
             )
             picks = [p for p in picks if prop_is_bettable(p)]
+            picks = _revalidate_pick_list(picks, book, game_date)
             picks.sort(key=prop_rank_key)
-            very_strong = (meta or {}).get("very_strong_props")
-            if very_strong is None:
-                very_strong, regular = _split_slate_props(picks)
-            else:
-                _, regular = _split_slate_props(picks)
+            very_strong, regular = _split_slate_props(picks)
             return _daily_props_payload(
                 game_date=game_date,
                 limit=limit,
@@ -1352,6 +1496,7 @@ def build_daily_top_props(
             hint = "No props cached yet — enable USE_LIVE_ODDS and ODDS_API_KEY, then scan."
 
     picks.sort(key=prop_rank_key)
+    picks = _revalidate_pick_list(picks, book, game_date)
     if picks and scan:
         very_strong, regular = _split_slate_props(picks)
         _write_json(
