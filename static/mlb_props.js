@@ -30,7 +30,17 @@
 
   async function runSearch(refresh = false) {
     if (metaEl) metaEl.textContent = refresh ? "Refreshing props from sportsbooks…" : "Searching props…";
-    const params = buildPropSearchQuery(readFilters(refresh));
+    const filters = readFilters(refresh);
+    if (!refresh) {
+      try {
+        const cacheMeta = await fetchJSON("/api/props/cache-meta");
+        if (cacheMeta.requires_refresh) {
+          filters.scan = true;
+          filters.refresh = true;
+        }
+      } catch (_) {}
+    }
+    const params = buildPropSearchQuery(filters);
     try {
       const data = await fetchJSON(`/api/props/search?${params.toString()}`);
       const hint = data.hint ? ` ${data.hint}` : "";

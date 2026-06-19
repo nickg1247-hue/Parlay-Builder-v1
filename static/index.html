@@ -11,8 +11,8 @@
   </script>
   <meta name="pb-build" content="2026-06-17-props-v4">
   <title>NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260620b">
-  <link rel="stylesheet" href="/static/app.css?v=20260620b">
+  <link rel="stylesheet" href="/static/style.css?v=20260620c">
+  <link rel="stylesheet" href="/static/app.css?v=20260620c">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -99,7 +99,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260620b"></script>
+  <script src="/static/app.js?v=20260620c"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -115,10 +115,13 @@
       const refreshEl = document.getElementById("refresh-line");
       const heroChips = document.getElementById("hero-chips");
 
-      async function loadHomeProps({ scan = false } = {}) {
-        const url = scan
-          ? "/api/daily/props?limit=25&bookmaker=draftkings&scan=true"
-          : "/api/daily/props?limit=25&bookmaker=draftkings";
+      async function loadHomeProps() {
+        let refresh = "";
+        try {
+          const meta = await fetchJSON("/api/props/cache-meta");
+          if (meta.requires_refresh) refresh = "&refresh=true";
+        } catch (_) {}
+        const url = `/api/daily/props?limit=25&bookmaker=draftkings&scan=true${refresh}`;
         let propsData = { top_props: [], very_strong_props: [], total_actionable: 0 };
         try {
           const res = await fetch(url);
@@ -132,9 +135,7 @@
           if (res.ok) propsData = await res.json();
         } catch (_) {
           renderBestProps(propsEl, [], {
-            emptyMessage: scan
-              ? "Could not load props — check server logs."
-              : "Loading player props…",
+            emptyMessage: "Could not load props — check server logs.",
           });
           return propsData;
         }
@@ -152,11 +153,7 @@
         renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
           emptyMessage: (propsData.top_props || []).length
             ? undefined
-            : scan
-              ? `No actionable props found after scanning today's slate.${hint}`
-              : propsData.total_actionable
-                ? undefined
-                : `No cached props yet — scanning slate…${hint}`,
+            : `No actionable props found after scanning today's slate.${hint}`,
         });
         return propsData;
       }
@@ -192,10 +189,7 @@
           colors: _teamColors,
         });
 
-        loadHomeProps({ scan: false }).then((cached) => {
-          if ((cached.total_actionable || 0) > 0) return;
-          return loadHomeProps({ scan: true });
-        });
+        loadHomeProps();
       } catch (e) {
         renderHomeHeroChips(heroChips, { summary: null, scoreCounts: null, status: null });
         glance.innerHTML = `<div class="glance-card glance-muted"><span>Could not load today's summary.</span></div>`;

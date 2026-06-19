@@ -50,7 +50,9 @@ from app.services.props_mlb import (
     build_daily_top_props,
     DEFAULT_DISPLAY_BOOKMAKER,
     build_game_props,
+    ensure_props_cache_generation,
     evaluate_prop_parlay,
+    get_props_cache_meta,
     list_prop_bookmakers,
     list_prop_market_types,
     search_daily_props,
@@ -124,6 +126,13 @@ async def _maintenance_loop() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    wiped = ensure_props_cache_generation()
+    if wiped:
+        logger.info(
+            "Props cache wiped on startup (generation=%s, removed=%s files)",
+            wiped.get("generation"),
+            wiped.get("removed_files"),
+        )
     maintenance_task: asyncio.Task | None = None
     try:
         import pandas as pd
@@ -621,6 +630,11 @@ async def prop_parlay_eval(body: PropParlayEvalRequest):
     return evaluate_prop_parlay(legs)
 
 
+@app.get("/api/props/cache-meta")
+async def props_cache_meta():
+    return get_props_cache_meta()
+
+
 @app.get("/api/daily/props")
 async def daily_top_props(
     date_param: str | None = Query(None, alias="date"),
@@ -641,6 +655,10 @@ async def daily_top_props(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
+    cache_meta = get_props_cache_meta()
+    if cache_meta.get("requires_refresh"):
+        scan = True
+        refresh = True
     result = build_daily_top_props(
         game_date,
         limit=limit,

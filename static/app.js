@@ -1312,7 +1312,7 @@ function buildPropSearchQuery(filters = {}) {
 window.buildPropSearchQuery = buildPropSearchQuery;
 
 const PROP_BOOK_STORAGE_KEY = "pb-prop-bookmaker";
-const PROP_BOOK_DEFAULT_VERSION = "20260620b";
+const PROP_BOOK_DEFAULT_VERSION = "20260620c";
 const PROP_BOOK_DEFAULT_VERSION_KEY = "pb-prop-book-default-v";
 
 (function migratePropBookDefault() {
@@ -1403,9 +1403,19 @@ function buildPropBookQuery(extra = {}) {
   return params;
 }
 
+async function buildPropBookQueryWithRefresh(extra = {}) {
+  const params = buildPropBookQuery({ ...extra, scan: true });
+  try {
+    const meta = await fetchJSON("/api/props/cache-meta");
+    if (meta.requires_refresh) params.set("refresh", "true");
+  } catch (_) {}
+  return params;
+}
+
 window.getSelectedPropBookmaker = getSelectedPropBookmaker;
 window.initPropBookSelect = initPropBookSelect;
 window.buildPropBookQuery = buildPropBookQuery;
+window.buildPropBookQueryWithRefresh = buildPropBookQueryWithRefresh;
 
 function populatePropSlipFromProps(props, count, { replace = true } = {}) {
   const legs = selectUniquePlayerPropLegs(props, count);

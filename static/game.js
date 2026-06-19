@@ -376,8 +376,12 @@
 
 
 
-  function propsUrl(refresh) {
-    const params = buildPropBookQuery({ refresh: !!refresh });
+  async function propsUrl(refresh) {
+    const build =
+      typeof window.buildPropBookQueryWithRefresh === "function"
+        ? window.buildPropBookQueryWithRefresh
+        : async (extra) => window.buildPropBookQuery(extra);
+    const params = await build({ refresh: !!refresh });
     if (dateParam) params.set("date", dateParam);
     const q = params.toString();
     return `/api/games/mlb/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`;
@@ -685,7 +689,7 @@
 
       errEl?.classList.add("hidden");
 
-      const data = await fetchJSON(propsUrl(refresh));
+      const data = await fetchJSON(await propsUrl(refresh));
 
       renderProps(data);
 

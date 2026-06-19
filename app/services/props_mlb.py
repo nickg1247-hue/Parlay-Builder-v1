@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 PROPS_DIR = PROJECT_ROOT / "data" / "processed" / "props_repository"
 EVENTS_DIR = PROPS_DIR / "events"
+PROPS_CACHE_META_PATH = PROPS_DIR / ".cache_meta.json"
+# Bump when prop line parsing or cache rules change — triggers wipe on server start.
+PROPS_CACHE_GENERATION = "20260620c"
 
 
 def _raw_events_dir() -> Path:
@@ -648,6 +651,65 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def wipe_props_bet_cache() -> dict[str, Any]:
+    """Delete all cached prop lines so the next scan must pull from the API."""
+    removed = 0
+    PROPS_DIR.mkdir(parents=True, exist_ok=True)
+    for path in PROPS_DIR.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.name in (".cache_meta.json", ".gitkeep"):
+            continue
+        try:
+            path.unlink()
+            removed += 1
+        except OSError as exc:
+            logger.warning("Could not delete prop cache file %s: %s", path, exc)
+    meta = {
+        "generation": PROPS_CACHE_GENERATION,
+        "wiped_at": _clock().isoformat(),
+        "requires_refresh": True,
+        "removed_files": removed,
+    }
+    _write_json(PROPS_CACHE_META_PATH, meta)
+    logger.info(
+        "Wiped props bet cache (generation=%s, removed=%s files)",
+        PROPS_CACHE_GENERATION,
+        removed,
+    )
+    return meta
+
+
+def get_props_cache_meta() -> dict[str, Any]:
+    meta = _load_json(PROPS_CACHE_META_PATH) or {}
+    return {
+        "generation": str(meta.get("generation") or ""),
+        "expected_generation": PROPS_CACHE_GENERATION,
+        "requires_refresh": bool(meta.get("requires_refresh")),
+        "wiped_at": meta.get("wiped_at"),
+        "refreshed_at": meta.get("refreshed_at"),
+        "removed_files": meta.get("removed_files"),
+    }
+
+
+def mark_props_cache_refreshed() -> None:
+    meta = _load_json(PROPS_CACHE_META_PATH) or {}
+    meta["generation"] = PROPS_CACHE_GENERATION
+    meta["requires_refresh"] = False
+    meta["refreshed_at"] = _clock().isoformat()
+    _write_json(PROPS_CACHE_META_PATH, meta)
+
+
+def ensure_props_cache_generation() -> dict[str, Any] | None:
+    """On deploy/restart, wipe stale prop caches when generation changes."""
+    meta = _load_json(PROPS_CACHE_META_PATH) or {}
+    if meta.get("generation") == PROPS_CACHE_GENERATION and not meta.get("requires_refresh"):
+        return None
+    if meta.get("generation") == PROPS_CACHE_GENERATION and meta.get("requires_refresh"):
+        return meta
+    return wipe_props_bet_cache()
+
+
 def _line_balance_score(over_odds: int, under_odds: int) -> float:
     """Lower score = prices closer to a typical main line (-110/-110)."""
     return abs(abs(over_odds) - 110) + abs(abs(under_odds) - 110)
@@ -1172,8 +1234,13 @@ def build_game_props(
         empty_payload["message"] = msg
         return empty_payload
 
-    # Always fetch all US books in one call; filter to the selected book when parsing.
-    result = fetch_mlb_event_props_if_allowed(event_id, markets=fetch_markets)
+    # Single-book fetch for a specific sportsbook; all books for consensus.
+    api_books = book if book != DEFAULT_PROP_BOOKMAKER else None
+    result = fetch_mlb_event_props_if_allowed(
+        event_id,
+        markets=fetch_markets,
+        bookmakers=api_books,
+    )
     if result.denied:
         empty_payload["message"] = _status_message(result.denied_reason)
         cached = _load_json(cache_path)
@@ -1483,7 +1550,7 @@ def build_daily_top_props(
     source = "scan" if scan else "game_cache"
     hint: str | None = None
 
-    if not picks:
+    if not picks and not refresh:
         picks = _aggregate_repo_game_props(game_date, book)
         if picks:
             source = "repo_game_cache"
@@ -1515,6 +1582,9 @@ def build_daily_top_props(
                 "total_very_strong": len(very_strong),
             },
         )
+
+    if refresh and games_fetched > 0:
+        mark_props_cache_refreshed()
 
     return _daily_props_payload(
         game_date=game_date,

@@ -267,6 +267,35 @@ def test_draftkings_excludes_obscure_book_total_bases_ladder():
     assert all(r["line"] != 4.5 for r in consensus)
 
 
+def test_wipe_props_bet_cache_clears_repo(isolated_props, monkeypatch):
+    import json
+    from datetime import date
+
+    monkeypatch.setattr(props_mlb, "PROPS_CACHE_GENERATION", "test-gen")
+    (isolated_props / "824097.draftkings.json").write_text(
+        json.dumps({"props": [{"player": "A"}]}), encoding="utf-8"
+    )
+    (isolated_props / "slate_2026-06-19.draftkings.json").write_text("{}", encoding="utf-8")
+    meta = props_mlb.wipe_props_bet_cache()
+    assert meta["requires_refresh"] is True
+    assert meta["generation"] == "test-gen"
+    assert not (isolated_props / "824097.draftkings.json").exists()
+    assert props_mlb.get_props_cache_meta()["requires_refresh"] is True
+
+
+def test_ensure_props_cache_generation_wipes_on_version_change(isolated_props, monkeypatch):
+    monkeypatch.setattr(props_mlb, "PROPS_CACHE_GENERATION", "v2")
+    props_mlb._write_json(
+        props_mlb.PROPS_CACHE_META_PATH,
+        {"generation": "v1", "requires_refresh": False},
+    )
+    (isolated_props / "822723.json").write_text("{}", encoding="utf-8")
+    wiped = props_mlb.ensure_props_cache_generation()
+    assert wiped is not None
+    assert not (isolated_props / "822723.json").exists()
+    assert props_mlb.get_props_cache_meta()["generation"] == "v2"
+
+
 def test_resolve_bookmaker_defaults_to_draftkings():
     assert props_mlb._resolve_bookmaker(None) == "draftkings"
     assert props_mlb._resolve_bookmaker("") == "draftkings"
@@ -677,7 +706,7 @@ def test_build_game_props_fetches_and_caches(
     assert (isolated_props / "777001.draftkings.json").exists()
     assert (isolated_props / "raw_events" / "777001.2026-06-16.json").exists()
     mock_props.assert_called_once()
-    assert mock_props.call_args.kwargs.get("bookmakers") is None
+    assert mock_props.call_args.kwargs.get("bookmakers") == "draftkings"
 
     mock_props.reset_mock()
     fd_payload = props_mlb.build_game_props(
