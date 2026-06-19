@@ -46,6 +46,29 @@
     }
   }
 
+  async function loadTracker() {
+    const el = document.getElementById("props-tracker-stats");
+    if (!el) return;
+    try {
+      const data = await fetchJSON("/api/props/tracker/summary?days=30");
+      const buckets = data.line_strength || {};
+      const fmtRate = (rate) =>
+        rate != null ? `${(rate * 100).toFixed(0)}% hit` : "—";
+      const cards = ["strong", "moderate", "weak"].map((key) => {
+        const b = buckets[key] || {};
+        const label = key.charAt(0).toUpperCase() + key.slice(1);
+        return `<div class="props-tracker-stat"><strong>${fmtRate(b.hit_rate)}</strong><span>${label} · ${b.settled || 0} graded / ${b.offered || 0} offered</span></div>`;
+      });
+      const overall =
+        data.overall_hit_rate != null
+          ? `${(data.overall_hit_rate * 100).toFixed(0)}% overall (${data.props_settled || 0} graded)`
+          : `${data.props_logged || 0} logged — grading starts after games finish`;
+      el.innerHTML = `<p class="props-tracker-note">${overall}</p>${cards.join("")}`;
+    } catch (_) {
+      el.textContent = "Tracker unavailable.";
+    }
+  }
+
   async function init() {
     initLiveTicker("live-ticker", { sport: "mlb" });
     await initPropBookSelect(bookEl);
@@ -69,6 +92,7 @@
 
     refreshBtn?.addEventListener("click", () => runSearch(true));
 
+    await loadTracker();
     await runSearch(false);
   }
 

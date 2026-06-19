@@ -15,6 +15,10 @@ from app.services.forward_clv import backfill_closing_odds as backfill_mlb_clv
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
 from app.services.nba_forward_clv import backfill_closing_odds as backfill_nba_clv
 from app.services.nba_forward_clv import summarize_clv as summarize_nba_clv
+from app.services.prop_pick_tracker import (
+    backfill_prop_results,
+    summarize_prop_tracker,
+)
 
 
 def main() -> None:
@@ -36,6 +40,11 @@ def main() -> None:
         action="store_true",
         help="Compute updates without writing new log rows (NBA only)",
     )
+    parser.add_argument(
+        "--props",
+        action="store_true",
+        help="Also backfill MLB player prop results (hit/miss grading)",
+    )
     args = parser.parse_args()
     game_date = date.fromisoformat(args.date) if args.date else None
 
@@ -50,6 +59,12 @@ def main() -> None:
 
     print("Backfill:", result)
     print("Summary:", summary)
+
+    if args.props and args.sport == "mlb":
+        prop_result = backfill_prop_results(game_date)
+        prop_summary = summarize_prop_tracker(days=30)
+        print("Prop backfill:", prop_result)
+        print("Prop tracker:", prop_summary)
 
 
 if __name__ == "__main__":

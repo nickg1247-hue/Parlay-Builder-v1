@@ -578,6 +578,8 @@
 
         const odds = side === "over" ? prop.over_odds : prop.under_odds;
 
+        if (odds == null) return;
+
         window.addPropToSlip(
           window.propSlipLegFromProp({
             ...prop,

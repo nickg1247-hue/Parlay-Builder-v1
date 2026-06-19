@@ -53,6 +53,7 @@ PUBLIC_API_PATHS = frozenset({
     "/api/props/bookmakers",
     "/api/props/markets",
     "/api/props/search",
+    "/api/props/tracker/summary",
 })
 PUBLIC_API_PREFIXES = (
     "/api/games/mlb/",

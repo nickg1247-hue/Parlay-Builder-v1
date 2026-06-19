@@ -344,28 +344,100 @@ def prop_slip_leg(
     }
 
 
+def prop_is_bettable(prop: dict[str, Any], *, allow_stale: bool = False) -> bool:
+    """
+    True only when the recommended side has a live book price on that side.
+
+    Blocks model-only picks, missing odds, wrong-side traps, and expired cache.
+    """
+    if not prop.get("actionable"):
+        return False
+    side = str(prop.get("recommended_side") or "").lower()
+    if side not in ("over", "under"):
+        return False
+    recommended = prop.get("recommended_odds")
+    if recommended is None:
+        return False
+    try:
+        recommended_int = int(recommended)
+    except (TypeError, ValueError):
+        return False
+    if not is_valid_american_odds(recommended_int):
+        return False
+    side_key = "over_odds" if side == "over" else "under_odds"
+    listed = prop.get(side_key)
+    if listed is None:
+        return False
+    try:
+        listed_int = int(listed)
+    except (TypeError, ValueError):
+        return False
+    if not is_valid_american_odds(listed_int):
+        return False
+    if prop.get("stale_cache") and not allow_stale:
+        return False
+    return True
+
+
+def get_props_refresh_meta(game_date: date | None = None) -> dict[str, Any]:
+    """Latest props slate cache metadata for refresh status UI."""
+    game_date = game_date or date.today()
+    cached = _load_json(_slate_cache_path(game_date, DEFAULT_PROP_BOOKMAKER))
+    if not cached:
+        cached = _load_json(PROPS_DIR / f"slate_{game_date.isoformat()}.json")
+    if not cached:
+        return {"cached_at": None, "games_scanned": 0, "total_actionable": 0}
+    return {
+        "cached_at": cached.get("cached_at"),
+        "games_scanned": cached.get("games_scanned", 0),
+        "total_actionable": len(cached.get("all_props") or []),
+    }
+
+
+def _mark_stale_props(payload: dict[str, Any]) -> dict[str, Any]:
+    """Downgrade actionable flags when serving expired prop cache."""
+    if not payload.get("stale_cache"):
+        return payload
+    props: list[dict[str, Any]] = []
+    for row in payload.get("props") or []:
+        item = dict(row)
+        item["stale_cache"] = True
+        if item.get("actionable"):
+            item["actionable"] = False
+            item["actionable_reason"] = (
+                "Cached lines expired — refresh props for current book prices"
+            )
+        props.append(item)
+    top = [p for p in props if p.get("actionable") and p.get("score", 0) >= 60][:12]
+    return {**payload, "props": props, "top_picks": top}
+
+
 def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     matchup = payload.get("matchup")
     bookmaker = _normalize_bookmaker(payload.get("bookmaker"))
     markets_requested = str(payload.get("markets_requested") or DEFAULT_MLB_PROP_MARKETS)
+    stale = bool(payload.get("stale_cache"))
     for prop in _filter_prop_markets(
         payload.get("props") or [],
         markets_requested=markets_requested,
     ):
-        if not prop.get("actionable") or prop.get("recommended_hit_rate") is None:
+        row = dict(prop)
+        if stale:
+            row["stale_cache"] = True
+        if not prop_is_bettable(row):
             continue
-        if prop.get("recommended_odds") is None:
+        if row.get("recommended_hit_rate") is None:
             continue
         rows.append(
             {
-                **prop,
+                **row,
                 "game_id": game_id,
                 "matchup": matchup,
                 "bookmaker": bookmaker,
                 "bookmaker_label": payload.get("bookmaker_label") or _bookmaker_label(bookmaker),
                 "slip_leg": prop_slip_leg(
-                    prop, game_id=game_id, matchup=matchup, bookmaker=bookmaker
+                    row, game_id=game_id, matchup=matchup, bookmaker=bookmaker
                 ),
             }
         )
@@ -797,7 +869,7 @@ def build_game_props(
             cached = _trim_props_payload(cached, fetch_markets)
             if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
                 cached = {**cached, "stale_cache": True}
-            return cached
+            return _mark_stale_props(cached)
         raw = _load_raw_event(str(game_id), game_date)
         if raw and _raw_event_fresh(raw) and raw.get("event"):
             payload = _assemble_game_props_payload(
@@ -934,7 +1006,7 @@ def _load_best_slate_props(
     game_date: date,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
 ) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
-    """Today's slate aggregate, else newest slate_*.json in the repository."""
+    """Today's slate aggregate for the requested date and book (no cross-day fallback)."""
     book = _normalize_bookmaker(bookmaker)
     cached = _load_json(_slate_cache_path(game_date, book))
     if cached and cached.get("all_props") is not None:
@@ -943,29 +1015,14 @@ def _load_best_slate_props(
         legacy = _load_json(PROPS_DIR / f"slate_{game_date.isoformat()}.json")
         if legacy and legacy.get("all_props") is not None:
             return legacy["all_props"] or [], "slate_cache", legacy
-
-    suffix = f".{book}.json"
-    candidates = sorted(
-        (
-            path
-            for path in PROPS_DIR.glob("slate_*.json")
-            if path.name.endswith(suffix)
-            or (book == DEFAULT_PROP_BOOKMAKER and path.name.count(".") == 1)
-        ),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    for path in candidates:
-        data = _load_json(path)
-        if data and data.get("all_props"):
-            return data["all_props"] or [], "slate_cache_repo", data
     return [], "none", None
 
 
 def _aggregate_repo_game_props(
+    game_date: date,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
 ) -> list[dict[str, Any]]:
-    """Last resort: merge actionable props from all per-game JSON files in the repo."""
+    """Merge bettable props from per-game cache files for the requested date."""
     book = _normalize_bookmaker(bookmaker)
     picks: list[dict[str, Any]] = []
     if not PROPS_DIR.exists():
@@ -988,6 +1045,11 @@ def _aggregate_repo_game_props(
         payload = _load_json(path)
         if not payload:
             continue
+        if payload.get("date") and payload.get("date") != game_date.isoformat():
+            continue
+        age = _cache_age_seconds(path)
+        if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
+            payload = {**payload, "stale_cache": True}
         seen.add(game_id)
         picks.extend(_collect_actionable_props(payload, game_id))
     picks.sort(key=prop_rank_key)
@@ -1010,6 +1072,7 @@ def _daily_props_payload(
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
     very_strong_props: list[dict[str, Any]] | None = None,
     top_props: list[dict[str, Any]] | None = None,
+    log_tracker: bool = True,
 ) -> dict[str, Any]:
     from app.odds.live_odds import live_odds_enabled
 
@@ -1039,6 +1102,15 @@ def _daily_props_payload(
     }
     if hint:
         out["hint"] = hint
+    if log_tracker and picks and live_odds_enabled():
+        from app.services.prop_pick_tracker import log_offered_props
+
+        logged = log_offered_props(
+            picks,
+            game_date.isoformat(),
+            source=f"daily_{source}",
+        )
+        out["props_logged_count"] = len(logged)
     return out
 
 
@@ -1068,6 +1140,7 @@ def build_daily_top_props(
             picks = _normalize_scored_props(
                 _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
             )
+            picks = [p for p in picks if prop_is_bettable(p)]
             picks.sort(key=prop_rank_key)
             very_strong = (meta or {}).get("very_strong_props")
             if very_strong is None:
@@ -1085,11 +1158,6 @@ def build_daily_top_props(
                 games_scanned=meta.get("games_scanned", 0) if meta else 0,
                 cached_at=meta.get("cached_at") if meta else None,
                 bookmaker=book,
-                hint=(
-                    "Showing cached slate props from repository."
-                    if source == "slate_cache_repo"
-                    else None
-                ),
             )
 
     schedule = get_mlb_schedule(game_date)
@@ -1140,10 +1208,10 @@ def build_daily_top_props(
     hint: str | None = None
 
     if not picks:
-        picks = _aggregate_repo_game_props(book)
+        picks = _aggregate_repo_game_props(game_date, book)
         if picks:
             source = "repo_game_cache"
-            hint = "Using props from on-disk game cache (schedule date may differ from cache)."
+            hint = "Using today's cached game props from disk."
         elif fetch_errors:
             hint = fetch_errors[0]
         elif not games:
