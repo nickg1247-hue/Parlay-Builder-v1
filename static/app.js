@@ -1140,6 +1140,14 @@ function renderBestProps(el, topProps, options = {}) {
       const form = propHitRatesHtml(p, side);
       const strength = lineStrengthHtml(p);
       const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
+      const offered =
+        Array.isArray(p.offered_books) && p.offered_books.length
+          ? `<span class="best-bet-meta best-prop-offered">Posted at: ${p.offered_books.map((b) => b.replace(/_/g, " ")).join(", ")}</span>`
+          : "";
+      const oneSided =
+        p.complete_market === false
+          ? `<span class="best-bet-meta prop-one-sided-tag">One-sided line at book</span>`
+          : "";
       const insight = p.line_insight
         ? `<span class="best-bet-insight">${p.line_insight}</span>`
         : "";
@@ -1149,6 +1157,8 @@ function renderBestProps(el, topProps, options = {}) {
           <span class="best-bet-team">${p.player}</span>
           <span class="best-bet-meta">${p.matchup || ""}</span>
           <span class="best-bet-meta best-prop-book">${bookLabel}</span>
+          ${offered}
+          ${oneSided}
           <span class="best-bet-meta">${line}</span>
           <span class="best-bet-edge">${odds}</span>
           <span class="best-bet-form">${form}</span>
@@ -1217,6 +1227,11 @@ function renderPropExplorerList(el, props, options = {}) {
       const strength = lineStrengthHtml(p);
       const lineKind = p.line_kind === "alternate" ? "Alternate line" : "Main line";
       const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
+      const offeredNote =
+        Array.isArray(p.offered_books) && p.offered_books.length
+          ? ` · Posted: ${p.offered_books.join(", ")}`
+          : "";
+      const oneSidedNote = p.complete_market === false ? " · One-sided at book" : "";
       const factors = (p.factors || [])
         .slice(0, 4)
         .map((f) => `<li>${f}</li>`)
@@ -1233,7 +1248,7 @@ function renderPropExplorerList(el, props, options = {}) {
         <div class="prop-explorer-head">
           <div>
             <h3 class="prop-explorer-player">${p.player}</h3>
-            <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}</p>
+            <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
           </div>
           <span class="prop-explorer-score" title="Form score">${score}</span>
         </div>
@@ -1305,7 +1320,7 @@ const PROP_BOOK_ALIASES = {
   pointsbet: "consensus",
 };
 const DEFAULT_PROP_BOOKMAKERS = [
-  { key: "consensus", label: "Best line (median)" },
+  { key: "consensus", label: "Best line (full markets only)" },
   { key: "draftkings", label: "DraftKings" },
   { key: "fanduel", label: "FanDuel" },
   { key: "betmgm", label: "BetMGM" },

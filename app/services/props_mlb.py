@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import statistics
+from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -48,7 +49,7 @@ DEFAULT_PROP_BOOKMAKER = "consensus"
 VERY_STRONG_LINE_STRENGTH = "very_strong"
 # Keys must match The Odds API bookmaker keys (see the-odds-api.com bookmaker list).
 PROP_BOOKMAKERS: dict[str, str] = {
-    "consensus": "Best line (median)",
+    "consensus": "Best line (full markets only)",
     "draftkings": "DraftKings",
     "fanduel": "FanDuel",
     "betmgm": "BetMGM",
@@ -597,14 +598,25 @@ def _parse_event_props(
     event: dict[str, Any],
     bookmaker_key: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Normalize Odds API event-odds response to prop rows."""
+    """Normalize Odds API event-odds to prop rows from real posted lines only.
+
+    Per-book mode: exactly what that sportsbook returned (one-sided markets allowed).
+    Consensus mode: median odds only when at least one book posted both Over and Under
+    at the same player/market/line — never stitch Over from book A with Under from book B.
+    """
     bookmaker_key = _normalize_bookmaker(bookmaker_key)
     books = event.get("bookmakers") or []
     if bookmaker_key != DEFAULT_PROP_BOOKMAKER:
         books = [book for book in books if book.get("key") == bookmaker_key]
 
-    grouped: dict[tuple[str, str, float, str, str], list[int]] = {}
+  # book_key -> (player, market, line, line_kind) -> {over, under, meta}
+    per_book: dict[str, dict[tuple[str, str, float, str], dict[str, Any]]] = {}
+
     for book in books:
+        bk = str(book.get("key") or "")
+        if not bk:
+            continue
+        store = per_book.setdefault(bk, {})
         for market in book.get("markets") or []:
             market_key = str(market.get("key") or "")
             if not market_key.startswith(("batter_", "pitcher_")):
@@ -626,31 +638,70 @@ def _parse_event_props(
                     continue
                 if not is_valid_american_odds(american):
                     continue
-                key = (player, canonical_type, line, name, line_kind)
-                grouped.setdefault(key, []).append(american)
+                pk = (player, canonical_type, line, line_kind)
+                row = store.setdefault(
+                    pk,
+                    {
+                        "player": player,
+                        "market_type": canonical_type,
+                        "market_label": market_label(canonical_type),
+                        "line": line,
+                        "line_kind": line_kind,
+                        "over_odds": None,
+                        "under_odds": None,
+                    },
+                )
+                if name == "over":
+                    row["over_odds"] = american
+                else:
+                    row["under_odds"] = american
 
-    by_player_market: dict[tuple[str, str, float, str], dict[str, Any]] = {}
-    for (player, market_key, line, side, line_kind), prices in grouped.items():
-        pk = (player, market_key, line, line_kind)
-        row = by_player_market.setdefault(
-            pk,
-            {
-                "player": player,
-                "market_type": market_key,
-                "market_label": market_label(market_key),
-                "line": line,
-                "line_kind": line_kind,
-                "over_odds": None,
-                "under_odds": None,
-            },
+    rows: list[dict[str, Any]] = []
+
+    if bookmaker_key != DEFAULT_PROP_BOOKMAKER:
+        for bk, markets in per_book.items():
+            for row in markets.values():
+                if not row.get("over_odds") and not row.get("under_odds"):
+                    continue
+                complete = (
+                    row.get("over_odds") is not None and row.get("under_odds") is not None
+                )
+                rows.append(
+                    {
+                        **row,
+                        "complete_market": complete,
+                        "offered_books": [bk],
+                    }
+                )
+    else:
+        by_line: dict[tuple[str, str, float, str], list[tuple[str, dict[str, Any]]]] = (
+            defaultdict(list)
         )
-        med = _median_int(prices)
-        if side == "over":
-            row["over_odds"] = med
-        else:
-            row["under_odds"] = med
+        for bk, markets in per_book.items():
+            for pk, row in markets.items():
+                by_line[pk].append((bk, row))
 
-    rows = [r for r in by_player_market.values() if r.get("over_odds") or r.get("under_odds")]
+        for pk, book_rows in by_line.items():
+            complete_books = [
+                (bk, row)
+                for bk, row in book_rows
+                if row.get("over_odds") is not None and row.get("under_odds") is not None
+            ]
+            if not complete_books:
+                continue
+            overs = [int(row["over_odds"]) for _, row in complete_books]
+            unders = [int(row["under_odds"]) for _, row in complete_books]
+            base = dict(complete_books[0][1])
+            rows.append(
+                {
+                    **base,
+                    "over_odds": _median_int(overs),
+                    "under_odds": _median_int(unders),
+                    "complete_market": True,
+                    "offered_books": [bk for bk, _ in complete_books],
+                }
+            )
+
     rows.sort(key=lambda r: (r["market_type"], r["player"], r["line"]))
     return rows
 

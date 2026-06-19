@@ -2705,6 +2705,16 @@ html.ntg-splash-active {
   animation: pb-gold-shine 2.4s ease-in-out infinite;
 }
 
+.prop-one-sided-tag {
+  color: #ffb347;
+  font-size: 0.72rem;
+}
+
+.best-prop-offered {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 .prop-card--very-strong,
 .best-prop-card.prop-card--very-strong,
 .prop-explorer-card.prop-card--very-strong {

@@ -105,9 +105,56 @@ def test_parse_event_props_median_odds():
 def test_parse_event_props_single_book():
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
     assert len(rows) == 2
+    assert all(r["complete_market"] for r in rows)
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="fanduel")
     assert len(rows) == 1
     assert rows[0]["over_odds"] == -120
+    assert rows[0]["complete_market"] is True
+
+
+def test_consensus_excludes_stitched_one_sided_books():
+    event = {
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Aaron Judge",
+                                "price": -115,
+                                "point": 1.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+            {
+                "key": "fanduel",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Under",
+                                "description": "Aaron Judge",
+                                "price": -100,
+                                "point": 1.5,
+                            },
+                        ],
+                    }
+                ],
+            },
+        ],
+    }
+    assert props_mlb._parse_event_props(event) == []
+    dk_rows = props_mlb._parse_event_props(event, bookmaker_key="draftkings")
+    assert len(dk_rows) == 1
+    assert dk_rows[0]["over_odds"] == -115
+    assert dk_rows[0]["under_odds"] is None
+    assert dk_rows[0]["complete_market"] is False
 
 
 def test_normalize_bookmaker_aliases():
