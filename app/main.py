@@ -1,8 +1,9 @@
 import app.config  # noqa: F401 — load .env before auth middleware reads env vars
-from app.config import PROJECT_ROOT
+from app.config import PROJECT_ROOT, prop_slip_public_enabled
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import date as date_type
 from pathlib import Path
@@ -20,6 +21,16 @@ from app.auth.admin_auth import (
     is_authenticated,
     set_session_cookie,
     verify_credentials,
+)
+from app.auth.user_auth import (
+    UserPropsAuthMiddleware,
+    can_access_props,
+    clear_user_session_cookie,
+    get_user_session,
+    is_valid_email,
+    props_require_verified_user,
+    set_user_session_cookie,
+    user_registration_enabled,
 )
 from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
@@ -82,7 +93,17 @@ from app.services.model_lab import (
 from app.db.market_status import get_market_eval_status
 from app.db.parlay_status import get_parlay_status
 from app.db.mlb_status import get_mlb_data_status
-from app.db.totals_status import get_totals_model_status
+from app.services.user_accounts import (
+    create_user,
+    get_user_by_email,
+    get_user_by_id,
+    get_user_by_verification_token,
+    mark_email_verified,
+    rotate_verification_token,
+    verification_token_valid,
+    verify_user_credentials,
+)
+from app.services.email_service import send_verification_email
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -171,6 +192,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="NTG Sports", lifespan=lifespan)
+app.add_middleware(UserPropsAuthMiddleware)
 app.add_middleware(AdminAuthMiddleware)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -184,6 +206,24 @@ def _html_page(name: str) -> FileResponse:
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+class UserRegisterRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class UserLoginRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(..., min_length=8, max_length=256)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
 
 
 class SaveCustomWeightsRequest(BaseModel):
@@ -223,6 +263,21 @@ async def login_page():
     return FileResponse(STATIC_DIR / "login.html")
 
 
+@app.get("/signin")
+async def signin_page():
+    return _html_page("signin.html")
+
+
+@app.get("/signup")
+async def signup_page():
+    return _html_page("signup.html")
+
+
+@app.get("/verify-email")
+async def verify_email_page():
+    return _html_page("verify_email.html")
+
+
 @app.post("/api/auth/login")
 async def auth_login(body: LoginRequest):
     if not auth_enabled():
@@ -253,11 +308,98 @@ async def auth_logout():
 
 @app.get("/api/auth/status")
 async def auth_status(request: Request):
+    session = get_user_session(request)
+    user_row = get_user_by_id(session["user_id"]) if session else None
     return {
         "auth_enabled": auth_enabled(),
         "auth_misconfigured": auth_misconfigured(),
         "authenticated": is_authenticated(request),
+        "user_auth": {
+            "registration_enabled": user_registration_enabled(),
+            "props_require_verified_user": props_require_verified_user(),
+            "signed_in": session is not None,
+            "email": session["email"] if session else None,
+            "email_verified": bool(user_row and user_row.get("email_verified_at")),
+            "can_access_props": can_access_props(request, user_row=user_row),
+        },
     }
+
+
+@app.post("/api/auth/user/register")
+async def user_register(body: UserRegisterRequest):
+    if not user_registration_enabled():
+        raise HTTPException(status_code=503, detail="Registration is disabled")
+    if not is_valid_email(body.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    if get_user_by_email(body.email):
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+    user, token = create_user(body.email, body.password)
+    sent = send_verification_email(user["email"], token)
+    payload: dict = {
+        "ok": True,
+        "email": user["email"],
+        "verification_sent": sent,
+        "message": "Check your email for a verification link.",
+    }
+    if not sent and os.getenv("APP_ENV", "development").lower() != "production":
+        from app.services.email_service import build_verification_url
+
+        payload["dev_verification_url"] = build_verification_url(token)
+    return payload
+
+
+@app.post("/api/auth/user/login")
+async def user_login(body: UserLoginRequest):
+    if not is_valid_email(body.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    user = verify_user_credentials(body.email, body.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    response = JSONResponse(
+        {
+            "ok": True,
+            "email": user["email"],
+            "email_verified": bool(user.get("email_verified_at")),
+        }
+    )
+    set_user_session_cookie(response, user["id"], user["email"])
+    return response
+
+
+@app.post("/api/auth/user/logout")
+async def user_logout():
+    response = JSONResponse({"ok": True})
+    clear_user_session_cookie(response)
+    return response
+
+
+@app.post("/api/auth/user/verify-email")
+async def user_verify_email(body: VerifyEmailRequest):
+    user = get_user_by_verification_token(body.token)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification link")
+    if user.get("email_verified_at"):
+        return {"ok": True, "already_verified": True, "email": user["email"]}
+    if not verification_token_valid(user):
+        raise HTTPException(status_code=400, detail="Verification link expired — request a new one")
+    mark_email_verified(user["id"])
+    response = JSONResponse({"ok": True, "email": user["email"]})
+    set_user_session_cookie(response, user["id"], user["email"])
+    return response
+
+
+@app.post("/api/auth/user/resend-verification")
+async def user_resend_verification(body: ResendVerificationRequest):
+    if not is_valid_email(body.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    user = get_user_by_email(body.email)
+    if not user:
+        return {"ok": True, "message": "If that email is registered, a verification link was sent."}
+    if user.get("email_verified_at"):
+        return {"ok": True, "already_verified": True}
+    token = rotate_verification_token(user["id"])
+    send_verification_email(user["email"], token)
+    return {"ok": True, "message": "Verification email sent."}
 
 
 @app.get("/health")
@@ -290,7 +432,10 @@ async def build_info():
         "project_root": str(PROJECT_ROOT),
         "features": {
             "mlb_player_props": True,
-            "home_prop_slip": True,
+            "home_prop_slip": prop_slip_public_enabled(),
+            "prop_slip": prop_slip_public_enabled(),
+            "props_require_verified_user": props_require_verified_user(),
+            "user_registration_enabled": user_registration_enabled(),
             "matchup_ranked_props": True,
             "bet_context_line_strength": True,
         },
@@ -645,6 +790,8 @@ async def prop_parlay_eval(body: PropParlayEvalRequest):
 
 @app.post("/api/props/slip/export")
 async def prop_slip_export(body: PropSlipExportRequest):
+    if not prop_slip_public_enabled():
+        raise HTTPException(status_code=404, detail="Prop slip export is not enabled")
     legs = [leg.model_dump() for leg in body.legs]
     return export_slip_for_bookmaker(
         legs,

@@ -1128,7 +1128,10 @@ function renderBestProps(el, topProps, options = {}) {
   if (!el) return;
   const props = topProps || [];
   if (!props.length) {
-    el.innerHTML = `
+    const needsAuth = pbFeatures.props_require_verified_user && !canAccessProps();
+    el.innerHTML = needsAuth
+      ? propsAuthBannerHtml("/")
+      : `
       <div class="best-bets-empty-card">
         ${emptyStateIcon("no-bets")}
         <p>${options.emptyMessage || "No actionable player props yet. Open MLB games to load lines."}</p>
@@ -1169,7 +1172,11 @@ function renderBestProps(el, topProps, options = {}) {
           ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
           ${insight}
         </a>
-        <button type="button" class="home-prop-add-btn" data-add-home-prop="${i}" aria-label="Add ${p.player} to prop slip">+ Add</button>
+        ${
+          isPropSlipPublic()
+            ? `<button type="button" class="home-prop-add-btn" data-add-home-prop="${i}" aria-label="Add ${p.player} to prop slip">+ Add</button>`
+            : ""
+        }
       </div>`;
     })
     .join("");
@@ -1267,7 +1274,7 @@ function renderPropExplorerList(el, props, options = {}) {
         <div class="prop-explorer-actions">
           <a class="btn-ghost" href="${gameHref}">Game</a>
           ${
-            p.actionable && p.recommended_odds != null
+            isPropSlipPublic() && p.actionable && p.recommended_odds != null
               ? `<button type="button" class="home-prop-add-btn" data-add-explorer-prop="${i}">+ Add to slip</button>`
               : ""
           }
@@ -1743,6 +1750,28 @@ function initUtilityNav(nav, path) {
   nav.setAttribute("aria-label", "Site tools");
   nav.classList.add("app-nav-utility");
 
+  const userAuth = window.pbUserAuth || {};
+  if (pbFeatures.props_require_verified_user) {
+    const userEl = document.createElement("span");
+    userEl.className = "app-nav-user";
+    if (userAuth.signed_in && userAuth.email_verified) {
+      userEl.innerHTML = `${userAuth.email || "Account"} · <a href="#" id="nav-user-signout">Sign out</a>`;
+      nav.appendChild(userEl);
+      userEl.querySelector("#nav-user-signout")?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await fetch("/api/auth/user/logout", { method: "POST" });
+        window.location.reload();
+      });
+    } else {
+      const authLink = document.createElement("a");
+      authLink.href = userAuth.signed_in
+        ? `/verify-email?email=${encodeURIComponent(userAuth.email || "")}`
+        : "/signin";
+      authLink.textContent = userAuth.signed_in ? "Verify email" : "Sign in";
+      nav.appendChild(authLink);
+    }
+  }
+
   const updatesLink = document.createElement("a");
   updatesLink.href = "/updates";
   updatesLink.textContent = "Updates";
@@ -1849,6 +1878,77 @@ async function initUpdatesModal() {
 }
 
 const PROP_SLIP_KEY = "pb_prop_slip";
+
+let pbFeatures = { prop_slip: false, props_require_verified_user: false };
+let pbUserAuth = {
+  signed_in: false,
+  email_verified: false,
+  can_access_props: true,
+};
+
+function isPropSlipPublic() {
+  return Boolean(pbFeatures.prop_slip);
+}
+
+function canAccessProps() {
+  if (!pbFeatures.props_require_verified_user) return true;
+  return Boolean(pbUserAuth.can_access_props);
+}
+
+function propsAuthBannerHtml(nextPath) {
+  const next = nextPath || `${window.location.pathname}${window.location.search}`;
+  const verifyOnly = pbUserAuth.signed_in && !pbUserAuth.email_verified;
+  const headline = verifyOnly
+    ? "Verify your email to unlock player props."
+    : "Sign in to view player props. Games and news stay free.";
+  const primaryHref = verifyOnly
+    ? `/verify-email?email=${encodeURIComponent(pbUserAuth.email || "")}&next=${encodeURIComponent(next)}`
+    : `/signin?next=${encodeURIComponent(next)}`;
+  const primaryLabel = verifyOnly ? "Verify email" : "Sign in";
+  return `
+    <div class="props-auth-banner">
+      <p>${headline}</p>
+      <div class="props-auth-banner-actions">
+        <a class="props-auth-primary" href="${primaryHref}">${primaryLabel}</a>
+        ${verifyOnly ? "" : `<a class="props-auth-secondary" href="/signup?next=${encodeURIComponent(next)}">Create account</a>`}
+      </div>
+    </div>`;
+}
+
+function renderPropsAuthGate(el, nextPath) {
+  if (!el) return;
+  el.innerHTML = propsAuthBannerHtml(nextPath);
+}
+
+async function loadPublicFeatures() {
+  try {
+    const [buildRes, statusRes] = await Promise.all([
+      fetch("/api/build"),
+      fetch("/api/auth/status"),
+    ]);
+    if (buildRes.ok) {
+      const data = await buildRes.json();
+      const features = data.features || {};
+      pbFeatures = {
+        ...features,
+        prop_slip: Boolean(features.prop_slip ?? features.home_prop_slip),
+        props_require_verified_user: Boolean(features.props_require_verified_user),
+      };
+    }
+    if (statusRes.ok) {
+      const status = await statusRes.json();
+      pbUserAuth = status.user_auth || pbUserAuth;
+    }
+  } catch {
+    /* keep defaults */
+  }
+  window.pbFeatures = pbFeatures;
+  window.pbUserAuth = pbUserAuth;
+  window.propSlipEnabled = pbFeatures.prop_slip;
+  window.canAccessProps = canAccessProps;
+  window.propsAuthBannerHtml = propsAuthBannerHtml;
+  window.renderPropsAuthGate = renderPropsAuthGate;
+}
 
 function getPropSlipLegs() {
   try {
@@ -2235,6 +2335,7 @@ function removePropFromSlip(legId) {
 }
 
 function initPropSlipUi() {
+  if (!isPropSlipPublic()) return;
   if (document.getElementById("prop-slip-root")) return;
 
   const root = document.createElement("div");
@@ -2294,15 +2395,18 @@ function showBuildBadge() {
 }
 
 function bootNTGSplash() {
-  initSiteChrome();
-  initUpdatesModal().catch(() => {});
-  initPropSlipUi();
-  showBuildBadge();
-  if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
-    initNTGSplash().catch(() => clearNTGSplashState());
-  } else {
-    clearNTGSplashState();
-  }
+  loadPublicFeatures()
+    .finally(() => {
+      initSiteChrome();
+      initUpdatesModal().catch(() => {});
+      initPropSlipUi();
+      showBuildBadge();
+      if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
+        initNTGSplash().catch(() => clearNTGSplashState());
+      } else {
+        clearNTGSplashState();
+      }
+    });
 }
 
 if (document.readyState === "loading") {

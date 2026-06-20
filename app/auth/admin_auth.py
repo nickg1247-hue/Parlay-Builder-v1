@@ -45,7 +45,7 @@ PROTECTED_API_PREFIXES = (
     "/api/clv/summary",
     "/api/lab/",
 )
-# Public on main site even when admin auth is on (prefix match on /api/daily would block these).
+# Public on main site for admin auth — user props middleware gates verified access.
 PUBLIC_API_PATHS = frozenset({
     "/api/build",
     "/api/daily/props",
@@ -55,8 +55,9 @@ PUBLIC_API_PATHS = frozenset({
     "/api/props/markets",
     "/api/props/search",
     "/api/props/tracker/summary",
+    "/api/props/cache-meta",
 })
-PUBLIC_API_PREFIXES = (
+PUBLIC_API_PREFIXES: tuple[str, ...] = (
     "/api/games/mlb/",
 )
 

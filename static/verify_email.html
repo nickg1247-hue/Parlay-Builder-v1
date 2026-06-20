@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify email — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Verify email</h1>
+      <p id="verify-intro">Confirming your account…</p>
+      <div id="verify-error" class="auth-error" role="alert"></div>
+      <div id="verify-note" class="auth-note hidden" role="status"></div>
+      <form id="resend-form" class="hidden">
+        <div class="auth-field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <button type="submit" class="auth-submit auth-submit--ghost" id="resend-btn">Resend verification email</button>
+      </form>
+      <a class="auth-back" href="/signin">← Sign in</a>
+    </div>
+  </div>
+  <script src="/static/auth.js"></script>
+  <script>
+    initVerifyEmailPage();
+  </script>
+</body>
+</html>

@@ -1,11 +1,16 @@
+import os
 import sqlite3
 from pathlib import Path
 
 from app.config import PROJECT_ROOT, settings
 
 
+def _database_url() -> str:
+    return os.getenv("DATABASE_URL", settings.database_url)
+
+
 def get_sqlite_path() -> Path:
-    url = settings.database_url
+    url = _database_url()
     if not url.startswith("sqlite:///"):
         raise ValueError(f"Unsupported database URL: {url}")
     path_str = url.removeprefix("sqlite:///")
@@ -25,11 +30,13 @@ def init_db() -> None:
     """Ensure SQLite file exists and sport tables are present."""
     from app.db.cfb_schema import ensure_cfb_games_table
     from app.db.nba_schema import ensure_nba_games_table
+    from app.db.user_schema import ensure_users_table
 
     conn = get_connection()
     try:
         conn.execute("SELECT 1")
         ensure_nba_games_table(conn)
         ensure_cfb_games_table(conn)
+        ensure_users_table(conn)
     finally:
         conn.close()

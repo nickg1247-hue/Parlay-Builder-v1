@@ -665,6 +665,8 @@
 
     if (odds == null) return "";
 
+    if (!window.propSlipEnabled) return "";
+
     const label = side === "over" ? "+ Over" : "+ Under";
 
     return `<button type="button" class="btn-add-prop" data-add-prop="1" data-side="${side}" data-prop-index="${index}" data-list="${list}">${label}</button>`;
@@ -689,7 +691,22 @@
 
       errEl?.classList.add("hidden");
 
-      const data = await fetchJSON(await propsUrl(refresh));
+      const res = await fetch(await propsUrl(refresh));
+      if (res.status === 401) {
+        loadingEl?.classList.add("hidden");
+        bodyEl?.classList.remove("hidden");
+        if (bodyEl && window.renderPropsAuthGate) {
+          window.renderPropsAuthGate(bodyEl, window.location.pathname);
+        } else if (errEl) {
+          errEl.classList.remove("hidden");
+          errEl.textContent = "Sign in to view player props.";
+        }
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(await res.text() || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
 
       renderProps(data);
 

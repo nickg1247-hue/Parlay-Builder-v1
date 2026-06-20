@@ -42,7 +42,18 @@
     }
     const params = buildPropSearchQuery(filters);
     try {
-      const data = await fetchJSON(`/api/props/search?${params.toString()}`);
+      const res = await fetch(`/api/props/search?${params.toString()}`);
+      if (res.status === 401) {
+        if (metaEl) metaEl.textContent = "Sign in required";
+        if (window.renderPropsAuthGate) {
+          window.renderPropsAuthGate(resultsEl, "/mlb/props");
+        } else {
+          renderPropExplorerList(resultsEl, [], { emptyMessage: "Sign in to view player props." });
+        }
+        return;
+      }
+      if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+      const data = await res.json();
       const hint = data.hint ? ` ${data.hint}` : "";
       if (metaEl) {
         metaEl.textContent = `${data.total_matched || 0} props · ${data.total_very_strong || 0} very strong · ${data.bookmaker_label || "Consensus"}${hint}`;

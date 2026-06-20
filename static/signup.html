@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign up — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      <p>Sign up with email to unlock player props. We will send a verification link.</p>
+      <form id="signup-form" autocomplete="on">
+        <div class="auth-field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <div class="auth-field">
+          <label for="password2">Confirm password</label>
+          <input id="password2" name="password2" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <div id="signup-error" class="auth-error" role="alert"></div>
+        <div id="signup-note" class="auth-note hidden" role="status"></div>
+        <button type="submit" class="auth-submit" id="signup-btn">Create account</button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="/signin">Sign in</a></p>
+      <a class="auth-back" href="/">← Back to home</a>
+    </div>
+  </div>
+  <script src="/static/auth.js"></script>
+  <script>
+    initSignUpPage();
+  </script>
+</body>
+</html>

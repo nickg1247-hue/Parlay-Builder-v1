@@ -2489,6 +2489,58 @@ html.ntg-splash-active {
   color: var(--muted);
 }
 
+.props-auth-banner {
+  background: rgba(29, 155, 240, 0.08);
+  border: 1px solid rgba(29, 155, 240, 0.25);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.props-auth-banner p {
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.props-auth-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.props-auth-banner-actions a {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.props-auth-banner-actions .props-auth-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.props-auth-banner-actions .props-auth-secondary {
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.app-nav-user {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.app-nav-user a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.app-nav-user a:hover {
+  text-decoration: underline;
+}
+
 .prop-slip-toggle {
   position: fixed;
   right: 1rem;

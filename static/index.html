@@ -12,7 +12,7 @@
   <meta name="pb-build" content="2026-06-17-props-v4">
   <title>NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260620c">
-  <link rel="stylesheet" href="/static/app.css?v=20260620e">
+  <link rel="stylesheet" href="/static/app.css?v=20260620g">
 </head>
 <body data-ntg-splash="1">
   <div class="app-shell">
@@ -99,7 +99,7 @@
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260620e"></script>
+  <script src="/static/app.js?v=20260620g"></script>
   <script>
     initLiveTicker("live-ticker", { sport: "all" });
     initHeadlineTicker("headline-ticker");
@@ -126,10 +126,8 @@
         try {
           const res = await fetch(url);
           if (res.status === 401) {
-            renderBestProps(propsEl, [], {
-              emptyMessage:
-                "Props API blocked by login — redeploy latest main and restart parlay-builder.",
-            });
+            renderBestProps(propsEl, [], { emptyMessage: "" });
+            if (veryStrongWrap) veryStrongWrap.classList.add("hidden");
             return propsData;
           }
           if (res.ok) propsData = await res.json();
