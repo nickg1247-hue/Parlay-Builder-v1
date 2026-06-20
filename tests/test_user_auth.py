@@ -1,7 +1,6 @@
-"""End-user registration, verification, and props gating."""
+"""End-user registration, login, and props gating."""
 
 import uuid
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -40,36 +39,29 @@ def isolated_users(tmp_path, monkeypatch):
     yield db_path
 
 
-def test_register_login_verify_flow(production_props_auth, isolated_users):
+def test_register_login_props_flow(production_props_auth, isolated_users):
     fan_email = _email("fan")
-    verified_email = _email("verified")
-    with patch("app.main.send_verification_email", return_value=True):
-        reg = client.post(
-            "/api/auth/user/register",
-            json={"email": fan_email, "password": "secretpass"},
-        )
+    reg = client.post(
+        "/api/auth/user/register",
+        json={"email": fan_email, "password": "secretpass"},
+    )
     assert reg.status_code == 200
     body = reg.json()
     assert body["email"] == fan_email
+
+    props = client.get("/api/daily/props?limit=1", cookies=reg.cookies)
+    assert props.status_code != 401
+
+    client.post("/api/auth/user/logout", cookies=reg.cookies)
+    props_logged_out = client.get("/api/daily/props?limit=1")
+    assert props_logged_out.status_code == 401
 
     login = client.post(
         "/api/auth/user/login",
         json={"email": fan_email, "password": "secretpass"},
     )
     assert login.status_code == 200
-    assert login.json()["email_verified"] is False
-
-    props = client.get("/api/daily/props?limit=1")
-    assert props.status_code == 401
-
-    user, token = create_user(verified_email, "secretpass")
-    mark_email_verified(user["id"])
-    login2 = client.post(
-        "/api/auth/user/login",
-        json={"email": verified_email, "password": "secretpass"},
-    )
-    assert login2.status_code == 200
-    props2 = client.get("/api/daily/props?limit=1")
+    props2 = client.get("/api/daily/props?limit=1", cookies=login.cookies)
     assert props2.status_code != 401
 
 

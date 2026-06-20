@@ -78,7 +78,9 @@ from app.services.cfb_backtest_report import (
     run_cfb_walk_forward_backtest,
 )
 from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
+from app.services.mlb_game_lineup import get_mlb_game_lineup
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
+from app.services.teams_hub import get_team_detail, list_teams
 from app.services.schedule_nba import get_nba_game, get_nba_schedule
 from app.services.scores_today import get_scores_today
 from app.services.backtest_report import load_saved_backtest_report, run_backtest_report
@@ -333,19 +335,16 @@ async def user_register(body: UserRegisterRequest):
         raise HTTPException(status_code=400, detail="Invalid email address")
     if get_user_by_email(body.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists")
-    user, token = create_user(body.email, body.password)
-    sent = send_verification_email(user["email"], token)
-    payload: dict = {
-        "ok": True,
-        "email": user["email"],
-        "verification_sent": sent,
-        "message": "Check your email for a verification link.",
-    }
-    if not sent and os.getenv("APP_ENV", "development").lower() != "production":
-        from app.services.email_service import build_verification_url
-
-        payload["dev_verification_url"] = build_verification_url(token)
-    return payload
+    user, _token = create_user(body.email, body.password)
+    response = JSONResponse(
+        {
+            "ok": True,
+            "email": user["email"],
+            "message": "Account created.",
+        }
+    )
+    set_user_session_cookie(response, user["id"], user["email"])
+    return response
 
 
 @app.post("/api/auth/user/login")
@@ -654,6 +653,35 @@ async def scores_today(
     return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
 
 
+@app.get("/api/games/mlb/{game_id}/lineup")
+async def mlb_game_lineup(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return get_mlb_game_lineup(game_id, game_date)
+
+
+@app.get("/api/teams")
+async def teams_list(
+    sport: str = Query("mlb", pattern="^(mlb|nba|cfb)$"),
+    q: str | None = Query(None, min_length=1, max_length=64),
+):
+    return list_teams(sport, query=q)
+
+
+@app.get("/api/teams/{sport}/{team_id}")
+async def team_detail(sport: str, team_id: str):
+    if sport not in ("mlb", "nba", "cfb"):
+        raise HTTPException(status_code=400, detail="Unsupported sport")
+    detail = get_team_detail(sport, team_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return detail
+
+
 @app.get("/api/games/mlb/{game_id}")
 async def mlb_game_detail(
     game_id: str,
@@ -888,6 +916,18 @@ async def daily_board(
         max_parlays=max_parlays,
         live_test=live_test,
     )
+
+
+@app.get("/my-team")
+async def my_team_page():
+    return _html_page("my_team.html")
+
+
+@app.get("/teams/{sport}/{team_id}")
+async def team_page(sport: str, team_id: str):
+    if sport not in ("mlb", "nba", "cfb"):
+        raise HTTPException(status_code=404, detail="Not found")
+    return _html_page("team.html")
 
 
 @app.get("/")

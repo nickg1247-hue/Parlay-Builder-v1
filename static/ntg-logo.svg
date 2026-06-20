@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" fill="none" role="img" aria-label="NTG Sports">
+  <defs>
+    <linearGradient id="logo-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="logo-arc" x1="4" y1="44" x2="44" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="0" y="12" rx="13" fill="url(#logo-bg)"/>
+  <path d="M13 46V22h5.2l6.2 11.2V22h4.4v24h-5l-6.3-11.5V46H13z" fill="#ffffff"/>
+  <path d="M10 48 C 18 20, 34 18, 40 28" stroke="url(#logo-arc)" stroke-width="2.8" stroke-linecap="round"/>
+  <circle cx="40" cy="28" r="2.4" fill="#7dd3fc"/>
+  <text x="62" y="44" fill="#ffffff" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-size="34" font-weight="800" letter-spacing="-1">NTG</text>
+  <text x="62" y="62" fill="#38bdf8" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="5.5">SPORTS</text>
+</svg>

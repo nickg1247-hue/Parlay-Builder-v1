@@ -213,6 +213,7 @@
         ${statCard("Over/Under", ouValue, ouTier)}
         ${statCard("Spread", spreadValue, spreadTier)}
         ${lastFiveHtml(recentGames)}
+        ${typeof formSparklineHtml === "function" && recentGames && recentGames.length ? formSparklineHtml(recentGames) : ""}
       </div>
     `;
 
@@ -247,15 +248,22 @@
         ? `<p class="model-ev-line"><strong>+EV value:</strong> ${model.ev_pick}${model.ev_edge != null ? ` · +${(model.ev_edge * 100).toFixed(1)}%` : ""}</p>`
         : "";
 
+    const confHtml =
+      typeof confidenceMeterHtml === "function"
+        ? confidenceMeterHtml({ model_confidence: model.win_confidence || model.confidence })
+        : "";
+
     return `
 
-      <div class="model-center-col">
+      <div class="model-center-col ntg-card">
 
         <p class="model-center-label">Model</p>
 
         <p class="model-pick">${model.pick}</p>
 
         <p class="model-win">${winPct} win</p>
+
+        ${confHtml}
 
         ${evLine}
 
@@ -292,6 +300,112 @@
 
     ].join("");
 
+  }
+
+  function fmtStatAvg(v) {
+    if (v == null || v === "") return "—";
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v);
+    return n.toFixed(3).replace(/^0(?=\.)/, "");
+  }
+
+  function fmtStatNum(v, digits = 2) {
+    if (v == null || v === "") return "—";
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v);
+    return n.toFixed(digits);
+  }
+
+  function pitcherCardHtml(p) {
+    if (!p) {
+      return `<div class="lineup-sp-empty"><p>Probable pitcher TBD</p></div>`;
+    }
+    const s = p.stats || {};
+    return `
+      <div class="lineup-sp-card">
+        <img class="lineup-player-photo lineup-sp-photo" src="${p.photo_url}" alt="" width="72" height="72" loading="lazy">
+        <div class="lineup-sp-meta">
+          <p class="lineup-sp-label">Starting pitcher</p>
+          <p class="lineup-sp-name">${p.name}</p>
+          <p class="lineup-sp-stats">ERA ${fmtStatNum(s.era)} · ${s.wins ?? "—"}-${s.losses ?? "—"} · ${s.strikeOuts ?? "—"} K · WHIP ${fmtStatNum(s.whip)}</p>
+        </div>
+      </div>`;
+  }
+
+  function lineupTableHtml(lineup) {
+    if (!lineup || !lineup.length) {
+      return `<p class="lineup-empty">Batting order not posted yet.</p>`;
+    }
+    const rows = lineup
+      .map(
+        (r) => {
+          const s = r.stats || {};
+          return `<tr>
+            <td>${r.order}</td>
+            <td class="lineup-player-cell">
+              <img class="lineup-player-photo" src="${r.photo_url}" alt="" width="40" height="40" loading="lazy">
+              <span>${r.name}</span>
+            </td>
+            <td>${r.position || "—"}</td>
+            <td>${fmtStatAvg(s.avg)}</td>
+            <td>${s.homeRuns ?? "—"}</td>
+            <td>${s.rbi ?? "—"}</td>
+          </tr>`;
+        }
+      )
+      .join("");
+    return `
+      <table class="lineup-table">
+        <thead>
+          <tr><th>#</th><th>Player</th><th>Pos</th><th>AVG</th><th>HR</th><th>RBI</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function teamLineupColumnHtml(side, game, payload) {
+    const team = side === "away" ? game.away_team : game.home_team;
+    const teamId = side === "away" ? game.away_team_id : game.home_team_id;
+    const logo = game[side === "away" ? "away_logo_url" : "home_logo_url"] || teamLogoUrl(teamId);
+    const block = payload[side] || {};
+    return `
+      <div class="lineup-team-col ${side}">
+        <div class="lineup-team-head">
+          <img class="team-logo" src="${logo}" alt="" width="40" height="40" loading="lazy">
+          <h3>${team}</h3>
+        </div>
+        ${pitcherCardHtml(block.starting_pitcher)}
+        ${lineupTableHtml(block.lineup)}
+      </div>`;
+  }
+
+  function renderLineup(data, game) {
+    const board = document.getElementById("lineup-board");
+    const note = document.getElementById("lineup-note");
+    if (!board || !game) return;
+    if (data.message && note) note.textContent = data.message;
+    board.innerHTML = `
+      <div class="lineup-columns">
+        ${teamLineupColumnHtml("away", game, data)}
+        ${teamLineupColumnHtml("home", game, data)}
+      </div>`;
+  }
+
+  async function loadLineup(game) {
+    const params = new URLSearchParams();
+    if (dateParam) params.set("date", dateParam);
+    const q = params.toString();
+    try {
+      const data = await fetchJSON(
+        `/api/games/mlb/${encodeURIComponent(gameId)}/lineup${q ? `?${q}` : ""}`
+      );
+      renderLineup(data, game);
+    } catch (_) {
+      const board = document.getElementById("lineup-board");
+      if (board) {
+        board.innerHTML = `<p class="lineup-empty">Could not load lineups.</p>`;
+      }
+    }
   }
 
 
@@ -622,8 +736,10 @@
 
     const veryStrong =
       typeof window.propVeryStrongClass === "function" ? window.propVeryStrongClass(prop) : "";
+    const heatCls =
+      typeof propHeatClass === "function" ? propHeatClass(prop) : "";
 
-    return `<article class="prop-card${veryStrong}">
+    return `<article class="prop-card ntg-card${veryStrong} ${heatCls}">
 
       <div class="prop-card-head">
 
@@ -862,9 +978,32 @@
 
       : "";
 
+    const factorVoteSummary = explanation.factor_majority_team && explanation.factor_votes
+      ? `<p class="explain-summary explain-alignment">${explanation.away_team} ${explanation.factor_votes.away} · ${explanation.home_team} ${explanation.factor_votes.home} factor edges${explanation.factor_votes.neutral ? ` (${explanation.factor_votes.neutral} even)` : ""}</p>`
+      : "";
+
+    const alignmentHtml = explanation.alignment_note
+      ? `<p class="explain-alignment ${explanation.pick_reconciled ? "explain-aligned" : "explain-mismatch"}">${explanation.alignment_note}</p>`
+      : "";
+
+    const ens = explanation.ensemble_components;
+    const ensembleHtml = ens
+      ? `<div class="explain-block"><h3>Ensemble breakdown</h3><ul class="explain-list">
+          <li>Logistic: ${(ens.logistic * 100).toFixed(1)}% home</li>
+          <li>Gradient boost: ${(ens.gbc * 100).toFixed(1)}% home</li>
+          <li>Elo: ${(ens.elo * 100).toFixed(1)}% home</li>
+          <li>Blended (pre-calibration): ${(ens.ensemble_raw * 100).toFixed(1)}% home</li>
+          <li>Final ensemble: ${(ens.ensemble * 100).toFixed(1)}% home</li>
+        </ul></div>`
+      : "";
+
     el.innerHTML = `
 
       ${explanation.summary ? `<p class="explain-summary">${explanation.summary}</p>` : ""}
+
+      ${factorVoteSummary}
+
+      ${alignmentHtml}
 
       <div class="explain-prob-row">
 
@@ -885,6 +1024,8 @@
       ${totalsHtml}
 
       ${factorRows ? `<div class="explain-block"><h3>Factor snapshot</h3><p class="explain-legend"><strong>${homeCol}</strong> is the home team in this table; <strong>${awayCol}</strong> is the away team.</p><table class="explain-table"><thead><tr><th>Factor</th><th>${homeCol}</th><th>${awayCol}</th><th>Edge</th></tr></thead><tbody>${factorRows}</tbody></table></div>` : ""}
+
+      ${ensembleHtml}
 
       ${explanation.disclaimer ? `<p class="explain-footnote">${explanation.disclaimer}</p>` : ""}
 
@@ -920,7 +1061,7 @@
 
     lastInsightsData = data;
 
-    renderMatchupHeader(header, data.game);
+    renderMatchupHeader(header, data.game, data.board_row);
 
     renderMatchupBoard(data);
 
@@ -998,7 +1139,7 @@
 
       const live = (data.games || []).find((g) => String(g.game_id) === String(gameId));
 
-      if (live) renderMatchupHeader(header, live);
+      if (live) renderMatchupHeader(header, live, lastInsightsData?.board_row);
 
     } catch (_) {
 
@@ -1069,6 +1210,7 @@
     content.classList.remove("hidden");
 
     renderInsights(data);
+    loadLineup(data.game);
 
     if (!dateParam && !useCache) {
 
@@ -1110,6 +1252,8 @@
 
   loadTeamColors()
     .then(async () => {
+      if (typeof initDesignSystem === "function") initDesignSystem();
+      if (typeof initGameStickyNav === "function") initGameStickyNav();
       try {
         await loadInsights(false);
       } catch (e) {

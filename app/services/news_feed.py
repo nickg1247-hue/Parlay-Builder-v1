@@ -22,10 +22,36 @@ CACHE_TTL_SECONDS = 15 * 60
 MAX_ITEMS = 10
 REQUEST_TIMEOUT = 20.0
 
+MEDIA_NS = {"media": "http://search.yahoo.com/mrss/"}
+
 FEEDS: list[tuple[str, str]] = [
     ("ESPN Top", "https://www.espn.com/espn/rss/news"),
     ("ESPN MLB", "https://www.espn.com/espn/rss/mlb/news"),
 ]
+
+
+def _image_from_item(item: ET.Element) -> str | None:
+    for tag in (
+        "{http://search.yahoo.com/mrss/}content",
+        "{http://search.yahoo.com/mrss/}thumbnail",
+    ):
+        node = item.find(tag)
+        if node is not None:
+            url = node.get("url") or node.get("href")
+            if url:
+                return url.strip()
+    enclosure = item.find("enclosure")
+    if enclosure is not None:
+        enc_type = (enclosure.get("type") or "").lower()
+        if enc_type.startswith("image/"):
+            url = enclosure.get("url")
+            if url:
+                return url.strip()
+    desc = item.findtext("description") or ""
+    match = re.search(r'src=["\']([^"\']+\.(?:jpg|jpeg|png|webp)[^"\']*)', desc, re.I)
+    if match:
+        return match.group(1)
+    return None
 
 
 def _parse_pub_date(raw: str | None) -> str | None:
@@ -56,6 +82,7 @@ def _parse_rss(xml_text: str, source: str) -> list[dict[str, Any]]:
         link = (item.findtext("link") or "").strip()
         if not title or not link:
             continue
+        image_url = _image_from_item(item)
         items.append(
             {
                 "title": title,
@@ -63,6 +90,7 @@ def _parse_rss(xml_text: str, source: str) -> list[dict[str, Any]]:
                 "published": _parse_pub_date(item.findtext("pubDate")),
                 "source": source,
                 "summary": _strip_html(item.findtext("description")),
+                "image_url": image_url,
             }
         )
     return items

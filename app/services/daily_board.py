@@ -235,6 +235,8 @@ def _slate_rows(
     for row in merged.itertuples(index=False):
         matchup = f"{row.away_team} @ {row.home_team}"
         model_home = float(row.model_prob_home)
+        model_home_raw = float(getattr(row, "model_prob_home_raw", model_home))
+        pick_reconciled = bool(getattr(row, "pick_reconciled", False))
         market_home = None
         edge_home = None
         ml_edge_best = None
@@ -311,6 +313,7 @@ def _slate_rows(
                 "away_team": row.away_team,
                 "home_team": row.home_team,
                 "model_prob_home": round(model_home, 4),
+                "model_prob_home_raw": round(model_home_raw, 4),
                 "display_prob_home": round(display_home, 4),
                 "market_prob_home": round(market_home, 4) if market_home else None,
                 "edge_home": round(edge_home, 4) if edge_home is not None else None,
@@ -335,6 +338,7 @@ def _slate_rows(
                     and best_pick["side"] != model_pick_side
                 ),
                 "model_disagrees_heavy_favorite": disagree,
+                "pick_reconciled": pick_reconciled,
                 "ou_line": ou_line,
                 "expected_total_runs": (
                     round(float(exp_runs), 2) if exp_runs is not None else None
@@ -659,6 +663,22 @@ def build_daily_board(
         merged = predict_spread_covers(merged)
     except (FileNotFoundError, ValueError) as exc:
         logger.warning("Spread cover predictions skipped: %s", exc)
+
+    from app.services.mlb_pick_reconcile import reconcile_slate_dataframe
+
+    market_by_game: dict[str, float] | None = None
+    if has_odds and "home_ml" in merged.columns:
+        from app.odds.odds_math import market_probs_from_american
+        from app.odds.team_aliases import is_valid_american_odds
+
+        market_by_game = {}
+        for row in merged.itertuples(index=False):
+            if is_valid_american_odds(getattr(row, "home_ml", None)) and is_valid_american_odds(
+                getattr(row, "away_ml", None)
+            ):
+                mh, _ = market_probs_from_american(int(row.home_ml), int(row.away_ml))
+                market_by_game[str(row.game_id)] = mh
+    merged = reconcile_slate_dataframe(merged, market_probs_home=market_by_game)
 
     slate = _slate_rows(
         merged, has_odds, totals_by_game, min_edge, block_strong_picks=block_strong_picks

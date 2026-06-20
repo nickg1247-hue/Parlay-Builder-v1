@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTG Sports — Combined Intro Preview</title>
+  <link rel="stylesheet" href="/static/brand.css?v=20260630f">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: #0a0808;
+      color: #e2e8f0;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+    h1 { margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 800; }
+    p { margin: 0 0 1.25rem; color: rgba(255,255,255,0.42); font-size: 0.86rem; line-height: 1.55; }
+    button {
+      border: 1px solid rgba(37, 99, 235, 0.45);
+      background: rgba(10, 14, 20, 0.85);
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 0.55rem 1rem;
+      font: 600 0.85rem inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: #2563eb; color: #fff; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Combined intro</h1>
+    <p>Homepage intro syncs the progress bar to real data loading (min 10s). Demo replays with the same timer logic only.</p>
+    <button type="button" id="replay-btn">Replay intro</button>
+  </main>
+  <script src="/static/ntg-intro.js?v=20260630f"></script>
+  <script>
+    async function playIntro() {
+      document.getElementById("ntg-splash")?.remove();
+      document.documentElement.classList.add("ntg-splash-pending", "ntg-splash-active");
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const splash = NTGIntro.buildElement(reduced);
+      document.body.appendChild(splash);
+      await NTGIntro.runSplash(splash, { reducedMotion: reduced });
+      splash.classList.add("ntg-splash--out");
+      document.documentElement.classList.remove("ntg-splash-pending", "ntg-splash-active");
+      setTimeout(() => splash.remove(), NTGIntro.EXIT_MS);
+    }
+    document.getElementById("replay-btn").addEventListener("click", playIntro);
+    playIntro();
+  </script>
+</body>
+</html>

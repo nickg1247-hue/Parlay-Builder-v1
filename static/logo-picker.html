@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTG Sports — Logo Options</title>
+  <link rel="stylesheet" href="/static/brand.css?v=20260630b">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: #0a0808;
+      color: #e2e8f0;
+    }
+    .page { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { margin: 0 0 0.35rem; font-size: 1.35rem; font-weight: 800; }
+    .lead { margin: 0 0 1.75rem; color: rgba(255,255,255,0.45); font-size: 0.88rem; line-height: 1.55; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(12, 10, 10, 0.6);
+    }
+    .card h2 {
+      margin: 0;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .card p {
+      margin: 0;
+      padding: 0 0.85rem 0.65rem;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.38);
+      line-height: 1.45;
+    }
+    .preview {
+      position: relative;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .preview--black { background: #000; }
+    .preview--stadium {
+      background: url("/static/assets/osu-stadium-field-centered.png") center 38% / cover no-repeat;
+    }
+    .preview--stadium::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 70% at 50% 44%, transparent 0%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+    .preview img {
+      position: relative;
+      z-index: 1;
+      max-width: 78%;
+      max-height: 110px;
+      object-fit: contain;
+    }
+    .preview--stadium img { mix-blend-mode: lighten; }
+    .row-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      padding: 0.35rem 0.85rem 0;
+    }
+    a.back {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: #bb0000;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    a.back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Logo options — round 2</h1>
+    <p class="lead">More realistic, broadcast-style directions. Each on black and over the OSU stadium intro. Tell me a number (or mix elements) and we’ll wire it in.</p>
+    <div class="grid" id="grid"></div>
+    <a class="back" href="/static/intro-demo.html">← Back to intro preview</a>
+  </main>
+  <script>
+    const options = [
+      { id: 1, file: "logo-v2-1-broadcast-wordmark.png", title: "Broadcast wordmark", desc: "ESPN-style dimensional type + analytics subline. Scarlet accent." },
+      { id: 2, file: "logo-v2-2-emblem-patch.png", title: "Emblem / patch", desc: "College media badge with engraved ring and realistic depth." },
+      { id: 3, file: "logo-v2-3-product-lockup.png", title: "Product lockup", desc: "App tile + NTG SPORTS + tagline. Research-tool feel." },
+      { id: 4, file: "logo-v2-4-jumbotron-led.png", title: "Jumbotron LED", desc: "Scoreboard display look — stadium-native branding." },
+      { id: 5, file: "logo-v2-5-field-perspective.png", title: "Field perspective", desc: "Yard-line depth with NTG overlay. Scarlet/white only." },
+      { id: 6, file: "logo-v2-6-dimensional-monogram.png", title: "Dimensional monogram", desc: "Refined N/T/G with matte depth — not flat, not chrome shield." },
+    ];
+    document.getElementById("grid").innerHTML = options.map((o) => `
+      <article class="card">
+        <h2>Option ${o.id} — ${o.title}</h2>
+        <p>${o.desc}</p>
+        <div class="row-label">On black</div>
+        <div class="preview preview--black">
+          <img src="/static/assets/${o.file}" alt="Option ${o.id}">
+        </div>
+        <div class="row-label">On stadium intro</div>
+        <div class="preview preview--stadium">
+          <img src="/static/assets/${o.file}" alt="Option ${o.id} on stadium">
+        </div>
+      </article>
+    `).join("");
+  </script>
+</body>
+</html>

@@ -1,0 +1,659 @@
+{
+  "sport": "cfb",
+  "id": "194",
+  "name": "Ohio State Buckeyes",
+  "logo_url": "https://a.espncdn.com/i/teamlogos/ncaa/500/194.png",
+  "record": null,
+  "standing": "1st in Big Ten",
+  "roster": [
+    {
+      "id": "5081820",
+      "name": "David Adolph",
+      "position": "WR",
+      "jersey": "82"
+    },
+    {
+      "id": "5141355",
+      "name": "Tarvos Alford",
+      "position": "LB",
+      "jersey": "17"
+    },
+    {
+      "id": "5110493",
+      "name": "Deontae Armstrong",
+      "position": "OL",
+      "jersey": "72"
+    },
+    {
+      "id": "5079306",
+      "name": "Devontae Armstrong",
+      "position": "OL",
+      "jersey": "73"
+    },
+    {
+      "id": "4703062",
+      "name": "Beau Atkinson",
+      "position": "DL",
+      "jersey": "14"
+    },
+    {
+      "id": "5150709",
+      "name": "Nolan Baudo",
+      "position": "WR",
+      "jersey": "23"
+    },
+    {
+      "id": "5141384",
+      "name": "Phillip Bell",
+      "position": "WR",
+      "jersey": "7"
+    },
+    {
+      "id": "5086920",
+      "name": "Eli Brickhandler",
+      "position": "QB",
+      "jersey": "6"
+    },
+    {
+      "id": "5167747",
+      "name": "Jarquez Carter",
+      "position": "DL",
+      "jersey": "91"
+    },
+    {
+      "id": "4685706",
+      "name": "Bennett Christian",
+      "position": "TE",
+      "jersey": "85"
+    },
+    {
+      "id": "5164637",
+      "name": "Jake Cook",
+      "position": "OL",
+      "jersey": "76"
+    },
+    {
+      "id": "5162686",
+      "name": "Jackson Courville",
+      "position": "PK",
+      "jersey": "96"
+    },
+    {
+      "id": "4923217",
+      "name": "Phillip Daniels",
+      "position": "OL",
+      "jersey": "70"
+    },
+    {
+      "id": "5141428",
+      "name": "Faheem Delane",
+      "position": "S",
+      "jersey": "10"
+    },
+    {
+      "id": "5150714",
+      "name": "Alec DelSignore",
+      "position": "LB",
+      "jersey": "50"
+    },
+    {
+      "id": "5126515",
+      "name": "Sam Dixon",
+      "position": "RB",
+      "jersey": "24"
+    },
+    {
+      "id": "4705854",
+      "name": "John Ferlmann",
+      "position": "LS",
+      "jersey": "43"
+    },
+    {
+      "id": "5081814",
+      "name": "Jayden Fielding",
+      "position": "PK",
+      "jersey": "38"
+    },
+    {
+      "id": "5297801",
+      "name": "Dylan Furshman",
+      "position": "LB",
+      "jersey": "54"
+    },
+    {
+      "id": "5297802",
+      "name": "Ian Gecse",
+      "position": "OL",
+      "jersey": "57"
+    },
+    {
+      "id": "5158778",
+      "name": "Logan George",
+      "position": "DL",
+      "jersey": "48"
+    },
+    {
+      "id": "5109531",
+      "name": "Julian Goines-Jackson",
+      "position": "OL",
+      "jersey": "63"
+    },
+    {
+      "id": "5219051",
+      "name": "Glorien Gough",
+      "position": "DB",
+      "jersey": "29"
+    },
+    {
+      "id": "5141481",
+      "name": "Zion Grady",
+      "position": "DL",
+      "jersey": "15"
+    },
+    {
+      "id": "5079444",
+      "name": "Mylan Graham",
+      "position": "WR",
+      "jersey": "5"
+    },
+    {
+      "id": "5081815",
+      "name": "Diant\u00e9 Griffin",
+      "position": "CB",
+      "jersey": "43"
+    },
+    {
+      "id": "5214405",
+      "name": "Jaystin Gwinn",
+      "position": "S",
+      "jersey": "35"
+    },
+    {
+      "id": "5195570",
+      "name": "Cody Haddad",
+      "position": "S",
+      "jersey": "30"
+    },
+    {
+      "id": "4917948",
+      "name": "Malik Hartford",
+      "position": "S",
+      "jersey": "9"
+    },
+    {
+      "id": "5219052",
+      "name": "Zach Hayes",
+      "position": "LB",
+      "jersey": "37"
+    },
+    {
+      "id": "5159009",
+      "name": "Chris Henry Jr.",
+      "position": "WR",
+      "jersey": "15"
+    },
+    {
+      "id": "4685372",
+      "name": "C.J. Hicks",
+      "position": "LB",
+      "jersey": "11"
+    },
+    {
+      "id": "4685384",
+      "name": "Carson Hinzman",
+      "position": "OL",
+      "jersey": "75"
+    },
+    {
+      "id": "5079485",
+      "name": "Eddrick Houston",
+      "position": "DE",
+      "jersey": "96"
+    },
+    {
+      "id": "5087131",
+      "name": "Ty Howard",
+      "position": "LB",
+      "jersey": "25"
+    },
+    {
+      "id": "4870835",
+      "name": "Brandon Inniss",
+      "position": "WR",
+      "jersey": "1"
+    },
+    {
+      "id": "5141517",
+      "name": "Bo Jackson",
+      "position": "RB",
+      "jersey": "25"
+    },
+    {
+      "id": "5081821",
+      "name": "Kenyatta Jackson Jr.",
+      "position": "DE",
+      "jersey": "97"
+    },
+    {
+      "id": "5226888",
+      "name": "Stanley Jackson Jr.",
+      "position": "RB",
+      "jersey": "28"
+    },
+    {
+      "id": "5211693",
+      "name": "Omar Jah",
+      "position": "CB",
+      "jersey": "36"
+    },
+    {
+      "id": "4877845",
+      "name": "Collin Johnson",
+      "position": "LS",
+      "jersey": "35"
+    },
+    {
+      "id": "5081811",
+      "name": "Brenten Jones",
+      "position": "S",
+      "jersey": "21"
+    },
+    {
+      "id": "5141494",
+      "name": "De'Zie Jones",
+      "position": "WR",
+      "jersey": "8"
+    },
+    {
+      "id": "5258440",
+      "name": "Isaiah Kema",
+      "position": "OL",
+      "jersey": "56"
+    },
+    {
+      "id": "5078278",
+      "name": "Lincoln Kienholz",
+      "position": "QB",
+      "jersey": "3"
+    },
+    {
+      "id": "5145736",
+      "name": "Dominic Kirks",
+      "position": "DE",
+      "jersey": "55"
+    },
+    {
+      "id": "5116115",
+      "name": "Maxence LeBlanc",
+      "position": "TE",
+      "jersey": "88"
+    },
+    {
+      "id": "5179362",
+      "name": "Eli Lee",
+      "position": "LB",
+      "jersey": "33"
+    },
+    {
+      "id": "5214446",
+      "name": "Brody Lennon",
+      "position": "TE",
+      "jersey": "87"
+    },
+    {
+      "id": "5079583",
+      "name": "Miles Lockhart",
+      "position": "CB",
+      "jersey": "13"
+    },
+    {
+      "id": "5088105",
+      "name": "Shawn Lodge",
+      "position": "WR",
+      "jersey": "80"
+    },
+    {
+      "id": "5219053",
+      "name": "Simon Lorentz",
+      "position": "OL",
+      "jersey": "64"
+    },
+    {
+      "id": "5141568",
+      "name": "Carter Lowe",
+      "position": "OL",
+      "jersey": "74"
+    },
+    {
+      "id": "5081804",
+      "name": "Mason Maggs",
+      "position": "QB",
+      "jersey": "16"
+    },
+    {
+      "id": "5150710",
+      "name": "Jermaine Mathews Jr.",
+      "position": "CB",
+      "jersey": "7"
+    },
+    {
+      "id": "5079518",
+      "name": "Jaylen McClain",
+      "position": "S",
+      "jersey": "18"
+    },
+    {
+      "id": "5141552",
+      "name": "Jayvon McFadden",
+      "position": "OL",
+      "jersey": "71"
+    },
+    {
+      "id": "5159957",
+      "name": "Joe McGuire",
+      "position": "P",
+      "jersey": "42"
+    },
+    {
+      "id": "5219054",
+      "name": "Nick McLarty",
+      "position": "P",
+      "jersey": "19"
+    },
+    {
+      "id": "5146856",
+      "name": "Eric Mensah",
+      "position": "DL",
+      "jersey": "90"
+    },
+    {
+      "id": "4870938",
+      "name": "Joshua Mickens",
+      "position": "DE",
+      "jersey": "52"
+    },
+    {
+      "id": "5219055",
+      "name": "Bukari Miles Jr.",
+      "position": "CB",
+      "jersey": "34"
+    },
+    {
+      "id": "5216345",
+      "name": "Bodpegn Miller",
+      "position": "WR",
+      "jersey": "18"
+    },
+    {
+      "id": "5219175",
+      "name": "Grant Mills",
+      "position": "LS",
+      "jersey": "41"
+    },
+    {
+      "id": "4870946",
+      "name": "Luke Montgomery",
+      "position": "OL",
+      "jersey": "51"
+    },
+    {
+      "id": "5079606",
+      "name": "Ian Moore",
+      "position": "OL",
+      "jersey": "69"
+    },
+    {
+      "id": "4870950",
+      "name": "Jason Moore",
+      "position": "DL",
+      "jersey": "94"
+    },
+    {
+      "id": "4685483",
+      "name": "Keenan Nelson Jr.",
+      "position": "DB",
+      "jersey": "16"
+    },
+    {
+      "id": "5195615",
+      "name": "Trajen Odom",
+      "position": "DL",
+      "jersey": "88"
+    },
+    {
+      "id": "4870885",
+      "name": "Joshua Padilla",
+      "position": "OL",
+      "jersey": "62"
+    },
+    {
+      "id": "5110454",
+      "name": "James Peoples",
+      "position": "RB",
+      "jersey": "20"
+    },
+    {
+      "id": "5141630",
+      "name": "Riley Pettijohn",
+      "position": "LB",
+      "jersey": "20"
+    },
+    {
+      "id": "5079667",
+      "name": "Payton Pierce",
+      "position": "LB",
+      "jersey": "26"
+    },
+    {
+      "id": "5141613",
+      "name": "Quincy Porter",
+      "position": "WR",
+      "jersey": "11"
+    },
+    {
+      "id": "5219057",
+      "name": "Eli Riggs",
+      "position": "LB",
+      "jersey": "38"
+    },
+    {
+      "id": "5141656",
+      "name": "Nate Roberts",
+      "position": "TE",
+      "jersey": "83"
+    },
+    {
+      "id": "5297798",
+      "name": "Trey Robinette",
+      "position": "QB",
+      "jersey": "14"
+    },
+    {
+      "id": "4870927",
+      "name": "Bryson Rodgers",
+      "position": "WR",
+      "jersey": "13"
+    },
+    {
+      "id": "5141663",
+      "name": "Anthony Rogers",
+      "position": "RB",
+      "jersey": "21"
+    },
+    {
+      "id": "5176115",
+      "name": "Leroy Roker III",
+      "position": "S",
+      "jersey": "28"
+    },
+    {
+      "id": "5141672",
+      "name": "Maxwell Roy",
+      "position": "DT",
+      "jersey": "93"
+    },
+    {
+      "id": "5150713",
+      "name": "Ryan Rudzinski",
+      "position": "S",
+      "jersey": "46"
+    },
+    {
+      "id": "5141635",
+      "name": "Devin Sanchez",
+      "position": "CB",
+      "jersey": "4"
+    },
+    {
+      "id": "5079712",
+      "name": "Julian Sayin",
+      "position": "QB",
+      "jersey": "10"
+    },
+    {
+      "id": "5150711",
+      "name": "Brennen Schramm",
+      "position": "WR",
+      "jersey": "34"
+    },
+    {
+      "id": "5079680",
+      "name": "Aaron Scott Jr.",
+      "position": "CB",
+      "jersey": "5"
+    },
+    {
+      "id": "5225387",
+      "name": "JJ Sebert",
+      "position": "S",
+      "jersey": "32"
+    },
+    {
+      "id": "4917984",
+      "name": "Austin Siereveld",
+      "position": "OL",
+      "jersey": "67"
+    },
+    {
+      "id": "5156154",
+      "name": "Epi Sitanilei",
+      "position": "DE",
+      "jersey": "44"
+    },
+    {
+      "id": "5079720",
+      "name": "Jeremiah Smith",
+      "position": "WR",
+      "jersey": "4"
+    },
+    {
+      "id": "4915838",
+      "name": "Will Smith Jr.",
+      "position": "DL",
+      "jersey": "53"
+    },
+    {
+      "id": "5146824",
+      "name": "Tavien St. Clair",
+      "position": "QB",
+      "jersey": "9"
+    },
+    {
+      "id": "5179136",
+      "name": "Deshawn Stewart",
+      "position": "S",
+      "jersey": "24"
+    },
+    {
+      "id": "5079603",
+      "name": "Garrett Stover",
+      "position": "LB",
+      "jersey": "23"
+    },
+    {
+      "id": "5297799",
+      "name": "Kolton Stover",
+      "position": "QB",
+      "jersey": "26"
+    },
+    {
+      "id": "5158250",
+      "name": "Justin Terry",
+      "position": "OL",
+      "jersey": "65"
+    },
+    {
+      "id": "5297800",
+      "name": "Gavin Thobe",
+      "position": "S",
+      "jersey": "49"
+    },
+    {
+      "id": "4871039",
+      "name": "Jelani Thurman",
+      "position": "TE",
+      "jersey": "15"
+    },
+    {
+      "id": "5219059",
+      "name": "Ahmed Tounkara",
+      "position": "DL",
+      "jersey": "59"
+    },
+    {
+      "id": "4685558",
+      "name": "Tegra Tshabola",
+      "position": "OL",
+      "jersey": "77"
+    },
+    {
+      "id": "5145224",
+      "name": "Gabe VanSickle",
+      "position": "OL",
+      "jersey": "58"
+    },
+    {
+      "id": "4430638",
+      "name": "Joey Velazquez",
+      "position": "LB",
+      "jersey": "39"
+    },
+    {
+      "id": "5079737",
+      "name": "Bryce West",
+      "position": "CB",
+      "jersey": "12"
+    },
+    {
+      "id": "5141701",
+      "name": "Isaiah West",
+      "position": "RB",
+      "jersey": "32"
+    },
+    {
+      "id": "5144409",
+      "name": "Dorian Williams",
+      "position": "WR",
+      "jersey": "84"
+    },
+    {
+      "id": "5079772",
+      "name": "Damarion Witten",
+      "position": "WR",
+      "jersey": "81"
+    },
+    {
+      "id": "5227756",
+      "name": "Preston Wolfe",
+      "position": "WR",
+      "jersey": "30"
+    },
+    {
+      "id": "5214523",
+      "name": "Jordyn Woods",
+      "position": "CB",
+      "jersey": "19"
+    }
+  ],
+  "recent_games": []
+}

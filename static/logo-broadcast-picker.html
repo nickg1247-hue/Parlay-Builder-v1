@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTG Sports — Broadcast Wordmark Options</title>
+  <link rel="stylesheet" href="/static/brand.css?v=20260630b">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: #0a0808;
+      color: #e2e8f0;
+    }
+    .page { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { margin: 0 0 0.35rem; font-size: 1.35rem; font-weight: 800; }
+    .lead { margin: 0 0 0.5rem; color: rgba(255,255,255,0.45); font-size: 0.88rem; line-height: 1.55; }
+    .ref { margin: 0 0 1.75rem; font-size: 0.78rem; color: rgba(187,0,0,0.85); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(12, 10, 10, 0.6);
+    }
+    .card--ref { border-color: rgba(187,0,0,0.35); }
+    .card h2 {
+      margin: 0;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .card p {
+      margin: 0;
+      padding: 0 0.85rem 0.65rem;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.38);
+      line-height: 1.45;
+    }
+    .preview {
+      position: relative;
+      height: 190px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .preview--black { background: #000; }
+    .preview--stadium {
+      background: url("/static/assets/osu-stadium-field-centered.png") center 38% / cover no-repeat;
+    }
+    .preview--stadium::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 70% at 50% 44%, transparent 0%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+    .preview img {
+      position: relative;
+      z-index: 1;
+      max-width: 82%;
+      max-height: 120px;
+      object-fit: contain;
+    }
+    .preview--stadium img { mix-blend-mode: lighten; }
+    .row-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      padding: 0.35rem 0.85rem 0;
+    }
+    .links { margin-top: 1.5rem; display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .links a { color: #bb0000; font-size: 0.85rem; text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Broadcast wordmark variations</h1>
+    <p class="lead">Same direction as Option 1 — dimensional broadcast type, scarlet accents, analytics sublines. Pick a letter or tell me what to mix.</p>
+    <p class="ref">Reference: original Option 1 shown first.</p>
+    <div class="grid" id="grid"></div>
+    <div class="links">
+      <a href="/static/logo-picker.html">← All logo rounds</a>
+      <a href="/static/intro-demo.html">Intro preview →</a>
+    </div>
+  </main>
+  <script>
+    const options = [
+      { id: "1", file: "logo-v2-1-broadcast-wordmark.png", title: "Original (Option 1)", desc: "Your starting pick — NTG + SPORTS ANALYTICS + scarlet underline.", ref: true },
+      { id: "A", file: "logo-broadcast-a-scarlet-underline.png", title: "A — Scarlet underline", desc: "Clean NTG with thin red line under letters only." },
+      { id: "B", file: "logo-broadcast-b-scarlet-t.png", title: "B — Scarlet T", desc: "Bold NTG with red accent on T; tagline Model · Markets · Edge." },
+      { id: "C", file: "logo-broadcast-c-double-line.png", title: "C — Double line", desc: "NTG + NTG SPORTS + Data · Analytics · Performance." },
+      { id: "D", file: "logo-broadcast-d-stacked-scarlet.png", title: "D — Stacked scarlet", desc: "Huge NTG, SPORTS below in scarlet. Minimal, game-day feel." },
+      { id: "E", file: "logo-broadcast-e-framed.png", title: "E — Framed", desc: "Subtle corner brackets + SPORTS ANALYTICS subline." },
+      { id: "F", file: "logo-broadcast-f-horizontal.png", title: "F — Horizontal", desc: "NTG SPORTS one line + win probability / odds subline." },
+    ];
+    document.getElementById("grid").innerHTML = options.map((o) => `
+      <article class="card${o.ref ? " card--ref" : ""}">
+        <h2>${o.ref ? "★ " : ""}${o.title}</h2>
+        <p>${o.desc}</p>
+        <div class="row-label">On black</div>
+        <div class="preview preview--black">
+          <img src="/static/assets/${o.file}" alt="${o.title}">
+        </div>
+        <div class="row-label">On stadium intro</div>
+        <div class="preview preview--stadium">
+          <img src="/static/assets/${o.file}" alt="${o.title} on stadium">
+        </div>
+      </article>
+    `).join("");
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Team — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260620h">
+  <link rel="stylesheet" href="/static/app.css?v=20260620h">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <section class="my-team-hero">
+        <h1>My Team</h1>
+        <p>Browse rosters, records, and recent games across MLB, NBA, and college football.</p>
+      </section>
+
+      <div class="my-team-toolbar">
+        <div class="my-team-sport-tabs" id="sport-tabs" role="tablist" aria-label="Sport"></div>
+        <label class="my-team-search">
+          <span class="sr-only">Search teams</span>
+          <input type="search" id="team-search" placeholder="Search teams…" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="teams-grid" class="teams-grid">
+        <div class="skeleton-card" style="height: 5rem;"></div>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260620h"></script>
+  <script src="/static/my_team.js?v=20260620h"></script>
+</body>
+</html>

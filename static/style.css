@@ -27,7 +27,7 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: transparent;
   color: var(--text);
   min-height: 100vh;

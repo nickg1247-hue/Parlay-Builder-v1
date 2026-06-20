@@ -1,0 +1,268 @@
+{
+  "sport": "mlb",
+  "id": "110",
+  "name": "Baltimore Orioles",
+  "logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/110.svg",
+  "record": null,
+  "standing": null,
+  "roster": [
+    {
+      "id": "668939",
+      "name": "Adley Rutschman",
+      "position": "C",
+      "jersey": "35"
+    },
+    {
+      "id": "544150",
+      "name": "Albert Su\u00e1rez",
+      "position": "P",
+      "jersey": "49"
+    },
+    {
+      "id": "552640",
+      "name": "Andrew Kittredge",
+      "position": "P",
+      "jersey": "39"
+    },
+    {
+      "id": "677942",
+      "name": "Blaze Alexander",
+      "position": "3B",
+      "jersey": "23"
+    },
+    {
+      "id": "687064",
+      "name": "Brandon Young",
+      "position": "P",
+      "jersey": "63"
+    },
+    {
+      "id": "691723",
+      "name": "Coby Mayo",
+      "position": "3B",
+      "jersey": "16"
+    },
+    {
+      "id": "681297",
+      "name": "Colton Cowser",
+      "position": "RF",
+      "jersey": "17"
+    },
+    {
+      "id": "664991",
+      "name": "Grant Wolfram",
+      "position": "P",
+      "jersey": "48"
+    },
+    {
+      "id": "683002",
+      "name": "Gunnar Henderson",
+      "position": "SS",
+      "jersey": "2"
+    },
+    {
+      "id": "702616",
+      "name": "Jackson Holliday",
+      "position": "2B",
+      "jersey": "7"
+    },
+    {
+      "id": "669236",
+      "name": "Jeremiah Jackson",
+      "position": "2B",
+      "jersey": "82"
+    },
+    {
+      "id": "669211",
+      "name": "Keegan Akin",
+      "position": "P",
+      "jersey": "45"
+    },
+    {
+      "id": "680694",
+      "name": "Kyle Bradish",
+      "position": "P",
+      "jersey": "38"
+    },
+    {
+      "id": "665750",
+      "name": "Leody Taveras",
+      "position": "CF",
+      "jersey": "30"
+    },
+    {
+      "id": "624413",
+      "name": "Pete Alonso",
+      "position": "1B",
+      "jersey": "25"
+    },
+    {
+      "id": "670329",
+      "name": "Rico Garcia",
+      "position": "P",
+      "jersey": "50"
+    },
+    {
+      "id": "664854",
+      "name": "Ryan Helsley",
+      "position": "P",
+      "jersey": "21"
+    },
+    {
+      "id": "669087",
+      "name": "Sam Huff",
+      "position": "C",
+      "jersey": "31"
+    },
+    {
+      "id": "694212",
+      "name": "Samuel Basallo",
+      "position": "C",
+      "jersey": "29"
+    },
+    {
+      "id": "669358",
+      "name": "Shane Baz",
+      "position": "P",
+      "jersey": "34"
+    },
+    {
+      "id": "621493",
+      "name": "Taylor Ward",
+      "position": "LF",
+      "jersey": "3"
+    },
+    {
+      "id": "669432",
+      "name": "Trevor Rogers",
+      "position": "P",
+      "jersey": "28"
+    },
+    {
+      "id": "694346",
+      "name": "Trey Gibson",
+      "position": "P",
+      "jersey": "43"
+    },
+    {
+      "id": "641933",
+      "name": "Tyler O'Neill",
+      "position": "RF",
+      "jersey": "9"
+    },
+    {
+      "id": "669330",
+      "name": "Tyler Wells",
+      "position": "P",
+      "jersey": "68"
+    },
+    {
+      "id": "666974",
+      "name": "Yennier Cano",
+      "position": "P",
+      "jersey": "78"
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": "823936",
+      "date": "2026-06-20T02:10:00Z",
+      "opponent": "Los Angeles Dodgers",
+      "home_away": "@",
+      "team_score": 5,
+      "opp_score": 6,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823125",
+      "date": "2026-06-18T20:10:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "@",
+      "team_score": 0,
+      "opp_score": 3,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823127",
+      "date": "2026-06-18T01:40:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "@",
+      "team_score": 5,
+      "opp_score": 3,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "823128",
+      "date": "2026-06-17T01:40:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "@",
+      "team_score": 1,
+      "opp_score": 3,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "824823",
+      "date": "2026-06-14T17:35:00Z",
+      "opponent": "San Diego Padres",
+      "home_away": "vs",
+      "team_score": 2,
+      "opp_score": 5,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "824828",
+      "date": "2026-06-13T20:05:00Z",
+      "opponent": "San Diego Padres",
+      "home_away": "vs",
+      "team_score": 3,
+      "opp_score": 9,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "824826",
+      "date": "2026-06-12T23:05:00Z",
+      "opponent": "San Diego Padres",
+      "home_away": "vs",
+      "team_score": 7,
+      "opp_score": 3,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824827",
+      "date": "2026-06-11T23:05:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "vs",
+      "team_score": 7,
+      "opp_score": 5,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824831",
+      "date": "2026-06-10T22:35:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "vs",
+      "team_score": 7,
+      "opp_score": 2,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824830",
+      "date": "2026-06-09T22:35:00Z",
+      "opponent": "Seattle Mariners",
+      "home_away": "vs",
+      "team_score": 5,
+      "opp_score": 6,
+      "won": false,
+      "status": "Final"
+    }
+  ]
+}

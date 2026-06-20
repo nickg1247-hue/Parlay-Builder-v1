@@ -204,10 +204,30 @@ function statusLabel(status) {
   return status;
 }
 
+function isGameUpcoming(status) {
+  const s = (status || "").toLowerCase();
+  return !isGameLive(status) && !isGameFinal(status);
+}
+
 function gameStatusText(game) {
-  if (!game) return "Scheduled";
+  if (!game) return "TBD";
   if (isGameLive(game.status) && game.period_label) return game.period_label;
+  if (isGameFinal(game.status)) return "Final";
+  if (isGameUpcoming(game.status) && game.start_time_utc) {
+    return formatLocalTimeShort(game.start_time_utc);
+  }
   return statusLabel(game.status);
+}
+
+function sortGamesForTicker(games) {
+  return (games || []).slice().sort((a, b) => {
+    const liveA = isGameLive(a.status) ? 0 : 1;
+    const liveB = isGameLive(b.status) ? 0 : 1;
+    if (liveA !== liveB) return liveA - liveB;
+    const ta = new Date(a.start_time_utc || 0).getTime();
+    const tb = new Date(b.start_time_utc || 0).getTime();
+    return ta - tb;
+  });
 }
 
 function sortGamesByStart(games) {
@@ -219,25 +239,30 @@ function sortGamesByStart(games) {
 }
 
 // ~0.32 px/frame ≈ 19 px/s at 60fps — ~10s for ~3 game cards to cross the viewport.
-const TICKER_SCROLL_PX_PER_FRAME = 0.32;
+const TICKER_SCROLL_PX_PER_FRAME = 0.45;
 const TICKER_RESUME_DEBOUNCE_MS = 500;
 
 function tickerItemHtml(game) {
   const away = game.away_score != null ? game.away_score : "";
   const home = game.home_score != null ? game.home_score : "";
-  const score =
-    away !== "" && home !== ""
-      ? `<span class="ticker-score">${away}–${home}</span>`
-      : "";
+  const showScore = shouldShowScores(game) && away !== "" && home !== "";
+  const score = showScore ? `<span class="ticker-score">${away}–${home}</span>` : "";
   const meta = gameStatusText(game);
   const shortAway = game.away_team.split(" ").pop();
   const shortHome = game.home_team.split(" ").pop();
   const sport = gameSport(game).toUpperCase();
   const colorStyle = gameCardColorStyle(game, _teamColors);
   const liveClass = isGameLive(game.status) ? " ticker-item-live" : "";
+  const awayLogo = game.away_logo_url || logoForGame(game, "away");
+  const homeLogo = game.home_logo_url || logoForGame(game, "home");
   return `
     <a class="ticker-item${liveClass}" href="${gameDetailHref(game)}" style="${colorStyle}">
       <span class="ticker-sport">${sport}</span>
+      <span class="ticker-logos">
+        <img class="ticker-logo" src="${awayLogo}" alt="" width="18" height="18" loading="lazy">
+        <span class="ticker-at">@</span>
+        <img class="ticker-logo" src="${homeLogo}" alt="" width="18" height="18" loading="lazy">
+      </span>
       <span class="ticker-teams">${shortAway} @ ${shortHome}</span>
       ${score}
       <span class="ticker-meta">${meta}</span>
@@ -390,7 +415,7 @@ function renderLiveTicker(el, games) {
   if (!el) return;
   stopTickerMarquee(el);
 
-  const sorted = sortGamesByStart(games);
+  const sorted = sortGamesForTicker(games);
   if (!sorted.length) {
     el.innerHTML = '<span class="ticker-empty">No games today</span>';
     return;
@@ -803,7 +828,7 @@ function initLiveTicker(elementId, options = {}) {
   el.classList.remove("ticker-placeholder");
   el.classList.add("live-ticker");
 
-  const intervalMs = options.intervalMs || 60000;
+  const intervalMs = options.intervalMs || 45000;
   const dateParam = options.date || qs("date");
   const sport = options.sport || "all";
   const base = `/api/scores/today?sport=${encodeURIComponent(sport)}`;
@@ -814,6 +839,7 @@ function initLiveTicker(elementId, options = {}) {
   async function refresh() {
     try {
       const data = await fetchJSON(url);
+      if (typeof flashTickerScores === "function") flashTickerScores(data.games);
       renderLiveTicker(el, data.games);
     } catch {
       stopTickerMarquee(el);
@@ -853,14 +879,21 @@ function gameCardHtml(game, options = {}) {
   const seriesHtml = game.series_summary
     ? `<p class="game-card-series">${game.series_summary}</p>`
     : "";
+  const vizHtml =
+    typeof confidenceMeterHtml === "function" ? confidenceMeterHtml(boardRow) : "";
+  const bandHtml =
+    typeof winProbBandHtml === "function"
+      ? winProbBandHtml(boardRow, game, colors)
+      : `<div class="game-card-color-band" aria-hidden="true"></div>`;
   return `
-    <div class="game-card-color-band" aria-hidden="true"></div>
+    ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
     <div class="game-card-top">
-      <span>${isGameLive(game.status) && game.period_label ? game.period_label : formatLocalTimeShort(game.start_time_utc)}</span>
-      <span class="status-badge ${statusBadgeClass(game.status)}${isGameLive(game.status) ? " badge-pulse" : ""}">${gameStatusText(game)}</span>
+      <span class="game-card-time">${isGameLive(game.status) && game.period_label ? game.period_label : isGameFinal(game.status) ? "Final" : formatLocalTimeShort(game.start_time_utc)}</span>
+      ${isGameLive(game.status) ? `<span class="status-badge badge-live badge-pulse">Live</span>` : isGameFinal(game.status) ? `<span class="status-badge badge-final">Final</span>` : ""}
     </div>
     ${seriesHtml}
+    ${vizHtml}
     ${leanHtml}
     <div class="game-card-matchup">
       <div class="team-side away">
@@ -906,7 +939,7 @@ function renderGameList(listEl, games, options = {}) {
   const gameDate = options.gameDate || null;
   sortGamesByStart(games).forEach((game) => {
     const card = document.createElement("a");
-    card.className = "game-card" + (isGameLive(game.status) ? " game-card-live" : "");
+    card.className = "game-card ntg-card" + (isGameLive(game.status) ? " game-card-live" : "");
     card.href = gameDetailHref(game, options);
     card.dataset.gameId = game.game_id;
     card.style.cssText = gameCardColorStyle(game, options.colors);
@@ -1508,10 +1541,13 @@ function renderWatchedGamesSection(el, games, options = {}) {
   renderGameList(inner, watched, options);
 }
 
-function renderMatchupHeader(el, game) {
+function renderMatchupHeader(el, game, boardRow) {
   if (!el || !game) return;
   applyGamePageWash(game);
-  el.innerHTML = matchupHeaderHtml(game);
+  el.innerHTML = matchupHeaderHtml(game, boardRow);
+  if (typeof enhanceBroadcastHeader === "function") {
+    enhanceBroadcastHeader(el, game, boardRow || null);
+  }
   const btn = el.querySelector(".watch-btn");
   if (btn) {
     btn.onclick = (e) => {
@@ -1522,7 +1558,7 @@ function renderMatchupHeader(el, game) {
   }
 }
 
-function matchupHeaderHtml(game) {
+function matchupHeaderHtml(game, boardRow) {
   const showScores = shouldShowScores(game);
   const centerText = isGameLive(game.status) && game.period_label
     ? game.period_label
@@ -1531,9 +1567,13 @@ function matchupHeaderHtml(game) {
   const seriesHtml = game.series_summary
     ? `<p class="matchup-series">${game.series_summary}</p>`
     : "";
+  const bandHtml =
+    typeof winProbBandHtml === "function"
+      ? winProbBandHtml(boardRow, game, _teamColors, "matchup-band")
+      : `<div class="game-card-color-band matchup-band" aria-hidden="true"></div>`;
   return `
     <div class="matchup-header-wrap" style="${gameCardColorStyle(game)}">
-    <div class="game-card-color-band matchup-band" aria-hidden="true"></div>
+    ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
     ${seriesHtml}
     <div class="matchup-grid">
@@ -1580,49 +1620,34 @@ function imgLogo(teamId, alt) {
   return img;
 }
 
-const NTG_SPLASH_LETTERS = {
-  n: "/static/assets/ntg-letter-n.png",
-  t: "/static/assets/ntg-letter-t.png",
-  g: "/static/assets/ntg-letter-g.png",
-};
-const NTG_SPLASH_MAX_MS = 5000;
+const NTG_SPLASH_MARK = "/static/ntg-mark.svg?v=20260622";
+const NTG_SPLASH_MAX_MS = 35000;
 
 function buildNTGSplashElement(reducedMotion) {
+  if (typeof window.NTGIntro?.buildElement === "function") {
+    return window.NTGIntro.buildElement(reducedMotion);
+  }
   const root = document.createElement("div");
   root.id = "ntg-splash";
   root.className = "ntg-splash" + (reducedMotion ? " ntg-splash--reduced" : "");
   root.setAttribute("role", "presentation");
   root.setAttribute("aria-hidden", "true");
-
   root.innerHTML = `
+    <div class="ntg-splash__bg" aria-hidden="true">
+      <div class="ntg-splash__spotlight"></div>
+      <div class="ntg-splash__grid"></div>
+    </div>
     <div class="ntg-splash__stage">
-      <svg class="ntg-splash__arcs" viewBox="0 0 420 300" aria-hidden="true">
-        <defs>
-          <linearGradient id="ntg-arc-grad-top" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#1d9bf0" stop-opacity="0.2"/>
-            <stop offset="40%" stop-color="#4aa8ff"/>
-            <stop offset="100%" stop-color="#ffffff"/>
-          </linearGradient>
-          <linearGradient id="ntg-arc-grad-bottom" x1="100%" y1="0%" x2="0%" y2="0%">
-            <stop offset="0%" stop-color="#1d9bf0" stop-opacity="0.2"/>
-            <stop offset="45%" stop-color="#2b7fd4"/>
-            <stop offset="100%" stop-color="#ffffff"/>
-          </linearGradient>
-        </defs>
-        <path class="ntg-splash__arc ntg-splash__arc--top" pathLength="1"
-          d="M 28 210 C 60 40, 200 8, 392 72"/>
-        <path class="ntg-splash__arc ntg-splash__arc--bottom" pathLength="1"
-          d="M 392 228 C 340 290, 120 292, 28 248"/>
-      </svg>
-      <div class="ntg-splash__logo-wrap">
-        <div class="ntg-splash__wordmark" role="img" aria-label="NTG Sports">
-          <img class="ntg-splash__letter-img ntg-splash__letter-img--n" src="${NTG_SPLASH_LETTERS.n}" alt="" />
-          <img class="ntg-splash__letter-img ntg-splash__letter-img--t" src="${NTG_SPLASH_LETTERS.t}" alt="" />
-          <img class="ntg-splash__letter-img ntg-splash__letter-img--g" src="${NTG_SPLASH_LETTERS.g}" alt="" />
+      <div class="ntg-splash__lockup">
+        <img class="ntg-splash__mark" src="${NTG_SPLASH_MARK}" width="88" height="88" alt="" />
+        <div class="ntg-splash__type">
+          <span class="ntg-splash__ntg">NTG</span>
+          <p class="ntg-splash__sports" aria-hidden="true">
+            <span class="ntg-splash__sports-line"></span>SPORTS<span class="ntg-splash__sports-line"></span>
+          </p>
+          <p class="ntg-splash__tagline">Model · Markets · Edge</p>
         </div>
-        <p class="ntg-splash__sports" aria-hidden="true"><span class="ntg-splash__sports-line"></span>SPORTS<span class="ntg-splash__sports-line"></span></p>
       </div>
-      <div class="ntg-splash__glow"></div>
     </div>
   `;
   return root;
@@ -1636,7 +1661,7 @@ function clearNTGSplashState() {
  * Cinematic NTG Sports intro — plays on every full page load.
  * Returns a promise that resolves when the splash finishes.
  */
-function initNTGSplash() {
+function initNTGSplash(splashOptions = {}) {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.documentElement.classList.add("ntg-splash-pending");
 
@@ -1644,8 +1669,14 @@ function initNTGSplash() {
   document.body.appendChild(splash);
   document.documentElement.classList.add("ntg-splash-active");
 
-  const holdMs = reduced ? 900 : 3000;
-  const exitMs = reduced ? 350 : 650;
+  const exitMs =
+    typeof window.NTGIntro?.EXIT_MS === "number" ? window.NTGIntro.EXIT_MS : reduced ? 350 : 700;
+  const minDurationMs =
+    splashOptions.minDurationMs ??
+    (typeof window.NTGIntro?.DURATION_MS === "number" ? window.NTGIntro.DURATION_MS : NTG_SPLASH_MAX_MS);
+  const maxMs =
+    splashOptions.maxDurationMs ??
+    (typeof window.NTGIntro?.MAX_MS === "number" ? window.NTGIntro.MAX_MS : NTG_SPLASH_MAX_MS);
   let finished = false;
 
   return new Promise((resolve) => {
@@ -1659,9 +1690,184 @@ function initNTGSplash() {
         resolve();
       }, exitMs);
     };
-    window.setTimeout(finish, holdMs);
-    window.setTimeout(finish, NTG_SPLASH_MAX_MS);
+
+    const runAnimation =
+      typeof window.NTGIntro?.runSplash === "function"
+        ? window.NTGIntro.runSplash(splash, {
+            reducedMotion: reduced,
+            minDurationMs,
+            getProgress: splashOptions.getProgress,
+            getStatus: splashOptions.getStatus,
+            waitFor: splashOptions.waitFor,
+          })
+        : new Promise((r) => window.setTimeout(r, reduced ? 850 : 2400));
+
+    runAnimation.then(finish);
+    window.setTimeout(finish, maxMs);
   });
+}
+
+function isHomePage() {
+  return Boolean(document.getElementById("today-glance"));
+}
+
+function setHomeLoadProgress(progress, value, status) {
+  if (!progress) return;
+  progress.value = Math.min(1, Math.max(0, value));
+  if (status) progress.status = status;
+}
+
+async function loadHomePageProps(progress) {
+  const propsEl = document.getElementById("best-props");
+  const veryStrongWrap = document.getElementById("very-strong-props-wrap");
+  const veryStrongEl = document.getElementById("very-strong-props");
+  if (!propsEl) return;
+
+  setHomeLoadProgress(progress, 0.62, "Scanning player props…");
+  let refresh = "";
+  try {
+    const meta = await fetchJSON("/api/props/cache-meta");
+    if (meta.requires_refresh) refresh = "&refresh=true";
+  } catch (_) {}
+
+  const url = `/api/daily/props?limit=25&bookmaker=draftkings&scan=true${refresh}`;
+  try {
+    const res = await fetch(url);
+    if (res.status === 401) {
+      renderBestProps(propsEl, [], { emptyMessage: "" });
+      if (veryStrongWrap) veryStrongWrap.classList.add("hidden");
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const propsData = await res.json();
+    const hint = propsData.hint ? ` ${propsData.hint}` : "";
+    const veryStrong = (propsData.very_strong_props || []).slice(0, 10);
+    if (veryStrongWrap && veryStrongEl) {
+      if (veryStrong.length) {
+        veryStrongWrap.classList.remove("hidden");
+        renderBestProps(veryStrongEl, veryStrong);
+      } else {
+        veryStrongWrap.classList.add("hidden");
+        veryStrongEl.innerHTML = "";
+      }
+    }
+    renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
+      emptyMessage: (propsData.top_props || []).length
+        ? undefined
+        : `No actionable props found after scanning today's slate.${hint}`,
+    });
+  } catch (_) {
+    renderBestProps(propsEl, [], {
+      emptyMessage: "Could not load props — check server logs.",
+    });
+  }
+}
+
+async function loadHomePageNews(progress) {
+  const list = document.getElementById("news-list");
+  if (!list) return;
+
+  setHomeLoadProgress(progress, 0.82, "Loading headlines…");
+  function showEmpty(msg) {
+    list.replaceChildren();
+    const card = document.createElement("div");
+    card.className = "news-empty-card ntg-card";
+    card.innerHTML = `${emptyStateIcon("news")}<p>${msg}</p>`;
+    list.appendChild(card);
+  }
+
+  try {
+    const data = await fetchJSON("/api/news");
+    const items = data.items || [];
+    if (!items.length) {
+      showEmpty(data.error || "No headlines available right now.");
+      return;
+    }
+    list.replaceChildren();
+    renderNewsGrid(list, items);
+  } catch (_) {
+    showEmpty("Headlines unavailable");
+  }
+}
+
+async function loadHomePageData(progress) {
+  const glance = document.getElementById("today-glance");
+  const bets = document.getElementById("best-bets");
+  const propsEl = document.getElementById("best-props");
+  const watched = document.getElementById("watched-section");
+  const refreshEl = document.getElementById("refresh-line");
+  const heroChips = document.getElementById("hero-chips");
+  const scoresRail = document.getElementById("home-scores-rail");
+
+  if (!glance) return;
+
+  try {
+    setHomeLoadProgress(progress, 0.05, "Loading team data…");
+    await loadTeamColors();
+
+    setHomeLoadProgress(progress, 0.12, "Running win-probability models…");
+    const [summary, scores, odds, status] = await Promise.all([
+      fetchJSON("/api/home/today"),
+      fetchJSON("/api/scores/today?sport=all"),
+      fetchJSON("/api/odds/today").catch(() => null),
+      fetchJSON("/api/status/refresh").catch(() => null),
+    ]);
+
+    setHomeLoadProgress(progress, 0.45, "Syncing live odds…");
+
+    if (refreshEl && status) {
+      refreshEl.textContent = formatRefreshStatus(status);
+      refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
+      pollRefreshStatusLine(refreshEl, 60000);
+    }
+
+    if (odds) recordOddsSnapshot(odds, scores.games);
+
+    const counts = scores.sports || {
+      mlb: (scores.games || []).filter((g) => g.sport === "mlb").length,
+      nba: (scores.games || []).filter((g) => g.sport === "nba").length,
+    };
+
+    if (typeof initStadiumHero === "function") initStadiumHero(scores.games || []);
+    if (typeof renderHomeScoresRail === "function") {
+      renderHomeScoresRail(scores.games || [], scoresRail);
+    }
+
+    renderHomeHeroChips(heroChips, { summary, scoreCounts: counts, status });
+    renderTodayGlance(glance, summary, counts);
+    renderBestBets(bets, summary.top_singles);
+    if (propsEl) {
+      renderBestProps(propsEl, [], { emptyMessage: "Loading player props…" });
+    }
+    renderWatchedGamesSection(watched, scores.games || [], {
+      boardMap: summary.slate_by_game_id || {},
+      gameDate: summary.date,
+      colors: _teamColors,
+    });
+
+    setHomeLoadProgress(progress, 0.55, "Loading today's slate…");
+    await loadHomePageProps(progress);
+    await loadHomePageNews(progress);
+    setHomeLoadProgress(progress, 1, "Ready");
+  } catch (_) {
+    renderHomeHeroChips(document.getElementById("hero-chips"), {
+      summary: null,
+      scoreCounts: null,
+      status: null,
+    });
+    if (glance) {
+      glance.innerHTML =
+        '<div class="glance-card glance-muted ntg-card"><span>Could not load today\'s summary.</span></div>';
+    }
+    if (bets) {
+      bets.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Best bets unavailable.</p></div>`;
+    }
+    if (propsEl) {
+      propsEl.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Player props unavailable.</p></div>`;
+    }
+    if (refreshEl) refreshEl.textContent = "Could not load refresh status";
+    setHomeLoadProgress(progress, 1, "Ready");
+  }
 }
 
 function shouldPlayNTGSplash() {
@@ -1712,6 +1918,9 @@ function sportPillIsActive(href, path) {
   if (href === "/mlb/props") {
     return path === "/mlb/props" || path.startsWith("/mlb/props/");
   }
+  if (href === "/my-team") {
+    return path === "/my-team" || path.startsWith("/teams/");
+  }
   return path === href || path.startsWith(`${href}/`);
 }
 
@@ -1723,6 +1932,7 @@ function renderSportPills(container, path) {
     { disabled: true, label: "NHL", title: "Coming soon" },
     { href: "/cfb", label: "CFB" },
     { href: "/mlb/props", label: "Player props" },
+    { href: "/my-team", label: "My Team" },
   ];
   container.replaceChildren();
   specs.forEach((spec) => {
@@ -1754,7 +1964,7 @@ function initUtilityNav(nav, path) {
   if (pbFeatures.props_require_verified_user) {
     const userEl = document.createElement("span");
     userEl.className = "app-nav-user";
-    if (userAuth.signed_in && userAuth.email_verified) {
+    if (userAuth.signed_in) {
       userEl.innerHTML = `${userAuth.email || "Account"} · <a href="#" id="nav-user-signout">Sign out</a>`;
       nav.appendChild(userEl);
       userEl.querySelector("#nav-user-signout")?.addEventListener("click", async (e) => {
@@ -1764,10 +1974,8 @@ function initUtilityNav(nav, path) {
       });
     } else {
       const authLink = document.createElement("a");
-      authLink.href = userAuth.signed_in
-        ? `/verify-email?email=${encodeURIComponent(userAuth.email || "")}`
-        : "/signin";
-      authLink.textContent = userAuth.signed_in ? "Verify email" : "Sign in";
+      authLink.href = "/signin";
+      authLink.textContent = "Sign in";
       nav.appendChild(authLink);
     }
   }
@@ -1785,6 +1993,15 @@ function initUtilityNav(nav, path) {
   sandboxLink.dataset.navSandbox = "1";
   if (path === "/sandbox") sandboxLink.classList.add("active");
   nav.appendChild(sandboxLink);
+
+  const densityBtn = document.createElement("button");
+  densityBtn.type = "button";
+  densityBtn.className = "density-toggle";
+  densityBtn.setAttribute("aria-label", "Toggle display density");
+  nav.appendChild(densityBtn);
+  if (typeof initDensityMode === "function") {
+    window.setTimeout(() => initDensityMode(), 0);
+  }
 }
 
 function initSiteChrome() {
@@ -1897,20 +2114,12 @@ function canAccessProps() {
 
 function propsAuthBannerHtml(nextPath) {
   const next = nextPath || `${window.location.pathname}${window.location.search}`;
-  const verifyOnly = pbUserAuth.signed_in && !pbUserAuth.email_verified;
-  const headline = verifyOnly
-    ? "Verify your email to unlock player props."
-    : "Sign in to view player props. Games and news stay free.";
-  const primaryHref = verifyOnly
-    ? `/verify-email?email=${encodeURIComponent(pbUserAuth.email || "")}&next=${encodeURIComponent(next)}`
-    : `/signin?next=${encodeURIComponent(next)}`;
-  const primaryLabel = verifyOnly ? "Verify email" : "Sign in";
   return `
     <div class="props-auth-banner">
-      <p>${headline}</p>
+      <p>Sign in to view player props. Games and news stay free.</p>
       <div class="props-auth-banner-actions">
-        <a class="props-auth-primary" href="${primaryHref}">${primaryLabel}</a>
-        ${verifyOnly ? "" : `<a class="props-auth-secondary" href="/signup?next=${encodeURIComponent(next)}">Create account</a>`}
+        <a class="props-auth-primary" href="/signin?next=${encodeURIComponent(next)}">Sign in</a>
+        <a class="props-auth-secondary" href="/signup?next=${encodeURIComponent(next)}">Create account</a>
       </div>
     </div>`;
 }
@@ -2373,6 +2582,43 @@ function initPropSlipUi() {
   renderPropSlipPanel();
 }
 
+function renderNewsGrid(container, items) {
+  if (!container) return;
+  container.replaceChildren();
+  container.className = "news-grid";
+  items.forEach((item) => {
+    const link = document.createElement("a");
+    link.className = "news-card";
+    link.href = item.link;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    const imageUrl = item.image_url || "";
+    const image = document.createElement("div");
+    image.className = "news-card-image";
+    if (imageUrl) {
+      image.style.backgroundImage = `url("${imageUrl.replace(/"/g, "%22")}")`;
+    } else {
+      image.classList.add("news-card-image-fallback");
+      image.textContent = (item.source || "News").slice(0, 1);
+    }
+    const body = document.createElement("div");
+    body.className = "news-card-body";
+    const title = document.createElement("span");
+    title.className = "news-card-title";
+    title.textContent = item.title;
+    const meta = document.createElement("span");
+    meta.className = "news-card-meta";
+    meta.textContent = item.source || "News";
+    const summary = document.createElement("span");
+    summary.className = "news-card-summary";
+    if (item.summary) summary.textContent = item.summary.slice(0, 140) + (item.summary.length > 140 ? "…" : "");
+    body.append(title, meta);
+    if (item.summary) body.append(summary);
+    link.append(image, body);
+    container.appendChild(link);
+  });
+}
+
 function showBuildBadge() {
   const el = document.getElementById("pb-build-badge");
   if (!el) return;
@@ -2395,18 +2641,52 @@ function showBuildBadge() {
 }
 
 function bootNTGSplash() {
-  loadPublicFeatures()
-    .finally(() => {
-      initSiteChrome();
-      initUpdatesModal().catch(() => {});
-      initPropSlipUi();
-      showBuildBadge();
-      if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
-        initNTGSplash().catch(() => clearNTGSplashState());
-      } else {
-        clearNTGSplashState();
-      }
-    });
+  if (!window._designLoaded) {
+    window._designLoaded = true;
+    if (!document.querySelector('link[href*="brand.css"]')) {
+      const brandLink = document.createElement("link");
+      brandLink.rel = "stylesheet";
+      brandLink.href = "/static/brand.css?v=20260622";
+      document.head.appendChild(brandLink);
+    }
+    if (!document.querySelector('link[href*="design.css"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/static/design.css?v=20260622";
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[src*="design.js"]')) {
+      const script = document.createElement("script");
+      script.src = "/static/design.js?v=20260622";
+      script.onload = () => {
+        if (typeof initDesignSystem === "function") initDesignSystem();
+      };
+      document.head.appendChild(script);
+    } else if (typeof initDesignSystem === "function") {
+      initDesignSystem();
+    }
+  } else if (typeof initDesignSystem === "function") {
+    initDesignSystem();
+  }
+
+  const homeProgress = { value: 0, status: "Starting up…" };
+  const homeLoad = isHomePage() ? loadHomePageData(homeProgress) : Promise.resolve();
+  const siteLoad = Promise.all([loadPublicFeatures(), homeLoad]).then(() => {
+    initSiteChrome();
+    initUpdatesModal().catch(() => {});
+    initPropSlipUi();
+    showBuildBadge();
+  });
+
+  if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
+    initNTGSplash({
+      getProgress: () => homeProgress.value,
+      getStatus: () => homeProgress.status,
+      waitFor: siteLoad,
+    }).catch(() => clearNTGSplashState());
+  } else {
+    siteLoad.finally(() => clearNTGSplashState());
+  }
 }
 
 if (document.readyState === "loading") {

@@ -1,67 +1,60 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260622" type="image/svg+xml">
   <title>Game — NTG Sports</title>
-
-  <meta name="pb-build" content="2026-06-17-props-v3">
-  <link rel="stylesheet" href="/static/style.css?v=20260620c">
-
-  <link rel="stylesheet" href="/static/app.css?v=20260620g">
-
+  <meta name="pb-build" content="2026-06-22-brand-v1">
+  <link rel="stylesheet" href="/static/style.css?v=20260622">
+  <link rel="stylesheet" href="/static/app.css?v=20260622">
+  <link rel="stylesheet" href="/static/brand.css?v=20260622">
+  <link rel="stylesheet" href="/static/design.css?v=20260622">
 </head>
-
-<body class="game-page-bg">
-
+<body class="game-page-bg" data-sport="mlb">
   <div class="game-page-wash" aria-hidden="true"></div>
-
   <div class="app-shell">
-
     <header class="app-topbar">
-
       <div class="app-nav-row">
-
         <a class="app-brand" href="/">NTG <span>Sports</span></a>
-
         <nav class="app-nav-links" aria-label="Site tools"></nav>
       </div>
       <div class="sport-pills" aria-label="Sports"></div>
-
     </header>
-
-
 
     <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
     <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
 
-
-
     <main class="app-main">
-
       <div id="game-loading" class="empty-state">Loading game…</div>
-
       <div id="game-error" class="error-state hidden"></div>
 
       <div id="game-content" class="hidden">
+        <header class="matchup-header broadcast-header" id="matchup-header"></header>
 
-        <header class="matchup-header" id="matchup-header"></header>
+        <nav class="game-sticky-nav" id="game-sticky-nav" aria-label="Game sections">
+          <a href="#section-lines">Lines</a>
+          <a href="#lineup-section">Lineups</a>
+          <a href="#model-explanation-section">Model</a>
+          <a href="#parlays-section">Parlays</a>
+          <a href="#props-section">Props</a>
+        </nav>
 
+        <section class="detail-section" id="section-lines">
+          <p class="app-section-title">
+            Matchup
+            <span id="lines-updated" class="lines-updated hidden"></span>
+            <a href="#" id="insights-refresh" class="insights-refresh-link hidden">Refresh odds</a>
+          </p>
+          <div class="warnings" id="insights-warnings"></div>
+          <div id="game-matchup-board" class="matchup-board"></div>
+        </section>
 
-
-        <p class="app-section-title">
-          Matchup
-          <span id="lines-updated" class="lines-updated hidden"></span>
-          <a href="#" id="insights-refresh" class="insights-refresh-link hidden">Refresh odds</a>
-        </p>
-
-        <div class="warnings" id="insights-warnings"></div>
-
-        <div id="game-matchup-board" class="matchup-board"></div>
+        <section class="detail-section" id="lineup-section">
+          <h2>Starters &amp; lineups</h2>
+          <p class="section-sub" id="lineup-note">Probable pitchers and batting orders when posted.</p>
+          <div id="lineup-board" class="lineup-board"></div>
+        </section>
 
         <section class="detail-section" id="model-explanation-section">
           <h2>Why the model thinks this</h2>
@@ -70,17 +63,11 @@
         </section>
 
         <section class="detail-section" id="parlays-section">
-
           <h2>Parlays</h2>
-
           <div id="parlays-body" class="parlays-body">Loading…</div>
-
         </section>
 
-
-
         <section class="detail-section" id="props-section">
-
           <div class="props-section-head">
             <h2>Player props</h2>
             <div class="props-head-controls">
@@ -88,37 +75,19 @@
               <button type="button" id="props-refresh" class="btn-ghost">Refresh</button>
             </div>
           </div>
-
           <p class="section-sub">Lines from your selected sportsbook (or median across books), ranked by recent form and matchup context — not a guarantee.</p>
-
           <div id="props-loading" class="empty-state">Loading props…</div>
           <div id="props-error" class="error-state hidden"></div>
           <div id="props-body" class="props-body hidden"></div>
-
           <p class="disclaimer-small props-disclaimer">Prop hit rates use last 10 MLB games. Experimental analytics — not betting advice.</p>
-
         </section>
 
-
-
-        <p class="disclaimer-small">
-
-          Experimental analytics — not betting advice. EV signals are not validated.
-
-        </p>
-
+        <p class="disclaimer-small">Experimental analytics — not betting advice. EV signals are not validated.</p>
       </div>
-
     </main>
-
   </div>
-
-  <script src="/static/app.js?v=20260620g"></script>
-
-  <script src="/static/game.js?v=20260620g"></script>
-
+  <script src="/static/design.js?v=20260621"></script>
+  <script src="/static/app.js?v=20260621"></script>
+  <script src="/static/game.js?v=20260621"></script>
 </body>
-
 </html>
-
-

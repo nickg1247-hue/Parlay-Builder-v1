@@ -20,11 +20,6 @@ function initSignInPage() {
   const errorEl = document.getElementById("signin-error");
   const noteEl = document.getElementById("signin-note");
   const btn = document.getElementById("signin-btn");
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("verify") === "required") {
-    showAuthNote(noteEl, "Verify your email to unlock player props.", false);
-  }
-
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showAuthNote(errorEl, "", true);
@@ -41,10 +36,6 @@ function initSignInPage() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         showAuthNote(errorEl, body.detail || "Sign in failed", true);
-        return;
-      }
-      if (!body.email_verified) {
-        window.location.href = `/verify-email?email=${encodeURIComponent(body.email)}`;
         return;
       }
       window.location.href = authNextPath("/");
@@ -86,12 +77,7 @@ function initSignUpPage() {
         showAuthNote(errorEl, body.detail || "Sign up failed", true);
         return;
       }
-      let msg = body.message || "Check your email for a verification link.";
-      if (body.dev_verification_url) {
-        msg += ` Dev link: ${body.dev_verification_url}`;
-      }
-      showAuthNote(noteEl, msg, false);
-      form.classList.add("hidden");
+      window.location.href = authNextPath("/mlb/props");
     } catch {
       showAuthNote(errorEl, "Network error — try again", true);
     } finally {

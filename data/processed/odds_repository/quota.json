@@ -1,9 +1,9 @@
 {
   "day": "2026-06-20",
-  "day_count": 9,
-  "hour_bucket": "2026-06-20T03",
-  "hour_count": 9,
-  "last_call_at": "2026-06-20T03:55:19.024076+00:00",
-  "last_denied_at": "2026-06-19T09:58:01.266191+00:00",
+  "day_count": 59,
+  "hour_bucket": "2026-06-20T10",
+  "hour_count": 3,
+  "last_call_at": "2026-06-20T10:54:14.914622+00:00",
+  "last_denied_at": "2026-06-20T04:27:00.413842+00:00",
   "last_denied_reason": null
 }

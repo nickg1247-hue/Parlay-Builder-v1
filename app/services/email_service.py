@@ -22,6 +22,27 @@ def build_verification_url(token: str) -> str:
     return f"{public_site_url()}/verify-email?token={token}"
 
 
+def _smtp_password() -> str:
+    return os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
+
+
+def smtp_config_summary() -> dict[str, str | bool]:
+    """Non-secret SMTP config for diagnostics."""
+    user = os.getenv("SMTP_USER", "").strip()
+    from_addr = os.getenv("EMAIL_FROM", user or "").strip()
+    return {
+        "configured": _smtp_configured(),
+        "host": os.getenv("SMTP_HOST", "").strip(),
+        "port": os.getenv("SMTP_PORT", "587").strip(),
+        "user": user,
+        "from_addr": from_addr,
+        "use_tls": os.getenv("SMTP_USE_TLS", "true").strip().lower()
+        in ("1", "true", "yes"),
+        "user_looks_like_email": "@" in user,
+        "from_matches_user": from_addr.lower() == user.lower() if user and from_addr else False,
+    }
+
+
 def send_verification_email(to_email: str, token: str) -> bool:
     """Send verification email. Returns True if sent (or logged in dev fallback)."""
     verify_url = build_verification_url(token)
@@ -45,9 +66,23 @@ def send_verification_email(to_email: str, token: str) -> bool:
     host = os.getenv("SMTP_HOST", "").strip()
     port = int(os.getenv("SMTP_PORT", "587"))
     user = os.getenv("SMTP_USER", "").strip()
-    password = os.getenv("SMTP_PASSWORD", "").strip()
+    password = _smtp_password()
     from_addr = os.getenv("EMAIL_FROM", user or "noreply@ntgsports.com").strip()
     use_tls = os.getenv("SMTP_USE_TLS", "true").strip().lower() in ("1", "true", "yes")
+
+    if not user or "@" not in user:
+        logger.error(
+            "SMTP_USER must be a full email address (e.g. you@gmail.com), got: %r",
+            user,
+        )
+        return False
+    if "gmail.com" in host and from_addr.lower() != user.lower():
+        logger.warning(
+            "Gmail SMTP: EMAIL_FROM (%s) should match SMTP_USER (%s) on free Gmail",
+            from_addr,
+            user,
+        )
+        from_addr = user
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -62,7 +97,24 @@ def send_verification_email(to_email: str, token: str) -> bool:
             if user and password:
                 smtp.login(user, password)
             smtp.send_message(msg)
+        logger.info("Verification email sent to %s", to_email)
         return True
+    except smtplib.SMTPAuthenticationError as exc:
+        logger.error(
+            "SMTP auth failed for %s — check SMTP_USER and SMTP_PASSWORD (Gmail app password): %s",
+            user,
+            exc,
+        )
+        return False
+    except OSError as exc:
+        logger.error(
+            "SMTP connection failed to %s:%s — VPS may block outbound port %s: %s",
+            host,
+            port,
+            port,
+            exc,
+        )
+        return False
     except Exception as exc:
         logger.error("Failed to send verification email to %s: %s", to_email, exc)
         return False

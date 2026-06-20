@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 132" fill="none" role="img" aria-label="NTG Sports">
+  <defs>
+    <linearGradient id="shield-metal" x1="20" y1="8" x2="100" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="35%" stop-color="#94a3b8"/>
+      <stop offset="55%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <linearGradient id="shield-inner" x1="30" y1="20" x2="90" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="shield-cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="shield-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="M60 6 L104 26 L104 74 Q104 112 60 126 Q16 112 16 74 L16 26 Z"
+        fill="url(#shield-metal)" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shield-glow)"/>
+  <path d="M60 14 L96 31 L96 72 Q96 104 60 116 Q24 104 24 72 L24 31 Z" fill="url(#shield-inner)"/>
+  <!-- N -->
+  <path d="M28 44 V96 H38 V62 L50 96 H60 V44 H50 V78 L38 44 Z" fill="#ffffff"/>
+  <!-- T -->
+  <path d="M52 38 H68 V48 H63 V96 H57 V48 H52 Z" fill="url(#shield-cyan)"/>
+  <!-- G -->
+  <path d="M72 44 H88 Q96 44 96 54 V66 H84 V54 H78 V86 H92 V96 H72 Q64 96 64 86 V54 Q64 44 72 44 Z" fill="url(#shield-cyan)"/>
+</svg>

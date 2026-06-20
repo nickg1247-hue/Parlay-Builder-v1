@@ -1,4 +1,4 @@
-"""End-user session auth (email signup + verification) for player props access."""
+"""End-user session auth (email signup) for player props access."""
 
 from __future__ import annotations
 
@@ -41,13 +41,14 @@ USER_AUTH_PUBLIC_PATHS = frozenset({
     "/signin",
     "/signup",
     "/verify-email",
+    "/my-team",
     "/login",
     "/health",
 })
 
 
 def props_require_verified_user() -> bool:
-    """When true, player props require a verified user account (soft gate — site stays public)."""
+    """When true, player props require a signed-in user account (soft gate — site stays public)."""
     explicit = os.getenv("PROPS_REQUIRE_VERIFIED_USER", "").strip().lower()
     if explicit in ("1", "true", "yes", "on"):
         return True
@@ -212,13 +213,11 @@ def can_access_props(request: Request, *, user_row: dict[str, Any] | None = None
         from app.services.user_accounts import get_user_by_id
 
         user_row = get_user_by_id(session["user_id"])
-    if not user_row:
-        return False
-    return bool(user_row.get("email_verified_at"))
+    return user_row is not None
 
 
 class UserPropsAuthMiddleware(BaseHTTPMiddleware):
-    """Soft gate: props require verified user; games/news stay public."""
+    """Soft gate: props require signed-in user; games/news stay public."""
 
     def __init__(self, app: ASGIApp) -> None:
         super().__init__(app)
@@ -244,7 +243,7 @@ class UserPropsAuthMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=401,
                 content={
-                    "detail": "Sign in and verify your email to view player props.",
+                    "detail": "Sign in to view player props.",
                     "code": "props_auth_required",
                 },
             )

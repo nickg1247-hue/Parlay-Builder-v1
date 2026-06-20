@@ -1,0 +1,508 @@
+{
+  "sport": "mlb",
+  "id": "109",
+  "name": "Arizona Diamondbacks",
+  "logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/109.svg",
+  "record": null,
+  "standing": null,
+  "roster": [
+    {
+      "id": "680728",
+      "name": "Adrian Del Castillo",
+      "position": "DH",
+      "jersey": "25",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/680728/headshot/silo/current"
+    },
+    {
+      "id": "805299",
+      "name": "Brandyn Garcia",
+      "position": "P",
+      "jersey": "55",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/805299/headshot/silo/current"
+    },
+    {
+      "id": "682998",
+      "name": "Corbin Carroll",
+      "position": "RF",
+      "jersey": "7",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/682998/headshot/silo/current"
+    },
+    {
+      "id": "686753",
+      "name": "Drey Jameson",
+      "position": "P",
+      "jersey": "99",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/686753/headshot/silo/current"
+    },
+    {
+      "id": "593958",
+      "name": "Eduardo Rodriguez",
+      "position": "P",
+      "jersey": "57",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/593958/headshot/silo/current"
+    },
+    {
+      "id": "672515",
+      "name": "Gabriel Moreno",
+      "position": "C",
+      "jersey": "14",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/672515/headshot/silo/current"
+    },
+    {
+      "id": "672695",
+      "name": "Geraldo Perdomo",
+      "position": "SS",
+      "jersey": "2",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/672695/headshot/silo/current"
+    },
+    {
+      "id": "545121",
+      "name": "Ildemaro Vargas",
+      "position": "1B",
+      "jersey": "6",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/545121/headshot/silo/current"
+    },
+    {
+      "id": "642528",
+      "name": "Jonathan Lo\u00e1isiga",
+      "position": "P",
+      "jersey": "43",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642528/headshot/silo/current"
+    },
+    {
+      "id": "691783",
+      "name": "Jordan Lawlar",
+      "position": "LF",
+      "jersey": "10",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691783/headshot/silo/current"
+    },
+    {
+      "id": "678489",
+      "name": "Jorge Barrosa",
+      "position": "CF",
+      "jersey": "1",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/678489/headshot/silo/current"
+    },
+    {
+      "id": "666661",
+      "name": "Juan Morillo",
+      "position": "P",
+      "jersey": "62",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666661/headshot/silo/current"
+    },
+    {
+      "id": "606466",
+      "name": "Ketel Marte",
+      "position": "2B",
+      "jersey": "4",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/606466/headshot/silo/current"
+    },
+    {
+      "id": "656464",
+      "name": "Kevin Ginkel",
+      "position": "P",
+      "jersey": "37",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/656464/headshot/silo/current"
+    },
+    {
+      "id": "666971",
+      "name": "Lourdes Gurriel Jr.",
+      "position": "LF",
+      "jersey": "12",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666971/headshot/silo/current"
+    },
+    {
+      "id": "694410",
+      "name": "LuJames Groover",
+      "position": "1B",
+      "jersey": "16",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694410/headshot/silo/current"
+    },
+    {
+      "id": "518876",
+      "name": "Merrill Kelly",
+      "position": "P",
+      "jersey": "29",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/518876/headshot/silo/current"
+    },
+    {
+      "id": "647336",
+      "name": "Michael Soroka",
+      "position": "P",
+      "jersey": "34",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/647336/headshot/silo/current"
+    },
+    {
+      "id": "571448",
+      "name": "Nolan Arenado",
+      "position": "3B",
+      "jersey": "28",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/571448/headshot/silo/current"
+    },
+    {
+      "id": "623149",
+      "name": "Paul Sewald",
+      "position": "P",
+      "jersey": "38",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/623149/headshot/silo/current"
+    },
+    {
+      "id": "656976",
+      "name": "Pavin Smith",
+      "position": "DH",
+      "jersey": "26",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/656976/headshot/silo/current"
+    },
+    {
+      "id": "657044",
+      "name": "Ryan Thompson",
+      "position": "P",
+      "jersey": "81",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/657044/headshot/silo/current"
+    },
+    {
+      "id": "664199",
+      "name": "Taylor Clarke",
+      "position": "P",
+      "jersey": "45",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/664199/headshot/silo/current"
+    },
+    {
+      "id": "694371",
+      "name": "Tommy Troy",
+      "position": "LF",
+      "jersey": "9",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694371/headshot/silo/current"
+    },
+    {
+      "id": "700270",
+      "name": "Yilber D\u00edaz",
+      "position": "P",
+      "jersey": "30",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/700270/headshot/silo/current"
+    },
+    {
+      "id": "668678",
+      "name": "Zac Gallen",
+      "position": "P",
+      "jersey": "23",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/668678/headshot/silo/current"
+    }
+  ],
+  "roster_groups": [
+    {
+      "key": "P",
+      "label": "Pitchers",
+      "players": [
+        {
+          "id": "668678",
+          "name": "Zac Gallen",
+          "position": "P",
+          "jersey": "23",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/668678/headshot/silo/current"
+        },
+        {
+          "id": "518876",
+          "name": "Merrill Kelly",
+          "position": "P",
+          "jersey": "29",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/518876/headshot/silo/current"
+        },
+        {
+          "id": "700270",
+          "name": "Yilber D\u00edaz",
+          "position": "P",
+          "jersey": "30",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/700270/headshot/silo/current"
+        },
+        {
+          "id": "647336",
+          "name": "Michael Soroka",
+          "position": "P",
+          "jersey": "34",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/647336/headshot/silo/current"
+        },
+        {
+          "id": "656464",
+          "name": "Kevin Ginkel",
+          "position": "P",
+          "jersey": "37",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/656464/headshot/silo/current"
+        },
+        {
+          "id": "623149",
+          "name": "Paul Sewald",
+          "position": "P",
+          "jersey": "38",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/623149/headshot/silo/current"
+        },
+        {
+          "id": "642528",
+          "name": "Jonathan Lo\u00e1isiga",
+          "position": "P",
+          "jersey": "43",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642528/headshot/silo/current"
+        },
+        {
+          "id": "664199",
+          "name": "Taylor Clarke",
+          "position": "P",
+          "jersey": "45",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/664199/headshot/silo/current"
+        },
+        {
+          "id": "805299",
+          "name": "Brandyn Garcia",
+          "position": "P",
+          "jersey": "55",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/805299/headshot/silo/current"
+        },
+        {
+          "id": "593958",
+          "name": "Eduardo Rodriguez",
+          "position": "P",
+          "jersey": "57",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/593958/headshot/silo/current"
+        },
+        {
+          "id": "666661",
+          "name": "Juan Morillo",
+          "position": "P",
+          "jersey": "62",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666661/headshot/silo/current"
+        },
+        {
+          "id": "657044",
+          "name": "Ryan Thompson",
+          "position": "P",
+          "jersey": "81",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/657044/headshot/silo/current"
+        },
+        {
+          "id": "686753",
+          "name": "Drey Jameson",
+          "position": "P",
+          "jersey": "99",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/686753/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "C",
+      "label": "Catchers",
+      "players": [
+        {
+          "id": "672515",
+          "name": "Gabriel Moreno",
+          "position": "C",
+          "jersey": "14",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/672515/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "IF",
+      "label": "Infielders",
+      "players": [
+        {
+          "id": "672695",
+          "name": "Geraldo Perdomo",
+          "position": "SS",
+          "jersey": "2",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/672695/headshot/silo/current"
+        },
+        {
+          "id": "606466",
+          "name": "Ketel Marte",
+          "position": "2B",
+          "jersey": "4",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/606466/headshot/silo/current"
+        },
+        {
+          "id": "545121",
+          "name": "Ildemaro Vargas",
+          "position": "1B",
+          "jersey": "6",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/545121/headshot/silo/current"
+        },
+        {
+          "id": "694410",
+          "name": "LuJames Groover",
+          "position": "1B",
+          "jersey": "16",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694410/headshot/silo/current"
+        },
+        {
+          "id": "571448",
+          "name": "Nolan Arenado",
+          "position": "3B",
+          "jersey": "28",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/571448/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "OF",
+      "label": "Outfielders",
+      "players": [
+        {
+          "id": "678489",
+          "name": "Jorge Barrosa",
+          "position": "CF",
+          "jersey": "1",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/678489/headshot/silo/current"
+        },
+        {
+          "id": "682998",
+          "name": "Corbin Carroll",
+          "position": "RF",
+          "jersey": "7",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/682998/headshot/silo/current"
+        },
+        {
+          "id": "694371",
+          "name": "Tommy Troy",
+          "position": "LF",
+          "jersey": "9",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694371/headshot/silo/current"
+        },
+        {
+          "id": "691783",
+          "name": "Jordan Lawlar",
+          "position": "LF",
+          "jersey": "10",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691783/headshot/silo/current"
+        },
+        {
+          "id": "666971",
+          "name": "Lourdes Gurriel Jr.",
+          "position": "LF",
+          "jersey": "12",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666971/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "DH",
+      "label": "Designated Hitters",
+      "players": [
+        {
+          "id": "680728",
+          "name": "Adrian Del Castillo",
+          "position": "DH",
+          "jersey": "25",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/680728/headshot/silo/current"
+        },
+        {
+          "id": "656976",
+          "name": "Pavin Smith",
+          "position": "DH",
+          "jersey": "26",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/656976/headshot/silo/current"
+        }
+      ]
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": "825069",
+      "date": "2026-06-20T01:45:00Z",
+      "opponent": "Minnesota Twins",
+      "home_away": "vs",
+      "team_score": 9,
+      "opp_score": 5,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "825072",
+      "date": "2026-06-17T19:40:00Z",
+      "opponent": "Los Angeles Angels",
+      "home_away": "vs",
+      "team_score": 8,
+      "opp_score": 1,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "825070",
+      "date": "2026-06-17T01:40:00Z",
+      "opponent": "Los Angeles Angels",
+      "home_away": "vs",
+      "team_score": 0,
+      "opp_score": 7,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "825071",
+      "date": "2026-06-16T01:40:00Z",
+      "opponent": "Los Angeles Angels",
+      "home_away": "vs",
+      "team_score": 4,
+      "opp_score": 3,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824506",
+      "date": "2026-06-14T17:40:00Z",
+      "opponent": "Cincinnati Reds",
+      "home_away": "@",
+      "team_score": 5,
+      "opp_score": 3,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824508",
+      "date": "2026-06-13T20:10:00Z",
+      "opponent": "Cincinnati Reds",
+      "home_away": "@",
+      "team_score": 1,
+      "opp_score": 2,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "824507",
+      "date": "2026-06-12T23:15:00Z",
+      "opponent": "Cincinnati Reds",
+      "home_away": "@",
+      "team_score": 5,
+      "opp_score": 2,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "823855",
+      "date": "2026-06-11T17:10:00Z",
+      "opponent": "Miami Marlins",
+      "home_away": "@",
+      "team_score": 0,
+      "opp_score": 2,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823856",
+      "date": "2026-06-10T22:40:00Z",
+      "opponent": "Miami Marlins",
+      "home_away": "@",
+      "team_score": 0,
+      "opp_score": 8,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823858",
+      "date": "2026-06-09T22:40:00Z",
+      "opponent": "Miami Marlins",
+      "home_away": "@",
+      "team_score": 6,
+      "opp_score": 10,
+      "won": false,
+      "status": "Final"
+    }
+  ]
+}
