@@ -52,6 +52,7 @@ from app.services.props_mlb import (
     build_game_props,
     ensure_props_cache_generation,
     evaluate_prop_parlay,
+    export_slip_for_bookmaker,
     get_props_cache_meta,
     list_prop_bookmakers,
     list_prop_market_types,
@@ -203,6 +204,14 @@ class PropParlayLeg(BaseModel):
 
 class PropParlayEvalRequest(BaseModel):
     legs: list[PropParlayLeg] = Field(default_factory=list)
+
+
+class PropSlipExportRequest(BaseModel):
+    legs: list[PropParlayLeg] = Field(default_factory=list)
+    bookmaker: str = Field(
+        DEFAULT_DISPLAY_BOOKMAKER,
+        description="Target sportsbook key for export (DraftKings, FanDuel, etc.).",
+    )
 
 
 @app.get("/login")
@@ -628,6 +637,12 @@ async def props_search(
 async def prop_parlay_eval(body: PropParlayEvalRequest):
     legs = [leg.model_dump() for leg in body.legs]
     return evaluate_prop_parlay(legs)
+
+
+@app.post("/api/props/slip/export")
+async def prop_slip_export(body: PropSlipExportRequest):
+    legs = [leg.model_dump() for leg in body.legs]
+    return export_slip_for_bookmaker(legs, body.bookmaker)
 
 
 @app.get("/api/props/cache-meta")

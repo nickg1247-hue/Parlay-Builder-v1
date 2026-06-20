@@ -141,6 +141,8 @@ def fetch_mlb_event_odds(
         "regions": regions,
         "markets": markets,
         "oddsFormat": "american",
+        "includeLinks": "true",
+        "includeSids": "true",
     }
     if bookmakers:
         params["bookmakers"] = bookmakers

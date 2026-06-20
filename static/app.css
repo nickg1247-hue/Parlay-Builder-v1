@@ -2572,6 +2572,131 @@ html.ntg-splash-active {
   margin-top: 0.75rem;
 }
 
+.prop-slip-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  align-items: center;
+}
+
+.prop-slip-copy {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  background: #1d9bf0;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.prop-slip-copy:hover {
+  background: #1a8cd8;
+}
+
+.prop-slip-copy--ok {
+  background: #2ecc71;
+}
+
+.prop-slip-actions .btn-ghost {
+  flex-shrink: 0;
+}
+
+.prop-slip-export-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.prop-slip-export-row.hidden {
+  display: none;
+}
+
+.prop-slip-export-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prop-slip-export-select {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.prop-slip-deeplink-note {
+  margin-top: 0.45rem;
+  line-height: 1.35;
+}
+
+.prop-slip-book-wizard {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.prop-slip-book-wizard-card {
+  position: relative;
+  width: min(400px, 100%);
+  background: rgba(22, 24, 28, 0.98);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.prop-slip-book-wizard-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.prop-slip-book-wizard-kicker {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
+.prop-slip-book-wizard-leg {
+  font-weight: 600;
+  margin: 0 0 0.65rem;
+  line-height: 1.4;
+}
+
+.prop-slip-book-wizard-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 0.85rem;
+  line-height: 1.35;
+}
+
+.prop-slip-book-wizard-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.prop-slip-wizard-done {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
 .prop-skip-tag,
 .prop-skip-note {
   display: inline-block;

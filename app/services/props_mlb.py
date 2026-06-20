@@ -353,6 +353,7 @@ def prop_slip_leg(
     if bookmaker and bookmaker != DEFAULT_PROP_BOOKMAKER:
         leg_parts.append(bookmaker)
     alltime_key = "hit_rate_over_alltime" if side == "over" else "hit_rate_under_alltime"
+    link_key = "over_link" if side == "over" else "under_link"
     return {
         "id": "|".join(leg_parts),
         "game_id": str(game_id),
@@ -371,6 +372,7 @@ def prop_slip_leg(
         "score": prop.get("score"),
         "bookmaker": bookmaker,
         "bookmaker_label": _bookmaker_label(bookmaker),
+        "deeplink": prop.get(link_key) or prop.get("deeplink"),
     }
 
 
@@ -931,12 +933,18 @@ def _parse_event_props(
                         "line_kind": line_kind,
                         "over_odds": None,
                         "under_odds": None,
+                        "over_link": None,
+                        "under_link": None,
                     },
                 )
                 if name == "over":
                     row["over_odds"] = american
+                    if outcome.get("link"):
+                        row["over_link"] = str(outcome["link"])
                 else:
                     row["under_odds"] = american
+                    if outcome.get("link"):
+                        row["under_link"] = str(outcome["link"])
 
     for bk in list(per_book.keys()):
         per_book[bk] = _collapse_to_primary_lines(per_book[bk])
@@ -1329,6 +1337,222 @@ def evaluate_prop_parlay(legs: list[dict[str, Any]]) -> dict[str, Any]:
         "american_payout": american_payout,
         "implied_prob": round(combined_implied, 6),
         "profit_on_10": round((decimal * 10.0) - 10.0, 2),
+    }
+
+
+EXPORT_BOOK_HINTS: dict[str, str] = {
+    "draftkings": "DraftKings: Parlay tab → search each player → add the matching selection.",
+    "fanduel": "FanDuel: Same Game Parlay+ or parlay hub → search player → add each leg.",
+    "betmgm": "BetMGM: One Game Parlay / parlay builder → find each prop below.",
+    "betrivers": "BetRivers: Parlay builder → search player props and add each leg.",
+    "williamhill_us": "Caesars: Build parlay → search player → add matching props.",
+    "bovada": "Bovada: Parlay → player props → add each selection below.",
+    "betonlineag": "BetOnline: Parlay → find each player prop in the list below.",
+    "espnbet": "theScore Bet: Parlay → search player → add each leg.",
+    "fanatics": "Fanatics Sportsbook: Parlay → search player → add each prop.",
+}
+
+
+def _normalize_player_name(name: str | None) -> str:
+    return (name or "").strip().lower()
+
+
+def _prop_side_link(prop: dict[str, Any], side: str) -> str | None:
+    key = "over_link" if side == "over" else "under_link"
+    link = prop.get(key) or (prop.get("deeplink") if side == prop.get("recommended_side") else None)
+    return str(link) if link else None
+
+
+def _format_export_american(odds: int | None) -> str:
+    if odds is None:
+        return "—"
+    return f"+{odds}" if odds > 0 else str(odds)
+
+
+def _find_prop_for_slip_leg(
+    props: list[dict[str, Any]],
+    leg: dict[str, Any],
+) -> dict[str, Any] | None:
+    player = _normalize_player_name(leg.get("player"))
+    market = leg.get("market_type")
+    side = str(leg.get("side") or "over").lower()
+    if not player or not market:
+        return None
+    try:
+        target_line = float(leg["line"]) if leg.get("line") is not None else None
+    except (TypeError, ValueError):
+        target_line = None
+
+    odds_key = "over_odds" if side == "over" else "under_odds"
+    for prop in props:
+        if _normalize_player_name(prop.get("player")) != player:
+            continue
+        if prop.get("market_type") != market:
+            continue
+        if target_line is not None and prop.get("line") is not None:
+            try:
+                if abs(float(prop["line"]) - target_line) > 0.001:
+                    continue
+            except (TypeError, ValueError):
+                continue
+        if prop.get(odds_key) is None:
+            continue
+        return prop
+    return None
+
+
+def _slip_leg_export_line(leg: dict[str, Any]) -> str:
+    side = "Under" if leg.get("side") == "under" else "Over"
+    market = leg.get("market_label") or leg.get("market_type") or "Prop"
+    line = leg.get("line", "")
+    player = leg.get("player", "")
+    text = f"{player} {side} {line} {market}".strip()
+    odds = leg.get("american_odds")
+    if odds is not None:
+        text += f" ({_format_export_american(int(odds))})"
+    if leg.get("matchup"):
+        text += f" · {leg['matchup']}"
+    if not leg.get("available_at_book", True):
+        text += " [NOT AT BOOK — find similar line manually]"
+    elif leg.get("line_changed"):
+        text += f" [was {leg.get('original_line')} on your slip]"
+    return text
+
+
+def format_slip_export_text(
+    legs: list[dict[str, Any]],
+    *,
+    bookmaker: str,
+    bookmaker_label: str,
+    parlay: dict[str, Any] | None = None,
+) -> str:
+    """Plain-text slip formatted for a specific sportsbook."""
+    parlay = parlay or evaluate_prop_parlay(legs)
+    available = [leg for leg in legs if leg.get("available_at_book", True)]
+
+    lines = [
+        f"{len(legs)}-Leg Prop Parlay — {bookmaker_label}",
+        "NTG Sports",
+        "",
+    ]
+    for i, leg in enumerate(legs, 1):
+        lines.append(f"{i}. {_slip_leg_export_line(leg)}")
+
+    lines.append("")
+    american = parlay.get("american_payout")
+    if american is not None:
+        lines.append(
+            f"Combined odds at {bookmaker_label}: {_format_export_american(int(american))} (approx)"
+        )
+    profit = parlay.get("profit_on_10")
+    if profit is not None:
+        lines.append(f"$10 stake → ${profit:.2f} profit if all legs hit")
+
+    missing = len(legs) - len(available)
+    if missing:
+        lines.append("")
+        lines.append(
+            f"Warning: {missing} leg(s) not found at {bookmaker_label} — verify before betting."
+        )
+
+    hint = EXPORT_BOOK_HINTS.get(
+        bookmaker,
+        f"Open {bookmaker_label} and add each leg to your parlay.",
+    )
+    lines.extend(["", hint])
+    return "\n".join(lines)
+
+
+def export_slip_for_bookmaker(
+    legs: list[dict[str, Any]],
+    bookmaker: str | None,
+) -> dict[str, Any]:
+    """Reprice slip legs at the chosen sportsbook and build export text."""
+    book = _resolve_bookmaker(bookmaker)
+    if book == DEFAULT_PROP_BOOKMAKER:
+        book = DEFAULT_DISPLAY_BOOKMAKER
+    book_label = _bookmaker_label(book)
+
+    game_props_cache: dict[str, list[dict[str, Any]]] = {}
+    repriced: list[dict[str, Any]] = []
+    missing: list[dict[str, Any]] = []
+
+    for leg in legs:
+        game_id = str(leg.get("game_id") or "")
+        side = str(leg.get("side") or "over").lower()
+        if not game_id:
+            row = {
+                **leg,
+                "bookmaker": book,
+                "bookmaker_label": book_label,
+                "available_at_book": False,
+                "export_note": "Missing game id",
+            }
+            repriced.append(row)
+            missing.append(row)
+            continue
+
+        if game_id not in game_props_cache:
+            payload = build_game_props(game_id, bookmaker=book, refresh=False)
+            game_props_cache[game_id] = (payload or {}).get("props") or []
+
+        match = _find_prop_for_slip_leg(game_props_cache[game_id], leg)
+        if not match:
+            row = {
+                **leg,
+                "bookmaker": book,
+                "bookmaker_label": book_label,
+                "available_at_book": False,
+                "export_note": f"Not offered at {book_label}",
+            }
+            repriced.append(row)
+            missing.append(row)
+            continue
+
+        odds_key = "over_odds" if side == "over" else "under_odds"
+        american = match.get(odds_key)
+        line = match.get("line", leg.get("line"))
+        original_line = leg.get("line")
+        line_changed = (
+            original_line is not None
+            and line is not None
+            and abs(float(line) - float(original_line)) > 0.001
+        )
+        repriced.append(
+            {
+                **leg,
+                "line": line,
+                "american_odds": american,
+                "bookmaker": book,
+                "bookmaker_label": book_label,
+                "available_at_book": american is not None,
+                "line_changed": line_changed,
+                "original_line": original_line if line_changed else None,
+                "deeplink": _prop_side_link(match, side) or leg.get("deeplink"),
+            }
+        )
+
+    deeplink_legs = [leg for leg in repriced if leg.get("deeplink")]
+    parlay = evaluate_prop_parlay([leg for leg in repriced if leg.get("available_at_book")])
+    export_text = format_slip_export_text(
+        repriced,
+        bookmaker=book,
+        bookmaker_label=book_label,
+        parlay=parlay,
+    )
+    return {
+        "bookmaker": book,
+        "bookmaker_label": book_label,
+        "legs": repriced,
+        "missing_count": len(missing),
+        "missing": missing,
+        "parlay": parlay,
+        "export_text": export_text,
+        "deeplink_count": len(deeplink_legs),
+        "can_open_in_book": bool(deeplink_legs),
+        "open_strategy": (
+            "single" if len(deeplink_legs) == 1 else "multi" if deeplink_legs else "none"
+        ),
     }
 
 

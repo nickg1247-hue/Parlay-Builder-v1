@@ -30,3 +30,17 @@ def test_daily_board_still_protected_when_auth_enabled(production_auth):
         with patch.object(admin_auth, "is_authenticated", return_value=False):
             resp = client.get("/api/daily")
     assert resp.status_code == 401
+
+
+def test_prop_slip_export_public_when_auth_enabled(production_auth):
+    with patch.object(admin_auth, "auth_enabled", return_value=True):
+        with patch.object(admin_auth, "is_authenticated", return_value=False):
+            with patch(
+                "app.main.export_slip_for_bookmaker",
+                return_value={"export_text": "test", "legs": []},
+            ):
+                resp = client.post(
+                    "/api/props/slip/export",
+                    json={"legs": [], "bookmaker": "draftkings"},
+                )
+    assert resp.status_code != 401

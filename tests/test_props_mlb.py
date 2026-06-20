@@ -26,12 +26,14 @@ FAKE_EVENT = {
                             "description": "Aaron Judge",
                             "price": -115,
                             "point": 1.5,
+                            "link": "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over",
                         },
                         {
                             "name": "Under",
                             "description": "Aaron Judge",
                             "price": -105,
                             "point": 1.5,
+                            "link": "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-under",
                         },
                     ],
                 },
@@ -65,6 +67,7 @@ FAKE_EVENT = {
                             "description": "Aaron Judge",
                             "price": -120,
                             "point": 1.5,
+                            "link": "https://sportsbook.fanduel.com/addToBetslip?selectionId=fd-judge-over",
                         },
                         {
                             "name": "Under",
@@ -649,6 +652,58 @@ def test_evaluate_prop_parlay():
     assert result["decimal_payout"] > 3.0
     assert result["american_payout"] is not None
     assert result["profit_on_10"] > 0
+
+
+def test_parse_event_props_preserves_deeplinks():
+    rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    judge = next(r for r in rows if r["player"] == "Aaron Judge")
+    assert judge["over_link"] == "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over"
+
+
+@patch("app.services.props_mlb.build_game_props")
+def test_export_slip_for_bookmaker_reprices_at_target_book(mock_build):
+    mock_build.return_value = {
+        "props": props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="fanduel"),
+    }
+    slip_leg = {
+        "id": "777001|Aaron Judge|batter_hits|1.5|over",
+        "game_id": "777001",
+        "matchup": "Boston Red Sox @ New York Yankees",
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "market_label": "Hits",
+        "side": "over",
+        "line": 1.5,
+        "american_odds": -115,
+    }
+    out = props_mlb.export_slip_for_bookmaker([slip_leg], "fanduel")
+    assert out["bookmaker"] == "fanduel"
+    assert out["missing_count"] == 0
+    assert out["legs"][0]["american_odds"] == -120
+    assert out["legs"][0]["deeplink"] == "https://sportsbook.fanduel.com/addToBetslip?selectionId=fd-judge-over"
+    assert out["can_open_in_book"] is True
+    assert out["open_strategy"] == "single"
+    assert "FanDuel" in out["export_text"]
+    assert "DraftKings: Parlay" not in out["export_text"]
+    assert "FanDuel:" in out["export_text"]
+
+
+@patch("app.services.props_mlb.build_game_props")
+def test_export_slip_for_bookmaker_marks_missing_legs(mock_build):
+    mock_build.return_value = {"props": []}
+    slip_leg = {
+        "game_id": "777001",
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "market_label": "Hits",
+        "side": "over",
+        "line": 1.5,
+        "american_odds": -115,
+    }
+    out = props_mlb.export_slip_for_bookmaker([slip_leg], "draftkings")
+    assert out["missing_count"] == 1
+    assert out["legs"][0]["available_at_book"] is False
+    assert "NOT AT BOOK" in out["export_text"]
 
 
 @patch("app.services.props_mlb._probable_pitchers", return_value=(None, None))

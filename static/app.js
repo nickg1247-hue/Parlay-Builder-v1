@@ -1117,6 +1117,9 @@ function propSlipLegFromProp(p) {
     line_strength_label: p.line_strength_label,
     line_insight: p.line_insight,
     score: p.rank_score ?? p.score,
+    bookmaker: p.bookmaker,
+    bookmaker_label: p.bookmaker_label,
+    deeplink: p.deeplink,
   };
 }
 
@@ -1416,6 +1419,46 @@ window.getSelectedPropBookmaker = getSelectedPropBookmaker;
 window.initPropBookSelect = initPropBookSelect;
 window.buildPropBookQuery = buildPropBookQuery;
 window.buildPropBookQueryWithRefresh = buildPropBookQueryWithRefresh;
+
+const PROP_EXPORT_BOOK_KEY = "pb-prop-export-bookmaker";
+
+function getExportablePropBookmakers() {
+  return (propBookmakersCache || DEFAULT_PROP_BOOKMAKERS).filter((b) => b.key !== "consensus");
+}
+
+function getPropSlipExportBook() {
+  const stored = localStorage.getItem(PROP_EXPORT_BOOK_KEY);
+  const list = getExportablePropBookmakers();
+  if (stored && list.some((b) => b.key === stored)) return stored;
+  const viewBook = getSelectedPropBookmaker();
+  if (viewBook !== "consensus" && list.some((b) => b.key === viewBook)) return viewBook;
+  return "draftkings";
+}
+
+function setPropSlipExportBook(key) {
+  localStorage.setItem(PROP_EXPORT_BOOK_KEY, key);
+}
+
+async function initPropSlipExportSelect(selectEl) {
+  if (!selectEl || selectEl.dataset.ready === "1") return;
+  await loadPropBookmakers();
+  const list = getExportablePropBookmakers();
+  const current = getPropSlipExportBook();
+  selectEl.innerHTML = list
+    .map(
+      (b) =>
+        `<option value="${b.key}"${b.key === current ? " selected" : ""}>${b.label}</option>`
+    )
+    .join("");
+  selectEl.addEventListener("change", () => {
+    setPropSlipExportBook(selectEl.value);
+    const openBtn = document.getElementById("prop-slip-open-book");
+    if (openBtn) {
+      openBtn.textContent = `Open in ${selectEl.selectedOptions[0]?.textContent || "Sportsbook"}`;
+    }
+  });
+  selectEl.dataset.ready = "1";
+}
 
 function populatePropSlipFromProps(props, count, { replace = true } = {}) {
   const legs = selectUniquePlayerPropLegs(props, count);
@@ -1830,6 +1873,206 @@ function propSlipLegLabel(leg) {
   return `${leg.player} ${market} ${side}${leg.line} (${fmtAmericanOdds(leg.american_odds)})`;
 }
 
+function propSlipSideWord(side) {
+  return side === "under" ? "Under" : "Over";
+}
+
+/** DraftKings / FanDuel style: "Aaron Judge Over 0.5 Hits (-110)". */
+function propSlipLegSportsbookLine(leg, { includeOdds = true, includeMatchup = false } = {}) {
+  const market = leg.market_label || leg.market_type || "Prop";
+  const line = leg.line != null ? leg.line : "";
+  const side = propSlipSideWord(leg.side);
+  let text = `${leg.player} ${side} ${line} ${market}`.replace(/\s+/g, " ").trim();
+  if (includeOdds && leg.american_odds != null) {
+    text += ` (${fmtAmericanOdds(leg.american_odds)})`;
+  }
+  if (includeMatchup && leg.matchup) {
+    text += ` · ${leg.matchup}`;
+  }
+  return text;
+}
+
+function combinedParlayAmerican(legs) {
+  const decimal = clientParlayDecimal(legs);
+  if (decimal >= 2) return fmtAmericanOdds(Math.round((decimal - 1) * 100));
+  if (decimal > 1) return fmtAmericanOdds(Math.round(-100 / (decimal - 1)));
+  return "—";
+}
+
+function formatPropSlipExport(legs, { bookmakerLabel } = {}) {
+  if (!legs.length) return "";
+
+  const label = bookmakerLabel || "Sportsbook";
+  const lines = [`${legs.length}-Leg Prop Parlay — ${label}`, "NTG Sports", ""];
+
+  legs.forEach((leg, i) => {
+    lines.push(`${i + 1}. ${propSlipLegSportsbookLine(leg, { includeOdds: true, includeMatchup: true })}`);
+  });
+
+  const decimal = clientParlayDecimal(legs);
+  const profit10 = (decimal * 10 - 10).toFixed(2);
+  lines.push("");
+  lines.push(`Combined odds at ${label}: ${combinedParlayAmerican(legs)} (approx)`);
+  lines.push(`$10 stake → $${profit10} profit if all legs hit`);
+  lines.push("");
+  lines.push(`Open ${label} and add each leg to your parlay.`);
+
+  return lines.join("\n");
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      /* fall through */
+    }
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(ta);
+  }
+}
+
+async function fetchPropSlipExport() {
+  const legs = getPropSlipLegs();
+  if (!legs.length) return null;
+  const bookEl = document.getElementById("prop-slip-export-book");
+  const bookmaker = bookEl?.value || getPropSlipExportBook();
+  try {
+    const res = await fetch("/api/props/slip/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ legs, bookmaker }),
+    });
+    if (res.ok) return res.json();
+  } catch {
+    /* fallback below */
+  }
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  const label = list.find((b) => b.key === bookmaker)?.label || bookmaker;
+  return {
+    bookmaker,
+    bookmaker_label: label,
+    legs,
+    export_text: formatPropSlipExport(legs, { bookmakerLabel: label }),
+    can_open_in_book: legs.some((l) => l.deeplink),
+    deeplink_count: legs.filter((l) => l.deeplink).length,
+    open_strategy: "none",
+  };
+}
+
+function getPropSlipExportBookLabel() {
+  const bookEl = document.getElementById("prop-slip-export-book");
+  if (bookEl?.selectedOptions?.[0]) return bookEl.selectedOptions[0].textContent;
+  const key = bookEl?.value || getPropSlipExportBook();
+  const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
+  return list.find((b) => b.key === key)?.label || "Sportsbook";
+}
+
+function openSportsbookDeeplink(url) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function closePropSlipBookWizard() {
+  document.getElementById("prop-slip-book-wizard")?.remove();
+  document.body.classList.remove("prop-slip-wizard-open");
+}
+
+function showPropSlipBookWizard(exportData) {
+  closePropSlipBookWizard();
+  const deeplinkLegs = (exportData.legs || []).filter((l) => l.deeplink);
+  if (!deeplinkLegs.length) return false;
+
+  let idx = 0;
+  const bookLabel = exportData.bookmaker_label || "Sportsbook";
+  const overlay = document.createElement("div");
+  overlay.id = "prop-slip-book-wizard";
+  overlay.className = "prop-slip-book-wizard";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-label", `Add legs to ${bookLabel}`);
+
+  function renderStep() {
+    const leg = deeplinkLegs[idx];
+    const n = deeplinkLegs.length;
+    overlay.innerHTML = `
+      <div class="prop-slip-book-wizard-card">
+        <button type="button" class="prop-slip-book-wizard-close" aria-label="Close">×</button>
+        <p class="prop-slip-book-wizard-kicker">Add to ${bookLabel} · Leg ${idx + 1} of ${n}</p>
+        <p class="prop-slip-book-wizard-leg">${propSlipLegSportsbookLine(leg, { includeOdds: true, includeMatchup: true })}</p>
+        <p class="prop-slip-book-wizard-note">Opens ${bookLabel} and adds this leg to your bet slip. Stay logged in so legs stack in one parlay.</p>
+        <div class="prop-slip-book-wizard-actions">
+          <button type="button" class="prop-slip-copy" id="prop-slip-wizard-add">Add leg ${idx + 1} →</button>
+          ${idx + 1 < n ? `<button type="button" class="btn-ghost" id="prop-slip-wizard-skip">Skip</button>` : ""}
+        </div>
+        ${idx + 1 === n ? `<button type="button" class="btn-ghost prop-slip-wizard-done" id="prop-slip-wizard-done">Done</button>` : ""}
+      </div>
+    `;
+    overlay.querySelector(".prop-slip-book-wizard-close")?.addEventListener("click", closePropSlipBookWizard);
+    overlay.querySelector("#prop-slip-wizard-add")?.addEventListener("click", () => {
+      openSportsbookDeeplink(leg.deeplink);
+      if (idx + 1 < n) {
+        idx += 1;
+        renderStep();
+      } else {
+        closePropSlipBookWizard();
+      }
+    });
+    overlay.querySelector("#prop-slip-wizard-skip")?.addEventListener("click", () => {
+      idx += 1;
+      renderStep();
+    });
+    overlay.querySelector("#prop-slip-wizard-done")?.addEventListener("click", closePropSlipBookWizard);
+  }
+
+  document.body.appendChild(overlay);
+  document.body.classList.add("prop-slip-wizard-open");
+  renderStep();
+  return true;
+}
+
+async function openPropSlipInBook() {
+  const exportData = await fetchPropSlipExport();
+  if (!exportData) return { ok: false, reason: "empty" };
+
+  const deeplinkLegs = (exportData.legs || []).filter((l) => l.deeplink);
+  if (!deeplinkLegs.length) {
+    const copied = exportData.export_text
+      ? await copyTextToClipboard(exportData.export_text)
+      : false;
+    return {
+      ok: copied,
+      reason: "no_deeplinks",
+      bookLabel: exportData.bookmaker_label,
+    };
+  }
+
+  if (deeplinkLegs.length === 1) {
+    openSportsbookDeeplink(deeplinkLegs[0].deeplink);
+    return { ok: true, reason: "opened_single" };
+  }
+
+  showPropSlipBookWizard(exportData);
+  return { ok: true, reason: "wizard" };
+}
+
+async function copyPropSlipToClipboard() {
+  const exportData = await fetchPropSlipExport();
+  if (!exportData?.export_text) return false;
+  return copyTextToClipboard(exportData.export_text);
+}
+
 function clientParlayDecimal(legs) {
   let payout = 1;
   for (const leg of legs) {
@@ -1853,8 +2096,12 @@ function renderPropSlipPanel() {
   if (!legs.length) {
     legsEl.innerHTML = "<p class=\"prop-slip-empty\">Add props from any game page to build a cross-game parlay slip.</p>";
     totalsEl.innerHTML = "";
+    document.getElementById("prop-slip-export-row")?.classList.add("hidden");
     return;
   }
+
+  document.getElementById("prop-slip-export-row")?.classList.remove("hidden");
+  initPropSlipExportSelect(document.getElementById("prop-slip-export-book"));
 
   legsEl.innerHTML = legs
     .map((leg) => {
@@ -1897,12 +2144,54 @@ function renderPropSlipPanel() {
     ? `<div class="prop-slip-warn">${corrWarnings.map((w) => `<p>${w}</p>`).join("")}</div>`
     : "";
 
+  const bookLabel = getPropSlipExportBookLabel();
+
   totalsEl.innerHTML = `
     ${warnHtml}
     <p><strong>${legs.length}-leg parlay</strong> · Combined ${american}</p>
     <p class="prop-slip-meta">$10 stake → $${profit10} profit if all legs hit (book may differ)</p>
-    <button type="button" class="btn-ghost" id="prop-slip-clear">Clear slip</button>
+    <div class="prop-slip-actions">
+      <button type="button" class="prop-slip-copy" id="prop-slip-open-book">Open in ${bookLabel}</button>
+      <button type="button" class="btn-ghost" id="prop-slip-copy">Copy list</button>
+      <button type="button" class="btn-ghost" id="prop-slip-clear">Clear</button>
+    </div>
+    <p class="prop-slip-meta prop-slip-deeplink-note" id="prop-slip-deeplink-note">Uses sportsbook add-to-slip links when props were refreshed recently.</p>
   `;
+
+  document.getElementById("prop-slip-open-book")?.addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Loading…";
+    const result = await openPropSlipInBook();
+    btn.disabled = false;
+    if (result.reason === "no_deeplinks") {
+      btn.textContent = result.ok ? "Copied list" : "No links yet";
+      const note = document.getElementById("prop-slip-deeplink-note");
+      if (note) {
+        note.textContent = `No ${result.bookLabel || "sportsbook"} links in cache — copied list instead. Refresh props on game pages, then try again.`;
+      }
+    } else if (result.ok) {
+      btn.textContent = result.reason === "wizard" ? "Follow steps →" : "Opened!";
+    } else {
+      btn.textContent = "Failed";
+    }
+    window.setTimeout(() => {
+      btn.textContent = orig;
+    }, 2500);
+  });
+
+  document.getElementById("prop-slip-copy")?.addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    const ok = await copyPropSlipToClipboard();
+    const orig = btn.textContent;
+    btn.textContent = ok ? "Copied!" : "Copy failed";
+    btn.classList.toggle("prop-slip-copy--ok", ok);
+    window.setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove("prop-slip-copy--ok");
+    }, 2000);
+  });
 
   document.getElementById("prop-slip-clear")?.addEventListener("click", () => {
     savePropSlipLegs([]);
@@ -1959,6 +2248,10 @@ function initPropSlipUi() {
         <button type="button" id="prop-slip-close" class="prop-slip-close" aria-label="Close">×</button>
       </div>
       <div id="prop-slip-legs" class="prop-slip-legs"></div>
+      <div id="prop-slip-export-row" class="prop-slip-export-row hidden">
+        <label class="prop-slip-export-label" for="prop-slip-export-book">Export for</label>
+        <select id="prop-slip-export-book" class="prop-slip-export-select" aria-label="Sportsbook to export slip for"></select>
+      </div>
       <div id="prop-slip-totals" class="prop-slip-totals"></div>
     </div>
   `;
@@ -1973,6 +2266,8 @@ function initPropSlipUi() {
 
   window.addPropToSlip = addPropToSlip;
   window.propSlipLegFromProp = propSlipLegFromProp;
+  window.formatPropSlipExport = formatPropSlipExport;
+  window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
   renderPropSlipPanel();
 }
 
