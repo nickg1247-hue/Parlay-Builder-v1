@@ -212,6 +212,10 @@ class PropSlipExportRequest(BaseModel):
         DEFAULT_DISPLAY_BOOKMAKER,
         description="Target sportsbook key for export (DraftKings, FanDuel, etc.).",
     )
+    refresh_links: bool = Field(
+        True,
+        description="When cached props lack deeplinks, refresh from Odds API (quota-gated).",
+    )
 
 
 @app.get("/login")
@@ -642,7 +646,11 @@ async def prop_parlay_eval(body: PropParlayEvalRequest):
 @app.post("/api/props/slip/export")
 async def prop_slip_export(body: PropSlipExportRequest):
     legs = [leg.model_dump() for leg in body.legs]
-    return export_slip_for_bookmaker(legs, body.bookmaker)
+    return export_slip_for_bookmaker(
+        legs,
+        body.bookmaker,
+        refresh_links=body.refresh_links,
+    )
 
 
 @app.get("/api/props/cache-meta")

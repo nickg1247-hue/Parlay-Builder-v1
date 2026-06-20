@@ -1357,6 +1357,113 @@ def _normalize_player_name(name: str | None) -> str:
     return (name or "").strip().lower()
 
 
+def _prop_match_key(row: dict[str, Any]) -> tuple[str, str, float] | None:
+    player = _normalize_player_name(row.get("player"))
+    market = row.get("market_type")
+    if not player or not market:
+        return None
+    try:
+        line = float(row["line"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    return (player, str(market), line)
+
+
+def _props_have_deeplinks(props: list[dict[str, Any]]) -> bool:
+    return any(p.get("over_link") or p.get("under_link") for p in props)
+
+
+def _merge_deeplinks_into_props(
+    props: list[dict[str, Any]],
+    link_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Copy over_link/under_link from parsed event rows onto cached enriched props."""
+    link_map: dict[tuple[str, str, float], dict[str, Any]] = {}
+    for row in link_rows:
+        key = _prop_match_key(row)
+        if key and (row.get("over_link") or row.get("under_link")):
+            link_map[key] = row
+    if not link_map:
+        return props
+    merged: list[dict[str, Any]] = []
+    for prop in props:
+        key = _prop_match_key(prop)
+        links = link_map.get(key) if key else None
+        if links:
+            patch = {
+                k: links[k]
+                for k in ("over_link", "under_link")
+                if links.get(k)
+            }
+            merged.append({**prop, **patch})
+        else:
+            merged.append(prop)
+    return merged
+
+
+def _persist_prop_links_in_cache(
+    game_id: str,
+    bookmaker: str,
+    props: list[dict[str, Any]],
+) -> None:
+    """Write deeplink fields back into the on-disk game props cache."""
+    cached = _load_cached_game_props(game_id, bookmaker)
+    if not cached:
+        return
+    prop_map = {
+        key: p for p in props if (key := _prop_match_key(p)) is not None
+    }
+    updated_props: list[dict[str, Any]] = []
+    for prop in cached.get("props") or []:
+        key = _prop_match_key(prop)
+        links = prop_map.get(key) if key else None
+        if links and (links.get("over_link") or links.get("under_link")):
+            patch = {
+                k: links[k]
+                for k in ("over_link", "under_link")
+                if links.get(k)
+            }
+            updated_props.append({**prop, **patch})
+        else:
+            updated_props.append(prop)
+    _write_json(_props_cache_path(game_id, bookmaker), {**cached, "props": updated_props})
+
+
+def _load_game_props_for_export(
+    game_id: str,
+    bookmaker: str,
+    *,
+    refresh_links: bool = False,
+) -> list[dict[str, Any]]:
+    """Load props for slip export, backfilling deeplinks from raw cache or live refresh."""
+    book = _resolve_bookmaker(bookmaker)
+    payload = build_game_props(game_id, bookmaker=book, refresh=False)
+    props = (payload or {}).get("props") or []
+    if _props_have_deeplinks(props):
+        return props
+
+    game_date = date.today()
+    if payload and payload.get("date"):
+        try:
+            game_date = date.fromisoformat(str(payload["date"]))
+        except ValueError:
+            pass
+
+    raw = _load_raw_event(str(game_id), game_date)
+    if raw and raw.get("event"):
+        link_rows = _parse_event_props(raw["event"], bookmaker_key=book)
+        if _props_have_deeplinks(link_rows):
+            props = _merge_deeplinks_into_props(props, link_rows)
+            _persist_prop_links_in_cache(str(game_id), book, props)
+            return props
+
+    if refresh_links:
+        payload = build_game_props(game_id, game_date=game_date, bookmaker=book, refresh=True)
+        return (payload or {}).get("props") or []
+
+    return props
+
+
 def _prop_side_link(prop: dict[str, Any], side: str) -> str | None:
     key = "over_link" if side == "over" else "under_link"
     link = prop.get(key) or (prop.get("deeplink") if side == prop.get("recommended_side") else None)
@@ -1466,6 +1573,8 @@ def format_slip_export_text(
 def export_slip_for_bookmaker(
     legs: list[dict[str, Any]],
     bookmaker: str | None,
+    *,
+    refresh_links: bool = True,
 ) -> dict[str, Any]:
     """Reprice slip legs at the chosen sportsbook and build export text."""
     book = _resolve_bookmaker(bookmaker)
@@ -1493,8 +1602,11 @@ def export_slip_for_bookmaker(
             continue
 
         if game_id not in game_props_cache:
-            payload = build_game_props(game_id, bookmaker=book, refresh=False)
-            game_props_cache[game_id] = (payload or {}).get("props") or []
+            game_props_cache[game_id] = _load_game_props_for_export(
+                game_id,
+                book,
+                refresh_links=refresh_links,
+            )
 
         match = _find_prop_for_slip_leg(game_props_cache[game_id], leg)
         if not match:

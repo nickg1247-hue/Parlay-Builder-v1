@@ -660,6 +660,72 @@ def test_parse_event_props_preserves_deeplinks():
     assert judge["over_link"] == "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over"
 
 
+def test_merge_deeplinks_into_props():
+    rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    cached = [{**row, "score": 80} for row in rows]
+    for prop in cached:
+        prop.pop("over_link", None)
+        prop.pop("under_link", None)
+    merged = props_mlb._merge_deeplinks_into_props(cached, rows)
+    judge = next(r for r in merged if r["player"] == "Aaron Judge")
+    assert judge["over_link"] == "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over"
+    assert judge["score"] == 80
+
+
+@patch("app.services.props_mlb._load_raw_event")
+@patch("app.services.props_mlb.build_game_props")
+def test_export_backfills_deeplinks_from_raw_event(mock_build, mock_raw):
+    link_rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    cached = [{**row, "score": 70} for row in link_rows]
+    for prop in cached:
+        prop.pop("over_link", None)
+        prop.pop("under_link", None)
+    mock_build.return_value = {"props": cached, "date": "2026-06-16"}
+    mock_raw.return_value = {"event": FAKE_EVENT, "fetched_at": "2026-06-16T12:00:00+00:00"}
+    slip_leg = {
+        "game_id": "777001",
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "market_label": "Hits",
+        "side": "over",
+        "line": 1.5,
+        "american_odds": -115,
+    }
+    out = props_mlb.export_slip_for_bookmaker([slip_leg], "draftkings", refresh_links=False)
+    assert out["can_open_in_book"] is True
+    assert "draftkings.com" in out["legs"][0]["deeplink"]
+    mock_build.assert_called_once()
+
+
+@patch("app.services.props_mlb._load_raw_event", return_value=None)
+@patch("app.services.props_mlb.build_game_props")
+def test_export_refreshes_props_when_cache_lacks_links(mock_build, _mock_raw):
+    link_rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    cached = [{**row} for row in link_rows]
+    for prop in cached:
+        prop.pop("over_link", None)
+        prop.pop("under_link", None)
+
+    def _build(game_id, bookmaker=None, refresh=False, **kwargs):
+        if refresh:
+            return {"props": link_rows}
+        return {"props": cached, "date": "2026-06-16"}
+
+    mock_build.side_effect = _build
+    slip_leg = {
+        "game_id": "777001",
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "market_label": "Hits",
+        "side": "over",
+        "line": 1.5,
+        "american_odds": -115,
+    }
+    out = props_mlb.export_slip_for_bookmaker([slip_leg], "draftkings")
+    assert out["can_open_in_book"] is True
+    assert mock_build.call_count == 2
+
+
 @patch("app.services.props_mlb.build_game_props")
 def test_export_slip_for_bookmaker_reprices_at_target_book(mock_build):
     mock_build.return_value = {

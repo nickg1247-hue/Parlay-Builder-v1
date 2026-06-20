@@ -1954,7 +1954,7 @@ async function fetchPropSlipExport() {
     const res = await fetch("/api/props/slip/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ legs, bookmaker }),
+      body: JSON.stringify({ legs, bookmaker, refresh_links: true }),
     });
     if (res.ok) return res.json();
   } catch {
@@ -2169,7 +2169,7 @@ function renderPropSlipPanel() {
       btn.textContent = result.ok ? "Copied list" : "No links yet";
       const note = document.getElementById("prop-slip-deeplink-note");
       if (note) {
-        note.textContent = `No ${result.bookLabel || "sportsbook"} links in cache — copied list instead. Refresh props on game pages, then try again.`;
+        note.textContent = `No ${result.bookLabel || "sportsbook"} deeplinks available — copied list instead. Links may not be offered for these props, or odds API quota blocked a refresh.`;
       }
     } else if (result.ok) {
       btn.textContent = result.reason === "wizard" ? "Follow steps →" : "Opened!";
