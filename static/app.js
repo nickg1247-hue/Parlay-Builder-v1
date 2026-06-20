@@ -1104,6 +1104,7 @@ function propSlipLegFromProp(p) {
   return {
     id: [p.game_id, p.player, p.market_type, p.line, side].join("|"),
     game_id: p.game_id,
+    game_date: p.game_date || p.date || null,
     matchup: p.matchup,
     player: p.player,
     market_type: p.market_type,

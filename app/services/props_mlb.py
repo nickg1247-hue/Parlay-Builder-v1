@@ -7,7 +7,7 @@ import logging
 import os
 import statistics
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -340,6 +340,7 @@ def prop_slip_leg(
     game_id: str,
     matchup: str | None,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+    game_date: date | str | None = None,
 ) -> dict[str, Any]:
     """Normalize a ranked prop row for the client bet slip."""
     side = prop.get("recommended_side") or "over"
@@ -354,9 +355,14 @@ def prop_slip_leg(
         leg_parts.append(bookmaker)
     alltime_key = "hit_rate_over_alltime" if side == "over" else "hit_rate_under_alltime"
     link_key = "over_link" if side == "over" else "under_link"
+    if isinstance(game_date, date):
+        game_date_str = game_date.isoformat()
+    else:
+        game_date_str = str(game_date)[:10] if game_date else None
     return {
         "id": "|".join(leg_parts),
         "game_id": str(game_id),
+        "game_date": game_date_str,
         "matchup": matchup,
         "player": prop.get("player"),
         "market_type": prop.get("market_type"),
@@ -497,7 +503,11 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
                 "bookmaker": bookmaker,
                 "bookmaker_label": payload.get("bookmaker_label") or _bookmaker_label(bookmaker),
                 "slip_leg": prop_slip_leg(
-                    row, game_id=game_id, matchup=matchup, bookmaker=bookmaker
+                    row,
+                    game_id=game_id,
+                    matchup=matchup,
+                    bookmaker=bookmaker,
+                    game_date=game_date,
                 ),
             }
         )
@@ -1181,6 +1191,17 @@ def build_game_props(
     book = _resolve_bookmaker(bookmaker)
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
+        if not refresh:
+            cached = _load_cached_game_props(str(game_id), book)
+            if cached:
+                cached = _trim_props_payload(cached, fetch_markets)
+                cached = _apply_published_line_filter(cached)
+                cached = {
+                    **cached,
+                    "stale_cache": True,
+                    "message": "Game not on today's schedule — showing cached props.",
+                }
+                return _mark_stale_props(cached)
         return None
 
     game = detail["game"]
@@ -1429,37 +1450,122 @@ def _persist_prop_links_in_cache(
     _write_json(_props_cache_path(game_id, bookmaker), {**cached, "props": updated_props})
 
 
+def _game_date_candidates(
+    game_id: str,
+    *,
+    leg: dict[str, Any] | None = None,
+    cached_payload: dict[str, Any] | None = None,
+) -> list[date]:
+    """Dates to try when resolving props for a game (slip legs may span prior slates)."""
+    seen: set[str] = set()
+    out: list[date] = []
+
+    def add(raw: date | str | None) -> None:
+        if raw is None:
+            return
+        if isinstance(raw, date):
+            d = raw
+        else:
+            try:
+                d = date.fromisoformat(str(raw)[:10])
+            except ValueError:
+                return
+        key = d.isoformat()
+        if key not in seen:
+            seen.add(key)
+            out.append(d)
+
+    if leg:
+        add(leg.get("game_date"))
+    if cached_payload:
+        add(cached_payload.get("date"))
+    raw_dir = _raw_events_dir()
+    if raw_dir.is_dir():
+        for path in sorted(raw_dir.glob(f"{game_id}.*.json"), reverse=True):
+            suffix = path.stem.rsplit(".", 1)[-1]
+            add(suffix)
+    add(date.today())
+    add(date.today() - timedelta(days=1))
+    return out
+
+
+def _find_raw_event_any_date(game_id: str) -> dict[str, Any] | None:
+    """Load the newest raw Odds API event snapshot for a game id."""
+    raw_dir = _raw_events_dir()
+    if not raw_dir.is_dir():
+        return None
+    for path in sorted(raw_dir.glob(f"{game_id}.*.json"), reverse=True):
+        payload = _load_json(path)
+        if payload and payload.get("event"):
+            return payload
+    return None
+
+
 def _load_game_props_for_export(
     game_id: str,
     bookmaker: str,
     *,
     refresh_links: bool = False,
+    leg: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Load props for slip export, backfilling deeplinks from raw cache or live refresh."""
     book = _resolve_bookmaker(bookmaker)
-    payload = build_game_props(game_id, bookmaker=book, refresh=False)
-    props = (payload or {}).get("props") or []
+    cached_payload = _load_cached_game_props(str(game_id), book)
+    props = (cached_payload or {}).get("props") or []
+    resolved_date: date | None = None
+
+    if not props:
+        for try_date in _game_date_candidates(
+            str(game_id), leg=leg, cached_payload=cached_payload
+        ):
+            payload = build_game_props(
+                str(game_id),
+                game_date=try_date,
+                bookmaker=book,
+                refresh=False,
+            )
+            if payload and payload.get("props"):
+                props = payload["props"]
+                resolved_date = try_date
+                cached_payload = payload
+                break
+    elif cached_payload and cached_payload.get("date"):
+        try:
+            resolved_date = date.fromisoformat(str(cached_payload["date"])[:10])
+        except ValueError:
+            resolved_date = None
+
     if _props_have_deeplinks(props):
         return props
 
-    game_date = date.today()
-    if payload and payload.get("date"):
-        try:
-            game_date = date.fromisoformat(str(payload["date"]))
-        except ValueError:
-            pass
-
-    raw = _load_raw_event(str(game_id), game_date)
+    raw = _find_raw_event_any_date(str(game_id))
+    if raw is None and resolved_date is not None:
+        raw = _load_raw_event(str(game_id), resolved_date)
     if raw and raw.get("event"):
         link_rows = _parse_event_props(raw["event"], bookmaker_key=book)
         if _props_have_deeplinks(link_rows):
-            props = _merge_deeplinks_into_props(props, link_rows)
-            _persist_prop_links_in_cache(str(game_id), book, props)
+            if props:
+                props = _merge_deeplinks_into_props(props, link_rows)
+                _persist_prop_links_in_cache(str(game_id), book, props)
+            else:
+                props = link_rows
             return props
 
     if refresh_links:
-        payload = build_game_props(game_id, game_date=game_date, bookmaker=book, refresh=True)
-        return (payload or {}).get("props") or []
+        for try_date in _game_date_candidates(
+            str(game_id), leg=leg, cached_payload=cached_payload
+        ):
+            if get_mlb_game(str(game_id), try_date) is None:
+                continue
+            payload = build_game_props(
+                str(game_id),
+                game_date=try_date,
+                bookmaker=book,
+                refresh=True,
+            )
+            refreshed = (payload or {}).get("props") or []
+            if refreshed:
+                return refreshed
 
     return props
 
@@ -1606,16 +1712,19 @@ def export_slip_for_bookmaker(
                 game_id,
                 book,
                 refresh_links=refresh_links,
+                leg=leg,
             )
 
         match = _find_prop_for_slip_leg(game_props_cache[game_id], leg)
         if not match:
+            leg_deeplink = leg.get("deeplink")
             row = {
                 **leg,
                 "bookmaker": book,
                 "bookmaker_label": book_label,
                 "available_at_book": False,
                 "export_note": f"Not offered at {book_label}",
+                "deeplink": leg_deeplink if leg_deeplink else None,
             }
             repriced.append(row)
             missing.append(row)
@@ -1943,6 +2052,7 @@ def _collect_scored_props_from_payload(
     bookmaker = _normalize_bookmaker(payload.get("bookmaker"))
     book_label = payload.get("bookmaker_label") or _bookmaker_label(bookmaker)
     matchup = payload.get("matchup")
+    game_date = payload.get("date")
     rows: list[dict[str, Any]] = []
     for prop in payload.get("props") or []:
         if not prop.get("over_odds") and not prop.get("under_odds"):
@@ -1957,7 +2067,11 @@ def _collect_scored_props_from_payload(
         }
         if prop.get("actionable") and prop.get("recommended_odds") is not None:
             row["slip_leg"] = prop_slip_leg(
-                prop, game_id=game_id, matchup=matchup, bookmaker=bookmaker
+                prop,
+                game_id=game_id,
+                matchup=matchup,
+                bookmaker=bookmaker,
+                game_date=game_date,
             )
         rows.append(row)
     return rows

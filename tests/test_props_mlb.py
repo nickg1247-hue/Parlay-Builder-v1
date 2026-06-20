@@ -672,6 +672,26 @@ def test_merge_deeplinks_into_props():
     assert judge["score"] == 80
 
 
+def test_load_game_props_for_export_uses_cached_props_off_schedule(isolated_props):
+    link_rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    cache_path = isolated_props / "777001.draftkings.json"
+    props_mlb._write_json(
+        cache_path,
+        {
+            "game_id": "777001",
+            "date": "2026-06-19",
+            "props": link_rows,
+            "status": "ok",
+        },
+    )
+    leg = {"game_id": "777001", "game_date": "2026-06-19"}
+    loaded = props_mlb._load_game_props_for_export(
+        "777001", "draftkings", refresh_links=False, leg=leg
+    )
+    assert len(loaded) == 2
+    assert props_mlb._props_have_deeplinks(loaded)
+
+
 @patch("app.services.props_mlb._load_raw_event")
 @patch("app.services.props_mlb.build_game_props")
 def test_export_backfills_deeplinks_from_raw_event(mock_build, mock_raw):
@@ -697,9 +717,14 @@ def test_export_backfills_deeplinks_from_raw_event(mock_build, mock_raw):
     mock_build.assert_called_once()
 
 
-@patch("app.services.props_mlb._load_raw_event", return_value=None)
+@patch("app.services.props_mlb.get_mlb_game")
+@patch("app.services.props_mlb._find_raw_event_any_date", return_value=None)
+@patch("app.services.props_mlb._load_cached_game_props", return_value=None)
 @patch("app.services.props_mlb.build_game_props")
-def test_export_refreshes_props_when_cache_lacks_links(mock_build, _mock_raw):
+def test_export_refreshes_props_when_cache_lacks_links(
+    mock_build, _mock_cache, _mock_raw_any, mock_game
+):
+    mock_game.return_value = {"game": {"game_id": "777001"}}
     link_rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
     cached = [{**row} for row in link_rows]
     for prop in cached:
@@ -720,10 +745,11 @@ def test_export_refreshes_props_when_cache_lacks_links(mock_build, _mock_raw):
         "side": "over",
         "line": 1.5,
         "american_odds": -115,
+        "game_date": "2026-06-16",
     }
     out = props_mlb.export_slip_for_bookmaker([slip_leg], "draftkings")
     assert out["can_open_in_book"] is True
-    assert mock_build.call_count == 2
+    assert any(c.kwargs.get("refresh") for c in mock_build.call_args_list)
 
 
 @patch("app.services.props_mlb.build_game_props")
