@@ -2,110 +2,6 @@
   "date": "2026-06-20",
   "games": [
     {
-      "game_id": "824263",
-      "home_team": "Detroit Tigers",
-      "away_team": "Chicago White Sox",
-      "home_team_id": 116,
-      "away_team_id": 145,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/116.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/145.svg",
-      "start_time_utc": "2026-06-20T17:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "823532",
-      "home_team": "New York Yankees",
-      "away_team": "Cincinnati Reds",
-      "home_team_id": 147,
-      "away_team_id": 113,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/147.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/113.svg",
-      "start_time_utc": "2026-06-20T17:35:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "824665",
-      "home_team": "Chicago Cubs",
-      "away_team": "Toronto Blue Jays",
-      "home_team_id": 112,
-      "away_team_id": 141,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/112.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/141.svg",
-      "start_time_utc": "2026-06-20T18:20:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "822885",
-      "home_team": "Texas Rangers",
-      "away_team": "San Diego Padres",
-      "home_team_id": 140,
-      "away_team_id": 135,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/140.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/135.svg",
-      "start_time_utc": "2026-06-20T20:05:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "822967",
-      "home_team": "Tampa Bay Rays",
-      "away_team": "Washington Nationals",
-      "home_team_id": 139,
-      "away_team_id": 120,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/139.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/120.svg",
-      "start_time_utc": "2026-06-20T20:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "823854",
-      "home_team": "Miami Marlins",
-      "away_team": "San Francisco Giants",
-      "home_team_id": 146,
-      "away_team_id": 137,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/146.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/137.svg",
-      "start_time_utc": "2026-06-20T20:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "824909",
-      "home_team": "Atlanta Braves",
-      "away_team": "Milwaukee Brewers",
-      "home_team_id": 144,
-      "away_team_id": 158,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/144.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/158.svg",
-      "start_time_utc": "2026-06-20T20:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
-      "game_id": "824180",
-      "home_team": "Houston Astros",
-      "away_team": "Cleveland Guardians",
-      "home_team_id": 117,
-      "away_team_id": 114,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/117.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/114.svg",
-      "start_time_utc": "2026-06-20T23:15:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
-    },
-    {
       "game_id": "823447",
       "home_team": "Philadelphia Phillies",
       "away_team": "New York Mets",
@@ -114,9 +10,9 @@
       "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/143.svg",
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/121.svg",
       "start_time_utc": "2026-06-20T23:15:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "status": "Live",
+      "home_score": 15,
+      "away_score": 3
     },
     {
       "game_id": "824342",
@@ -127,9 +23,9 @@
       "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/115.svg",
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/134.svg",
       "start_time_utc": "2026-06-21T01:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "status": "Live",
+      "home_score": 1,
+      "away_score": 1
     },
     {
       "game_id": "824988",
@@ -140,9 +36,9 @@
       "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/133.svg",
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/108.svg",
       "start_time_utc": "2026-06-21T02:05:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "status": "Live",
+      "home_score": 0,
+      "away_score": 0
     },
     {
       "game_id": "823937",
@@ -153,9 +49,9 @@
       "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/119.svg",
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/110.svg",
       "start_time_utc": "2026-06-21T02:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "status": "Live",
+      "home_score": 0,
+      "away_score": 0
     },
     {
       "game_id": "823126",
@@ -167,8 +63,8 @@
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/111.svg",
       "start_time_utc": "2026-06-21T02:10:00Z",
       "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "home_score": 0,
+      "away_score": 0
     },
     {
       "game_id": "825068",
@@ -179,11 +75,11 @@
       "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/109.svg",
       "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/142.svg",
       "start_time_utc": "2026-06-21T02:10:00Z",
-      "status": "Preview",
-      "home_score": null,
-      "away_score": null
+      "status": "Live",
+      "home_score": 0,
+      "away_score": 0
     }
   ],
-  "games_count": 14,
-  "cached_at": "2026-06-20T10:51:49.452911+00:00"
+  "games_count": 6,
+  "cached_at": "2026-06-21T01:47:28.664229+00:00"
 }

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
+  <title>Methodology — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260701">
+  <link rel="stylesheet" href="/static/app.css?v=20260701">
+  <link rel="stylesheet" href="/static/design.css?v=20260701">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
+      </div>
+      <div class="sport-pills"></div>
+    </header>
+
+    <main class="app-main page">
+      <h1>Methodology</h1>
+      <p class="text-muted">Plain-English overview of how NTG Sports models work — and what they do not do.</p>
+
+      <section class="ntg-card" style="padding:1rem;margin:1.25rem 0;">
+        <h2>What the models use</h2>
+        <ul>
+          <li>Team win-probability models trained on historical game results, park factors, and rest.</li>
+          <li>Player prop scoring from MLB game logs (L5, L10, season hit rates vs posted lines).</li>
+          <li>Matchup context where available (e.g. opposing starter ERA for batter props).</li>
+          <li>Live and cached sportsbook odds from The Odds API for EV and edge calculations.</li>
+        </ul>
+      </section>
+
+      <section class="ntg-card" style="padding:1rem;margin:1.25rem 0;">
+        <h2>What we ignore (for now)</h2>
+        <ul>
+          <li>Injury news not yet in the data feed, steam moves, and sharp closing-line intelligence.</li>
+          <li>Same-game parlay correlation beyond basic warnings.</li>
+          <li>Guaranteed ROI or bankroll management — this is research tooling, not financial advice.</li>
+        </ul>
+      </section>
+
+      <section class="ntg-card" style="padding:1rem;margin:1.25rem 0;">
+        <h2>Edge &amp; EV</h2>
+        <p>
+          For moneyline picks, <strong>edge</strong> is model win probability minus implied book probability (after vig).
+          For props, we rank by recent form hit rate vs the posted line, with matchup adjustments.
+          A pick marked actionable means the model side clears our minimum hit-rate threshold on offered odds.
+        </p>
+      </section>
+
+      <section class="ntg-card" style="padding:1rem;margin:1.25rem 0;">
+        <h2>Responsible use</h2>
+        <p>
+          NTG Sports is experimental analytics for adults 21+. It is not betting advice.
+          Past model performance does not guarantee future results. See our
+          <a href="/performance">performance log</a> for tracked prop offers and outcomes.
+        </p>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260701"></script>
+  <script>loadPublicFeatures().then(() => initSiteChrome());</script>
+</body>
+</html>

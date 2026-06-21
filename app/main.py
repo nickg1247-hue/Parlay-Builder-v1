@@ -39,6 +39,7 @@ from app.services.daily_board import build_daily_board
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
 from app.services.prop_pick_tracker import (
     backfill_prop_results,
+    list_recent_picks,
     summarize_prop_tracker,
 )
 from app.services.nba_custom_weights import (
@@ -92,9 +93,19 @@ from app.services.model_lab import (
     run_experiment,
     run_until_within_goal,
 )
+from app.services.player_context import get_player_prop_context, resolve_player_id_for_name
+from app.services.player_profile import get_player_profile
+from app.services.user_teams import (
+    follow_team,
+    get_alert_prefs,
+    list_follows,
+    set_alert_prefs,
+    unfollow_team,
+)
 from app.db.market_status import get_market_eval_status
 from app.db.parlay_status import get_parlay_status
 from app.db.mlb_status import get_mlb_data_status
+from app.db.totals_status import get_totals_model_status
 from app.services.user_accounts import (
     create_user,
     get_user_by_email,
@@ -128,6 +139,16 @@ class LabRunRequest(BaseModel):
 class LabConfirmRequest(BaseModel):
     run_id: str = Field(..., min_length=1)
     promote: bool = False
+
+
+class TeamFollowRequest(BaseModel):
+    sport: str = Field(..., pattern="^(mlb|nba|cfb)$")
+    team_id: str = Field(..., min_length=1, max_length=32)
+
+
+class AlertPrefsRequest(BaseModel):
+    daily_digest: bool = False
+    digest_hour_et: int = Field(8, ge=0, le=23)
 
 
 logger = logging.getLogger(__name__)
@@ -918,9 +939,138 @@ async def daily_board(
     )
 
 
+@app.get("/api/performance/summary")
+async def performance_summary(days: int = Query(30, ge=1, le=365)):
+    summary = summarize_prop_tracker(days=days)
+    clv = summarize_mlb_clv()
+    return {"prop_tracker": summary, "clv": clv}
+
+
+@app.get("/api/performance/picks")
+async def performance_picks(limit: int = Query(50, ge=1, le=200)):
+    return {"picks": list_recent_picks(limit=limit)}
+
+
+@app.get("/api/players/{sport}/{player_id}/prop-context")
+async def player_prop_context(
+    sport: str,
+    player_id: str,
+    market_type: str = Query(..., min_length=3),
+    line: float = Query(...),
+    side: str = Query("over", pattern="^(over|under)$"),
+    season: int | None = Query(None),
+):
+    if sport not in ("mlb", "nba", "cfb"):
+        raise HTTPException(status_code=400, detail="Unsupported sport")
+    return get_player_prop_context(
+        sport,
+        player_id,
+        market_type=market_type,
+        line=line,
+        side=side,
+        season=season,
+    )
+
+
+@app.get("/api/players/{sport}/{player_id}/profile")
+async def player_profile(sport: str, player_id: str):
+    if sport not in ("mlb", "nba", "cfb"):
+        raise HTTPException(status_code=400, detail="Unsupported sport")
+    return get_player_profile(sport, player_id)
+
+
+@app.get("/api/players/{sport}/by-name/{player_name}/id")
+async def player_id_by_name(sport: str, player_name: str):
+    pid = resolve_player_id_for_name(sport, player_name)
+    if pid is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return {"player_id": pid, "sport": sport}
+
+
+def _require_user_session(request: Request) -> dict:
+    session = get_user_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Sign in required")
+    return session
+
+
+@app.get("/api/user/teams/follows")
+async def user_team_follows_list(request: Request):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return {"follows": list_follows(conn, session["user_id"])}
+    finally:
+        conn.close()
+
+
+@app.post("/api/user/teams/follow")
+async def user_team_follow(request: Request, body: TeamFollowRequest):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return follow_team(conn, session["user_id"], body.sport, body.team_id)
+    finally:
+        conn.close()
+
+
+@app.delete("/api/user/teams/follow")
+async def user_team_unfollow(
+    request: Request,
+    sport: str = Query(..., pattern="^(mlb|nba|cfb)$"),
+    team_id: str = Query(..., min_length=1, max_length=32),
+):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return unfollow_team(conn, session["user_id"], sport, team_id)
+    finally:
+        conn.close()
+
+
+@app.get("/api/user/alerts")
+async def user_alert_prefs_get(request: Request):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return get_alert_prefs(conn, session["user_id"])
+    finally:
+        conn.close()
+
+
+@app.post("/api/user/alerts")
+async def user_alert_prefs_set(request: Request, body: AlertPrefsRequest):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return set_alert_prefs(
+            conn,
+            session["user_id"],
+            daily_digest=body.daily_digest,
+            digest_hour_et=body.digest_hour_et,
+        )
+    finally:
+        conn.close()
+
+
 @app.get("/my-team")
 async def my_team_page():
     return _html_page("my_team.html")
+
+
+@app.get("/methodology")
+async def methodology_page():
+    return _html_page("methodology.html")
+
+
+@app.get("/performance")
+async def performance_page():
+    return _html_page("performance.html")
+
+
+@app.get("/parlay")
+async def parlay_page():
+    return _html_page("prop_slip.html")
 
 
 @app.get("/teams/{sport}/{team_id}")

@@ -37,15 +37,17 @@
   function playerCardHtml(p) {
     const jersey = p.jersey != null ? `#${p.jersey}` : "";
     const pos = p.position || "";
+    const pid = p.id || p.player_id || "";
+    const safeName = (p.name || "").replace(/"/g, "&quot;");
     return `
-      <article class="roster-player-card">
+      <button type="button" class="roster-player-card ntg-card roster-player-card--clickable" data-player-id="${pid}" data-player-name="${safeName}">
         ${playerPhotoHtml(p)}
         <div class="roster-player-meta">
           ${jersey ? `<span class="roster-player-jersey">${jersey}</span>` : ""}
           <h3 class="roster-player-name">${p.name}</h3>
           ${pos ? `<span class="roster-player-pos">${pos}</span>` : ""}
         </div>
-      </article>`;
+      </button>`;
   }
 
   function rosterGroupsHtml(groups) {
@@ -124,6 +126,15 @@
           fb.className = "roster-player-fallback";
           fb.textContent = img.dataset.fallback || "?";
           img.replaceWith(fb);
+        });
+      });
+      content.querySelectorAll(".roster-player-card--clickable").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pid = btn.getAttribute("data-player-id");
+          const name = btn.getAttribute("data-player-name");
+          if (pid && typeof openPlayerProfileModal === "function") {
+            openPlayerProfileModal(sport, pid, name);
+          }
         });
       });
     })

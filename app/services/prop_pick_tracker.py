@@ -300,3 +300,9 @@ def summarize_prop_tracker(days: int = 30) -> dict[str, Any]:
         "line_strength": buckets,
         "result_status_counts": status_counts,
     }
+
+
+def list_recent_picks(limit: int = 50) -> list[dict[str, Any]]:
+    rows = list(_latest_by_pick_id(_read_all_rows()).values())
+    rows.sort(key=lambda r: str(r.get("logged_at") or ""), reverse=True)
+    return rows[: max(1, min(limit, 200))]

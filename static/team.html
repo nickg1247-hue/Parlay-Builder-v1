@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
   <title>Team — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260620h">
-  <link rel="stylesheet" href="/static/app.css?v=20260620h">
+  <link rel="stylesheet" href="/static/style.css?v=20260701">
+  <link rel="stylesheet" href="/static/app.css?v=20260701">
+  <link rel="stylesheet" href="/static/design.css?v=20260701">
 </head>
 <body>
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="sport-pills"></div>
     </header>
 
-    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+    <div id="live-ticker" class="ticker-placeholder"></div>
 
     <main class="app-main">
       <div id="team-loading" class="empty-state">Loading team…</div>
@@ -25,7 +27,8 @@
       <div id="team-content" class="hidden"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260620h"></script>
-  <script src="/static/team.js?v=20260620i"></script>
+  <script src="/static/player_prop_modal.js?v=20260701"></script>
+  <script src="/static/app.js?v=20260701"></script>
+  <script src="/static/team.js?v=20260701"></script>
 </body>
 </html>

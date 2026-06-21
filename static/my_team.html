@@ -3,30 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
   <title>My Team — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260620h">
-  <link rel="stylesheet" href="/static/app.css?v=20260620h">
+  <link rel="stylesheet" href="/static/style.css?v=20260701">
+  <link rel="stylesheet" href="/static/app.css?v=20260701">
+  <link rel="stylesheet" href="/static/design.css?v=20260701">
 </head>
 <body>
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="sport-pills"></div>
     </header>
 
-    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+    <div id="live-ticker" class="ticker-placeholder"></div>
 
     <main class="app-main">
       <section class="my-team-hero">
         <h1>My Team</h1>
-        <p>Browse rosters, records, and recent games across MLB, NBA, and college football.</p>
+        <p>Follow teams, browse rosters, and opt into a daily slate email when signed in.</p>
+      </section>
+
+      <section id="followed-teams-section" class="ntg-card hidden" style="padding:1rem;margin-bottom:1rem;">
+        <h2 class="home-col-title">Followed teams</h2>
+        <div id="followed-teams-list" class="teams-grid"></div>
+      </section>
+
+      <section id="alert-prefs-section" class="ntg-card hidden" style="padding:1rem;margin-bottom:1rem;">
+        <label>
+          <input type="checkbox" id="daily-digest-toggle">
+          Email me my teams' slate daily (8:00 AM ET)
+        </label>
+        <p class="section-sub" style="margin-top:0.5rem">Requires verified email. <a href="/signin">Sign in</a> to sync follows.</p>
       </section>
 
       <div class="my-team-toolbar">
-        <div class="my-team-sport-tabs" id="sport-tabs" role="tablist" aria-label="Sport"></div>
+        <div class="my-team-sport-tabs" id="sport-tabs" role="tablist"></div>
         <label class="my-team-search">
           <span class="sr-only">Search teams</span>
           <input type="search" id="team-search" placeholder="Search teams…" autocomplete="off">
@@ -38,7 +53,7 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260620h"></script>
-  <script src="/static/my_team.js?v=20260620h"></script>
+  <script src="/static/app.js?v=20260701"></script>
+  <script src="/static/my_team.js?v=20260701"></script>
 </body>
 </html>

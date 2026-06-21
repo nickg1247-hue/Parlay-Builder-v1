@@ -118,3 +118,33 @@ def send_verification_email(to_email: str, token: str) -> bool:
     except Exception as exc:
         logger.error("Failed to send verification email to %s: %s", to_email, exc)
         return False
+
+
+def send_team_digest_email(to_email: str, subject: str, body: str) -> bool:
+    """Daily followed-teams slate digest (MVP — same SMTP path as verification)."""
+    if not _smtp_configured():
+        logger.warning("SMTP not configured — digest for %s:\n%s", to_email, body[:500])
+        return False
+    host = os.getenv("SMTP_HOST", "").strip()
+    port = int(os.getenv("SMTP_PORT", "587"))
+    user = os.getenv("SMTP_USER", "").strip()
+    password = _smtp_password()
+    from_addr = os.getenv("SMTP_FROM", user).strip()
+    use_tls = os.getenv("SMTP_USE_TLS", "true").strip().lower() in ("1", "true", "yes")
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = from_addr
+    msg["To"] = to_email
+    msg.set_content(body)
+    try:
+        with smtplib.SMTP(host, port, timeout=30) as smtp:
+            if use_tls:
+                smtp.starttls()
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(msg)
+        logger.info("Team digest sent to %s", to_email)
+        return True
+    except Exception as exc:
+        logger.error("Failed to send team digest to %s: %s", to_email, exc)
+        return False

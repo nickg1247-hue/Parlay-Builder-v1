@@ -2,10 +2,10 @@
   "dates": [
     {
       "date": "2026-06-20",
-      "fetched_at": "2026-06-20T10:54:15.545939+00:00",
+      "fetched_at": "2026-06-21T01:47:29.235158+00:00",
       "source": "the_odds_api_live",
-      "games_matched": 14,
-      "api_fetch_count": 7
+      "games_matched": 20,
+      "api_fetch_count": 8
     },
     {
       "date": "2026-06-19",

@@ -1,5 +1,7 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
+const NTG_ASSET_V = "20260701";
+
 async function fetchJSON(url) {
   const res = await fetch(url);
   if (!res.ok) {
@@ -93,6 +95,73 @@ function formatLocalTimeShort(isoUtc) {
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
+
+function formatRefreshStrip(status) {
+  if (!status) return "Syncing data…";
+  const parts = [];
+  if (status.odds_fetched_at) {
+    parts.push(`Odds synced ${formatRelativeShort(status.odds_fetched_at)}`);
+  }
+  if (status.ok && status.ran_at) {
+    parts.push(`Models run ${formatRelativeShort(status.ran_at)}`);
+  } else if (status.display_updated_at) {
+    parts.push(`Board ${formatRelativeShort(status.display_updated_at)}`);
+  }
+  if (status.games_on_slate != null) {
+    parts.push(`${status.games_on_slate} games today`);
+  }
+  return parts.length ? parts.join(" · ") : formatRefreshStatus(status);
+}
+
+function ensureSiteStyles() {
+  const v = NTG_ASSET_V;
+  if (!document.querySelector('link[href*="design.css"]')) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `/static/design.css?v=${v}`;
+    document.head.appendChild(link);
+  }
+  if (!document.querySelector('link[rel="icon"][href*="ntg-mark"]')) {
+    const icon = document.createElement("link");
+    icon.rel = "icon";
+    icon.type = "image/svg+xml";
+    icon.href = `/static/ntg-mark.svg?v=${v}`;
+    document.head.appendChild(icon);
+  }
+}
+
+function ntgBrandWordmarkInner() {
+  return `
+    <span class="ntg-brand-wordmark">
+      <span class="ntg-brand-wordmark-lockup">
+        <span class="ntg-brand-wordmark-ntg">NTG</span>
+        <span class="ntg-brand-wordmark-sports">SPORTS</span>
+      </span>
+      <span class="ntg-brand-wordmark-accent" aria-hidden="true"></span>
+    </span>`;
+}
+
+function upgradeBrandLinks() {
+  document.querySelectorAll("a.app-brand").forEach((el) => {
+    el.innerHTML = ntgBrandWordmarkInner();
+    el.setAttribute("aria-label", "NTG Sports home");
+  });
+}
+
+function brandedErrorState(el, { title, message, kind = "no-board", onRetry = null } = {}) {
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <div class="empty-state-card branded-error-state">
+      ${emptyStateIcon(kind)}
+      <h3>${title || "Something went wrong"}</h3>
+      <p>${message || "Please try again in a moment."}</p>
+      ${onRetry ? '<button type="button" class="empty-state-retry">Try again</button>' : ""}
+    </div>`;
+  el.querySelector(".empty-state-retry")?.addEventListener("click", onRetry);
+}
+
+window.brandedErrorState = brandedErrorState;
 
 function formatRefreshStatus(status) {
   if (!status) return "Not refreshed yet";
@@ -1114,13 +1183,13 @@ function renderBestBets(el, topSingles) {
       const form = teamWinRatesHtml(p);
       const strength = lineStrengthHtml(p);
       const insight = p.line_insight
-        ? `<span class="best-bet-insight">${p.line_insight}</span>`
+        ? `<span class="best-bet-insight pick-why-chip">${p.line_insight}</span>`
         : "";
       return `
       <a class="best-bet-card" href="${gameHref}">
         <span class="best-bet-team">${p.team}</span>
         <span class="best-bet-meta">${p.matchup || ""}</span>
-        <span class="best-bet-edge">EV ${edge} · ${odds}</span>
+        <span class="best-bet-edge pick-edge-chip">EV ${edge} · ${odds}</span>
         <span class="best-bet-form">${form}</span>
         ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
         ${insight}
@@ -1189,22 +1258,28 @@ function renderBestProps(el, topProps, options = {}) {
           ? `<span class="best-bet-meta prop-one-sided-tag">One-sided line at book</span>`
           : "";
       const insight = p.line_insight
-        ? `<span class="best-bet-insight">${p.line_insight}</span>`
+        ? `<span class="best-bet-insight pick-why-chip">${p.line_insight}</span>`
         : "";
+      const edgeChip =
+        p.rank_score != null
+          ? `<span class="pick-edge-chip">Model ${p.rank_score}</span>`
+          : p.recommended_hit_rate != null
+            ? `<span class="pick-edge-chip">L10 ${Math.round(p.recommended_hit_rate * 100)}%</span>`
+            : "";
       return `
-      <div class="best-bet-card best-prop-card${propVeryStrongClass(p)}">
-        <a class="best-prop-card-link" href="${gameHref}">
+      <div class="best-bet-card best-prop-card prop-card-clickable${propVeryStrongClass(p)}" data-prop-idx="${i}" role="button" tabindex="0" aria-label="View ${p.player} prop details">
+        <div class="best-prop-card-link">
           <span class="best-bet-team">${p.player}</span>
           <span class="best-bet-meta">${p.matchup || ""}</span>
           <span class="best-bet-meta best-prop-book">${bookLabel}</span>
           ${offered}
           ${oneSided}
           <span class="best-bet-meta">${line}</span>
-          <span class="best-bet-edge">${odds}</span>
+          <span class="best-bet-edge">${odds} ${edgeChip}</span>
           <span class="best-bet-form">${form}</span>
           ${strength ? `<span class="best-bet-strength">${strength}</span>` : ""}
           ${insight}
-        </a>
+        </div>
         ${
           isPropSlipPublic()
             ? `<button type="button" class="home-prop-add-btn" data-add-home-prop="${i}" aria-label="Add ${p.player} to prop slip">+ Add</button>`
@@ -1228,6 +1303,23 @@ function renderBestProps(el, topProps, options = {}) {
       window.setTimeout(() => {
         btn.textContent = prev;
       }, 1500);
+    });
+  });
+
+  el.querySelectorAll(".prop-card-clickable").forEach((card) => {
+    const idx = Number(card.getAttribute("data-prop-idx"));
+    const open = () => {
+      if (typeof openPropModal === "function") openPropModal(props[idx], "mlb");
+    };
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".home-prop-add-btn")) return;
+      open();
+    });
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
     });
   });
 }
@@ -1288,7 +1380,7 @@ function renderPropExplorerList(el, props, options = {}) {
         ? ""
         : `<span class="prop-skip-tag">${p.actionable_reason || "Not recommended"}</span>`;
       return `
-      <article class="prop-explorer-card${propVeryStrongClass(p)} ${p.actionable ? "" : "prop-explorer-card--skip"}">
+      <article class="prop-explorer-card prop-card-clickable${propVeryStrongClass(p)} ${p.actionable ? "" : "prop-explorer-card--skip"}" data-prop-idx="${i}" role="button" tabindex="0">
         <div class="prop-explorer-head">
           <div>
             <h3 class="prop-explorer-player">${p.player}</h3>
@@ -1317,13 +1409,31 @@ function renderPropExplorerList(el, props, options = {}) {
     .join("");
 
   el.querySelectorAll("[data-add-explorer-prop]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const idx = Number(btn.dataset.addExplorerProp);
       const prop = rows[idx];
       const leg = propSlipLegFromProp(prop);
       if (!leg || !window.addPropToSlip) return;
       window.addPropToSlip(leg);
       btn.textContent = "Added";
+    });
+  });
+
+  el.querySelectorAll(".prop-explorer-card.prop-card-clickable").forEach((card) => {
+    const idx = Number(card.getAttribute("data-prop-idx"));
+    const open = () => {
+      if (typeof openPropModal === "function") openPropModal(rows[idx], "mlb");
+    };
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("a, button")) return;
+      open();
+    });
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
     });
   });
 }
@@ -1855,16 +1965,22 @@ async function loadHomePageData(progress) {
       scoreCounts: null,
       status: null,
     });
-    if (glance) {
-      glance.innerHTML =
-        '<div class="glance-card glance-muted ntg-card"><span>Could not load today\'s summary.</span></div>';
-    }
-    if (bets) {
-      bets.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Best bets unavailable.</p></div>`;
-    }
-    if (propsEl) {
-      propsEl.innerHTML = `<div class="best-bets-empty-card">${emptyStateIcon("no-bets")}<p>Player props unavailable.</p></div>`;
-    }
+    brandedErrorState(glance, {
+      title: "Summary unavailable",
+      message: "Could not load today's model slate.",
+      kind: "no-board",
+      onRetry: () => loadHomePageData(progress),
+    });
+    brandedErrorState(bets, {
+      title: "Best bets unavailable",
+      message: "Try refreshing in a moment.",
+      kind: "no-bets",
+    });
+    brandedErrorState(propsEl, {
+      title: "Props unavailable",
+      message: "Player props could not be loaded.",
+      kind: "no-bets",
+    });
     if (refreshEl) refreshEl.textContent = "Could not load refresh status";
     setHomeLoadProgress(progress, 1, "Ready");
   }
@@ -1924,6 +2040,36 @@ function sportPillIsActive(href, path) {
   return path === href || path.startsWith(`${href}/`);
 }
 
+function mainNavIsActive(href, path) {
+  if (href === "/") return path === "/";
+  return path === href || path.startsWith(`${href}/`);
+}
+
+function renderMainNav(container, path) {
+  const specs = [
+    { href: "/", label: "Slate" },
+    { href: "/mlb/props", label: "Props" },
+    { href: "/parlay", label: "Parlay", feature: "prop_slip" },
+    { href: "/my-team", label: "My Team" },
+    { href: "/performance", label: "Performance" },
+    { href: "/methodology", label: "Methodology" },
+  ];
+  container.replaceChildren();
+  container.setAttribute("aria-label", "Primary");
+  specs.forEach((spec) => {
+    const link = document.createElement("a");
+    link.className = "main-nav-link";
+    link.href = spec.href;
+    link.textContent = spec.label;
+    if (mainNavIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
+    if (spec.feature === "prop_slip" && !isPropSlipPublic()) {
+      link.classList.add("main-nav-link-locked");
+      link.title = "Prop slip requires server flag PROP_SLIP_PUBLIC=true";
+    }
+    container.appendChild(link);
+  });
+}
+
 function renderSportPills(container, path) {
   const specs = [
     { href: "/mlb", label: "MLB" },
@@ -1931,8 +2077,6 @@ function renderSportPills(container, path) {
     { disabled: true, label: "NFL", title: "Coming soon" },
     { disabled: true, label: "NHL", title: "Coming soon" },
     { href: "/cfb", label: "CFB" },
-    { href: "/mlb/props", label: "Player props" },
-    { href: "/my-team", label: "My Team" },
   ];
   container.replaceChildren();
   specs.forEach((spec) => {
@@ -1957,7 +2101,7 @@ function renderSportPills(container, path) {
 
 function initUtilityNav(nav, path) {
   nav.replaceChildren();
-  nav.setAttribute("aria-label", "Site tools");
+  nav.setAttribute("aria-label", "Account & tools");
   nav.classList.add("app-nav-utility");
 
   const userAuth = window.pbUserAuth || {};
@@ -1986,14 +2130,6 @@ function initUtilityNav(nav, path) {
   if (path === "/updates") updatesLink.classList.add("active");
   nav.appendChild(updatesLink);
 
-  const sandboxLink = document.createElement("a");
-  sandboxLink.href = "/sandbox";
-  sandboxLink.textContent = "Sandbox";
-  sandboxLink.classList.add("nav-sandbox");
-  sandboxLink.dataset.navSandbox = "1";
-  if (path === "/sandbox") sandboxLink.classList.add("active");
-  nav.appendChild(sandboxLink);
-
   const densityBtn = document.createElement("button");
   densityBtn.type = "button";
   densityBtn.className = "density-toggle";
@@ -2004,7 +2140,48 @@ function initUtilityNav(nav, path) {
   }
 }
 
+function renderSiteFooter() {
+  const year = new Date().getFullYear();
+  return `
+    <footer class="site-footer" aria-label="Site footer">
+      <div class="site-footer-inner">
+        <p class="site-footer-tagline">Model · Markets · Edge</p>
+        <nav class="site-footer-nav" aria-label="Footer links">
+          <a href="/methodology">Methodology</a>
+          <a href="/performance">Performance</a>
+          <a href="/updates">Updates</a>
+          <a href="mailto:contact@ntgsports.com">Contact</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+        <p class="site-footer-disclaimer">
+          Experimental analytics only — not betting advice. Must be 21+ where applicable.
+          Gamble responsibly. If you or someone you know has a gambling problem, call 1-800-GAMBLER.
+        </p>
+        <p class="site-footer-sources">Data: MLB Stats API · ESPN · The Odds API · pybaseball</p>
+        <p class="site-footer-copy">© ${year} NTG Sports</p>
+      </div>
+    </footer>`;
+}
+
+async function initSiteRefreshBar(bar) {
+  if (!bar) return;
+  async function tick() {
+    try {
+      const status = await fetchJSON("/api/status/refresh");
+      bar.textContent = formatRefreshStrip(status);
+      bar.classList.toggle("ok", Boolean(status?.ok || status?.display_updated_at));
+    } catch (_) {
+      bar.textContent = "Could not load sync status";
+    }
+  }
+  await tick();
+  window.setInterval(tick, 60000);
+}
+
 function initSiteChrome() {
+  ensureSiteStyles();
+  upgradeBrandLinks();
   const path = window.location.pathname || "/";
   document.querySelectorAll(".app-topbar").forEach((topbar) => {
     const navRow = topbar.querySelector(".app-nav-row");
@@ -2018,10 +2195,35 @@ function initSiteChrome() {
     }
     initUtilityNav(nav, path);
 
+    let refreshBar = topbar.querySelector(".site-refresh-bar");
+    if (!refreshBar) {
+      refreshBar = document.createElement("div");
+      refreshBar.className = "site-refresh-bar";
+      refreshBar.id = "site-refresh-bar";
+      refreshBar.setAttribute("aria-live", "polite");
+      refreshBar.textContent = "Checking sync…";
+      navRow.insertAdjacentElement("afterend", refreshBar);
+    }
+    initSiteRefreshBar(refreshBar);
+
+    let primary = topbar.querySelector(".app-nav-primary");
+    if (!primary) {
+      primary = document.createElement("nav");
+      primary.className = "app-nav-primary";
+      const anchor = topbar.querySelector(".sport-pills") || refreshBar;
+      anchor.insertAdjacentElement("beforebegin", primary);
+    }
+    renderMainNav(primary, path);
+
     const pills = topbar.querySelector(".sport-pills");
     if (pills) {
       renderSportPills(pills, path);
     }
+  });
+
+  document.querySelectorAll(".app-shell").forEach((shell) => {
+    if (shell.querySelector(".site-footer")) return;
+    shell.insertAdjacentHTML("beforeend", renderSiteFooter());
   });
 }
 
@@ -2639,6 +2841,8 @@ function showBuildBadge() {
     })
     .catch(() => {});
 }
+
+window.emptyStateIcon = emptyStateIcon;
 
 function bootNTGSplash() {
   if (!window._designLoaded) {

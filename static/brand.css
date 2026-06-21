@@ -1429,3 +1429,180 @@ html.ntg-splash-active {
     text-indent: 0.18em;
   }
 }
+
+/* --- Sitewide header wordmark (matches intro lockup) --- */
+
+.ntg-brand-wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  line-height: 1;
+}
+
+.ntg-brand-wordmark-lockup {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-family: var(--font-display, "Plus Jakarta Sans", system-ui, sans-serif);
+}
+
+.ntg-brand-wordmark-ntg {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.ntg-brand-wordmark-sports {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ntg-brand-wordmark-accent {
+  display: block;
+  width: 100%;
+  max-width: 88px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+}
+
+/* --- Primary nav + refresh strip --- */
+
+.site-refresh-bar {
+  width: 100%;
+  padding: 0.35rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.site-refresh-bar.ok {
+  color: var(--ntg-brand-cyan, #38bdf8);
+}
+
+.app-nav-primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  margin-top: 0.45rem;
+}
+
+.main-nav-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.2rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.main-nav-link:hover {
+  color: var(--text);
+}
+
+.main-nav-link-active {
+  color: var(--ntg-brand-cyan, #38bdf8);
+  border-bottom-color: var(--ntg-brand-blue, #2563eb);
+}
+
+.main-nav-link-locked {
+  opacity: 0.55;
+  cursor: help;
+}
+
+/* --- Global footer --- */
+
+.site-footer {
+  margin-top: 2.5rem;
+  padding: 1.75rem var(--app-gutter) 2rem;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--ntg-brand-navy, #0a0e14) 65%, var(--surface));
+}
+
+.site-footer-inner {
+  max-width: var(--app-content-max, 1600px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.site-footer-tagline {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ntg-brand-cyan);
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.site-footer-nav a {
+  font-size: 0.82rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.site-footer-nav a:hover {
+  color: var(--ntg-brand-cyan);
+}
+
+.site-footer-disclaimer,
+.site-footer-sources,
+.site-footer-copy {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
+.pick-edge-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ntg-brand-cyan);
+  margin-left: 0.25rem;
+}
+
+.pick-why-chip {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.prop-card-clickable {
+  cursor: pointer;
+}
+
+.prop-card-clickable:focus-visible {
+  outline: 2px solid var(--ntg-brand-blue);
+  outline-offset: 2px;
+}
+
+.empty-state-retry {
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.empty-state-retry:hover {
+  border-color: var(--ntg-brand-blue);
+}

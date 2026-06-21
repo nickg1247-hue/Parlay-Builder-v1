@@ -3366,3 +3366,156 @@ body.slate-mlb .app-main > * {
 body.updates-modal-open {
   overflow: hidden;
 }
+
+/* Player prop / profile modal */
+.player-prop-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.player-prop-modal.hidden {
+  display: none;
+}
+
+.player-prop-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.player-prop-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 560px);
+  max-height: 88vh;
+  overflow: auto;
+  margin: 0;
+  padding: 1.25rem 1.25rem 1.5rem;
+  border-radius: 16px 16px 0 0;
+}
+
+.player-prop-modal__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.prop-modal-head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.prop-modal-photo {
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--surface);
+}
+
+.prop-modal-rates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.prop-modal-table-wrap {
+  overflow-x: auto;
+}
+
+.prop-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.prop-modal-table th,
+.prop-modal-table td {
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.prop-log-hit td:last-child {
+  color: var(--positive);
+}
+
+.prop-log-miss td:last-child {
+  color: #f87171;
+}
+
+body.player-prop-modal-open {
+  overflow: hidden;
+}
+
+/* Prop slip full page */
+.prop-slip-page-main {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.prop-slip-page-head h1 {
+  font-size: 1.35rem;
+  margin-bottom: 0.35rem;
+}
+
+@media (min-width: 720px) {
+  .player-prop-modal {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .player-prop-modal__panel {
+    border-radius: var(--ntg-radius, 12px);
+    max-height: 85vh;
+  }
+}
+
+.prop-slip-panel--page {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border);
+  border-radius: var(--ntg-radius, 12px);
+  padding: 1rem;
+}
+
+.roster-player-card--clickable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.65rem;
+}
+
+.team-card-wrap {
+  position: relative;
+}
+
+.team-follow-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--ntg-brand-cyan);
+  font-size: 1.1rem;
+  cursor: pointer;
+}

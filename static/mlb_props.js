@@ -91,6 +91,9 @@
   }
 
   async function init() {
+    await loadPublicFeatures();
+    initSiteChrome();
+    initPropSlipUi();
     initLiveTicker("live-ticker", { sport: "mlb" });
     await initPropBookSelect(bookEl);
 

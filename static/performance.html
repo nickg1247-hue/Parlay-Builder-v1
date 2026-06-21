@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
+  <title>Performance — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260701">
+  <link rel="stylesheet" href="/static/app.css?v=20260701">
+  <link rel="stylesheet" href="/static/design.css?v=20260701">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
+      </div>
+      <div class="sport-pills"></div>
+    </header>
+
+    <main class="app-main page">
+      <h1>Model performance</h1>
+      <p class="text-muted">Tracked prop offers from the forward log — not a guarantee of future results.</p>
+      <p><a href="/methodology">How we score picks →</a></p>
+
+      <div id="perf-summary" class="glance-card ntg-card" style="padding:1rem;margin:1rem 0;">
+        <p>Loading summary…</p>
+      </div>
+
+      <p class="app-section-title">Recent logged picks</p>
+      <div id="perf-picks" class="home-picks-list">
+        <div class="skeleton-card" style="padding:0.65rem"><div class="skeleton-row"></div></div>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260701"></script>
+  <script src="/static/performance.js?v=20260701"></script>
+  <script>loadPublicFeatures().then(() => { initSiteChrome(); bootPerformancePage(); });</script>
+</body>
+</html>
