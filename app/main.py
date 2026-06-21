@@ -2,16 +2,19 @@ import app.config  # noqa: F401 — load .env before auth middleware reads env v
 from app.config import PROJECT_ROOT, prop_slip_public_enabled
 
 import asyncio
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import date as date_type
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.auth.admin_auth import (
     AdminAuthMiddleware,
@@ -232,6 +235,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="NTG Sports", lifespan=lifespan)
 app.add_middleware(UserPropsAuthMiddleware)
 app.add_middleware(AdminAuthMiddleware)
+
+
+class StaticCacheMiddleware(BaseHTTPMiddleware):
+    """Long-cache versioned static assets; HTML stays no-cache."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/static/") and request.query_params.get("v"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+app.add_middleware(StaticCacheMiddleware)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 _HTML_NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
@@ -472,7 +489,25 @@ async def build_info():
     build_path = PROJECT_ROOT / "BUILD"
     build_id = build_path.read_text(encoding="utf-8").strip() if build_path.exists() else "unknown"
     props_dir = PROJECT_ROOT / "data" / "processed" / "props_repository"
-    props_sample = build_daily_top_props(date_type.today(), limit=3, scan=False)
+    props_meta = get_props_cache_meta()
+    slate_path = (
+        PROJECT_ROOT
+        / "data"
+        / "processed"
+        / "props_repository"
+        / f"slate_{date_type.today().isoformat()}.draftkings.json"
+    )
+    slate_summary: dict[str, Any] = {}
+    if slate_path.exists():
+        try:
+            slate = json.loads(slate_path.read_text(encoding="utf-8"))
+            slate_summary = {
+                "total_actionable": slate.get("total_actionable", 0),
+                "top_count": len(slate.get("top_props") or []),
+                "source": slate.get("source") or "slate_cache",
+            }
+        except (json.JSONDecodeError, OSError):
+            pass
     return {
         "build_id": build_id,
         "project_root": str(PROJECT_ROOT),
@@ -489,11 +524,8 @@ async def build_info():
         "props_repository_exists": props_dir.exists(),
         "props_service": (PROJECT_ROOT / "app" / "services" / "props_mlb.py").exists(),
         "props_api": {
-            "total_actionable": props_sample.get("total_actionable", 0),
-            "top_count": len(props_sample.get("top_props") or []),
-            "source": props_sample.get("source"),
-            "hint": props_sample.get("hint"),
-            "live_odds_enabled": props_sample.get("live_odds_enabled"),
+            **props_meta,
+            **slate_summary,
         },
     }
 
@@ -604,7 +636,13 @@ async def home_today(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return get_home_today_summary(game_date)
+    try:
+        return get_home_today_summary(game_date)
+    except Exception as exc:
+        logger.exception("Home summary failed for %s", game_date)
+        raise HTTPException(
+            status_code=503, detail="Home summary temporarily unavailable"
+        ) from exc
 
 
 @app.get("/api/odds/today")
@@ -708,7 +746,11 @@ async def mlb_game_lineup(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return get_mlb_game_lineup(game_id, game_date)
+    try:
+        return get_mlb_game_lineup(game_id, game_date)
+    except Exception as exc:
+        logger.exception("MLB lineup failed for game %s", game_id)
+        raise HTTPException(status_code=503, detail="Lineup temporarily unavailable") from exc
 
 
 @app.get("/api/teams")
@@ -763,12 +805,16 @@ async def mlb_game_insights(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    insights = build_game_insights(
-        game_id,
-        game_date=game_date,
-        use_cache=use_cache,
-        refresh=refresh,
-    )
+    try:
+        insights = build_game_insights(
+            game_id,
+            game_date=game_date,
+            use_cache=use_cache,
+            refresh=refresh,
+        )
+    except Exception as exc:
+        logger.exception("MLB insights failed for game %s", game_id)
+        raise HTTPException(status_code=503, detail="Game insights temporarily unavailable") from exc
     if insights is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return insights
@@ -791,13 +837,19 @@ async def mlb_game_props(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    payload = build_game_props(
-        game_id,
-        game_date=game_date,
-        refresh=refresh,
-        bookmaker=bookmaker,
-        include_all_markets=include_all_markets,
-    )
+    try:
+        payload = build_game_props(
+            game_id,
+            game_date=game_date,
+            refresh=refresh,
+            bookmaker=bookmaker,
+            include_all_markets=include_all_markets,
+        )
+    except Exception as exc:
+        logger.exception("MLB props failed for game %s", game_id)
+        raise HTTPException(
+            status_code=503, detail="Player props temporarily unavailable"
+        ) from exc
     if payload is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return payload
@@ -913,6 +965,10 @@ async def daily_top_props(
         False,
         description="Force refresh props for the selected sportsbook.",
     ),
+    cache_only: bool = Query(
+        False,
+        description="Return cached slate props only — no scan, refresh, or auto-scan.",
+    ),
     bookmaker: str | None = Query(
         DEFAULT_DISPLAY_BOOKMAKER,
         description="Sportsbook key (default DraftKings; consensus = median across major books).",
@@ -922,7 +978,7 @@ async def daily_top_props(
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
     cache_meta = get_props_cache_meta()
-    if cache_meta.get("requires_refresh"):
+    if not cache_only and cache_meta.get("requires_refresh"):
         scan = True
         refresh = True
     result = build_daily_top_props(
@@ -932,7 +988,12 @@ async def daily_top_props(
         refresh=refresh,
         bookmaker=bookmaker,
     )
-    if not result.get("top_props") and not scan and not refresh:
+    if (
+        not cache_only
+        and not result.get("top_props")
+        and not scan
+        and not refresh
+    ):
         result = build_daily_top_props(
             game_date,
             limit=limit,

@@ -262,8 +262,9 @@ def get_mlb_game_lineup(game_id: str, game_date: date | None = None) -> dict[str
     sides: dict[str, dict[str, Any]] = {"away": {}, "home": {}}
 
     if schedule_game:
+        teams = schedule_game.get("teams") or {}
         for side in ("away", "home"):
-            team_blob = schedule_game["teams"][side]
+            team_blob = teams.get(side) or {}
             sp = _probable_pitcher(team_blob)
             if sp:
                 person_ids.add(sp["id"])

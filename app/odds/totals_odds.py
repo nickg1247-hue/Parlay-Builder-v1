@@ -62,6 +62,9 @@ def attach_totals_odds(
     odds_df["home_team"] = odds_df["home_team"].map(normalize_team_name)
     odds_df["away_team"] = odds_df["away_team"].map(normalize_team_name)
     odds_df["date_key"] = pd.to_datetime(odds_df["date"]).dt.strftime("%Y-%m-%d")
+    odds_df = odds_df.drop_duplicates(
+        subset=["date_key", "home_team", "away_team"], keep="first"
+    )
     return out.merge(
         odds_df,
         on=["date_key", "home_team", "away_team"],

@@ -138,8 +138,18 @@
     playersFeed.querySelectorAll(".player-feed-name").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (typeof openPlayerProfileModal === "function") {
-          openPlayerProfileModal(btn.dataset.playerSport || "mlb", btn.dataset.playerId, btn.dataset.playerName);
-      btn.addEventListener("click", () => unwatchPlayer(btn.dataset.unwatchSport, btn.dataset.unwatchId));
+          openPlayerProfileModal(
+            btn.dataset.playerSport || "mlb",
+            btn.dataset.playerId,
+            btn.dataset.playerName
+          );
+        }
+      });
+    });
+    playersFeed.querySelectorAll(".player-unwatch-btn").forEach((btn) => {
+      btn.addEventListener("click", () =>
+        unwatchPlayer(btn.dataset.unwatchSport, btn.dataset.unwatchId)
+      );
     });
   }
 

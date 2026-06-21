@@ -5,10 +5,10 @@
   "use strict";
 
   const STADIUM_SRC = "/static/assets/osu-stadium-field-centered.png?v=20260630e";
-  const DURATION_MS = 10000;
-  const HOLD_MS = 400;
-  const EXIT_MS = 550;
-  const MAX_MS = 35000;
+  const DURATION_MS = 3800;
+  const HOLD_MS = 280;
+  const EXIT_MS = 450;
+  const MAX_MS = 12000;
 
   const STATUS = [
     "Running win-probability models…",

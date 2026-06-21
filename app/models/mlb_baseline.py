@@ -76,7 +76,17 @@ class HoldoutMetrics:
     accuracy: float
 
 
+_games_df_cache: dict[str, Any] = {"mtime": None, "df": None}
+
+
 def load_games() -> pd.DataFrame:
+    mtime: float | None = None
+    if PARQUET_PATH.exists():
+        mtime = PARQUET_PATH.stat().st_mtime
+    cached = _games_df_cache.get("df")
+    if cached is not None and _games_df_cache.get("mtime") == mtime:
+        return cached
+
     if PARQUET_PATH.exists():
         df = pd.read_parquet(PARQUET_PATH)
     else:
@@ -87,7 +97,10 @@ def load_games() -> pd.DataFrame:
             conn.close()
     df["date"] = pd.to_datetime(df["date"])
     df["season"] = df["date"].dt.year
-    return df.sort_values(["date", "game_id"]).reset_index(drop=True)
+    df = df.sort_values(["date", "game_id"]).reset_index(drop=True)
+    _games_df_cache["mtime"] = mtime
+    _games_df_cache["df"] = df
+    return df
 
 
 def _season_era_medians(train: pd.DataFrame) -> dict[int, float]:

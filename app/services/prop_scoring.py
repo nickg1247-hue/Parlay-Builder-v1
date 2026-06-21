@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 from app.data.pitcher_lookup import lookup_pitcher_rates
+from app.services.teams_hub import _mlb_player_photo
 
 logger = logging.getLogger(__name__)
 
@@ -558,6 +559,8 @@ def score_prop(
 
     return {
         "score": score,
+        "player_id": player_id,
+        "photo_url": _mlb_player_photo(player_id) if player_id else None,
         "recommended_side": side,
         "recommended_odds": choice["recommended_odds"],
         "recommended_hit_rate": hit_rate,

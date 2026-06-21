@@ -3,128 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
-  <title>Today's model slate — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260701">
-  <link rel="stylesheet" href="/static/app.css?v=20260701">
-  <link rel="stylesheet" href="/static/brand.css?v=20260701">
-  <link rel="stylesheet" href="/static/design.css?v=20260701">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260708" type="image/svg+xml">
+  <title>Dashboard — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260708">
+  <link rel="stylesheet" href="/static/app.css?v=20260708">
+  <link rel="stylesheet" href="/static/brand.css?v=20260708">
+  <link rel="stylesheet" href="/static/design.css?v=20260708">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260711">
 </head>
-<body data-ntg-splash="1">
+<body data-ntg-splash="1" class="home-v2 home-dashboard">
   <div class="app-shell">
-    <header class="app-topbar">
-      <div class="app-nav-row">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
         <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links" aria-label="Account & tools"></nav>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
+      </div>
     </header>
 
-    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
-    <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
-
-    <div class="home-hero-stadium-wrap">
-      <div class="home-hero-stadium" aria-hidden="true">
-        <div class="home-hero-stadium-layers">
-          <div class="home-hero-stadium-layer active"></div>
-          <div class="home-hero-stadium-layer"></div>
+    <section class="dash-hero" aria-label="Today on NTG Sports">
+      <div class="dash-hero-inner">
+        <div class="dash-hero-copy">
+          <h1>See the edge before the line moves</h1>
+          <p class="dash-hero-kicker">Model · Markets · Edge</p>
+          <div class="dash-hero-actions">
+            <a class="dash-btn dash-btn-primary" href="/mlb">
+              <span class="dash-btn-icon" aria-hidden="true">▦</span> View Slate
+            </a>
+            <a class="dash-btn dash-btn-gold" href="/mlb/props">
+              <span class="dash-btn-icon" aria-hidden="true">★</span> Very Strong Props
+            </a>
+          </div>
+          <div id="hero-chips" class="hero-chips dash-hero-chips hidden" aria-hidden="true"></div>
         </div>
-        <div class="home-hero-stadium-overlay"></div>
+        <div id="hero-bento" class="dash-hero-widgets" aria-label="Live preview">
+          <div class="dash-widget skeleton-card"></div>
+          <div class="dash-widget skeleton-card"></div>
+          <div class="dash-widget skeleton-card"></div>
+          <div class="dash-widget skeleton-card"></div>
+        </div>
       </div>
-      <div class="home-hero-stadium-content">
-        <h1>Today's model slate</h1>
-        <p>Markets vs. model — +EV singles, player props, and live board across today's games.</p>
-        <div id="hero-chips" class="hero-chips" aria-label="Today at a glance"></div>
-        <p class="home-hero-venue" id="hero-venue"></p>
-      </div>
-    </div>
+    </section>
 
-    <main class="app-main">
-      <p class="refresh-line" id="refresh-line">Checking last update…</p>
+    <main class="app-main dash-main">
+      <p class="refresh-line hidden" id="refresh-line" aria-hidden="true">Checking last update…</p>
 
-      <div class="home-layout">
-        <aside class="home-col-side home-col-scores">
-          <p class="home-col-title">Live board</p>
-          <div id="home-scores-rail" class="scores-rail">
-            <div class="skeleton-game-card"></div>
-            <div class="skeleton-game-card"></div>
-          </div>
-        </aside>
-
-        <div class="home-col-main">
-          <p class="app-section-title">Today at a glance</p>
-          <div id="today-glance">
-            <div class="skeleton-row" style="height: 4rem; border-radius: 12px;"></div>
-          </div>
-
-          <hr class="app-section-divider" aria-hidden="true">
-
-          <p class="app-section-title">Today's edge</p>
-          <div class="home-picks-grid">
-            <div class="home-picks-col">
-              <h3 class="home-picks-col-title">Best bets</h3>
-              <div id="best-bets" class="home-picks-list">
-                <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
-              </div>
-            </div>
-            <div class="home-picks-col">
-              <div class="home-picks-col-head">
-                <h3 class="home-picks-col-title">Best player props</h3>
-                <a href="/mlb/props" class="home-props-more-link">Explore all →</a>
-              </div>
-              <div id="very-strong-props-wrap" class="home-very-strong-wrap hidden">
-                <h4 class="home-very-strong-title">Very strong · 100% L10 / Season</h4>
-                <div id="very-strong-props" class="home-picks-list home-very-strong-list"></div>
-              </div>
-              <div id="best-props" class="home-picks-list">
-                <div class="skeleton-card" style="padding: 0.65rem;"><div class="skeleton-row"></div></div>
-              </div>
-            </div>
-          </div>
-
-          <div id="watched-section" class="hidden"></div>
-
-          <hr class="app-section-divider" aria-hidden="true">
-
-          <p class="app-section-title">Explore</p>
-          <div class="home-links">
-            <a class="home-link-card ntg-card" href="/parlay">
-              <span>Prop parlay builder</span>
-              <span class="arrow">→</span>
-            </a>
-            <a class="home-link-card ntg-card" href="/performance">
-              <span>Model performance</span>
-              <span class="arrow">→</span>
-            </a>
-            <a class="home-link-card ntg-card" href="/mlb">
-              <span>MLB game slate</span>
-              <span class="arrow">→</span>
-            </a>
-            <a class="home-link-card ntg-card" href="/nba">
-              <span>NBA game slate</span>
-              <span class="arrow">→</span>
-            </a>
+      <section class="dash-metrics" aria-label="Today's metrics">
+        <div id="today-glance">
+          <div class="dash-metrics-grid">
+            <div class="dash-metric skeleton-card"></div>
+            <div class="dash-metric skeleton-card"></div>
+            <div class="dash-metric skeleton-card"></div>
+            <div class="dash-metric skeleton-card"></div>
           </div>
         </div>
+      </section>
 
-        <aside class="home-col-side home-sidebar-news">
-          <p class="home-col-title">Headlines</p>
-          <div id="news-list" class="news-list">
-            <p class="news-loading">Loading headlines…</p>
+      <section id="very-strong-props-wrap" class="dash-gold-band hidden" aria-label="Very strong props">
+        <div class="dash-gold-band-inner">
+          <header class="dash-gold-head">
+            <span class="dash-gold-icon" aria-hidden="true"><svg class="dash-icon-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 10l-5.5 4.7L18.5 22 12 18.3 5.5 22l2-7.3L2 10l7.1-1.1L12 2z"/></svg></span>
+            <h2>Very Strong · 100% Form</h2>
+            <a href="/mlb/props" class="dash-link-more">View all →</a>
+          </header>
+          <div id="very-strong-props" class="dash-gold-cards"></div>
+        </div>
+      </section>
+
+      <section class="dash-grid" aria-label="Today's board">
+        <div class="dash-col dash-col-left">
+          <article class="dash-panel">
+            <header class="dash-panel-head">
+              <h2>Best Bets Today</h2>
+              <span class="dash-panel-tag">Top player props</span>
+            </header>
+            <div id="best-bets" class="dash-bets-list">
+              <div class="skeleton-card dash-skeleton-row"></div>
+            </div>
+          </article>
+
+          <article class="dash-panel dash-panel-parlay">
+            <header class="dash-panel-head">
+              <h2>Prop Parlay Builder</h2>
+              <span class="dash-panel-tag">Suggested 3-leg</span>
+            </header>
+            <div id="home-parlay-preview" class="dash-parlay-preview">
+              <p class="dash-parlay-empty">Add props from game pages to build a slip.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="dash-col dash-col-right">
+          <article class="dash-panel">
+            <header class="dash-panel-head dash-panel-head-live">
+              <div class="dash-panel-head-left">
+                <h2>Live Board</h2>
+                <span id="dash-live-head-badge" class="dash-live-head-badge dash-live-head-badge--idle"><span class="dash-live-pulse" aria-hidden="true"></span> LIVE</span>
+              </div>
+              <a href="/mlb" class="dash-link-more">View All ›</a>
+            </header>
+            <div id="home-scores-rail" class="dash-live-list">
+              <div class="skeleton-card dash-skeleton-row"></div>
+            </div>
+          </article>
+
+          <article class="dash-panel dash-panel-perf">
+            <header class="dash-panel-head">
+              <h2>Model Performance</h2>
+              <a href="/performance" class="dash-link-more">Full report →</a>
+            </header>
+            <div id="home-performance" class="dash-perf-body">
+              <p class="dash-perf-loading">Loading performance…</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="dash-edge-section" aria-label="The edge">
+        <header class="dash-edge-head">
+          <span class="dash-edge-bolt" aria-hidden="true">⚡</span>
+          <div>
+            <h2>The Edge</h2>
+            <p class="dash-edge-sub">Best form props &amp; model singles today</p>
           </div>
-        </aside>
-      </div>
+        </header>
+        <div class="dash-edge-scroll-wrap">
+          <div id="edge-scroll" class="dash-edge-track">
+            <p class="dash-edge-empty">Loading picks…</p>
+          </div>
+        </div>
+      </section>
 
+      <div id="best-props" class="hidden" aria-hidden="true"></div>
+      <div id="watched-section" class="hidden"></div>
       <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
     </main>
   </div>
-  <script src="/static/ntg-intro.js?v=20260701"></script>
-  <script src="/static/design.js?v=20260701"></script>
+  <script src="/static/ntg-intro.js?v=20260708"></script>
+  <script src="/static/design.js?v=20260708"></script>
   <script src="/static/player_prop_modal.js?v=20260703"></script>
-  <script src="/static/app.js?v=20260701"></script>
+  <script src="/static/home-dashboard.js?v=20260711"></script>
+  <script src="/static/app.js?v=20260708"></script>
   <script>
-    initLiveTicker("live-ticker", { sport: "all", intervalMs: 45000 });
-    initHeadlineTicker("headline-ticker");
     if (typeof initDesignSystem === "function") initDesignSystem();
   </script>
 </body>

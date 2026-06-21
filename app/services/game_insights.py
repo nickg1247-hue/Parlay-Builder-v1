@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from datetime import date
 from typing import Any
 
@@ -27,6 +28,9 @@ from app.services.schedule_mlb import get_mlb_game
 
 logger = logging.getLogger(__name__)
 
+_INSIGHTS_CACHE_TTL_SECONDS = 120
+_insights_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
 def _pct(prob: float | None) -> float | None:
     if prob is None:
         return None
@@ -39,22 +43,35 @@ def _load_board(
     refresh: bool,
 ) -> dict[str, Any]:
     """Prefer on-disk morning cache; rebuild when refresh=true or missing."""
-    if not refresh and DAILY_BOARD_CACHE.exists():
+    cached_board: dict[str, Any] | None = None
+    if DAILY_BOARD_CACHE.exists():
         try:
-            board = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
-            if board.get("date") == game_date.isoformat():
-                return board
+            cached_board = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
+            if not refresh and cached_board.get("date") == game_date.isoformat():
+                return cached_board
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Could not read daily board cache: %s", exc)
+            cached_board = None
 
-    return build_daily_board(
-        game_date=game_date,
-        use_cache=use_cache,
-        refresh=refresh,
-        skip_totals=False,
-        min_edge=DEFAULT_MIN_EDGE,
-        max_parlays=DEFAULT_MAX_PARLAYS,
-    )
+    try:
+        return build_daily_board(
+            game_date=game_date,
+            use_cache=use_cache,
+            refresh=refresh,
+            skip_totals=False,
+            min_edge=DEFAULT_MIN_EDGE,
+            max_parlays=DEFAULT_MAX_PARLAYS,
+        )
+    except Exception as exc:
+        logger.exception("Daily board rebuild failed for %s", game_date.isoformat())
+        if cached_board and cached_board.get("slate"):
+            warnings = list(cached_board.get("warnings") or [])
+            warnings.append(
+                "Live board rebuild failed — showing last saved slate. "
+                f"({type(exc).__name__})"
+            )
+            return {**cached_board, "warnings": warnings}
+        raise
 
 
 def _slate_row(board: dict[str, Any], game_id: str) -> dict[str, Any] | None:
@@ -503,6 +520,12 @@ def build_game_insights(
 ) -> dict[str, Any] | None:
     """Merge schedule game, daily board row, markets, model, and parlays."""
     game_date = game_date or date.today()
+    cache_key = f"{game_id}:{game_date.isoformat()}:{use_cache}"
+    if not refresh:
+        hit = _insights_cache.get(cache_key)
+        if hit and (time.time() - hit[0]) < _INSIGHTS_CACHE_TTL_SECONDS:
+            return hit[1]
+
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
         return None
@@ -538,7 +561,7 @@ def build_game_insights(
             "or use demo date with use_cache=true."
         )
 
-    return {
+    payload = {
         "game_id": str(game_id),
         "date": game_date.isoformat(),
         "mode": board.get("mode", "demo" if use_cache else "live"),
@@ -555,3 +578,6 @@ def build_game_insights(
         "parlays": _parlays_for_game(board, game_id),
         "edge_threshold": board.get("edge_threshold", DEFAULT_MIN_EDGE),
     }
+    if not refresh:
+        _insights_cache[cache_key] = (time.time(), payload)
+    return payload

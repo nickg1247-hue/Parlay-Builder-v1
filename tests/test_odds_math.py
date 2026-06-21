@@ -33,6 +33,7 @@ def test_valid_american_odds_filter():
     assert not is_valid_american_odds(-1)
     assert not is_valid_american_odds(0)
     assert not is_valid_american_odds(600)
+    assert not is_valid_american_odds(float("nan"))
 
 
 def test_american_payout_profit():

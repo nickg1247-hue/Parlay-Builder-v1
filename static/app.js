@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260704";
+const NTG_ASSET_V = "20260708";
 
 (function ensureChromeStylesEarly() {
   for (const file of ["brand.css", "design.css"]) {
@@ -13,12 +13,47 @@ const NTG_ASSET_V = "20260704";
 })();
 
 async function fetchJSON(url) {
+  const cacheable =
+    typeof url === "string" &&
+    (url.startsWith("/api/news") ||
+      url.startsWith("/api/status/refresh") ||
+      url.startsWith("/api/props/markets") ||
+      url.startsWith("/api/props/bookmakers") ||
+      url.startsWith("/api/props/tracker/summary"));
+  if (cacheable && window.__ntgFetchCache?.has(url)) {
+    const hit = window.__ntgFetchCache.get(url);
+    if (Date.now() - hit.at < hit.ttl) return hit.data;
+  }
   const res = await fetch(url);
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
+    let msg = text || `HTTP ${res.status}`;
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.detail) {
+        msg =
+          typeof parsed.detail === "string"
+            ? parsed.detail
+            : JSON.stringify(parsed.detail);
+      }
+    } catch (_) {
+      if (msg === "Internal Server Error") {
+        msg = "Something went wrong loading this page. Try again in a moment.";
+      }
+    }
+    throw new Error(msg);
   }
-  return res.json();
+  const data = await res.json();
+  if (cacheable) {
+    if (!window.__ntgFetchCache) window.__ntgFetchCache = new Map();
+    const ttl = url.startsWith("/api/news")
+      ? 120000
+      : url.startsWith("/api/props/tracker")
+        ? 180000
+        : 30000;
+    window.__ntgFetchCache.set(url, { data, at: Date.now(), ttl });
+  }
+  return data;
 }
 
 function teamLogoUrl(teamId, sport = "mlb", abbr) {
@@ -104,6 +139,19 @@ function formatLocalTimeShort(isoUtc) {
   const d = new Date(isoUtc);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function formatDashboardSyncStrip(status) {
+  if (!status) return "Checking sync…";
+  const parts = [];
+  if (status.ok) parts.push("Models loaded");
+  if (status.odds_fetched_at) parts.push("Odds synced");
+  if (status.display_updated_at != null || status.games_on_slate != null) {
+    parts.push("Slate ready");
+  }
+  const updated = status.display_updated_at || status.odds_fetched_at || status.ran_at;
+  if (updated) parts.push(`Updated ${formatRelativeShort(updated)}`);
+  return parts.length ? parts.join(" · ") : formatRefreshStatus(status);
 }
 
 function formatRefreshStrip(status) {
@@ -1057,10 +1105,256 @@ function updateGameCards(listEl, games) {
   attachWatchHandlers(listEl);
 }
 
-function renderTodayGlance(el, summary, scoreCounts) {
+function renderHeroBento(el, { games, summary, propsData }) {
+  if (!el) return;
+  const cards = [];
+  const gameList = games || [];
+
+  const liveGame = gameList.find((g) => isGameLive(g.status));
+  const nextGame =
+    liveGame ||
+    gameList.find((g) => !isGameFinal(g.status) && !isGameLive(g.status));
+  if (nextGame) {
+    const href = gameDetailHref(nextGame);
+    const away = (nextGame.away_team || "Away").split(" ").pop();
+    const home = (nextGame.home_team || "Home").split(" ").pop();
+    const score =
+      nextGame.away_score != null && nextGame.home_score != null
+        ? `${nextGame.away_score}–${nextGame.home_score}`
+        : formatLocalTimeShort(nextGame.start_time_utc);
+    const liveTag = isGameLive(nextGame.status)
+      ? `<span class="home-v2-bento-mini-live">Live</span>`
+      : "";
+    cards.push(`
+      <a class="home-v2-bento-mini" href="${href}">
+        <span class="home-v2-bento-mini-label">${(nextGame.sport || "mlb").toUpperCase()} · Live board</span>
+        <span class="home-v2-bento-mini-title">${away} @ ${home}</span>
+        ${liveTag}
+        <span class="home-v2-bento-mini-meta">${score}</span>
+      </a>`);
+  } else {
+    cards.push(`
+      <div class="home-v2-bento-mini">
+        <span class="home-v2-bento-mini-label">Live board</span>
+        <span class="home-v2-bento-mini-title">No games yet</span>
+        <span class="home-v2-bento-mini-meta">Check back closer to first pitch</span>
+      </div>`);
+  }
+
+  const pick = (summary?.top_singles || [])[0];
+  if (pick) {
+    const edge = pick.edge != null ? `${(pick.edge * 100).toFixed(1)}%` : "—";
+    const odds = pick.american_odds > 0 ? `+${pick.american_odds}` : pick.american_odds;
+    const href = pick.game_id ? `/mlb/game/${encodeURIComponent(pick.game_id)}` : "/mlb";
+    cards.push(`
+      <a class="home-v2-bento-mini" href="${href}">
+        <span class="home-v2-bento-mini-label">+EV single</span>
+        <span class="home-v2-bento-mini-title">${pick.team}</span>
+        <span class="home-v2-bento-mini-edge">EV ${edge} · ${odds}</span>
+        <span class="home-v2-bento-mini-meta">${pick.matchup || ""}</span>
+      </a>`);
+  } else {
+    cards.push(`
+      <div class="home-v2-bento-mini">
+        <span class="home-v2-bento-mini-label">+EV single</span>
+        <span class="home-v2-bento-mini-title">No edge flagged</span>
+        <span class="home-v2-bento-mini-meta">Threshold not met today</span>
+      </div>`);
+  }
+
+  const prop = (propsData?.very_strong_props || propsData?.top_props || [])[0];
+  if (prop) {
+    const side = prop.recommended_side || "over";
+    const odds = fmtAmericanOdds(prop.recommended_odds);
+    const href = prop.game_id ? `/mlb/game/${encodeURIComponent(prop.game_id)}` : "/mlb/props";
+    const gold = propEffectiveStrength(prop).line_strength === "very_strong";
+    cards.push(`
+      <a class="home-v2-bento-mini" href="${href}">
+        <span class="home-v2-bento-mini-label ${gold ? "home-v2-bento-mini-label--gold" : ""}">${gold ? "Very strong" : "Player prop"}</span>
+        <span class="home-v2-bento-mini-title">${prop.player}</span>
+        <span class="home-v2-bento-mini-meta">${prop.market_label || prop.market_type}: ${side} ${prop.line} · ${odds}</span>
+      </a>`);
+  } else {
+    cards.push(`
+      <div class="home-v2-bento-mini">
+        <span class="home-v2-bento-mini-label">Player prop</span>
+        <span class="home-v2-bento-mini-title">Props loading</span>
+        <span class="home-v2-bento-mini-meta">Scanning today's slate</span>
+      </div>`);
+  }
+
+  if (summary?.board_available) {
+    cards.push(`
+      <div class="home-v2-bento-mini">
+        <span class="home-v2-bento-mini-label">Model board</span>
+        <span class="home-v2-bento-mini-title">${summary.plus_ev_singles ?? 0} +EV picks</span>
+        <span class="home-v2-bento-mini-meta">${summary.games_on_slate ?? 0} MLB games · ${summary.games_with_odds ?? 0} w/ lines</span>
+      </div>`);
+  } else {
+    cards.push(`
+      <div class="home-v2-bento-mini">
+        <span class="home-v2-bento-mini-label">Model board</span>
+        <span class="home-v2-bento-mini-title">Warming up</span>
+        <span class="home-v2-bento-mini-meta">${summary?.message || "Daily board not ready"}</span>
+      </div>`);
+  }
+
+  el.innerHTML = cards.slice(0, 4).join("");
+}
+
+function renderEdgeScroll(el, singles, props) {
+  if (!el) return;
+  const items = [];
+  (singles || []).slice(0, 8).forEach((p) => {
+    items.push({ type: "single", data: p });
+  });
+  (props || []).slice(0, 8).forEach((p) => {
+    items.push({ type: "prop", data: p });
+  });
+
+  if (!items.length) {
+    el.innerHTML = `<p class="home-v2-edge-empty">No +EV singles or actionable props on today's board.</p>`;
+    return;
+  }
+
+  el.innerHTML = items
+    .map(({ type, data: p }) => {
+      if (type === "single") {
+        const edge = p.edge != null ? `${(p.edge * 100).toFixed(1)}%` : "—";
+        const odds = p.american_odds > 0 ? `+${p.american_odds}` : p.american_odds;
+        const href = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
+        return `
+          <a class="home-v2-edge-card" href="${href}">
+            <span class="home-v2-edge-kind">+EV single</span>
+            <span class="home-v2-edge-title">${p.team}</span>
+            <span class="home-v2-edge-meta">${p.matchup || ""}</span>
+            <span class="home-v2-edge-val">EV ${edge} · ${odds}</span>
+          </a>`;
+      }
+      const side = p.recommended_side || "over";
+      const odds = fmtAmericanOdds(p.recommended_odds);
+      const href = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb/props";
+      const veryStrong = propEffectiveStrength(p).line_strength === "very_strong";
+      return `
+        <a class="home-v2-edge-card${veryStrong ? " home-v2-edge-card--prop" : ""}" href="${href}">
+          <span class="home-v2-edge-kind">${veryStrong ? "Very strong" : "Player prop"}</span>
+          <span class="home-v2-edge-title">${p.player}</span>
+          <span class="home-v2-edge-meta">${p.market_label || p.market_type}: ${side} ${p.line}</span>
+          <span class="home-v2-edge-val">${odds}</span>
+        </a>`;
+    })
+    .join("");
+}
+
+function renderHomeNews(list, data) {
+  if (!list) return;
+  const items = data?.items || [];
+  if (!items.length) {
+    list.replaceChildren();
+    const card = document.createElement("div");
+    card.className = "news-empty-card ntg-card";
+    card.innerHTML = `${emptyStateIcon("news")}<p>${data?.error || "No headlines available right now."}</p>`;
+    list.appendChild(card);
+    return;
+  }
+  list.replaceChildren();
+  renderNewsGrid(list, items);
+}
+
+async function fetchDailyPropsForHome(options = {}) {
+  const cacheOnly = options.cacheOnly !== false;
+  const url = `/api/daily/props?limit=12&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
+  try {
+    const res = await fetch(url);
+    if (res.status === 401) return null;
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) {
+    return null;
+  }
+}
+
+function dedupePropsForEdge(props) {
+  const seen = new Set();
+  const out = [];
+  for (const p of props || []) {
+    const key = [p.game_id, p.player, p.market_type, p.line, p.recommended_side].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
+}
+
+function applyHomeProps(propsData, propsEl, veryStrongWrap, veryStrongEl) {
+  if (!propsEl) return;
+  const hint = propsData?.hint ? ` ${propsData.hint}` : "";
+  const veryStrong = (propsData?.very_strong_props || []).slice(0, 10);
+  if (veryStrongWrap && veryStrongEl) {
+    if (veryStrong.length) {
+      veryStrongWrap.classList.remove("hidden");
+      renderBestProps(veryStrongEl, veryStrong);
+    } else {
+      veryStrongWrap.classList.add("hidden");
+      veryStrongEl.innerHTML = "";
+    }
+  }
+  if (!propsData) {
+    if (veryStrongWrap) veryStrongWrap.classList.add("hidden");
+    if (veryStrongEl) veryStrongEl.innerHTML = "";
+    renderBestProps(propsEl, [], {
+      emptyMessage:
+        pbFeatures.props_require_verified_user && !canAccessProps()
+          ? ""
+          : "Could not load props — check server logs.",
+    });
+    return;
+  }
+  renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
+    emptyMessage: (propsData.top_props || []).length
+      ? undefined
+      : `No actionable props found after scanning today's slate.${hint}`,
+  });
+}
+
+function renderTodayGlance(el, summary, scoreCounts, extras = {}) {
   if (!el) return;
   const mlb = scoreCounts?.mlb ?? "—";
   const nba = scoreCounts?.nba ?? "—";
+  const cfb = scoreCounts?.cfb ?? 0;
+  const gamesToday =
+    typeof mlb === "number" && typeof nba === "number"
+      ? mlb + nba + (typeof cfb === "number" ? cfb : 0)
+      : "—";
+
+  if (document.body.classList.contains("home-v2")) {
+    const slate = summary?.board_available ? summary.games_on_slate ?? gamesToday : gamesToday;
+    const ev = summary?.board_available ? summary.plus_ev_singles ?? 0 : "—";
+    const veryStrong = extras.veryStrongCount ?? "—";
+    const hitRate =
+      extras.hitRate != null ? `${Math.round(extras.hitRate * 100)}%` : "—";
+    el.innerHTML = `
+      <div class="home-v2-metrics-grid">
+        <div class="home-v2-metric-tile">
+          <span class="home-v2-metric-num">${slate}</span>
+          <span class="home-v2-metric-lbl">Games today</span>
+        </div>
+        <div class="home-v2-metric-tile">
+          <span class="home-v2-metric-num">${ev}</span>
+          <span class="home-v2-metric-lbl">+EV singles</span>
+        </div>
+        <div class="home-v2-metric-tile home-v2-metric-tile--gold">
+          <span class="home-v2-metric-num">${veryStrong}</span>
+          <span class="home-v2-metric-lbl">Very strong</span>
+        </div>
+        <div class="home-v2-metric-tile">
+          <span class="home-v2-metric-num">${hitRate}</span>
+          <span class="home-v2-metric-lbl">Prop hit rate</span>
+        </div>
+      </div>`;
+    return;
+  }
+
   if (!summary?.board_available) {
     el.innerHTML = `
       <div class="glance-card glance-muted">
@@ -1836,165 +2130,241 @@ function setHomeLoadProgress(progress, value, status) {
   if (!progress) return;
   progress.value = Math.min(1, Math.max(0, value));
   if (status) progress.status = status;
+  const fill = document.getElementById("dash-progress-fill");
+  if (fill) fill.style.width = `${Math.round(progress.value * 100)}%`;
 }
 
-async function loadHomePageProps(progress) {
-  const propsEl = document.getElementById("best-props");
-  const veryStrongWrap = document.getElementById("very-strong-props-wrap");
-  const veryStrongEl = document.getElementById("very-strong-props");
-  if (!propsEl) return;
+function homePageElements() {
+  return {
+    glance: document.getElementById("today-glance"),
+    bets: document.getElementById("best-bets"),
+    propsEl: document.getElementById("best-props"),
+    veryStrongWrap: document.getElementById("very-strong-props-wrap"),
+    veryStrongEl: document.getElementById("very-strong-props"),
+    watched: document.getElementById("watched-section"),
+    refreshEl: document.getElementById("refresh-line"),
+    heroChips: document.getElementById("hero-chips"),
+    heroBento: document.getElementById("hero-bento"),
+    edgeScroll: document.getElementById("edge-scroll"),
+    scoresRail: document.getElementById("home-scores-rail"),
+    parlayPreview: document.getElementById("home-parlay-preview"),
+    performance: document.getElementById("home-performance"),
+  };
+}
 
-  setHomeLoadProgress(progress, 0.62, "Scanning player props…");
-  let refresh = "";
-  try {
-    const meta = await fetchJSON("/api/props/cache-meta");
-    if (meta.requires_refresh) refresh = "&refresh=true";
-  } catch (_) {}
+function isDashboardHome() {
+  return document.body.classList.contains("home-dashboard");
+}
 
-  const url = `/api/daily/props?limit=25&bookmaker=draftkings&scan=true${refresh}`;
-  try {
-    const res = await fetch(url);
-    if (res.status === 401) {
-      renderBestProps(propsEl, [], { emptyMessage: "" });
-      if (veryStrongWrap) veryStrongWrap.classList.add("hidden");
-      return;
+function applyHomeRefreshStatus(status, refreshEl) {
+  const useSiteRefreshBar = Boolean(document.getElementById("site-refresh-bar"));
+  if (!refreshEl || !status) return;
+  refreshEl.textContent = formatRefreshStatus(status);
+  refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
+  if (!useSiteRefreshBar) pollRefreshStatusLine(refreshEl, 60000);
+  window.__ntgRefreshStatus = status;
+}
+
+function scoreCountsFromScores(scores) {
+  return (
+    scores?.sports || {
+      mlb: (scores?.games || []).filter((g) => g.sport === "mlb").length,
+      nba: (scores?.games || []).filter((g) => g.sport === "nba").length,
+      cfb: (scores?.games || []).filter((g) => g.sport === "cfb").length,
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const propsData = await res.json();
-    const hint = propsData.hint ? ` ${propsData.hint}` : "";
-    const veryStrong = (propsData.very_strong_props || []).slice(0, 10);
-    if (veryStrongWrap && veryStrongEl) {
+  );
+}
+
+function renderHomePageCore(summary, scores, odds, status) {
+  const els = homePageElements();
+  if (!els.glance || !summary || !scores) return;
+
+  applyHomeRefreshStatus(status, els.refreshEl);
+  if (odds) recordOddsSnapshot(odds, scores.games);
+
+  const counts = scoreCountsFromScores(scores);
+
+  if (isDashboardHome()) {
+    if (typeof renderDashboardHeroWidgets === "function") {
+      renderDashboardHeroWidgets(els.heroBento, { games: scores.games, summary, propsData: null });
+    }
+    if (typeof renderDashboardMetrics === "function") {
+      renderDashboardMetrics(els.glance, summary, counts, {});
+    }
+    if (typeof renderDashboardBestBets === "function") {
+      renderDashboardBestBets(els.bets, summary.top_singles, scores.games);
+    }
+    if (typeof renderDashboardLiveBoard === "function") {
+      renderDashboardLiveBoard(els.scoresRail, scores.games);
+    }
+    if (typeof renderDashboardParlayPreview === "function") {
+      renderDashboardParlayPreview(els.parlayPreview, null, scores.games);
+    }
+    if (typeof renderDashboardEdgeScroll === "function") {
+      renderDashboardEdgeScroll(els.edgeScroll, summary.top_singles, [], scores.games);
+    }
+    if (els.performance) {
+      els.performance.innerHTML = `<p class="dash-perf-loading">Loading performance…</p>`;
+    }
+  } else {
+    if (typeof initStadiumHero === "function") initStadiumHero(scores.games || []);
+    if (typeof renderHomeScoresRail === "function") {
+      renderHomeScoresRail(scores.games || [], els.scoresRail);
+    }
+    renderHomeHeroChips(els.heroChips, { summary, scoreCounts: counts, status });
+    renderTodayGlance(els.glance, summary, counts, {});
+    renderBestBets(els.bets, summary.top_singles);
+    renderHeroBento(els.heroBento, { games: scores.games, summary, propsData: null });
+    renderEdgeScroll(els.edgeScroll, summary.top_singles, []);
+  }
+
+  renderWatchedGamesSection(els.watched, scores.games || [], {
+    boardMap: summary.slate_by_game_id || {},
+    gameDate: summary.date,
+    colors: _teamColors,
+  });
+
+  return { summary, scores, counts };
+}
+
+function renderHomePageSecondary(summary, scores, propsData, trackerSummary, perfSummary) {
+  const els = homePageElements();
+  if (!els.glance || !summary || !scores) return;
+
+  const counts = scoreCountsFromScores(scores);
+  const veryStrongCount =
+    propsData?.total_very_strong ?? (propsData?.very_strong_props || []).length;
+  const hitRate = trackerSummary?.overall_hit_rate ?? null;
+  const veryStrong = (propsData?.very_strong_props || []).slice(0, 3);
+
+  if (isDashboardHome()) {
+    if (typeof renderDashboardMetrics === "function") {
+      renderDashboardMetrics(els.glance, summary, counts, { veryStrongCount, hitRate });
+    }
+    if (typeof renderDashboardHeroWidgets === "function") {
+      renderDashboardHeroWidgets(els.heroBento, { games: scores.games, summary, propsData });
+    }
+    if (els.veryStrongWrap && els.veryStrongEl) {
       if (veryStrong.length) {
-        veryStrongWrap.classList.remove("hidden");
-        renderBestProps(veryStrongEl, veryStrong);
+        els.veryStrongWrap.classList.remove("hidden");
+        if (typeof renderDashboardGoldBand === "function") {
+          renderDashboardGoldBand(els.veryStrongEl, veryStrong, scores.games);
+        }
       } else {
-        veryStrongWrap.classList.add("hidden");
-        veryStrongEl.innerHTML = "";
+        els.veryStrongWrap.classList.add("hidden");
+        els.veryStrongEl.innerHTML = "";
       }
     }
-    renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
-      emptyMessage: (propsData.top_props || []).length
-        ? undefined
-        : `No actionable props found after scanning today's slate.${hint}`,
-    });
-  } catch (_) {
-    renderBestProps(propsEl, [], {
-      emptyMessage: "Could not load props — check server logs.",
-    });
-  }
-}
-
-async function loadHomePageNews(progress) {
-  const list = document.getElementById("news-list");
-  if (!list) return;
-
-  setHomeLoadProgress(progress, 0.82, "Loading headlines…");
-  function showEmpty(msg) {
-    list.replaceChildren();
-    const card = document.createElement("div");
-    card.className = "news-empty-card ntg-card";
-    card.innerHTML = `${emptyStateIcon("news")}<p>${msg}</p>`;
-    list.appendChild(card);
-  }
-
-  try {
-    const data = await fetchJSON("/api/news");
-    const items = data.items || [];
-    if (!items.length) {
-      showEmpty(data.error || "No headlines available right now.");
-      return;
+    applyHomeProps(propsData, els.propsEl, null, null);
+    if (typeof renderDashboardEdgeScroll === "function") {
+      renderDashboardEdgeScroll(
+        els.edgeScroll,
+        summary.top_singles,
+        dedupePropsForEdge([
+          ...(propsData?.very_strong_props || []),
+          ...(propsData?.top_props || []),
+        ]),
+        scores.games
+      );
     }
-    list.replaceChildren();
-    renderNewsGrid(list, items);
-  } catch (_) {
-    showEmpty("Headlines unavailable");
+    if (typeof renderDashboardPerformance === "function") {
+      renderDashboardPerformance(els.performance, trackerSummary, perfSummary);
+    }
+    if (typeof renderDashboardParlayPreview === "function") {
+      renderDashboardParlayPreview(els.parlayPreview, propsData, scores.games);
+    }
+    return;
   }
+
+  renderTodayGlance(els.glance, summary, counts, { veryStrongCount, hitRate });
+  applyHomeProps(propsData, els.propsEl, els.veryStrongWrap, els.veryStrongEl);
+  renderHeroBento(els.heroBento, { games: scores.games, summary, propsData });
+  renderEdgeScroll(
+    els.edgeScroll,
+    summary.top_singles,
+    dedupePropsForEdge([
+      ...(propsData?.very_strong_props || []),
+      ...(propsData?.top_props || []),
+    ])
+  );
 }
 
-async function loadHomePageData(progress) {
-  const glance = document.getElementById("today-glance");
-  const bets = document.getElementById("best-bets");
-  const propsEl = document.getElementById("best-props");
-  const watched = document.getElementById("watched-section");
-  const refreshEl = document.getElementById("refresh-line");
-  const heroChips = document.getElementById("hero-chips");
-  const scoresRail = document.getElementById("home-scores-rail");
-
-  if (!glance) return;
+async function loadHomePageCritical(progress) {
+  const els = homePageElements();
+  if (!els.glance) return null;
 
   try {
-    setHomeLoadProgress(progress, 0.05, "Loading team data…");
-    await loadTeamColors();
-
-    setHomeLoadProgress(progress, 0.12, "Running win-probability models…");
+    setHomeLoadProgress(progress, 0.1, "Running win-probability models…");
     const [summary, scores, odds, status] = await Promise.all([
       fetchJSON("/api/home/today"),
       fetchJSON("/api/scores/today?sport=all"),
       fetchJSON("/api/odds/today").catch(() => null),
       fetchJSON("/api/status/refresh").catch(() => null),
+      loadTeamColors(),
     ]);
 
-    setHomeLoadProgress(progress, 0.45, "Syncing live odds…");
-
-    if (refreshEl && status) {
-      refreshEl.textContent = formatRefreshStatus(status);
-      refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
-      pollRefreshStatusLine(refreshEl, 60000);
-    }
-
-    if (odds) recordOddsSnapshot(odds, scores.games);
-
-    const counts = scores.sports || {
-      mlb: (scores.games || []).filter((g) => g.sport === "mlb").length,
-      nba: (scores.games || []).filter((g) => g.sport === "nba").length,
-    };
-
-    if (typeof initStadiumHero === "function") initStadiumHero(scores.games || []);
-    if (typeof renderHomeScoresRail === "function") {
-      renderHomeScoresRail(scores.games || [], scoresRail);
-    }
-
-    renderHomeHeroChips(heroChips, { summary, scoreCounts: counts, status });
-    renderTodayGlance(glance, summary, counts);
-    renderBestBets(bets, summary.top_singles);
-    if (propsEl) {
-      renderBestProps(propsEl, [], { emptyMessage: "Loading player props…" });
-    }
-    renderWatchedGamesSection(watched, scores.games || [], {
-      boardMap: summary.slate_by_game_id || {},
-      gameDate: summary.date,
-      colors: _teamColors,
-    });
-
-    setHomeLoadProgress(progress, 0.55, "Loading today's slate…");
-    await loadHomePageProps(progress);
-    await loadHomePageNews(progress);
+    setHomeLoadProgress(progress, 0.85, "Syncing live odds…");
+    const core = renderHomePageCore(summary, scores, odds, status);
     setHomeLoadProgress(progress, 1, "Ready");
+    return core;
   } catch (_) {
-    renderHomeHeroChips(document.getElementById("hero-chips"), {
+    renderHomeHeroChips(els.heroChips, {
       summary: null,
       scoreCounts: null,
       status: null,
     });
-    brandedErrorState(glance, {
+    brandedErrorState(els.glance, {
       title: "Summary unavailable",
       message: "Could not load today's model slate.",
       kind: "no-board",
-      onRetry: () => loadHomePageData(progress),
+      onRetry: () => loadHomePageCritical(progress),
     });
-    brandedErrorState(bets, {
+    brandedErrorState(els.bets, {
       title: "Best bets unavailable",
       message: "Try refreshing in a moment.",
       kind: "no-bets",
     });
-    brandedErrorState(propsEl, {
-      title: "Props unavailable",
-      message: "Player props could not be loaded.",
-      kind: "no-bets",
-    });
-    if (refreshEl) refreshEl.textContent = "Could not load refresh status";
+    if (els.refreshEl) els.refreshEl.textContent = "Could not load refresh status";
     setHomeLoadProgress(progress, 1, "Ready");
+    return null;
   }
+}
+
+async function loadHomePageDeferred(core) {
+  if (!core?.summary || !core?.scores) return;
+  const els = homePageElements();
+
+  if (els.propsEl) {
+    renderBestProps(els.propsEl, [], { emptyMessage: "Loading player props…" });
+  }
+
+  try {
+    const [propsData, trackerSummary, perfSummary] = await Promise.all([
+      fetchDailyPropsForHome({ cacheOnly: true }),
+      fetchJSON("/api/props/tracker/summary?days=30").catch(() => null),
+      fetchJSON("/api/performance/summary?days=30").catch(() => null),
+    ]);
+    renderHomePageSecondary(
+      core.summary,
+      core.scores,
+      propsData,
+      trackerSummary,
+      perfSummary
+    );
+  } catch (_) {
+    if (!isDashboardHome() && els.propsEl) {
+      brandedErrorState(els.propsEl, {
+        title: "Props unavailable",
+        message: "Player props could not be loaded.",
+        kind: "no-bets",
+      });
+    }
+  }
+}
+
+async function loadHomePageData(progress) {
+  const core = await loadHomePageCritical(progress);
+  await loadHomePageDeferred(core);
 }
 
 function shouldPlayNTGSplash() {
@@ -2056,6 +2426,25 @@ function mainNavIsActive(href, path) {
   return path === href || path.startsWith(`${href}/`);
 }
 
+function renderHomeDashboardNav(container, path) {
+  const specs = [
+    { href: "/", label: "Dashboard" },
+    { href: "/mlb/props", label: "Top Props" },
+    { href: "/performance", label: "Model Hub" },
+    { href: "/sandbox", label: "Tools" },
+  ];
+  container.replaceChildren();
+  container.setAttribute("aria-label", "Primary");
+  specs.forEach((spec) => {
+    const link = document.createElement("a");
+    link.className = "main-nav-link";
+    link.href = spec.href;
+    link.textContent = spec.label;
+    if (mainNavIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
+    container.appendChild(link);
+  });
+}
+
 function renderMainNav(container, path) {
   const specs = [
     { href: "/", label: "Slate" },
@@ -2085,10 +2474,15 @@ function renderSportPills(container, path) {
   const specs = [
     { href: "/mlb", label: "MLB" },
     { href: "/nba", label: "NBA" },
-    { disabled: true, label: "NFL", title: "Coming soon" },
-    { disabled: true, label: "NHL", title: "Coming soon" },
     { href: "/cfb", label: "CFB" },
+    { href: "/mlb/props", label: "Props" },
   ];
+  if (!document.body.classList.contains("home-dashboard")) {
+    specs.push(
+      { disabled: true, label: "NFL", title: "Coming soon" },
+      { disabled: true, label: "NHL", title: "Coming soon" }
+    );
+  }
   container.replaceChildren();
   specs.forEach((spec) => {
     if (spec.disabled) {
@@ -2186,16 +2580,27 @@ function renderSiteFooter() {
 
 async function initSiteRefreshBar(bar) {
   if (!bar) return;
+  const useDashboardStrip = document.body.classList.contains("home-dashboard");
+  async function apply(status) {
+    bar.textContent = useDashboardStrip
+      ? formatDashboardSyncStrip(status)
+      : formatRefreshStrip(status);
+    bar.classList.toggle("ok", Boolean(status?.ok || status?.display_updated_at));
+  }
   async function tick() {
     try {
-      const status = await fetchJSON("/api/status/refresh");
-      bar.textContent = formatRefreshStrip(status);
-      bar.classList.toggle("ok", Boolean(status?.ok || status?.display_updated_at));
+      await apply(await fetchJSON("/api/status/refresh"));
     } catch (_) {
       bar.textContent = "Could not load sync status";
     }
   }
-  await tick();
+  if (window.__ntgRefreshStatus) {
+    const seeded = window.__ntgRefreshStatus;
+    window.__ntgRefreshStatus = null;
+    await apply(seeded);
+  } else {
+    await tick();
+  }
   window.setInterval(tick, 60000);
 }
 
@@ -2229,6 +2634,15 @@ function initSiteChrome() {
     } else {
       navRow.insertBefore(primary, nav);
     }
+    if (document.body.classList.contains("home-dashboard")) {
+      renderHomeDashboardNav(primary, path);
+      const pills = topbar.querySelector(".sport-pills");
+      if (pills) renderSportPills(pills, path);
+      const refreshBar = topbar.querySelector("#site-refresh-bar") || topbar.querySelector(".site-refresh-bar");
+      if (refreshBar) initSiteRefreshBar(refreshBar);
+      return;
+    }
+
     renderMainNav(primary, path);
 
     let subRow = topbar.querySelector(".app-topbar-row--sub");
@@ -2940,6 +3354,8 @@ function initPropSlipUi() {
   window.propSlipLegFromProp = propSlipLegFromProp;
   window.formatPropSlipExport = formatPropSlipExport;
   window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
+  window.getPropSlipLegs = getPropSlipLegs;
+  window.clientParlayDecimal = clientParlayDecimal;
   loadPropSlipFromShareParam();
   renderPropSlipPanel();
 }
@@ -3034,22 +3450,43 @@ function bootNTGSplash() {
   }
 
   const homeProgress = { value: 0, status: "Starting up…" };
-  const homeLoad = isHomePage() ? loadHomePageData(homeProgress) : Promise.resolve();
-  const siteLoad = Promise.all([loadPublicFeatures(), homeLoad]).then(() => {
+  const homeCritical = isHomePage()
+    ? loadHomePageCritical(homeProgress)
+    : Promise.resolve(null);
+  const splashReady = Promise.all([loadPublicFeatures(), homeCritical]).then(() => {
+    window.getPropSlipLegs = getPropSlipLegs;
+    window.clientParlayDecimal = clientParlayDecimal;
     initSiteChrome();
-    initUpdatesModal().catch(() => {});
     initPropSlipUi();
-    showBuildBadge();
   });
 
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
     initNTGSplash({
       getProgress: () => homeProgress.value,
       getStatus: () => homeProgress.status,
-      waitFor: siteLoad,
-    }).catch(() => clearNTGSplashState());
+      waitFor: splashReady,
+    })
+      .catch(() => clearNTGSplashState())
+      .finally(() => {
+        if (isHomePage()) {
+          homeCritical.then((core) => loadHomePageDeferred(core)).catch(() => {});
+        }
+        initUpdatesModal().catch(() => {});
+        showBuildBadge();
+      });
   } else {
-    siteLoad.finally(() => clearNTGSplashState());
+    splashReady
+      .then(() => {
+        if (isHomePage()) {
+          return homeCritical.then((core) => loadHomePageDeferred(core));
+        }
+        return null;
+      })
+      .finally(() => {
+        clearNTGSplashState();
+        initUpdatesModal().catch(() => {});
+        showBuildBadge();
+      });
   }
 }
 

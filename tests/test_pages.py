@@ -28,17 +28,22 @@ def test_home_page():
     assert response.status_code == 200
     text = response.text
     assert "NTG Sports" in text
-    assert 'class="sport-pills"' in text
-    assert 'Player props' not in text.split('app-nav-links')[1].split('sport-pills')[0]
-    assert 'class="active">MLB' not in text
-    assert 'sport-pill-active' not in text
+    assert "home-dashboard" in text
+    assert "sport-pills" in text
+    assert "home-v2" in text
     assert 'id="today-glance"' in text
     assert 'id="best-bets"' in text
-    assert 'id="best-props"' in text
-    assert 'id="hero-chips"' in text
-    assert 'id="news-list"' in text
-    assert "/api/status/refresh" in text
-    assert "live-ticker" in text
+    assert 'id="hero-bento"' in text
+    assert 'id="edge-scroll"' in text
+    assert 'id="home-parlay-preview"' in text
+    assert 'id="home-performance"' in text
+    assert 'id="home-scores-rail"' in text
+    assert 'id="news-list"' not in text
+    assert "home-v2.css" in text
+    assert "home-dashboard.js" in text
+    assert "See the edge before the line moves" in text
+    assert "Very Strong Props" in text
+    assert "Prop Parlay Builder" in text
 
 
 def test_mlb_slate_page():

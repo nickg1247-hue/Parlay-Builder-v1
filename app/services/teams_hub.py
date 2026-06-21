@@ -449,7 +449,10 @@ def _espn_team_detail(sport: str, team_id: str) -> dict[str, Any]:
             sched = sched_resp.json()
     except httpx.HTTPError as exc:
         logger.warning("ESPN team detail failed (%s/%s): %s", sport, team_id, exc)
-        raise
+        stale = _read_json(detail_path)
+        if isinstance(stale, dict) and stale.get("name"):
+            return stale
+        return None
 
     team = data.get("team") or {}
     logo = (team.get("logos") or [{}])[0].get("href")

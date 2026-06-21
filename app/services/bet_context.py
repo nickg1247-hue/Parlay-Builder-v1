@@ -181,3 +181,16 @@ def enrich_ml_singles(
             enrich_ml_single_pick(pick, game, game_date, games=games_df)
         )
     return enriched
+
+
+def form_composite_score(pick: dict[str, Any]) -> float:
+    """Average of available L5 / L10 / season win rates (higher = hotter team form)."""
+    rates = [
+        pick.get("win_rate_l5"),
+        pick.get("win_rate_l10"),
+        pick.get("win_rate_season"),
+    ]
+    vals = [float(r) for r in rates if r is not None]
+    if not vals:
+        return -1.0
+    return sum(vals) / len(vals)

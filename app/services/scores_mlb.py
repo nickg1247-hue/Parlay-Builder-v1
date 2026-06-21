@@ -66,21 +66,24 @@ def fetch_mlb_scores_day(game_date: date) -> list[dict[str, Any]]:
 
 
 def live_game_record(game: dict[str, Any]) -> dict[str, Any]:
-    home = game["teams"]["home"]
-    away = game["teams"]["away"]
-    status = game.get("status", {})
-    home_id = int(home["team"]["id"])
-    away_id = int(away["team"]["id"])
+    teams = game.get("teams") or {}
+    home = teams.get("home") or {}
+    away = teams.get("away") or {}
+    status = game.get("status") or {}
+    home_team = home.get("team") or {}
+    away_team = away.get("team") or {}
+    home_id = int(home_team.get("id") or 0)
+    away_id = int(away_team.get("id") or 0)
     abstract = status.get("abstractGameState") or ""
     return {
         "sport": "mlb",
-        "game_id": str(game["gamePk"]),
-        "home_team": normalize_team_name(home["team"]["name"]),
-        "away_team": normalize_team_name(away["team"]["name"]),
+        "game_id": str(game.get("gamePk") or ""),
+        "home_team": normalize_team_name(home_team.get("name") or "Home"),
+        "away_team": normalize_team_name(away_team.get("name") or "Away"),
         "home_team_id": home_id,
         "away_team_id": away_id,
-        "home_logo_url": team_logo_url(home_id),
-        "away_logo_url": team_logo_url(away_id),
+        "home_logo_url": team_logo_url(home_id) if home_id else None,
+        "away_logo_url": team_logo_url(away_id) if away_id else None,
         "start_time_utc": game.get("gameDate"),
         "status": abstract or status.get("detailedState", ""),
         "detailed_status": status.get("detailedState", ""),
@@ -116,8 +119,26 @@ def get_scores_today(sport: str = "mlb", game_date: date | None = None) -> dict[
     ):
         return {**_scores_cache, "cache_hit": True}
 
-    api_games = fetch_mlb_scores_day(game_date)
-    games = [live_game_record(g) for g in api_games]
+    try:
+        api_games = fetch_mlb_scores_day(game_date)
+        games = [live_game_record(g) for g in api_games]
+    except Exception as exc:
+        logger.warning("MLB scores fetch failed for %s: %s", game_date, exc)
+        if _scores_cache is not None and _scores_cache_key == cache_key:
+            stale = {**_scores_cache, "cache_hit": True, "stale": True}
+            stale["error"] = "Live scores temporarily unavailable — showing last update."
+            return stale
+        return {
+            "sport": sport,
+            "date": game_date.isoformat(),
+            "games": [],
+            "games_count": 0,
+            "cached_at": now.isoformat(),
+            "cache_ttl_seconds": SCORES_CACHE_TTL_SECONDS,
+            "source": "live",
+            "cache_hit": False,
+            "error": "Live scores temporarily unavailable.",
+        }
     if games:
         _update_teams_map(games)
 

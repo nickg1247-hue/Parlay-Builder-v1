@@ -70,8 +70,21 @@ def build_totals_slate(
     else:
         merged = featured.copy()
 
+    featured_by_game = {
+        str(gid): featured.iloc[[pos]]
+        for pos, gid in enumerate(featured["game_id"].astype(str))
+    }
+
     rows: list[dict] = []
-    for i, row in enumerate(merged.itertuples(index=False)):
+    seen_games: set[str] = set()
+    for row in merged.itertuples(index=False):
+        gid = str(row.game_id)
+        if gid in seen_games:
+            continue
+        seen_games.add(gid)
+        feat_row = featured_by_game.get(gid)
+        if feat_row is None:
+            continue
         ou = getattr(row, "ou_line", None)
         market_over = None
         over_am = _safe_int_odds(getattr(row, "over_odds", None))
@@ -81,9 +94,7 @@ def build_totals_slate(
                 market_over, _ = market_probs_from_american_totals(over_am, under_am)
         model_over = None
         if pd.notna(ou):
-            model_over = float(
-                predict_prob_over(featured.iloc[[i]], float(ou))[0]
-            )
+            model_over = float(predict_prob_over(feat_row, float(ou))[0])
         ou_val = float(ou) if pd.notna(ou) else None
         scored = score_totals_pick(
             float(row.expected_total_runs),

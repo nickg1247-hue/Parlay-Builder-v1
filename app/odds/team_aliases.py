@@ -38,11 +38,16 @@ def normalize_team_name(name: str) -> str:
     return raw
 
 
-def is_valid_american_odds(odds: int | float) -> bool:
+def is_valid_american_odds(odds: int | float | None) -> bool:
     """Reject placeholders and non–moneyline values from scraped feeds."""
     if odds is None:
         return False
-    value = int(odds)
+    try:
+        if isinstance(odds, float) and odds != odds:  # NaN
+            return False
+        value = int(odds)
+    except (TypeError, ValueError):
+        return False
     if value == 0:
         return False
     return 100 <= abs(value) <= 500

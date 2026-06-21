@@ -1352,26 +1352,25 @@
     .then(async () => {
       if (typeof initDesignSystem === "function") initDesignSystem();
       if (typeof initGameStickyNav === "function") initGameStickyNav();
-      try {
-        await loadInsights(false);
-      } catch (e) {
+      const propBookSelect = document.getElementById("prop-book-select");
+      const insightsPromise = loadInsights(false).catch((e) => {
         loading.classList.add("hidden");
         content.classList.remove("hidden");
         if (errEl) {
           errEl.classList.remove("hidden");
           errEl.textContent = e.message || "Could not load game insights";
         }
-      }
-      const propBookSelect = document.getElementById("prop-book-select");
-      if (typeof initPropBookSelect === "function") {
-        await initPropBookSelect(propBookSelect, () => loadProps(false));
-      }
-      try {
+      });
+      const propsPromise = (async () => {
+        if (typeof initPropBookSelect === "function") {
+          await initPropBookSelect(propBookSelect, () => loadProps(false));
+        }
         await loadGameMarketTypes();
         await loadProps(false);
-      } catch (_) {
+      })().catch(() => {
         /* loadProps handles its own error UI */
-      }
+      });
+      await Promise.all([insightsPromise, propsPromise]);
     })
     .catch((e) => {
 

@@ -9,12 +9,13 @@ from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.odds.odds_repository import get_today_snapshot
-from app.services.bet_context import enrich_ml_singles
-from app.services.daily_board import DAILY_BOARD_CACHE, _top_singles
+from app.services.bet_context import enrich_ml_singles, form_composite_score
+from app.services.daily_board import DAILY_BOARD_CACHE, _top_form_singles
 
 logger = logging.getLogger(__name__)
 
 STATIC_COLORS = PROJECT_ROOT / "static" / "mlb_team_colors.json"
+ML_BET_FORM_FLOOR = 0.72
 
 
 def _load_board() -> dict[str, Any] | None:
@@ -63,6 +64,105 @@ def _slate_index(slate: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _prop_form_composite(prop: dict[str, Any]) -> float:
+    side = prop.get("recommended_side") or "over"
+    if side == "over":
+        rates = [
+            prop.get("hit_rate_over_l5"),
+            prop.get("hit_rate_over_l10"),
+            prop.get("hit_rate_over_season"),
+        ]
+    else:
+        rates = [
+            prop.get("hit_rate_under_l5"),
+            prop.get("hit_rate_under_l10"),
+            prop.get("hit_rate_under_season"),
+        ]
+    vals = [float(r) for r in rates if r is not None]
+    if vals:
+        return sum(vals) / len(vals)
+    hr = prop.get("recommended_hit_rate")
+    return float(hr) if hr is not None else 0.0
+
+
+def _dedupe_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[Any, ...]] = set()
+    out: list[dict[str, Any]] = []
+    for prop in props:
+        key = (
+            prop.get("player"),
+            prop.get("market_type"),
+            prop.get("line"),
+            prop.get("recommended_side"),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(prop)
+    return out
+
+
+def _best_bets_for_home(
+    game_date: date,
+    slate: list[dict[str, Any]],
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Top home picks: player props by form; ML only if very hot and beats props."""
+    from app.services.props_mlb import build_daily_top_props
+
+    try:
+        props_payload = build_daily_top_props(game_date, limit=40, scan=False)
+    except Exception as exc:
+        logger.warning("Could not load daily props for home best bets: %s", exc)
+        props_payload = {}
+
+    raw_props = _dedupe_props(
+        (props_payload.get("very_strong_props") or [])
+        + (props_payload.get("top_props") or [])
+    )
+    prop_rows: list[dict[str, Any]] = []
+    for prop in raw_props:
+        if not prop.get("recommended_side"):
+            continue
+        prop_rows.append(
+            {
+                **prop,
+                "bet_type": "prop",
+                "form_score": round(_prop_form_composite(prop), 4),
+            }
+        )
+    prop_rows.sort(key=lambda row: row["form_score"], reverse=True)
+
+    ml_rows: list[dict[str, Any]] = []
+    if slate:
+        for pick in _top_form_singles(slate, game_date, limit=12):
+            ml_rows.append(
+                {
+                    **pick,
+                    "bet_type": "ml",
+                    "form_score": round(form_composite_score(pick), 4),
+                }
+            )
+
+    chosen = list(prop_rows[:limit])
+    if len(chosen) < limit and ml_rows:
+        floor = min((row["form_score"] for row in chosen), default=0.0)
+        for ml in ml_rows:
+            if len(chosen) >= limit:
+                break
+            if ml["form_score"] >= ML_BET_FORM_FLOOR and ml["form_score"] > floor:
+                chosen.append(ml)
+                chosen.sort(key=lambda row: row["form_score"], reverse=True)
+                chosen = chosen[:limit]
+                floor = chosen[-1]["form_score"] if chosen else 0.0
+
+    if not chosen and ml_rows:
+        chosen = ml_rows[:limit]
+
+    return chosen[:limit]
+
+
 def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
     """Today at a glance + best bets from on-disk daily board (no rebuild)."""
     game_date = game_date or date.today()
@@ -89,16 +189,20 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
     slate = board.get("slate") or []
     plus_ev_singles = sum(1 for g in slate if g.get("plus_ev_single"))
     plus_ev_totals = sum(1 for g in slate if g.get("plus_ev_total"))
-    cached_top = board.get("top_singles")
-    if cached_top is None and slate:
-        top_singles = _top_singles(slate, game_date)[:5]
-    else:
-        top_singles = (cached_top or [])[:5]
+    top_singles = _best_bets_for_home(game_date, slate) if slate else []
     if top_singles and any(
-        p.get("line_strength") is None or p.get("win_rate_l10") is None
-        for p in top_singles
+        row.get("bet_type") == "ml"
+        and (row.get("line_strength") is None or row.get("win_rate_l10") is None)
+        for row in top_singles
     ):
-        top_singles = enrich_ml_singles(top_singles, slate, game_date)
+        ml_only = [row for row in top_singles if row.get("bet_type") == "ml"]
+        if ml_only:
+            enriched = enrich_ml_singles(ml_only, slate, game_date)
+            by_team = {row.get("team"): row for row in enriched}
+            top_singles = [
+                by_team.get(row.get("team"), row) if row.get("bet_type") == "ml" else row
+                for row in top_singles
+            ]
 
     return {
         "date": board.get("date", game_date.isoformat()),

@@ -73,7 +73,8 @@
     }
 
     const layers = hero.querySelector(".home-hero-stadium-layers");
-    const caption = hero.querySelector(".home-hero-venue");
+    const caption =
+      document.getElementById("hero-venue") || hero.querySelector(".home-hero-venue");
     if (!layers) return;
 
     function showSlide(i) {

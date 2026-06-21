@@ -441,6 +441,60 @@ def _top_singles(
     return enrich_ml_singles(picks[:limit], slate, game_date)
 
 
+def _top_form_singles(
+    slate: list[dict[str, Any]],
+    game_date: date,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Top ML picks for the home page ranked by team form (L5 / L10 / season), not +EV."""
+    from app.services.bet_context import enrich_ml_singles, form_composite_score
+
+    picks: list[dict[str, Any]] = []
+    for game in slate:
+        side = game.get("model_pick_side")
+        team = game.get("model_pick_team")
+        best = game.get("best_pick")
+        if not side or not team:
+            if not best:
+                continue
+            side = best["side"]
+            team = best["team"]
+
+        model_prob = game.get("model_pick_prob")
+        if model_prob is None and game.get("model_prob_home") is not None:
+            model_prob = (
+                float(game["model_prob_home"])
+                if side == "home"
+                else round(1 - float(game["model_prob_home"]), 4)
+            )
+
+        if side == "home":
+            american = game.get("home_ml")
+        else:
+            american = game.get("away_ml")
+        if best and best.get("team") == team:
+            american = best.get("american_odds") or american
+            edge = best.get("edge")
+        else:
+            edge = game.get("ev_pick_edge") if game.get("ev_pick_team") == team else None
+
+        picks.append(
+            {
+                "game_id": game.get("game_id"),
+                "matchup": game.get("matchup"),
+                "team": team,
+                "side": side,
+                "edge": edge,
+                "american_odds": american,
+                "model_prob": model_prob,
+            }
+        )
+
+    enriched = enrich_ml_singles(picks, slate, game_date)
+    enriched.sort(key=form_composite_score, reverse=True)
+    return enriched[:limit]
+
+
 def _top_parlays_payload(
     merged: pd.DataFrame,
     odds_source: str,
