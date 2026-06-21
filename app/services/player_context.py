@@ -15,8 +15,9 @@ from app.services.prop_scoring import (
     _hit_rates,
     _http_client_get,
     _search_player_id,
-    _stat_value,
+    _season_game_log_values,
     market_label,
+    recent_game_window,
 )
 from app.services.mlb_player_depth import get_mlb_player_depth
 from app.services.teams_hub import _mlb_player_photo
@@ -27,20 +28,7 @@ MLB_STATS_BASE = "https://statsapi.mlb.com/api/v1"
 def _season_stat_values(
     player_id: int, group: str, stat_key: str, season: int
 ) -> list[float]:
-    log = fetch_mlb_season_game_log(player_id, group=group, season=season, limit=80)
-    col_key = stat_key if stat_key != "_outs" else "outs"
-    if stat_key == "_outs":
-        col_key = "outs"
-    values: list[float] = []
-    for g in log.get("games") or []:
-        raw = g.get("stats", {}).get(col_key)
-        if raw is None:
-            continue
-        try:
-            values.append(float(raw))
-        except (TypeError, ValueError):
-            continue
-    return values
+    return list(_season_game_log_values(player_id, group, stat_key, season))
 
 
 def get_player_prop_context(
@@ -95,8 +83,8 @@ def get_player_prop_context(
             "side": under if side == "under" else over,
         }
 
-    l5_vals = values[:5]
-    l10_vals = values[:10]
+    l5_vals = recent_game_window(values, 5)
+    l10_vals = recent_game_window(values, 10)
     hit_side = side if side in ("over", "under") else "over"
     prop_col = MARKET_STAT_COLUMN.get(market_type)
 

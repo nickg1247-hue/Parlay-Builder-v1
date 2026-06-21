@@ -126,6 +126,18 @@ def _hit_rates(values: list[float], line: float) -> tuple[float | None, float | 
     return round(over, 3), round(under, 3)
 
 
+def _split_game_date_iso(split: dict[str, Any]) -> str:
+    raw = split.get("date") or (split.get("game") or {}).get("gameDate") or ""
+    return str(raw)[:10]
+
+
+def recent_game_window(values: list[float] | tuple[float, ...], n: int) -> list[float]:
+    """Most recent n games from a chronological (oldest-first) log."""
+    if not values or n <= 0:
+        return []
+    return list(values[-n:])
+
+
 def displays_as_perfect_pct(rate: float | None) -> bool:
     """Match UI chips: Math.round(rate * 100) === 100."""
     if rate is None:
@@ -281,7 +293,10 @@ def _season_game_log_values(player_id: int, group: str, stat_key: str, season: i
     stats_blocks = payload.get("stats") or []
     if not stats_blocks:
         return tuple()
-    splits = stats_blocks[0].get("splits") or []
+    splits = sorted(
+        stats_blocks[0].get("splits") or [],
+        key=_split_game_date_iso,
+    )
     values: list[float] = []
     for split in splits:
         stat = split.get("stat") or {}
@@ -488,8 +503,8 @@ def score_prop(
             "factors": [f"Only {len(values)} games logged this season"],
         }
 
-    l5 = values[:5]
-    l10 = values[:10]
+    l5 = recent_game_window(values, 5)
+    l10 = recent_game_window(values, 10)
     l5_over, l5_under = _hit_rates(l5, line)
     l10_over, l10_under = _hit_rates(l10, line)
     season_over, season_under = _hit_rates(values, line)

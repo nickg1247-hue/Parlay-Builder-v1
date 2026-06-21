@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.prop_scoring import _http_client_get, _parse_innings_outs, _stat_value
+from app.services.prop_scoring import (
+    _http_client_get,
+    _parse_innings_outs,
+    _split_game_date_iso,
+    _stat_value,
+)
 
 MLB_STATS_BASE = "https://statsapi.mlb.com/api/v1"
 
@@ -87,7 +92,12 @@ def fetch_mlb_season_game_log(
         return {"group": group, "season": season, "columns": columns, "games": []}
 
     games: list[dict[str, Any]] = []
-    for split in stats_blocks[0].get("splits") or []:
+    splits = sorted(
+        stats_blocks[0].get("splits") or [],
+        key=_split_game_date_iso,
+        reverse=True,
+    )
+    for split in splits:
         stat = split.get("stat") or {}
         opp = split.get("opponent") or {}
         raw_date = split.get("date") or (split.get("game") or {}).get("gameDate") or ""

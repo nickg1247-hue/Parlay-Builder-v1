@@ -992,6 +992,29 @@ def test_form_score_is_l10_hit_rate_percent():
     assert prop_scoring._compute_rank_score(hit_rate=1.0) == 100.0
 
 
+def test_recent_game_window_uses_most_recent_games():
+    values = [0] + [2] * 14
+    assert prop_scoring.recent_game_window(values, 5) == [2, 2, 2, 2, 2]
+    assert prop_scoring.recent_game_window(values, 10) == [2] * 10
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_l5_l10_use_most_recent_games(mock_logs, _pid):
+    mock_logs.return_value = tuple([0] + [2] * 14)
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-115,
+        under_odds=+105,
+        season=2026,
+    )
+    assert result["hit_rate_over_l5"] == 1.0
+    assert result["hit_rate_over_l10"] == 1.0
+    assert result["hit_rate_over_season"] == round(14 / 15, 3)
+
+
 @patch("app.services.prop_scoring._search_player_id", return_value=592450)
 @patch("app.services.prop_scoring._season_game_log_values")
 def test_score_prop_marks_trap_when_only_wrong_side_listed(mock_logs, _pid):
