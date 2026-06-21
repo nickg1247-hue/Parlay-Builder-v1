@@ -412,6 +412,49 @@ def test_split_slate_props_and_daily_payload():
     assert payload["very_strong_props"][0]["line_strength"] == "very_strong"
 
 
+def test_sample_props_for_scoring_includes_low_count_markets():
+    props = [
+        {"market_type": "batter_hits", "player": f"P{i}", "line": 0.5} for i in range(100)
+    ]
+    props += [
+        {"market_type": "batter_rbis", "player": f"R{i}", "line": 0.5} for i in range(20)
+    ]
+    sampled = props_mlb._sample_props_for_scoring(props, 80)
+    assert len(sampled) == 80
+    assert any(p["market_type"] == "batter_rbis" for p in sampled)
+
+
+def test_enrich_props_no_cap_keeps_all_markets():
+    props = [
+        {"market_type": "batter_hits", "player": f"P{i}", "line": 0.5, "over_odds": -110, "under_odds": -110}
+        for i in range(100)
+    ]
+    props += [
+        {"market_type": "batter_rbis", "player": f"R{i}", "line": 0.5, "over_odds": -110, "under_odds": -110}
+        for i in range(15)
+    ]
+    with patch("app.services.props_mlb.score_prop", side_effect=lambda **kw: {"actionable": False}):
+        with patch("app.services.props_mlb.warm_scoring_cache"):
+            enriched = props_mlb._enrich_props(
+                props,
+                season=2026,
+                away_pitcher=None,
+                home_pitcher=None,
+                away_team_id=None,
+                home_team_id=None,
+                max_lines=None,
+            )
+    assert len(enriched) == 115
+    assert any(p["market_type"] == "batter_rbis" for p in enriched)
+
+
+def test_markets_for_fetch_extended_includes_pitcher_markets():
+    extended = props_mlb._markets_for_fetch(include_alternates=False, include_all_markets=True)
+    assert "batter_rbis" in extended
+    assert "pitcher_hits_allowed" in extended
+    assert "pitcher_outs" in extended
+
+
 def test_filter_prop_markets_excludes_runs_by_default():
     from app.odds.the_odds_api import DEFAULT_MLB_PROP_MARKETS
 

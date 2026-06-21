@@ -21,6 +21,17 @@
   --app-content-max: 1600px;
 }
 
+html[data-theme="light"] {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --border: #d8dee6;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #0b6bcb;
+  --positive: #059669;
+  --glass-bg: rgba(255, 255, 255, 0.82);
+}
+
 html {
   background-color: var(--bg);
   min-height: 100%;

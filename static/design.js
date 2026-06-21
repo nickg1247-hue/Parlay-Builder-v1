@@ -116,6 +116,26 @@
     });
   }
 
+  const THEME_KEY = "ntg_theme";
+
+  function initThemeMode() {
+    const saved = localStorage.getItem(THEME_KEY) || "dark";
+    document.documentElement.dataset.theme = saved;
+
+    document.querySelectorAll(".theme-toggle").forEach((btn) => {
+      const label = saved === "light" ? "Dark" : "Light";
+      btn.textContent = label;
+      btn.setAttribute("aria-pressed", saved === "light" ? "true" : "false");
+      btn.onclick = () => {
+        const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem(THEME_KEY, next);
+        btn.textContent = next === "light" ? "Dark" : "Light";
+        btn.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+      };
+    });
+  }
+
   function initBrandMarks() {
     document.querySelectorAll(".app-brand").forEach((brand) => {
       if (brand.dataset.brandInit === "1") return;
@@ -359,6 +379,7 @@
 
   function initDesignSystem() {
     initDensityMode();
+    initThemeMode();
     initBrandMarks();
     applyActiveSportAccent();
     initPageTransition();
@@ -367,6 +388,7 @@
 
   window.initDesignSystem = initDesignSystem;
   window.initDensityMode = initDensityMode;
+  window.initThemeMode = initThemeMode;
   window.initStadiumHero = initStadiumHero;
   window.renderHomeScoresRail = renderHomeScoresRail;
   window.winProbBandHtml = winProbBandHtml;

@@ -496,9 +496,28 @@
         ? window.buildPropBookQueryWithRefresh
         : async (extra) => window.buildPropBookQuery(extra);
     const params = await build({ refresh: !!refresh });
+    params.set("include_all_markets", "true");
     if (dateParam) params.set("date", dateParam);
     const q = params.toString();
     return `/api/games/mlb/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`;
+  }
+
+  let _gameMarketTypes = null;
+
+  async function loadGameMarketTypes() {
+    if (_gameMarketTypes) return _gameMarketTypes;
+    try {
+      const data = await fetchJSON("/api/props/markets");
+      _gameMarketTypes = data.markets || [];
+    } catch {
+      _gameMarketTypes = [];
+    }
+    return _gameMarketTypes;
+  }
+
+  function marketLabel(key) {
+    const found = (_gameMarketTypes || []).find((m) => m.key === key);
+    return found?.label || String(key || "").replace(/_/g, " ");
   }
 
 
@@ -534,8 +553,9 @@
 
   function renderProps(data) {
 
+    if (data) window._gamePropsData = data;
+    data = data || window._gamePropsData;
     const loadingEl = document.getElementById("props-loading");
-
     const errEl = document.getElementById("props-error");
 
     const bodyEl = document.getElementById("props-body");
@@ -562,7 +582,77 @@
     const top = data.top_picks || [];
     const veryStrong = data.very_strong_picks || [];
 
-    const all = data.props || [];
+    let all = data.props || [];
+
+    const filterActionable = document.getElementById("game-props-filter-actionable")?.checked;
+    const filterVeryStrong = document.getElementById("game-props-filter-very-strong")?.checked;
+    const filterMarket = document.getElementById("game-props-filter-market")?.value || "";
+    if (filterActionable || filterVeryStrong || filterMarket) {
+      all = all.filter((p) => {
+        if (filterActionable && !p.actionable) return false;
+        if (filterVeryStrong && p.line_strength !== "very_strong") return false;
+        if (filterMarket && p.market_type !== filterMarket) return false;
+        return true;
+      });
+    }
+
+    const marketTypes = [...new Set((data.props || []).map((p) => p.market_type).filter(Boolean))].sort(
+      (a, b) => marketLabel(a).localeCompare(marketLabel(b))
+    );
+    const marketOptions = marketTypes
+      .map(
+        (m) =>
+          `<option value="${m}"${filterMarket === m ? " selected" : ""}>${marketLabel(m)}</option>`
+      )
+      .join("");
+
+    all = all.slice().sort((a, b) => {
+      const ma = marketLabel(a.market_type);
+      const mb = marketLabel(b.market_type);
+      if (ma !== mb) return ma.localeCompare(mb);
+      return String(a.player || "").localeCompare(String(b.player || ""));
+    });
+
+    let lastMarket = null;
+    const tableRows = all
+      .map((p, i) => {
+        const side = p.recommended_side || "over";
+        const odds = side === "over" ? p.over_odds : p.under_odds;
+        const score = p.score != null ? `${Math.round(p.score)}` : "—";
+        const hitRates = propHitRatesHtml(p, side);
+        const lineStrength = propLineStrengthHtml(p);
+        const actionable = p.actionable
+          ? ""
+          : `<span class="prop-skip-tag" title="${p.actionable_reason || "Not recommended"}">Skip</span>`;
+        let marketHeader = "";
+        if (p.market_type !== lastMarket) {
+          lastMarket = p.market_type;
+          marketHeader = `<tr class="props-market-header"><td colspan="8"><strong>${marketLabel(p.market_type)}</strong></td></tr>`;
+        }
+        return `${marketHeader}<tr class="prop-row-clickable ${p.actionable ? "" : "prop-row-skip"}" data-open-game-prop="${i}" data-open-game-prop-list="all" role="button" tabindex="0">
+          <td>${p.player}</td>
+          <td>${p.market_label || marketLabel(p.market_type)}</td>
+          <td>${p.line}</td>
+          <td>${side} ${fmtOdds(odds)} ${actionable}</td>
+          <td>${score}</td>
+          <td class="prop-hit-rates">${hitRates}</td>
+          <td class="prop-line-strength">${lineStrength}${p.line_insight ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>
+          <td class="props-actions">${propActionButtons(p, i, "all")}</td>
+        </tr>`;
+      })
+      .join("");
+
+    const propsFilterBar = `
+      <div class="game-props-filters ntg-card">
+        <label><input type="checkbox" id="game-props-filter-actionable"${filterActionable ? " checked" : ""}> Actionable only</label>
+        <label><input type="checkbox" id="game-props-filter-very-strong"${filterVeryStrong ? " checked" : ""}> Very strong</label>
+        <label>Market
+          <select id="game-props-filter-market">
+            <option value="">All</option>
+            ${marketOptions}
+          </select>
+        </label>
+      </div>`;
 
     const bookLabel = data.bookmaker_label
       ? `<p class="props-book-label">Lines: ${data.bookmaker_label}</p>`
@@ -571,7 +661,7 @@
     const veryStrongBlock = veryStrong.length
       ? `<div class="props-block props-block-very-strong">
           <h3>Very strong · 100% L5 / L10 / Season</h3>
-          <div class="props-cards">${veryStrong.map((p, i) => propCardHtml(p, data, i)).join("")}</div>
+          <div class="props-cards">${veryStrong.map((p, i) => propCardHtml(p, data, i, "veryStrong")).join("")}</div>
         </div>`
       : "";
 
@@ -581,58 +671,19 @@
 
           <h3>Top form plays</h3>
 
-          <div class="props-cards">${top.map((p, i) => propCardHtml(p, data, i)).join("")}</div>
+          <div class="props-cards">${top.map((p, i) => propCardHtml(p, data, i, "top")).join("")}</div>
 
         </div>`
 
       : "";
-
-    const tableRows = all
-
-      .map((p, i) => {
-
-        const side = p.recommended_side || "over";
-
-        const odds = side === "over" ? p.over_odds : p.under_odds;
-
-        const score = p.score != null ? `${Math.round(p.score)}` : "—";
-
-        const hitRates = propHitRatesHtml(p, side);
-        const lineStrength = propLineStrengthHtml(p);
-
-        const actionable = p.actionable
-          ? ""
-          : `<span class="prop-skip-tag" title="${p.actionable_reason || "Not recommended"}">Skip</span>`;
-
-        return `<tr class="${p.actionable ? "" : "prop-row-skip"}">
-
-          <td>${p.player}</td>
-
-          <td>${p.market_label || p.market_type}</td>
-
-          <td>${p.line}</td>
-
-          <td>${side} ${fmtOdds(odds)} ${actionable}</td>
-
-          <td>${score}</td>
-
-          <td class="prop-hit-rates">${hitRates}</td>
-
-          <td class="prop-line-strength">${lineStrength}${p.line_insight ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>
-
-          <td class="props-actions">${propActionButtons(p, i, "all")}</td>
-
-        </tr>`;
-
-      })
-
-      .join("");
 
     bodyEl.classList.remove("hidden");
 
     bodyEl.innerHTML = `
 
       ${bookLabel}
+
+      ${propsFilterBar}
 
       ${veryStrongBlock}
 
@@ -682,11 +733,15 @@
 
     bodyEl.querySelectorAll("[data-add-prop]").forEach((btn) => {
 
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
+
+        e.stopPropagation();
 
         const idx = Number(btn.dataset.propIndex);
 
-        const list = btn.dataset.list === "top" ? top : all;
+        const listName = btn.dataset.list || "all";
+        const list =
+          listName === "veryStrong" ? veryStrong : listName === "top" ? top : all;
 
         const prop = list[idx];
 
@@ -715,6 +770,12 @@
 
     });
 
+    wireGamePropModals(bodyEl, { veryStrong, top, all }, data);
+
+    ["game-props-filter-actionable", "game-props-filter-very-strong", "game-props-filter-market"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", () => renderProps());
+    });
+
     if (refreshBtn) {
       refreshBtn.onclick = () => loadProps(true);
     }
@@ -722,7 +783,44 @@
 
 
 
-  function propCardHtml(prop, data, index) {
+  function wireGamePropModals(bodyEl, lists, data) {
+    if (typeof openPropModal !== "function") return;
+    const resolveProp = (listName, idx) => {
+      const list = lists[listName];
+      const prop = list?.[idx];
+      if (!prop) return null;
+      const side = prop.recommended_side || "over";
+      const odds = side === "over" ? prop.over_odds : prop.under_odds;
+      return {
+        ...prop,
+        game_id: gameId,
+        matchup: data.matchup,
+        recommended_odds: odds,
+      };
+    };
+    bodyEl.querySelectorAll("[data-open-game-prop]").forEach((el) => {
+      const listName = el.dataset.openGamePropList || "all";
+      const idx = Number(el.dataset.openGameProp);
+      const open = () => {
+        const prop = resolveProp(listName, idx);
+        if (prop) openPropModal(prop, "mlb");
+      };
+      el.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        open();
+      });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      });
+    });
+  }
+
+
+
+  function propCardHtml(prop, data, index, listName = "all") {
 
     const side = prop.recommended_side || "over";
 
@@ -739,7 +837,7 @@
     const heatCls =
       typeof propHeatClass === "function" ? propHeatClass(prop) : "";
 
-    return `<article class="prop-card ntg-card${veryStrong} ${heatCls}">
+    return `<article class="prop-card ntg-card prop-card-clickable${veryStrong} ${heatCls}" data-open-game-prop="${index}" data-open-game-prop-list="${listName}" role="button" tabindex="0" aria-label="View ${prop.player} prop details">
 
       <div class="prop-card-head">
 
@@ -757,7 +855,7 @@
 
       ${factors ? `<ul class="prop-card-factors">${factors}</ul>` : ""}
 
-      <div class="prop-card-actions">${propActionButtons(prop, index, "top")}</div>
+      <div class="prop-card-actions">${propActionButtons(prop, index, listName)}</div>
 
     </article>`;
 
@@ -771,7 +869,7 @@
       return `<span class="prop-skip-note">${prop.actionable_reason || "Not recommended"}</span>`;
     }
 
-    const list = listName === "top" ? "top" : "all";
+    const list = listName === "veryStrong" ? "veryStrong" : listName === "top" ? "top" : "all";
 
     const side = prop.recommended_side;
 
@@ -1269,6 +1367,7 @@
         await initPropBookSelect(propBookSelect, () => loadProps(false));
       }
       try {
+        await loadGameMarketTypes();
         await loadProps(false);
       } catch (_) {
         /* loadProps handles its own error UI */

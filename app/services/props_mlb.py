@@ -20,6 +20,7 @@ from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
 from app.odds.the_odds_api import (
     ALTERNATE_MLB_PROP_MARKETS,
     DEFAULT_MLB_PROP_MARKETS,
+    EXTENDED_MLB_PROP_MARKETS,
 )
 from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
 from app.services.prop_scoring import (
@@ -283,13 +284,7 @@ def _trim_props_payload(payload: dict[str, Any], markets_requested: str) -> dict
 def list_prop_market_types() -> list[dict[str, str]]:
     from app.services.prop_scoring import MARKET_LABELS
 
-    keys = (
-        "batter_hits",
-        "batter_total_bases",
-        "batter_home_runs",
-        "batter_rbis",
-        "pitcher_strikeouts",
-    )
+    keys = list(MARKET_LABELS.keys())
     return [{"key": key, "label": MARKET_LABELS.get(key, key)} for key in keys]
 
 
@@ -300,10 +295,51 @@ def _canonical_market_type(market_key: str) -> tuple[str, str]:
     return market_key, "main"
 
 
-def _markets_for_fetch(*, include_alternates: bool) -> str:
+def _markets_for_fetch(*, include_alternates: bool, include_all_markets: bool = False) -> str:
+    base = EXTENDED_MLB_PROP_MARKETS if include_all_markets else DEFAULT_MLB_PROP_MARKETS
+    if _include_runs_props(base):
+        base = f"{base},{RUNS_PROP_MARKET}"
     if include_alternates:
-        return f"{DEFAULT_MLB_PROP_MARKETS},{ALTERNATE_MLB_PROP_MARKETS}"
-    return DEFAULT_MLB_PROP_MARKETS
+        alts = ALTERNATE_MLB_PROP_MARKETS
+        if include_all_markets:
+            alts = (
+                f"{alts},pitcher_hits_allowed_alternate,"
+                "pitcher_earned_runs_alternate,pitcher_outs_alternate"
+            )
+        return f"{base},{alts}"
+    return base
+
+
+def _markets_satisfy_request(cached_markets: str, requested: str) -> bool:
+    cached_set = {m.strip() for m in cached_markets.split(",") if m.strip()}
+    needed = {m.strip() for m in requested.split(",") if m.strip()}
+    return needed.issubset(cached_set)
+
+
+def _sample_props_for_scoring(
+    props: list[dict[str, Any]], max_lines: int
+) -> list[dict[str, Any]]:
+    if len(props) <= max_lines:
+        return props
+    by_market: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in props:
+        by_market[str(row.get("market_type") or "unknown")].append(row)
+    markets = sorted(by_market.keys())
+    out: list[dict[str, Any]] = []
+    idx = 0
+    while len(out) < max_lines:
+        added = False
+        for mk in markets:
+            bucket = by_market[mk]
+            if idx < len(bucket):
+                out.append(bucket[idx])
+                added = True
+                if len(out) >= max_lines:
+                    break
+        if not added:
+            break
+        idx += 1
+    return out
 
 
 def _max_slate_prop_fetch(games_on_slate: int) -> int:
@@ -611,6 +647,7 @@ def _assemble_game_props_payload(
         home_pitcher=home_p,
         away_team_id=game.get("away_team_id"),
         home_team_id=game.get("home_team_id"),
+        max_lines=None,
     )
     pick_lists = _game_pick_lists(enriched)
     return {
@@ -1127,9 +1164,10 @@ def _enrich_props(
     home_pitcher: str | None,
     away_team_id: int | None,
     home_team_id: int | None,
+    max_lines: int | None = MAX_PROP_LINES_TO_SCORE,
 ) -> list[dict[str, Any]]:
-    if len(props) > MAX_PROP_LINES_TO_SCORE:
-        props = props[:MAX_PROP_LINES_TO_SCORE]
+    if max_lines is not None and len(props) > max_lines:
+        props = _sample_props_for_scoring(props, max_lines)
 
     batter_players = {
         row["player"]
@@ -1183,10 +1221,14 @@ def build_game_props(
     refresh: bool = False,
     markets: str | None = None,
     include_alternates: bool = False,
+    include_all_markets: bool = True,
     bookmaker: str | None = None,
 ) -> dict[str, Any] | None:
     """Fetch + score player props for one MLB game."""
-    fetch_markets = markets or _markets_for_fetch(include_alternates=include_alternates)
+    fetch_markets = markets or _markets_for_fetch(
+        include_alternates=include_alternates,
+        include_all_markets=include_all_markets,
+    )
     game_date = game_date or date.today()
     book = _resolve_bookmaker(bookmaker)
     detail = get_mlb_game(game_id, game_date)
@@ -1232,7 +1274,10 @@ def build_game_props(
 
     if not refresh:
         cached = _load_cached_game_props(str(game_id), book)
-        if cached:
+        if cached and _markets_satisfy_request(
+            str(cached.get("markets_requested") or ""),
+            fetch_markets,
+        ):
             cached = _trim_props_payload(cached, fetch_markets)
             cached = _apply_published_line_filter(cached)
             if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
@@ -1240,20 +1285,23 @@ def build_game_props(
             return _mark_stale_props(cached)
         raw = _load_raw_event(str(game_id), game_date)
         if raw and _raw_event_fresh(raw) and raw.get("event"):
-            payload = _assemble_game_props_payload(
-                raw["event"],
-                game_id=str(game_id),
-                game_date=game_date,
-                game=game,
-                book=book,
-                fetch_markets=raw.get("markets") or fetch_markets,
-                event_id=raw.get("event_id"),
-                source="raw_event_cache",
-                empty_payload=empty_payload,
-            )
-            payload = _apply_published_line_filter(payload)
-            _write_json(cache_path, payload)
-            return payload
+            raw_markets = str(raw.get("markets") or "")
+            if _markets_satisfy_request(raw_markets, fetch_markets):
+                payload = _assemble_game_props_payload(
+                    raw["event"],
+                    game_id=str(game_id),
+                    game_date=game_date,
+                    game=game,
+                    book=book,
+                    fetch_markets=fetch_markets,
+                    event_id=raw.get("event_id"),
+                    source="raw_event_cache",
+                    empty_payload=empty_payload,
+                )
+                payload = _apply_published_line_filter(payload)
+                _write_json(cache_path, payload)
+                return payload
+        refresh = True
 
     event_id, event_err = _resolve_event_id(
         game_date, home_team, away_team, refresh=refresh

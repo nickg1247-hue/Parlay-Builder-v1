@@ -43,7 +43,7 @@ def test_register_login_props_flow(production_props_auth, isolated_users):
     fan_email = _email("fan")
     reg = client.post(
         "/api/auth/user/register",
-        json={"email": fan_email, "password": "secretpass"},
+        json={"email": fan_email, "password": "secretpass", "accept_terms": True},
     )
     assert reg.status_code == 200
     body = reg.json()
@@ -63,6 +63,15 @@ def test_register_login_props_flow(production_props_auth, isolated_users):
     assert login.status_code == 200
     props2 = client.get("/api/daily/props?limit=1", cookies=login.cookies)
     assert props2.status_code != 401
+
+
+def test_register_requires_terms(production_props_auth, isolated_users):
+    fan_email = _email("noterms")
+    reg = client.post(
+        "/api/auth/user/register",
+        json={"email": fan_email, "password": "secretpass", "accept_terms": False},
+    )
+    assert reg.status_code == 400
 
 
 def test_verify_email_endpoint(production_props_auth, isolated_users):

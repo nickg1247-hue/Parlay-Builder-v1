@@ -15,6 +15,84 @@
     return odds > 0 ? `+${odds}` : `${odds}`;
   }
 
+  function fmtCell(v) {
+    if (v == null || v === "") return "—";
+    return v;
+  }
+
+  function renderGameLogTable(gameLog, options = {}) {
+    const log = gameLog || {};
+    const columns = log.columns || [];
+    const games = log.games || [];
+    const highlight = options.highlightColumn || log.highlight_column || null;
+    const showHitCol = options.showHitColumn === true;
+
+    if (!columns.length) {
+      return `<p class="prop-modal-empty-log">No game log data for this season.</p>`;
+    }
+
+    const head = columns
+      .map((c) => {
+        const cls = c.key === highlight ? "prop-log-stat-col" : "";
+        return `<th class="${cls}">${c.label}</th>`;
+      })
+      .join("");
+
+    const rows = games
+      .map((g) => {
+        let rowClass = "";
+        if (showHitCol && g.prop_hit === true) rowClass = "prop-log-hit";
+        else if (showHitCol && g.prop_hit === false) rowClass = "prop-log-miss";
+        const statCells = columns
+          .map((c) => {
+            const cls = c.key === highlight ? "prop-log-stat-col" : "";
+            return `<td class="${cls}">${fmtCell(g.stats?.[c.key])}</td>`;
+          })
+          .join("");
+        const hitCell = showHitCol
+          ? `<td class="prop-log-hit-col">${g.prop_hit === true ? "✓" : g.prop_hit === false ? "✗" : "—"}</td>`
+          : "";
+        return `<tr class="${rowClass}">
+          <td>${fmtCell(g.date)}</td>
+          <td>${fmtCell(g.opponent)}</td>
+          ${statCells}
+          ${hitCell}
+        </tr>`;
+      })
+      .join("");
+
+    const hitHeader = showHitCol ? `<th>Hit</th>` : "";
+
+    return `
+      <div class="prop-modal-table-wrap prop-modal-table-wrap--wide">
+        <table class="prop-modal-table prop-modal-table--stats">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Opp</th>
+              ${head}
+              ${hitHeader}
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="${columns.length + 2 + (showHitCol ? 1 : 0)}">No games</td></tr>`}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderSeasonTotals(totals) {
+    const entries = Object.entries(totals || {});
+    if (!entries.length) return "";
+    return `
+      <div class="prop-modal-season-totals">
+        ${entries
+          .map(
+            ([label, val]) =>
+              `<span class="prop-modal-total-chip"><strong>${label}</strong> ${fmtCell(val)}</span>`
+          )
+          .join("")}
+      </div>`;
+  }
+
   function ensureOverlay() {
     if (_overlay) return _overlay;
     _overlay = document.createElement("div");
@@ -47,8 +125,42 @@
       <div class="player-prop-modal__skeleton">
         <div class="skeleton-row" style="height:2rem;width:60%"></div>
         <div class="skeleton-row" style="height:1rem;width:40%;margin-top:0.75rem"></div>
-        <div class="skeleton-row" style="height:6rem;margin-top:1rem"></div>
+        <div class="skeleton-row" style="height:8rem;margin-top:1rem"></div>
       </div>`;
+  }
+
+  function renderWhyPickCard(prop, data) {
+    const factors = (prop.factors || []).slice(0, 6);
+    const insight = prop.line_insight || data?.line_insight || "";
+    if (!factors.length && !insight) return "";
+    const list = factors.length
+      ? `<ul class="why-pick-card__factors">${factors.map((f) => `<li>${f}</li>`).join("")}</ul>`
+      : "";
+    return `
+      <section class="why-pick-card ntg-card" aria-label="Why this pick">
+        <h3 class="why-pick-card__title">Why this pick</h3>
+        ${insight ? `<p class="why-pick-card__insight">${insight}</p>` : ""}
+        ${list}
+      </section>`;
+  }
+
+  function renderDepthBadges(depth) {
+    const d = depth || {};
+    const badges = d.badges || [];
+    const split = d.splits?.platoon;
+    let html = "";
+    if (badges.length) {
+      html += `<div class="prop-depth-badges">${badges
+        .map((b) => `<span class="hero-chip hero-chip-muted prop-depth-badge prop-depth-badge--${b.type}">${b.label}</span>`)
+        .join("")}</div>`;
+    }
+    if (split) {
+      html += `<p class="prop-depth-split"><strong>${split.label}</strong> AVG ${split.avg || "—"} · OPS ${split.ops || "—"} · ${split.homeRuns || 0} HR</p>`;
+    }
+    if (d.opposing_pitcher) {
+      html += `<p class="prop-depth-split">Opposing SP: <strong>${d.opposing_pitcher}</strong>${d.opposing_pitcher_era != null ? ` (${d.opposing_pitcher_era} ERA)` : ""}</p>`;
+    }
+    return html ? `<section class="prop-modal-depth">${html}</section>` : "";
   }
 
   function renderModalContent(prop, data) {
@@ -60,28 +172,17 @@
         : prop.recommended_hit_rate != null
           ? `<span class="prop-modal-edge">L10 ${fmtPct(prop.recommended_hit_rate)}</span>`
           : "";
-    const why = prop.line_insight
-      ? `<p class="prop-modal-why">${prop.line_insight}</p>`
-      : "";
-
+    const whyCard = renderWhyPickCard(prop, data);
+    const depthBlock = renderDepthBadges(data.depth);
     const rates = data.hit_rates || {};
-    const games = data.recent_games || [];
-    const tableRows = games
-      .map((g) => {
-        const hitClass =
-          g.hit === true ? "prop-log-hit" : g.hit === false ? "prop-log-miss" : "prop-log-push";
-        return `<tr class="${hitClass}">
-          <td>${g.date || "—"}</td>
-          <td>${g.opponent || "—"}</td>
-          <td>${g.stat_value != null ? g.stat_value : "—"}</td>
-          <td>${g.hit === true ? "✓" : g.hit === false ? "✗" : "—"}</td>
-        </tr>`;
-      })
-      .join("");
-
     const photo = data.photo_url
       ? `<img class="prop-modal-photo" src="${data.photo_url}" alt="" width="64" height="64">`
       : "";
+
+    const gameLogTable = renderGameLogTable(data.game_log, {
+      highlightColumn: data.prop_stat_key,
+      showHitColumn: true,
+    });
 
     return `
       <header class="prop-modal-head">
@@ -90,22 +191,20 @@
           <h2 id="player-prop-modal-title">${data.player_name || prop.player}</h2>
           <p class="prop-modal-market">${data.market_label || prop.market_label}: ${sideLabel} ${prop.line}</p>
           <p class="prop-modal-odds">${fmtOdds(prop.recommended_odds)} ${edge}</p>
-          ${why}
         </div>
       </header>
+      ${whyCard}
+      ${depthBlock}
       <div class="prop-modal-rates">
         <span class="hero-chip">L5 ${fmtPct(rates.l5)}</span>
         <span class="hero-chip">L10 ${fmtPct(rates.l10)}</span>
         <span class="hero-chip">Season ${fmtPct(rates.season)}</span>
+        <span class="hero-chip hero-chip-muted">${data.sample_games || 0} games</span>
       </div>
       <section class="prop-modal-log">
-        <h3>Recent games vs line</h3>
-        <div class="prop-modal-table-wrap">
-          <table class="prop-modal-table">
-            <thead><tr><th>Date</th><th>Opp</th><th>Stat</th><th>Hit</th></tr></thead>
-            <tbody>${tableRows || '<tr><td colspan="4">No game log data</td></tr>'}</tbody>
-          </table>
-        </div>
+        <h3>${data.season || ""} season game log</h3>
+        <p class="prop-modal-log-note">Highlighted column is the prop stat · ✓/✗ vs ${sideLabel} ${prop.line}</p>
+        ${gameLogTable}
       </section>
       <div class="prop-modal-actions">
         ${
@@ -114,6 +213,49 @@
             : ""
         }
       </div>`;
+  }
+
+  function renderProfileContent(data, playerName) {
+    const photo = data.photo_url
+      ? `<img class="prop-modal-photo" src="${data.photo_url}" alt="" width="64" height="64">`
+      : "";
+    const gameLogTable = renderGameLogTable(data.game_log);
+    const totals = renderSeasonTotals(data.season_totals);
+    const props = (data.available_props || [])
+      .map((p) => {
+        const side = p.recommended_side === "under" ? "U" : "O";
+        return `<li><button type="button" class="prop-modal-prop-link">${p.market_label}: ${side}${p.line} (${fmtOdds(p.recommended_odds)})</button></li>`;
+      })
+      .join("");
+
+    return `
+      <header class="prop-modal-head">
+        ${photo}
+        <div>
+          <h2 id="player-prop-modal-title">${data.name || playerName}</h2>
+          <p class="prop-modal-market">${data.position || ""} · ${data.season || ""} season</p>
+        </div>
+      </header>
+      ${totals}
+      <section class="prop-modal-log">
+        <h3>${data.season || ""} season game log</h3>
+        ${gameLogTable}
+      </section>
+      <section class="prop-modal-log">
+        <h3>Today's props</h3>
+        <ul class="prop-modal-props-list" id="prop-modal-props-list">${props || "<li>No props posted today</li>"}</ul>
+      </section>`;
+  }
+
+  function wireProfilePropLinks(container, props) {
+    const buttons = container?.querySelectorAll("#prop-modal-props-list .prop-modal-prop-link");
+    if (!buttons?.length) return;
+    buttons.forEach((btn, i) => {
+      btn.addEventListener("click", () => {
+        const p = props[i];
+        if (p) openPropModal(p, "mlb");
+      });
+    });
   }
 
   async function resolvePlayerId(sport, prop) {
@@ -152,6 +294,7 @@
       line: String(prop.line),
       side,
     });
+    if (prop.game_id) qs.set("game_id", String(prop.game_id));
     try {
       const res = await fetch(
         `/api/players/${encodeURIComponent(sport)}/${encodeURIComponent(playerId)}/prop-context?${qs}`
@@ -178,7 +321,6 @@
     _lastFocus?.focus?.();
   }
 
-  /** Player profile modal (team page) — shares overlay shell. */
   async function openPlayerProfileModal(sport, playerId, playerName) {
     const overlay = ensureOverlay();
     _lastFocus = document.activeElement;
@@ -197,38 +339,8 @@
         body.innerHTML = `<div class="empty-state-card"><p>${data.message || "Coming soon for this sport."}</p></div>`;
         return;
       }
-      const photo = data.photo_url
-        ? `<img class="prop-modal-photo" src="${data.photo_url}" alt="" width="64" height="64">`
-        : "";
-      const recent = (data.recent_games || [])
-        .map(
-          (g) =>
-            `<tr><td>${g.date || "—"}</td><td>${g.opponent || "—"}</td><td>${g.summary || g.stat_value || "—"}</td></tr>`
-        )
-        .join("");
-      const props = (data.available_props || [])
-        .map((p) => {
-          const side = p.recommended_side === "under" ? "U" : "O";
-          return `<li>${p.market_label}: ${side}${p.line} (${fmtOdds(p.recommended_odds)})</li>`;
-        })
-        .join("");
-      body.innerHTML = `
-        <header class="prop-modal-head">
-          ${photo}
-          <div>
-            <h2 id="player-prop-modal-title">${data.name || playerName}</h2>
-            <p class="prop-modal-market">${data.position || ""} · ${data.season || ""} season</p>
-          </div>
-        </header>
-        <section class="prop-modal-log">
-          <h3>Recent games</h3>
-          <table class="prop-modal-table"><thead><tr><th>Date</th><th>Opp</th><th>Line</th></tr></thead>
-          <tbody>${recent || '<tr><td colspan="3">No recent games</td></tr>'}</tbody></table>
-        </section>
-        <section class="prop-modal-log">
-          <h3>Today's props</h3>
-          <ul class="prop-modal-props-list">${props || "<li>No props posted today</li>"}</ul>
-        </section>`;
+      body.innerHTML = renderProfileContent(data, playerName);
+      wireProfilePropLinks(body, data.available_props || []);
     } catch {
       body.innerHTML = `<div class="empty-state-card"><p>Could not load player profile.</p></div>`;
     }
@@ -237,4 +349,5 @@
   global.openPropModal = openPropModal;
   global.closePropModal = closePropModal;
   global.openPlayerProfileModal = openPlayerProfileModal;
+  global.renderPlayerGameLogTable = renderGameLogTable;
 })(window);

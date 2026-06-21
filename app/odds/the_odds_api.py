@@ -33,6 +33,10 @@ ALTERNATE_MLB_PROP_MARKETS = (
     "batter_hits_alternate,batter_total_bases_alternate,"
     "batter_home_runs_alternate,batter_rbis_alternate,pitcher_strikeouts_alternate"
 )
+EXTENDED_MLB_PROP_MARKETS = (
+    f"{DEFAULT_MLB_PROP_MARKETS},"
+    "pitcher_hits_allowed,pitcher_earned_runs,pitcher_outs"
+)
 OPTIONAL_MLB_PROP_MARKETS = "batter_runs_scored"
 DEFAULT_MLB_PROP_REGIONS = os.getenv("ODDS_PROP_REGIONS", "us,us2")
 

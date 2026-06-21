@@ -95,12 +95,20 @@ from app.services.model_lab import (
 )
 from app.services.player_context import get_player_prop_context, resolve_player_id_for_name
 from app.services.player_profile import get_player_profile
+from app.services.slip_optimizer import suggest_prop_slip_swap
+from app.services.matchup_preview import build_matchup_preview
 from app.services.user_teams import (
     follow_team,
     get_alert_prefs,
     list_follows,
     set_alert_prefs,
     unfollow_team,
+)
+from app.services.user_players import (
+    build_player_feed,
+    follow_player,
+    list_player_follows,
+    unfollow_player,
 )
 from app.db.market_status import get_market_eval_status
 from app.db.parlay_status import get_parlay_status
@@ -144,6 +152,13 @@ class LabConfirmRequest(BaseModel):
 class TeamFollowRequest(BaseModel):
     sport: str = Field(..., pattern="^(mlb|nba|cfb)$")
     team_id: str = Field(..., min_length=1, max_length=32)
+
+
+class PlayerFollowRequest(BaseModel):
+    sport: str = Field(..., pattern="^(mlb|nba|cfb)$")
+    player_id: str = Field(..., min_length=1, max_length=32)
+    player_name: str = Field(..., min_length=1, max_length=120)
+    team_id: str | None = Field(None, max_length=32)
 
 
 class AlertPrefsRequest(BaseModel):
@@ -234,6 +249,7 @@ class LoginRequest(BaseModel):
 class UserRegisterRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=254)
     password: str = Field(..., min_length=8, max_length=128)
+    accept_terms: bool = Field(..., description="Must accept Terms and Privacy Policy")
 
 
 class UserLoginRequest(BaseModel):
@@ -266,6 +282,10 @@ class PropParlayLeg(BaseModel):
 
 
 class PropParlayEvalRequest(BaseModel):
+    legs: list[PropParlayLeg] = Field(default_factory=list)
+
+
+class PropParlayOptimizeRequest(BaseModel):
     legs: list[PropParlayLeg] = Field(default_factory=list)
 
 
@@ -352,16 +372,22 @@ async def auth_status(request: Request):
 async def user_register(body: UserRegisterRequest):
     if not user_registration_enabled():
         raise HTTPException(status_code=503, detail="Registration is disabled")
+    if not body.accept_terms:
+        raise HTTPException(
+            status_code=400,
+            detail="You must accept the Terms of Service and Privacy Policy",
+        )
     if not is_valid_email(body.email):
         raise HTTPException(status_code=400, detail="Invalid email address")
     if get_user_by_email(body.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists")
-    user, _token = create_user(body.email, body.password)
+    user, token = create_user(body.email, body.password, terms_accepted=True)
+    send_verification_email(user["email"], token)
     response = JSONResponse(
         {
             "ok": True,
             "email": user["email"],
-            "message": "Account created.",
+            "message": "Account created. Check your email to verify your address.",
         }
     )
     set_user_session_cookie(response, user["id"], user["email"])
@@ -717,6 +743,16 @@ async def mlb_game_detail(
     return detail
 
 
+@app.get("/api/games/mlb/{game_id}/preview")
+async def mlb_matchup_preview(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else date_type.today()
+    return build_matchup_preview("mlb", game_id, game_date=game_date, use_cache=use_cache)
+
+
 @app.get("/api/games/mlb/{game_id}/insights")
 async def mlb_game_insights(
     game_id: str,
@@ -743,6 +779,10 @@ async def mlb_game_props(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
+    include_all_markets: bool = Query(
+        True,
+        description="Fetch extended prop markets (RBIs, pitcher ER, etc.) for this game.",
+    ),
     bookmaker: str | None = Query(
         DEFAULT_DISPLAY_BOOKMAKER,
         description="Sportsbook key (default DraftKings; consensus = median across major books).",
@@ -756,6 +796,7 @@ async def mlb_game_props(
         game_date=game_date,
         refresh=refresh,
         bookmaker=bookmaker,
+        include_all_markets=include_all_markets,
     )
     if payload is None:
         raise HTTPException(status_code=404, detail="Game not found")
@@ -835,6 +876,12 @@ async def props_search(
 async def prop_parlay_eval(body: PropParlayEvalRequest):
     legs = [leg.model_dump() for leg in body.legs]
     return evaluate_prop_parlay(legs)
+
+
+@app.post("/api/parlay/props/optimize")
+async def prop_parlay_optimize(body: PropParlayOptimizeRequest):
+    legs = [leg.model_dump() for leg in body.legs]
+    return suggest_prop_slip_swap(legs)
 
 
 @app.post("/api/props/slip/export")
@@ -942,13 +989,23 @@ async def daily_board(
 @app.get("/api/performance/summary")
 async def performance_summary(days: int = Query(30, ge=1, le=365)):
     summary = summarize_prop_tracker(days=days)
-    clv = summarize_mlb_clv()
+    clv = summarize_mlb_clv(days=days)
     return {"prop_tracker": summary, "clv": clv}
 
 
 @app.get("/api/performance/picks")
-async def performance_picks(limit: int = Query(50, ge=1, le=200)):
-    return {"picks": list_recent_picks(limit=limit)}
+async def performance_picks(
+    limit: int = Query(50, ge=1, le=200),
+    days: int = Query(30, ge=0, le=365),
+    line_strength: str | None = Query(None, pattern="^(strong|moderate|weak)$"),
+):
+    return {
+        "picks": list_recent_picks(
+            limit=limit,
+            days=days,
+            line_strength=line_strength,
+        )
+    }
 
 
 @app.get("/api/players/{sport}/{player_id}/prop-context")
@@ -959,6 +1016,7 @@ async def player_prop_context(
     line: float = Query(...),
     side: str = Query("over", pattern="^(over|under)$"),
     season: int | None = Query(None),
+    game_id: str | None = Query(None),
 ):
     if sport not in ("mlb", "nba", "cfb"):
         raise HTTPException(status_code=400, detail="Unsupported sport")
@@ -969,6 +1027,7 @@ async def player_prop_context(
         line=line,
         side=side,
         season=season,
+        game_id=game_id,
     )
 
 
@@ -1053,9 +1112,72 @@ async def user_alert_prefs_set(request: Request, body: AlertPrefsRequest):
         conn.close()
 
 
+@app.get("/api/user/players/follows")
+async def user_player_follows_list(request: Request):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        follows = list_player_follows(conn, session["user_id"])
+        return {"follows": follows, "feed": build_player_feed(follows)}
+    finally:
+        conn.close()
+
+
+@app.get("/api/user/players/feed")
+async def user_player_feed(request: Request):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        follows = list_player_follows(conn, session["user_id"])
+        return build_player_feed(follows)
+    finally:
+        conn.close()
+
+
+@app.post("/api/user/players/follow")
+async def user_player_follow(request: Request, body: PlayerFollowRequest):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return follow_player(
+            conn,
+            session["user_id"],
+            sport=body.sport,
+            player_id=body.player_id,
+            player_name=body.player_name,
+            team_id=body.team_id,
+        )
+    finally:
+        conn.close()
+
+
+@app.delete("/api/user/players/follow")
+async def user_player_unfollow(
+    request: Request,
+    sport: str = Query(..., pattern="^(mlb|nba|cfb)$"),
+    player_id: str = Query(..., min_length=1, max_length=32),
+):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return unfollow_player(conn, session["user_id"], sport, player_id)
+    finally:
+        conn.close()
+
+
 @app.get("/my-team")
 async def my_team_page():
     return _html_page("my_team.html")
+
+
+@app.get("/privacy")
+async def privacy_page():
+    return _html_page("privacy.html")
+
+
+@app.get("/terms")
+async def terms_page():
+    return _html_page("terms.html")
 
 
 @app.get("/methodology")
@@ -1066,6 +1188,11 @@ async def methodology_page():
 @app.get("/performance")
 async def performance_page():
     return _html_page("performance.html")
+
+
+@app.get("/preview/mlb/{game_id}")
+async def mlb_preview_page(game_id: str):
+    return _html_page("preview.html")
 
 
 @app.get("/parlay")

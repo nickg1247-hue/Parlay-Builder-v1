@@ -1,6 +1,16 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260701";
+const NTG_ASSET_V = "20260704";
+
+(function ensureChromeStylesEarly() {
+  for (const file of ["brand.css", "design.css"]) {
+    if (document.querySelector(`link[href*="${file}"]`)) continue;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `/static/${file}?v=${NTG_ASSET_V}`;
+    document.head.appendChild(link);
+  }
+})();
 
 async function fetchJSON(url) {
   const res = await fetch(url);
@@ -115,10 +125,11 @@ function formatRefreshStrip(status) {
 
 function ensureSiteStyles() {
   const v = NTG_ASSET_V;
-  if (!document.querySelector('link[href*="design.css"]')) {
+  for (const file of ["brand.css", "design.css"]) {
+    if (document.querySelector(`link[href*="${file}"]`)) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = `/static/design.css?v=${v}`;
+    link.href = `/static/${file}?v=${v}`;
     document.head.appendChild(link);
   }
   if (!document.querySelector('link[rel="icon"][href*="ntg-mark"]')) {
@@ -2138,6 +2149,15 @@ function initUtilityNav(nav, path) {
   if (typeof initDensityMode === "function") {
     window.setTimeout(() => initDensityMode(), 0);
   }
+
+  const themeBtn = document.createElement("button");
+  themeBtn.type = "button";
+  themeBtn.className = "theme-toggle";
+  themeBtn.setAttribute("aria-label", "Toggle light or dark theme");
+  nav.appendChild(themeBtn);
+  if (typeof initThemeMode === "function") {
+    window.setTimeout(() => initThemeMode(), 0);
+  }
 }
 
 function renderSiteFooter() {
@@ -2187,6 +2207,9 @@ function initSiteChrome() {
     const navRow = topbar.querySelector(".app-nav-row");
     if (!navRow) return;
 
+    navRow.classList.add("app-topbar-row", "app-topbar-row--main");
+    const brand = navRow.querySelector(".app-brand");
+
     let nav = navRow.querySelector(".app-nav-links");
     if (!nav) {
       nav = document.createElement("nav");
@@ -2195,6 +2218,34 @@ function initSiteChrome() {
     }
     initUtilityNav(nav, path);
 
+    let primary = topbar.querySelector(".app-nav-primary");
+    if (!primary) {
+      primary = document.createElement("nav");
+      primary.className = "app-nav-primary";
+      primary.setAttribute("aria-label", "Primary");
+    }
+    if (brand) {
+      brand.insertAdjacentElement("afterend", primary);
+    } else {
+      navRow.insertBefore(primary, nav);
+    }
+    renderMainNav(primary, path);
+
+    let subRow = topbar.querySelector(".app-topbar-row--sub");
+    if (!subRow) {
+      subRow = document.createElement("div");
+      subRow.className = "app-topbar-row app-topbar-row--sub";
+      topbar.appendChild(subRow);
+    }
+
+    const pills = topbar.querySelector(".sport-pills");
+    if (pills && pills.parentElement !== subRow) {
+      subRow.appendChild(pills);
+    }
+    if (pills) {
+      renderSportPills(pills, path);
+    }
+
     let refreshBar = topbar.querySelector(".site-refresh-bar");
     if (!refreshBar) {
       refreshBar = document.createElement("div");
@@ -2202,23 +2253,11 @@ function initSiteChrome() {
       refreshBar.id = "site-refresh-bar";
       refreshBar.setAttribute("aria-live", "polite");
       refreshBar.textContent = "Checking sync…";
-      navRow.insertAdjacentElement("afterend", refreshBar);
+    }
+    if (refreshBar.parentElement !== subRow) {
+      subRow.appendChild(refreshBar);
     }
     initSiteRefreshBar(refreshBar);
-
-    let primary = topbar.querySelector(".app-nav-primary");
-    if (!primary) {
-      primary = document.createElement("nav");
-      primary.className = "app-nav-primary";
-      const anchor = topbar.querySelector(".sport-pills") || refreshBar;
-      anchor.insertAdjacentElement("beforebegin", primary);
-    }
-    renderMainNav(primary, path);
-
-    const pills = topbar.querySelector(".sport-pills");
-    if (pills) {
-      renderSportPills(pills, path);
-    }
   });
 
   document.querySelectorAll(".app-shell").forEach((shell) => {
@@ -2372,6 +2411,110 @@ function getPropSlipLegs() {
 
 function savePropSlipLegs(legs) {
   localStorage.setItem(PROP_SLIP_KEY, JSON.stringify(legs));
+  syncPropSlipShareUrl(legs);
+}
+
+function encodePropSlipShare(legs) {
+  const minimal = (legs || []).map((l) => ({
+    player: l.player,
+    market_type: l.market_type,
+    market_label: l.market_label,
+    side: l.side,
+    line: l.line,
+    american_odds: l.american_odds,
+    game_id: l.game_id,
+    matchup: l.matchup,
+    score: l.score,
+    line_insight: l.line_insight,
+    line_strength: l.line_strength,
+    line_strength_label: l.line_strength_label,
+  }));
+  return btoa(unescape(encodeURIComponent(JSON.stringify(minimal))));
+}
+
+function decodePropSlipShare(encoded) {
+  const raw = decodeURIComponent(escape(atob(encoded)));
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map((l, i) => ({
+    ...l,
+    id: l.id || [l.game_id, l.player, l.market_type, l.line, l.side, i].join("|"),
+  }));
+}
+
+function syncPropSlipShareUrl(legs) {
+  if (window.location.pathname !== "/parlay") return;
+  const url = new URL(window.location.href);
+  if (!legs?.length) {
+    url.searchParams.delete("share");
+  } else {
+    url.searchParams.set("share", encodePropSlipShare(legs));
+  }
+  window.history.replaceState({}, "", url);
+}
+
+function loadPropSlipFromShareParam() {
+  const share = new URLSearchParams(window.location.search).get("share");
+  if (!share) return false;
+  try {
+    const legs = decodePropSlipShare(share);
+    if (!legs.length) return false;
+    savePropSlipLegs(legs);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function runSlipOptimizer() {
+  const legs = getPropSlipLegs();
+  const noteEl = document.getElementById("prop-slip-suggest");
+  if (!noteEl) return;
+  noteEl.innerHTML = `<p class="prop-slip-meta">Finding a stronger leg…</p>`;
+  try {
+    const res = await fetch("/api/parlay/props/optimize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ legs }),
+    });
+    const data = await res.json();
+    if (data.status !== "ok") {
+      noteEl.innerHTML = `<p class="prop-slip-meta">${data.message || "No swap found."}</p>`;
+      return;
+    }
+    noteEl.innerHTML = `
+      <div class="prop-slip-suggest-card ntg-card">
+        <p><strong>Suggested swap</strong></p>
+        <p class="prop-slip-meta">${data.reason || ""}</p>
+        <p class="prop-slip-meta">Form score ${data.score_before} → ${data.score_after}</p>
+        <button type="button" class="home-props-fill-btn" id="prop-slip-apply-swap">Apply swap</button>
+        <button type="button" class="btn-ghost" id="prop-slip-dismiss-swap">Dismiss</button>
+      </div>`;
+    document.getElementById("prop-slip-apply-swap")?.addEventListener("click", () => {
+      if (data.new_legs) {
+        savePropSlipLegs(data.new_legs);
+        renderPropSlipPanel();
+      }
+    });
+    document.getElementById("prop-slip-dismiss-swap")?.addEventListener("click", () => {
+      noteEl.innerHTML = "";
+    });
+  } catch {
+    noteEl.innerHTML = `<p class="prop-slip-meta">Optimizer unavailable.</p>`;
+  }
+}
+
+async function copyPropSlipShareLink() {
+  const legs = getPropSlipLegs();
+  if (!legs.length) return false;
+  const url = new URL(window.location.origin + "/parlay");
+  url.searchParams.set("share", encodePropSlipShare(legs));
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function fmtAmericanOdds(odds) {
@@ -2662,13 +2805,28 @@ function renderPropSlipPanel() {
     ${warnHtml}
     <p><strong>${legs.length}-leg parlay</strong> · Combined ${american}</p>
     <p class="prop-slip-meta">$10 stake → $${profit10} profit if all legs hit (book may differ)</p>
+    <div id="prop-slip-suggest"></div>
     <div class="prop-slip-actions">
       <button type="button" class="prop-slip-copy" id="prop-slip-open-book">Open in ${bookLabel}</button>
+      ${legs.length >= 2 ? `<button type="button" class="btn-ghost" id="prop-slip-optimize">Suggest swap</button>` : ""}
+      <button type="button" class="btn-ghost" id="prop-slip-share">Share link</button>
       <button type="button" class="btn-ghost" id="prop-slip-copy">Copy list</button>
       <button type="button" class="btn-ghost" id="prop-slip-clear">Clear</button>
     </div>
     <p class="prop-slip-meta prop-slip-deeplink-note" id="prop-slip-deeplink-note">Uses sportsbook add-to-slip links when props were refreshed recently.</p>
   `;
+
+  document.getElementById("prop-slip-optimize")?.addEventListener("click", runSlipOptimizer);
+
+  document.getElementById("prop-slip-share")?.addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    const ok = await copyPropSlipShareLink();
+    const orig = btn.textContent;
+    btn.textContent = ok ? "Link copied!" : "Copy failed";
+    window.setTimeout(() => {
+      btn.textContent = orig;
+    }, 2000);
+  });
 
   document.getElementById("prop-slip-open-book")?.addEventListener("click", async (ev) => {
     const btn = ev.currentTarget;
@@ -2751,6 +2909,7 @@ function initPropSlipUi() {
 
   const root = document.createElement("div");
   root.id = "prop-slip-root";
+  root.className = "prop-slip-root prop-slip-root--mobile";
   root.innerHTML = `
     <button type="button" id="prop-slip-toggle" class="prop-slip-toggle" aria-expanded="false">
       Prop slip <span id="prop-slip-count">0</span>
@@ -2781,6 +2940,7 @@ function initPropSlipUi() {
   window.propSlipLegFromProp = propSlipLegFromProp;
   window.formatPropSlipExport = formatPropSlipExport;
   window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
+  loadPropSlipFromShareParam();
   renderPropSlipPanel();
 }
 

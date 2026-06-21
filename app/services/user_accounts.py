@@ -23,6 +23,7 @@ def _row_to_dict(row: tuple[Any, ...]) -> dict[str, Any]:
         "verification_token": row[4],
         "verification_token_expires_at": row[5],
         "created_at": row[6],
+        "terms_accepted_at": row[7] if len(row) > 7 else None,
     }
 
 
@@ -30,7 +31,8 @@ def _select_user(conn, where: str, param: Any) -> dict[str, Any] | None:
     cur = conn.execute(
         f"""
         SELECT id, email, password_hash, email_verified_at,
-               verification_token, verification_token_expires_at, created_at
+               verification_token, verification_token_expires_at, created_at,
+               terms_accepted_at
         FROM users
         WHERE {where}
         LIMIT 1
@@ -67,21 +69,23 @@ def get_user_by_verification_token(token: str) -> dict[str, Any] | None:
         conn.close()
 
 
-def create_user(email: str, password: str) -> tuple[dict[str, Any], str]:
+def create_user(email: str, password: str, *, terms_accepted: bool = False) -> tuple[dict[str, Any], str]:
     """Create user; returns (user_row, verification_token)."""
     email_key = normalize_email(email)
     token = secrets.token_urlsafe(32)
     expires = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    terms_at = _now_iso() if terms_accepted else None
     conn = get_connection()
     try:
         conn.execute(
             """
             INSERT INTO users (
                 email, password_hash, email_verified_at,
-                verification_token, verification_token_expires_at, created_at
-            ) VALUES (?, ?, NULL, ?, ?, ?)
+                verification_token, verification_token_expires_at, created_at,
+                terms_accepted_at
+            ) VALUES (?, ?, NULL, ?, ?, ?, ?)
             """,
-            (email_key, hash_password(password), token, expires, _now_iso()),
+            (email_key, hash_password(password), token, expires, _now_iso(), terms_at),
         )
         conn.commit()
         user = get_user_by_email(email_key)

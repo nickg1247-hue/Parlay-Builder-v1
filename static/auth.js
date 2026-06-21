@@ -62,6 +62,11 @@ function initSignUpPage() {
       showAuthNote(errorEl, "Passwords do not match", true);
       return;
     }
+    const acceptTerms = document.getElementById("accept-terms")?.checked;
+    if (!acceptTerms) {
+      showAuthNote(errorEl, "You must accept the Terms and Privacy Policy", true);
+      return;
+    }
     btn.disabled = true;
     try {
       const res = await fetch("/api/auth/user/register", {
@@ -70,6 +75,7 @@ function initSignUpPage() {
         body: JSON.stringify({
           email: document.getElementById("email").value,
           password,
+          accept_terms: true,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -77,7 +83,10 @@ function initSignUpPage() {
         showAuthNote(errorEl, body.detail || "Sign up failed", true);
         return;
       }
-      window.location.href = authNextPath("/mlb/props");
+      showAuthNote(noteEl, body.message || "Check your email to verify your account.", false);
+      window.setTimeout(() => {
+        window.location.href = authNextPath("/verify-email?email=" + encodeURIComponent(body.email || document.getElementById("email").value));
+      }, 1200);
     } catch {
       showAuthNote(errorEl, "Network error — try again", true);
     } finally {

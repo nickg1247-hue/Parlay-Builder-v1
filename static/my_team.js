@@ -4,9 +4,12 @@
   const tabsEl = document.getElementById("sport-tabs");
   const followedSection = document.getElementById("followed-teams-section");
   const followedList = document.getElementById("followed-teams-list");
+  const playersSection = document.getElementById("followed-players-section");
+  const playersFeed = document.getElementById("followed-players-feed");
   const alertSection = document.getElementById("alert-prefs-section");
   const digestToggle = document.getElementById("daily-digest-toggle");
   const FOLLOWS_KEY = "ntg_team_follows";
+  const PLAYER_FOLLOWS_KEY = "ntg_player_follows";
   let activeSport = "mlb";
   let searchTimer = null;
   let serverFollows = [];
@@ -100,6 +103,102 @@
     renderFollowedTeams();
   }
 
+  function renderPlayerFeed(feed) {
+    const players = feed?.players || [];
+    if (!players.length) {
+      playersSection?.classList.add("hidden");
+      return;
+    }
+    playersSection?.classList.remove("hidden");
+    playersFeed.innerHTML = players
+      .map((p) => {
+        const ng = p.next_game;
+        const gameBlock = ng?.game_id
+          ? `<p class="player-feed-game"><a href="/preview/mlb/${encodeURIComponent(ng.game_id)}">${ng.matchup || "Matchup preview"}</a> · ${ng.status || "Scheduled"} · <a class="btn-ghost btn-ghost-sm" href="/mlb/game/${encodeURIComponent(ng.game_id)}">Game</a></p>`
+          : `<p class="player-feed-game text-muted">No upcoming game today</p>`;
+        const news = (p.news || [])
+          .slice(0, 3)
+          .map(
+            (n) =>
+              `<li><a href="${n.link}" target="_blank" rel="noopener">${n.title}</a><span class="player-feed-news-src">${n.source || ""}</span></li>`
+          )
+          .join("");
+        return `
+        <article class="player-feed-card ntg-card">
+          <header class="player-feed-head">
+            <button type="button" class="player-feed-name" data-player-sport="${p.sport}" data-player-id="${p.player_id}" data-player-name="${p.player_name}">${p.player_name}</button>
+            <button type="button" class="player-unwatch-btn" data-unwatch-sport="${p.sport}" data-unwatch-id="${p.player_id}" aria-label="Unwatch">×</button>
+          </header>
+          ${gameBlock}
+          ${news ? `<ul class="player-feed-news">${news}</ul>` : `<p class="text-muted">No recent headlines mentioning this player.</p>`}
+        </article>`;
+      })
+      .join("");
+
+    playersFeed.querySelectorAll(".player-feed-name").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (typeof openPlayerProfileModal === "function") {
+          openPlayerProfileModal(btn.dataset.playerSport || "mlb", btn.dataset.playerId, btn.dataset.playerName);
+      btn.addEventListener("click", () => unwatchPlayer(btn.dataset.unwatchSport, btn.dataset.unwatchId));
+    });
+  }
+
+  async function unwatchPlayer(sport, playerId) {
+    if (window.pbUserAuth?.signed_in) {
+      try {
+        await fetch(
+          `/api/user/players/follow?sport=${encodeURIComponent(sport)}&player_id=${encodeURIComponent(playerId)}`,
+          { method: "DELETE" }
+        );
+      } catch (_) {}
+    }
+    const list = JSON.parse(localStorage.getItem(PLAYER_FOLLOWS_KEY) || "[]").filter(
+      (f) => !(f.sport === sport && f.player_id === playerId)
+    );
+    localStorage.setItem(PLAYER_FOLLOWS_KEY, JSON.stringify(list));
+    loadPlayerFeed();
+  }
+
+  async function loadPlayerFeed() {
+    if (window.pbUserAuth?.signed_in) {
+      try {
+        const data = await fetchJSON("/api/user/players/feed");
+        renderPlayerFeed(data);
+        return;
+      } catch (_) {}
+    }
+    const local = JSON.parse(localStorage.getItem(PLAYER_FOLLOWS_KEY) || "[]");
+    if (!local.length) {
+      playersSection?.classList.add("hidden");
+      return;
+    }
+    renderPlayerFeed({
+      players: local.map((p) => ({
+        ...p,
+        next_game: null,
+        news: [],
+      })),
+    });
+  }
+
+  window.ntgWatchPlayer = async function (sport, playerId, playerName, teamId) {
+    const entry = { sport, player_id: playerId, player_name: playerName, team_id: teamId || null };
+    const list = JSON.parse(localStorage.getItem(PLAYER_FOLLOWS_KEY) || "[]");
+    if (!list.some((f) => f.sport === sport && f.player_id === playerId)) {
+      list.push(entry);
+      localStorage.setItem(PLAYER_FOLLOWS_KEY, JSON.stringify(list));
+    }
+    if (window.pbUserAuth?.signed_in) {
+      try {
+        await fetch("/api/user/players/follow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        });
+      } catch (_) {}
+    }
+  };
+
   async function loadServerFollows() {
     if (!window.pbUserAuth?.signed_in) return;
     try {
@@ -189,6 +288,7 @@
     renderTabs();
     renderFollowedTeams();
     await loadServerFollows();
+    await loadPlayerFeed();
     await loadAlertPrefs();
     loadTeams();
   });

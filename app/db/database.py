@@ -32,6 +32,7 @@ def init_db() -> None:
     from app.db.nba_schema import ensure_nba_games_table
     from app.db.user_schema import ensure_users_table
     from app.services.user_teams import ensure_user_team_tables
+    from app.services.user_players import ensure_user_player_tables
 
     conn = get_connection()
     try:
@@ -40,5 +41,6 @@ def init_db() -> None:
         ensure_cfb_games_table(conn)
         ensure_users_table(conn)
         ensure_user_team_tables(conn)
+        ensure_user_player_tables(conn)
     finally:
         conn.close()

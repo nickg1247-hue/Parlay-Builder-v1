@@ -5,6 +5,11 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from app.services.mlb_game_log import (
+    MARKET_STAT_COLUMN,
+    annotate_prop_line_hits,
+    fetch_mlb_season_game_log,
+)
 from app.services.prop_scoring import (
     MARKET_STAT,
     _hit_rates,
@@ -13,44 +18,29 @@ from app.services.prop_scoring import (
     _stat_value,
     market_label,
 )
+from app.services.mlb_player_depth import get_mlb_player_depth
 from app.services.teams_hub import _mlb_player_photo
 
 MLB_STATS_BASE = "https://statsapi.mlb.com/api/v1"
 
 
-def _season_game_log_rows(
+def _season_stat_values(
     player_id: int, group: str, stat_key: str, season: int
-) -> list[dict[str, Any]]:
-    url = f"{MLB_STATS_BASE}/people/{player_id}/stats"
-    params = {"stats": "gameLog", "group": group, "season": season}
-    try:
-        response = _http_client_get().get(url, params=params)
-        response.raise_for_status()
-        payload = response.json()
-    except Exception:
-        return []
-
-    stats_blocks = payload.get("stats") or []
-    if not stats_blocks:
-        return []
-    rows: list[dict[str, Any]] = []
-    for split in stats_blocks[0].get("splits") or []:
-        stat = split.get("stat") or {}
-        val = _stat_value(group, stat_key, stat)
-        if val is None:
+) -> list[float]:
+    log = fetch_mlb_season_game_log(player_id, group=group, season=season, limit=80)
+    col_key = stat_key if stat_key != "_outs" else "outs"
+    if stat_key == "_outs":
+        col_key = "outs"
+    values: list[float] = []
+    for g in log.get("games") or []:
+        raw = g.get("stats", {}).get(col_key)
+        if raw is None:
             continue
-        game = split.get("game") or {}
-        opp = split.get("opponent") or {}
-        raw_date = split.get("date") or game.get("gameDate") or ""
-        rows.append(
-            {
-                "date": str(raw_date)[:10],
-                "opponent": opp.get("name") or opp.get("abbreviation") or "—",
-                "is_home": split.get("isHome"),
-                "stat_value": val,
-            }
-        )
-    return rows
+        try:
+            values.append(float(raw))
+        except (TypeError, ValueError):
+            continue
+    return values
 
 
 def get_player_prop_context(
@@ -61,9 +51,10 @@ def get_player_prop_context(
     line: float,
     side: str,
     season: int | None = None,
-    limit: int = 15,
+    limit: int = 20,
+    game_id: str | None = None,
 ) -> dict[str, Any]:
-    """Recent games vs prop line for modal display."""
+    """Recent games vs prop line + full season stat table."""
     if sport != "mlb":
         return {
             "sport": sport,
@@ -87,8 +78,14 @@ def get_player_prop_context(
     except Exception:
         pass
 
-    log_rows = _season_game_log_rows(pid, group, stat_key, yr)
-    values = [r["stat_value"] for r in log_rows]
+    game_log = fetch_mlb_season_game_log(pid, group=group, season=yr, limit=limit)
+    games = annotate_prop_line_hits(
+        game_log.get("games") or [],
+        market_type=market_type,
+        line=line,
+        side=side,
+    )
+    values = _season_stat_values(pid, group, stat_key, yr)
 
     def rate_for(vals: list[float]) -> dict[str, float | None]:
         over, under = _hit_rates(vals, line)
@@ -101,27 +98,31 @@ def get_player_prop_context(
     l5_vals = values[:5]
     l10_vals = values[:10]
     hit_side = side if side in ("over", "under") else "over"
+    prop_col = MARKET_STAT_COLUMN.get(market_type)
 
     recent: list[dict[str, Any]] = []
-    for row in log_rows[:limit]:
-        val = row["stat_value"]
-        if hit_side == "over":
-            hit = val > line
-            push = val == line
-        else:
-            hit = val < line
-            push = val == line
+    for row in games:
+        stat_val = row.get("stats", {}).get(prop_col) if prop_col else None
         recent.append(
             {
-                **row,
-                "hit": None if push else hit,
-                "vs_line": f"{'O' if val > line else 'U' if val < line else 'P'} {line:g}",
+                "date": row.get("date"),
+                "opponent": row.get("opponent"),
+                "stat_value": stat_val,
+                "hit": row.get("prop_hit"),
+                "stats": row.get("stats"),
             }
         )
 
     l5 = rate_for(l5_vals)
     l10 = rate_for(l10_vals)
     season_r = rate_for(values)
+
+    depth = get_mlb_player_depth(
+        pid,
+        game_id=game_id,
+        market_type=market_type,
+        season=yr,
+    )
 
     return {
         "status": "ok",
@@ -134,6 +135,7 @@ def get_player_prop_context(
         "line": line,
         "side": hit_side,
         "season": yr,
+        "prop_stat_key": prop_col,
         "hit_rates": {
             "l5": l5["side"],
             "l10": l10["side"],
@@ -141,6 +143,12 @@ def get_player_prop_context(
         },
         "sample_games": len(values),
         "recent_games": recent,
+        "game_log": {
+            **game_log,
+            "games": games,
+            "highlight_column": prop_col,
+        },
+        "depth": depth,
     }
 
 

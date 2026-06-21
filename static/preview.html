@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260704" type="image/svg+xml">
+  <title>Matchup preview — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260704">
+  <link rel="stylesheet" href="/static/app.css?v=20260704">
+  <link rel="stylesheet" href="/static/design.css?v=20260704">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
+      </div>
+      <div class="sport-pills"></div>
+    </header>
+
+    <main class="app-main page" id="preview-main">
+      <div id="preview-loading" class="skeleton-card" style="padding:1rem;height:8rem;"></div>
+      <div id="preview-error" class="empty-state-card hidden"></div>
+      <div id="preview-content" class="hidden"></div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260704"></script>
+  <script src="/static/preview.js?v=20260704"></script>
+  <script>loadPublicFeatures().then(() => { initSiteChrome(); bootPreviewPage(); });</script>
+</body>
+</html>

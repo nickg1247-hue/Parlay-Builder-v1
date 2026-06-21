@@ -44,6 +44,62 @@ def test_player_prop_context_invalid_market(client):
     assert r.json().get("status") == "error"
 
 
+def test_player_prop_context_includes_game_log(client):
+    r = client.get(
+        "/api/players/mlb/592450/prop-context",
+        params={"market_type": "batter_hits", "line": 0.5, "side": "over", "limit": 5},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("status") == "ok"
+    log = body.get("game_log") or {}
+    assert isinstance(log.get("columns"), list)
+    assert len(log.get("columns") or []) >= 4
+    if log.get("games"):
+        assert "stats" in log["games"][0]
+
+
+def test_player_prop_context_includes_depth(client):
+    r = client.get(
+        "/api/players/mlb/592450/prop-context",
+        params={
+            "market_type": "batter_hits",
+            "line": 0.5,
+            "side": "over",
+            "game_id": "777777",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("status") == "ok"
+    assert "depth" in body
+    assert isinstance(body["depth"].get("badges"), list)
+
+
+def test_parlay_optimize_empty(client):
+    r = client.post("/api/parlay/props/optimize", json={"legs": []})
+    assert r.status_code == 200
+    assert r.json().get("status") == "empty"
+
+
+def test_matchup_preview_page(client):
+    assert client.get("/preview/mlb/777777").status_code == 200
+
+
+def test_privacy_terms_pages(client):
+    assert client.get("/privacy").status_code == 200
+    assert client.get("/terms").status_code == 200
+
+
+def test_player_profile_includes_game_log(client):
+    r = client.get("/api/players/mlb/592450/profile")
+    assert r.status_code == 200
+    body = r.json()
+    if body.get("status") == "ok":
+        log = body.get("game_log") or {}
+        assert isinstance(log.get("columns"), list)
+
+
 def test_user_team_follows_require_auth(client):
     r = client.get("/api/user/teams/follows")
     assert r.status_code == 401

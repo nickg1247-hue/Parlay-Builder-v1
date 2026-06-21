@@ -40,14 +40,17 @@
     const pid = p.id || p.player_id || "";
     const safeName = (p.name || "").replace(/"/g, "&quot;");
     return `
-      <button type="button" class="roster-player-card ntg-card roster-player-card--clickable" data-player-id="${pid}" data-player-name="${safeName}">
-        ${playerPhotoHtml(p)}
-        <div class="roster-player-meta">
-          ${jersey ? `<span class="roster-player-jersey">${jersey}</span>` : ""}
-          <h3 class="roster-player-name">${p.name}</h3>
-          ${pos ? `<span class="roster-player-pos">${pos}</span>` : ""}
-        </div>
-      </button>`;
+      <div class="roster-player-wrap">
+        <button type="button" class="roster-player-card ntg-card roster-player-card--clickable" data-player-id="${pid}" data-player-name="${safeName}">
+          ${playerPhotoHtml(p)}
+          <div class="roster-player-meta">
+            ${jersey ? `<span class="roster-player-jersey">${jersey}</span>` : ""}
+            <h3 class="roster-player-name">${p.name}</h3>
+            ${pos ? `<span class="roster-player-pos">${pos}</span>` : ""}
+          </div>
+        </button>
+        <button type="button" class="player-watch-btn" data-watch-sport="${sport}" data-watch-id="${pid}" data-watch-name="${safeName}" data-watch-team="${teamId}" aria-label="Watch ${p.name}" title="Watch for news">☆</button>
+      </div>`;
   }
 
   function rosterGroupsHtml(groups) {
@@ -135,6 +138,24 @@
           if (pid && typeof openPlayerProfileModal === "function") {
             openPlayerProfileModal(sport, pid, name);
           }
+        });
+      });
+      content.querySelectorAll(".player-watch-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const fn = window.ntgWatchPlayer;
+          if (typeof fn !== "function") return;
+          fn(
+            btn.dataset.watchSport,
+            btn.dataset.watchId,
+            btn.dataset.watchName,
+            btn.dataset.watchTeam
+          ).then?.(() => {
+            btn.textContent = "★";
+            btn.classList.add("player-watch-btn--active");
+          });
+          btn.textContent = "★";
+          btn.classList.add("player-watch-btn--active");
         });
       });
     })

@@ -184,3 +184,46 @@ def get_news_headlines(*, force_refresh: bool = False) -> dict[str, Any]:
 
     _write_cache(payload)
     return payload
+
+
+def fetch_news(*, force_refresh: bool = False) -> list[dict[str, Any]]:
+    """Return headline items list (convenience wrapper)."""
+    payload = get_news_headlines(force_refresh=force_refresh)
+    return list(payload.get("items") or [])
+
+
+def _name_in_text(name: str, text: str) -> bool:
+    if not name or not text:
+        return False
+    # Match last name at minimum for "Aaron Judge" -> Judge in headline
+    parts = [p for p in name.strip().split() if len(p) > 2]
+    hay = text.lower()
+    if name.lower() in hay:
+        return True
+    if parts and parts[-1].lower() in hay:
+        return True
+    return False
+
+
+def news_matching_players(
+    items: list[dict[str, Any]],
+    player_names: list[str],
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Filter headlines mentioning any of the player names."""
+    if not items or not player_names:
+        return []
+    out: list[dict[str, Any]] = []
+    for item in items:
+        blob = " ".join(
+            str(item.get(k) or "")
+            for k in ("title", "summary", "description")
+        )
+        for name in player_names:
+            if _name_in_text(name, blob):
+                out.append(item)
+                break
+        if len(out) >= limit:
+            break
+    return out

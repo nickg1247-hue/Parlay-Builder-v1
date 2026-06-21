@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260703" type="image/svg+xml">
   <title>Performance — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260701">
-  <link rel="stylesheet" href="/static/app.css?v=20260701">
-  <link rel="stylesheet" href="/static/design.css?v=20260701">
+  <link rel="stylesheet" href="/static/style.css?v=20260703">
+  <link rel="stylesheet" href="/static/app.css?v=20260703">
+  <link rel="stylesheet" href="/static/design.css?v=20260703">
 </head>
 <body>
   <div class="app-shell">
@@ -21,21 +21,52 @@
 
     <main class="app-main page">
       <h1>Model performance</h1>
-      <p class="text-muted">Tracked prop offers from the forward log — not a guarantee of future results.</p>
+      <p class="text-muted">Public forward log of offered props — not a guarantee of future results.</p>
       <p><a href="/methodology">How we score picks →</a></p>
 
-      <div id="perf-summary" class="glance-card ntg-card" style="padding:1rem;margin:1rem 0;">
+      <div class="perf-toolbar ntg-card">
+        <label>
+          <span class="perf-filter-label">Period</span>
+          <select id="perf-days">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </label>
+        <label>
+          <span class="perf-filter-label">Line strength</span>
+          <select id="perf-strength">
+            <option value="">All picks</option>
+            <option value="strong">Strong only</option>
+            <option value="moderate">Moderate only</option>
+            <option value="weak">Weak only</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="perf-summary" class="glance-card ntg-card perf-summary-card">
         <p>Loading summary…</p>
       </div>
 
-      <p class="app-section-title">Recent logged picks</p>
-      <div id="perf-picks" class="home-picks-list">
+      <div class="perf-two-col">
+        <section class="ntg-card perf-panel">
+          <h2 class="home-col-title">By line strength</h2>
+          <div id="perf-buckets"></div>
+        </section>
+        <section class="ntg-card perf-panel">
+          <h2 class="home-col-title">Closing line value</h2>
+          <div id="perf-clv"></div>
+        </section>
+      </div>
+
+      <h2 class="app-section-title">Recent logged picks</h2>
+      <div id="perf-picks" class="perf-picks-list">
         <div class="skeleton-card" style="padding:0.65rem"><div class="skeleton-row"></div></div>
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260701"></script>
-  <script src="/static/performance.js?v=20260701"></script>
+  <script src="/static/app.js?v=20260703"></script>
+  <script src="/static/performance.js?v=20260703"></script>
   <script>loadPublicFeatures().then(() => { initSiteChrome(); bootPerformancePage(); });</script>
 </body>
 </html>
