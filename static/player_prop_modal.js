@@ -93,7 +93,52 @@
       </div>`;
   }
 
-  function ensureOverlay() {
+  function normalizePropForModal(prop) {
+    if (!prop || !prop.player || !prop.market_type) return null;
+    const side = prop.recommended_side || prop.side || "over";
+    return {
+      ...prop,
+      recommended_side: side,
+      recommended_odds: prop.recommended_odds ?? prop.american_odds,
+      line: prop.line,
+    };
+  }
+
+  function propFromParlayRow(leg, row) {
+    const base = row && typeof row === "object" ? row : {};
+    const slip = leg && typeof leg === "object" ? leg : {};
+    return normalizePropForModal({
+      ...base,
+      ...slip,
+      player: slip.player || base.player,
+      market_type: slip.market_type || base.market_type,
+      market_label: slip.market_label || base.market_label,
+      line: slip.line ?? base.line,
+      game_id: slip.game_id || base.game_id,
+      matchup: slip.matchup || base.matchup,
+      recommended_side: slip.side || base.recommended_side,
+      recommended_odds: slip.american_odds ?? base.recommended_odds,
+      player_id: base.player_id ?? slip.player_id,
+      photo_url: base.photo_url,
+      factors: base.factors,
+      line_insight: base.line_insight,
+      rank_score: base.rank_score ?? base.score ?? slip.score,
+      actionable: base.actionable ?? true,
+    });
+  }
+
+  function wireParlayLegModals(container, propsList) {
+    if (!container || !propsList?.length) return;
+    container.querySelectorAll("[data-open-parlay-prop]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = Number(el.dataset.openParlayProp);
+        const prop = propsList[idx];
+        if (prop) openPropModal(prop, "mlb");
+      });
+    });
+  }
     if (_overlay) return _overlay;
     _overlay = document.createElement("div");
     _overlay.id = "player-prop-modal";
@@ -259,13 +304,25 @@
   }
 
   async function resolvePlayerId(sport, prop) {
-    if (prop.player_id) return String(prop.player_id);
+    if (prop.player_id != null && String(prop.player_id).trim() !== "") {
+      return String(prop.player_id);
+    }
+    const name = String(prop.player || "").trim();
+    if (!name) return null;
     try {
+      const qs = new URLSearchParams({ name });
       const res = await fetch(
-        `/api/players/${encodeURIComponent(sport)}/by-name/${encodeURIComponent(prop.player)}/id`
+        `/api/players/${encodeURIComponent(sport)}/lookup?${qs.toString()}`
       );
-      if (!res.ok) return null;
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        return data.player_id != null ? String(data.player_id) : null;
+      }
+      const legacy = await fetch(
+        `/api/players/${encodeURIComponent(sport)}/by-name/${encodeURIComponent(name)}/id`
+      );
+      if (!legacy.ok) return null;
+      const data = await legacy.json();
       return data.player_id != null ? String(data.player_id) : null;
     } catch {
       return null;
@@ -273,7 +330,9 @@
   }
 
   async function openPropModal(prop, sport = "mlb") {
-    if (!prop || !prop.player || !prop.market_type) return;
+    const normalized = normalizePropForModal(prop);
+    if (!normalized) return;
+    prop = normalized;
     const overlay = ensureOverlay();
     _lastFocus = document.activeElement;
     overlay.classList.remove("hidden");
@@ -303,7 +362,9 @@
       const data = await res.json();
       body.innerHTML = renderModalContent(prop, data);
       body.querySelector("#prop-modal-add-slip")?.addEventListener("click", () => {
-        const leg = global.propSlipLegFromProp?.(prop);
+        const leg =
+          global.propSlipLegFromProp?.(prop, { requireActionable: false }) ||
+          global.propSlipLegFromProp?.(prop);
         if (leg && global.addPropToSlip?.(leg)) {
           body.querySelector("#prop-modal-add-slip").textContent = "Added ✓";
         }
@@ -350,4 +411,7 @@
   global.closePropModal = closePropModal;
   global.openPlayerProfileModal = openPlayerProfileModal;
   global.renderPlayerGameLogTable = renderGameLogTable;
+  global.normalizePropForModal = normalizePropForModal;
+  global.propFromParlayRow = propFromParlayRow;
+  global.wireParlayLegModals = wireParlayLegModals;
 })(window);

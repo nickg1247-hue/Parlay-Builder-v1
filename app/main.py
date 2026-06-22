@@ -1130,6 +1130,14 @@ async def player_profile(sport: str, player_id: str):
     return get_player_profile(sport, player_id)
 
 
+@app.get("/api/players/{sport}/lookup")
+async def player_lookup(sport: str, name: str = Query(..., min_length=1)):
+    pid = resolve_player_id_for_name(sport, name)
+    if pid is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return {"player_id": pid, "sport": sport}
+
+
 @app.get("/api/players/{sport}/by-name/{player_name}/id")
 async def player_id_by_name(sport: str, player_name: str):
     pid = resolve_player_id_for_name(sport, player_name)

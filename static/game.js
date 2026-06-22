@@ -803,7 +803,21 @@
       const idx = Number(el.dataset.openGameProp);
       const open = () => {
         const prop = resolveProp(listName, idx);
-        if (prop) openPropModal(prop, "mlb");
+        const propForModal =
+          typeof window.normalizePropForModal === "function"
+            ? window.normalizePropForModal({
+                ...prop,
+                game_id: gameId,
+                matchup: data.matchup,
+                recommended_odds: odds,
+              })
+            : {
+                ...prop,
+                game_id: gameId,
+                matchup: data.matchup,
+                recommended_odds: odds,
+              };
+        if (propForModal) openPropModal(propForModal, "mlb");
       };
       el.addEventListener("click", (e) => {
         if (e.target.closest("button")) return;

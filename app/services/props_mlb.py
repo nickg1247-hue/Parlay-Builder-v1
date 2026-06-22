@@ -401,6 +401,8 @@ def prop_slip_leg(
         "game_date": game_date_str,
         "matchup": matchup,
         "player": prop.get("player"),
+        "player_id": prop.get("player_id"),
+        "photo_url": prop.get("photo_url"),
         "market_type": prop.get("market_type"),
         "market_label": prop.get("market_label"),
         "side": side,

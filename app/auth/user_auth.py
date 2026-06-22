@@ -28,6 +28,8 @@ PROPS_API_EXACT = frozenset({
     "/api/props/markets",
     "/api/props/cache-meta",
     "/api/parlay/props/eval",
+    "/api/parlay/props/build",
+    "/api/parlay/props/optimize",
     "/api/props/slip/export",
     "/api/props/tracker/summary",
     "/api/props/tracker/backfill",
@@ -194,7 +196,18 @@ def safe_user_next_path(path: str | None) -> str:
 def is_props_api_path(path: str) -> bool:
     if path in PROPS_API_EXACT:
         return True
-    return path.startswith("/api/games/mlb/") and path.endswith("/props")
+    if path.startswith("/api/games/mlb/") and path.endswith("/props"):
+        return True
+    if path.startswith("/api/parlay/props/"):
+        return True
+    if path.startswith("/api/players/") and (
+        "/prop-context" in path
+        or path.endswith("/profile")
+        or "/lookup" in path
+        or "/by-name/" in path
+    ):
+        return True
+    return False
 
 
 def is_props_page_path(path: str) -> bool:

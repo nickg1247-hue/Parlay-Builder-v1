@@ -1503,10 +1503,17 @@ function renderBestBets(el, topSingles) {
     .join("");
 }
 
-function propSlipLegFromProp(p) {
-  if (!p || !p.actionable || p.recommended_odds == null) return null;
-  if (p.slip_leg) return p.slip_leg;
-  const side = p.recommended_side || "over";
+function propSlipLegFromProp(p, options = {}) {
+  const requireActionable = options.requireActionable !== false;
+  if (!p) return null;
+  const odds = p.recommended_odds ?? p.american_odds;
+  if (odds == null) return null;
+  if (requireActionable && !p.actionable) return null;
+  if (p.slip_leg && requireActionable) return p.slip_leg;
+  if (p.slip_leg && !requireActionable) {
+    return { ...p.slip_leg, american_odds: p.slip_leg.american_odds ?? odds };
+  }
+  const side = p.recommended_side || p.side || "over";
   const alltimeKey = side === "over" ? "hit_rate_over_alltime" : "hit_rate_under_alltime";
   return {
     id: [p.game_id, p.player, p.market_type, p.line, side].join("|"),
@@ -1614,7 +1621,15 @@ function renderBestProps(el, topProps, options = {}) {
   el.querySelectorAll(".prop-card-clickable").forEach((card) => {
     const idx = Number(card.getAttribute("data-prop-idx"));
     const open = () => {
-      if (typeof openPropModal === "function") openPropModal(props[idx], "mlb");
+      const prop = props[idx];
+      if (typeof window.openPropModal === "function" && prop) {
+        window.openPropModal(
+          typeof window.normalizePropForModal === "function"
+            ? window.normalizePropForModal(prop)
+            : prop,
+          "mlb"
+        );
+      }
     };
     card.addEventListener("click", (e) => {
       if (e.target.closest(".home-prop-add-btn")) return;
@@ -1728,7 +1743,15 @@ function renderPropExplorerList(el, props, options = {}) {
   el.querySelectorAll(".prop-explorer-card.prop-card-clickable").forEach((card) => {
     const idx = Number(card.getAttribute("data-prop-idx"));
     const open = () => {
-      if (typeof openPropModal === "function") openPropModal(rows[idx], "mlb");
+      const prop = rows[idx];
+      if (typeof window.openPropModal === "function" && prop) {
+        window.openPropModal(
+          typeof window.normalizePropForModal === "function"
+            ? window.normalizePropForModal(prop)
+            : prop,
+          "mlb"
+        );
+      }
     };
     card.addEventListener("click", (e) => {
       if (e.target.closest("a, button")) return;
@@ -1943,8 +1966,21 @@ window.populatePropSlipFromProps = populatePropSlipFromProps;
 
 function renderBuiltParlayResults(container, { legs, props, eval: evalData, legCount, targetDelta }) {
   if (!container) return;
-  const rows = props?.length ? props : legs || [];
-  if (!rows.length) {
+  const modalProps = (props || []).map((row, i) =>
+    typeof window.propFromParlayRow === "function"
+      ? window.propFromParlayRow(legs?.[i], row)
+      : row
+  );
+  if (!modalProps.length && legs?.length) {
+    legs.forEach((leg) => {
+      const normalized =
+        typeof window.propFromParlayRow === "function"
+          ? window.propFromParlayRow(leg, leg)
+          : leg;
+      if (normalized) modalProps.push(normalized);
+    });
+  }
+  if (!modalProps.length) {
     container.innerHTML = "";
     return;
   }
@@ -1958,31 +1994,28 @@ function renderBuiltParlayResults(container, { legs, props, eval: evalData, legC
       ? ` (${targetDelta >= 0 ? "+" : ""}${targetDelta} vs target)`
       : "";
 
-  const legHtml = rows
-    .map((row, i) => {
-      const leg = legs?.[i] || row;
-      const side = (leg.side || row.recommended_side || "over") === "under" ? "U" : "O";
+  const legHtml = modalProps
+    .map((prop, i) => {
+      const leg = legs?.[i] || prop;
+      const side = (prop.recommended_side || leg.side || "over") === "under" ? "U" : "O";
       const odds =
         typeof fmtAmericanOdds === "function"
-          ? fmtAmericanOdds(leg.american_odds ?? row.recommended_odds)
-          : leg.american_odds ?? row.recommended_odds ?? "—";
-      const href = leg.game_id
-        ? `/mlb/game/${encodeURIComponent(leg.game_id)}`
-        : "/mlb/props";
-      const photo = row.photo_url
-        ? `<img class="dash-player-photo" src="${row.photo_url}" alt="" width="36" height="36" loading="lazy" />`
+          ? fmtAmericanOdds(prop.recommended_odds ?? leg.american_odds)
+          : prop.recommended_odds ?? leg.american_odds ?? "—";
+      const photo = prop.photo_url
+        ? `<img class="dash-player-photo" src="${prop.photo_url}" alt="" width="36" height="36" loading="lazy" />`
         : "";
-      return `<a class="dash-parlay-leg-card parlay-builder-leg-card" href="${href}">
+      return `<button type="button" class="dash-parlay-leg-card parlay-builder-leg-card" data-open-parlay-prop="${i}" aria-label="View ${prop.player} stats">
         ${photo}
-        <strong>${leg.player || row.player}</strong>
-        <span>${row.market_label || leg.market_label || leg.market_type || row.market_type} ${side}${leg.line ?? row.line}</span>
+        <strong>${prop.player || leg.player}</strong>
+        <span>${prop.market_label || leg.market_label || prop.market_type || leg.market_type} ${side}${prop.line ?? leg.line}</span>
         <span>${odds}</span>
-      </a>${i < rows.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
+      </button>${i < modalProps.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
     })
     .join("");
 
   container.innerHTML = `
-    <p class="dash-parlay-sublabel">Built from best L5 · L10 · season form · ${legCount || rows.length} legs${delta}</p>
+    <p class="dash-parlay-sublabel">Built from best L5 · L10 · season form · ${legCount || modalProps.length} legs${delta} · tap a player for stats</p>
     <div class="dash-parlay-legs parlay-builder-legs">${legHtml}</div>
     <div class="dash-parlay-foot parlay-builder-actions">
       <div class="dash-parlay-odds">
@@ -1994,6 +2027,10 @@ function renderBuiltParlayResults(container, { legs, props, eval: evalData, legC
         <a class="home-props-fill-btn home-props-fill-btn-ghost" href="/prop_slip.html">Open slip</a>
       </div>
     </div>`;
+
+  if (typeof window.wireParlayLegModals === "function") {
+    window.wireParlayLegModals(container, modalProps);
+  }
 
   document.getElementById("parlay-add-slip")?.addEventListener("click", () => {
     if (typeof savePropSlipLegs === "function") {

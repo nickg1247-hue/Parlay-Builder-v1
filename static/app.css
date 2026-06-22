@@ -1946,6 +1946,13 @@ body.slate-mlb .app-main > * {
   background: rgba(255, 255, 255, 0.04);
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
+}
+
+.parlay-builder-leg-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 .parlay-builder-leg-card strong {
