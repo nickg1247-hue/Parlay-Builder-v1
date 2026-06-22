@@ -1112,15 +1112,27 @@ async def player_prop_context(
 ):
     if sport not in ("mlb", "nba", "cfb"):
         raise HTTPException(status_code=400, detail="Unsupported sport")
-    return get_player_prop_context(
-        sport,
-        player_id,
-        market_type=market_type,
-        line=line,
-        side=side,
-        season=season,
-        game_id=game_id,
-    )
+    canonical = market_type
+    if canonical.endswith("_alternate"):
+        canonical = canonical[: -len("_alternate")]
+    try:
+        result = get_player_prop_context(
+            sport,
+            player_id,
+            market_type=canonical,
+            line=line,
+            side=side,
+            season=season,
+            game_id=game_id,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    if result.get("status") == "error":
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("message") or "Could not load prop context",
+        )
+    return result
 
 
 @app.get("/api/players/{sport}/{player_id}/profile")

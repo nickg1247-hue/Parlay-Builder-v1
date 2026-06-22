@@ -55,7 +55,10 @@ def get_player_prop_context(
         return {"status": "error", "message": f"Unknown market: {market_type}"}
 
     group, stat_key = mapping
-    pid = int(player_id)
+    try:
+        pid = int(player_id)
+    except (TypeError, ValueError):
+        return {"status": "error", "message": "Invalid player id"}
     yr = season or date.today().year
     person_url = f"{MLB_STATS_BASE}/people/{pid}"
     player_name = ""

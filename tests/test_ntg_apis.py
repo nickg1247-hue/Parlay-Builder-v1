@@ -35,13 +35,27 @@ def test_methodology_and_performance_pages(client):
     assert client.get("/parlay").status_code == 200
 
 
+def test_player_prop_context_public_without_sign_in(client, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("PROPS_REQUIRE_VERIFIED_USER", raising=False)
+    from app.auth import user_auth
+
+    monkeypatch.setattr(user_auth, "props_require_verified_user", lambda: True)
+    r = client.get(
+        "/api/players/mlb/592450/prop-context",
+        params={"market_type": "batter_hits", "line": 0.5, "side": "over"},
+    )
+    assert r.status_code == 200
+    assert r.json().get("status") == "ok"
+
+
 def test_player_prop_context_invalid_market(client):
     r = client.get(
         "/api/players/mlb/592450/prop-context",
         params={"market_type": "unknown_market", "line": 0.5, "side": "over"},
     )
-    assert r.status_code == 200
-    assert r.json().get("status") == "error"
+    assert r.status_code == 400
+    assert "Unknown market" in str(r.json().get("detail", ""))
 
 
 def test_player_prop_context_includes_game_log(client):

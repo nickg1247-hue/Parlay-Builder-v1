@@ -20,6 +20,15 @@
     return v;
   }
 
+  function formatApiDetail(detail) {
+    if (!detail) return "";
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((d) => d.msg || d.message || JSON.stringify(d)).join("; ");
+    }
+    return String(detail);
+  }
+
   function renderGameLogTable(gameLog, options = {}) {
     const log = gameLog || {};
     const columns = log.columns || [];
@@ -93,14 +102,25 @@
       </div>`;
   }
 
+  function canonicalMarketType(marketType) {
+    const mt = String(marketType || "").trim();
+    if (!mt) return mt;
+    return mt.endsWith("_alternate") ? mt.slice(0, -"_alternate".length) : mt;
+  }
+
   function normalizePropForModal(prop) {
-    if (!prop || !prop.player || !prop.market_type) return null;
+    if (!prop || !prop.player) return null;
+    const market_type = canonicalMarketType(prop.market_type);
+    if (!market_type) return null;
+    const line = prop.line;
+    if (line == null || Number.isNaN(Number(line))) return null;
     const side = prop.recommended_side || prop.side || "over";
     return {
       ...prop,
+      market_type,
       recommended_side: side,
       recommended_odds: prop.recommended_odds ?? prop.american_odds,
-      line: prop.line,
+      line: Number(line),
     };
   }
 
@@ -211,6 +231,9 @@
   }
 
   function renderModalContent(prop, data) {
+    if (!data || data.status === "error") {
+      return `<div class="empty-state-card"><p>${data?.message || "Could not load player stats."}</p></div>`;
+    }
     const side = prop.recommended_side || prop.side || "over";
     const sideLabel = side === "under" ? "Under" : "Over";
     const edge =
@@ -314,7 +337,8 @@
     try {
       const qs = new URLSearchParams({ name });
       const res = await fetch(
-        `/api/players/${encodeURIComponent(sport)}/lookup?${qs.toString()}`
+        `/api/players/${encodeURIComponent(sport)}/lookup?${qs.toString()}`,
+        { credentials: "same-origin" }
       );
       if (res.ok) {
         const data = await res.json();
@@ -358,11 +382,25 @@
     if (prop.game_id) qs.set("game_id", String(prop.game_id));
     try {
       const res = await fetch(
-        `/api/players/${encodeURIComponent(sport)}/${encodeURIComponent(playerId)}/prop-context?${qs}`
+        `/api/players/${encodeURIComponent(sport)}/${encodeURIComponent(playerId)}/prop-context?${qs}`,
+        { credentials: "same-origin" }
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      let detail = "";
+      if (!res.ok) {
+        try {
+          const errBody = await res.json();
+          detail = formatApiDetail(errBody.detail || errBody.message);
+        } catch (_) {
+          detail = await res.text().catch(() => "");
+        }
+        throw new Error(detail || `HTTP ${res.status}`);
+      }
       const data = await res.json();
-      body.innerHTML = renderModalContent(prop, data);
+      try {
+        body.innerHTML = renderModalContent(prop, data);
+      } catch (renderErr) {
+        throw new Error(renderErr?.message || "Could not render player stats.");
+      }
       body.querySelector("#prop-modal-add-slip")?.addEventListener("click", () => {
         const leg =
           global.propSlipLegFromProp?.(prop, { requireActionable: false }) ||
@@ -371,8 +409,9 @@
           body.querySelector("#prop-modal-add-slip").textContent = "Added ✓";
         }
       });
-    } catch {
-      body.innerHTML = `<div class="empty-state-card">${global.emptyStateIcon?.("no-bets") || ""}<p>Could not load prop context.</p><button type="button" class="empty-state-retry" data-retry="1">Try again</button></div>`;
+    } catch (err) {
+      const msg = err?.message || "Could not load prop context.";
+      body.innerHTML = `<div class="empty-state-card">${global.emptyStateIcon?.("no-bets") || ""}<p>${msg}</p><button type="button" class="empty-state-retry" data-retry="1">Try again</button></div>`;
       body.querySelector("[data-retry]")?.addEventListener("click", () => openPropModal(prop, sport));
     }
   }

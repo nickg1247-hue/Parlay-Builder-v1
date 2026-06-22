@@ -200,13 +200,6 @@ def is_props_api_path(path: str) -> bool:
         return True
     if path.startswith("/api/parlay/props/"):
         return True
-    if path.startswith("/api/players/") and (
-        "/prop-context" in path
-        or path.endswith("/profile")
-        or "/lookup" in path
-        or "/by-name/" in path
-    ):
-        return True
     return False
 
 
@@ -243,6 +236,9 @@ class UserPropsAuthMiddleware(BaseHTTPMiddleware):
         if path in USER_AUTH_PUBLIC_PATHS or path.startswith("/api/auth/user/"):
             return await call_next(request)
         if path.startswith("/static/") or path == "/api/build" or path == "/api/auth/status":
+            return await call_next(request)
+        # Player lookup / stats modals stay public (props list may still require sign-in).
+        if path.startswith("/api/players/"):
             return await call_next(request)
 
         needs_props = is_props_api_path(path) or is_props_page_path(path)
