@@ -2195,29 +2195,95 @@ def search_daily_props(
         include_alternates=include_alternates,
     )
 
-    pool: list[dict[str, Any]] = []
     markets = _markets_for_fetch(include_alternates=include_alternates)
     schedule = get_mlb_schedule(game_date)
-    for game in schedule.get("games") or []:
+    games = schedule.get("games") or []
+    games_on_slate = len([g for g in games if g.get("game_id")])
+    fetch_limit = _max_slate_prop_fetch(games_on_slate)
+    games_fetched = 0
+    games_scanned = 0
+    games_with_props = 0
+    pool_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
+
+    def _merge_payload(payload: dict[str, Any] | None, gid: str) -> None:
+        nonlocal games_scanned, games_with_props
+        if not payload:
+            return
+        payload = _trim_props_payload(payload, markets)
+        props = payload.get("props") or []
+        if not props:
+            return
+        games_scanned += 1
+        games_with_props += 1
+        for row in _collect_scored_props_from_payload(payload, gid):
+            key = (
+                gid,
+                row.get("player"),
+                row.get("market_type"),
+                row.get("line"),
+                row.get("recommended_side"),
+            )
+            pool_by_key[key] = row
+
+    for game in games:
         gid = str(game.get("game_id") or "")
         if not gid:
             continue
-        payload = _load_cached_game_props(gid, book)
-        if not payload:
-            raw = _load_raw_event(gid, game_date)
-            if raw and _raw_event_fresh(raw) and raw.get("event"):
-                payload = build_game_props(
-                    gid,
-                    game_date=game_date,
-                    refresh=False,
-                    bookmaker=book,
-                    include_alternates=include_alternates,
-                )
-        if not payload:
+        payload = None if refresh else _load_cached_game_props(gid, book)
+        if payload and payload.get("props"):
+            _merge_payload(payload, gid)
             continue
-        payload = _trim_props_payload(payload, markets)
-        pool.extend(_collect_scored_props_from_payload(payload, gid))
 
+        if scan and games_fetched < fetch_limit:
+            built = build_game_props(
+                gid,
+                game_date=game_date,
+                refresh=True,
+                bookmaker=book,
+                include_alternates=include_alternates,
+            )
+            if built:
+                games_fetched += 1
+                _merge_payload(built, gid)
+            continue
+
+        built = build_game_props(
+            gid,
+            game_date=game_date,
+            refresh=False,
+            bookmaker=book,
+            include_alternates=include_alternates,
+        )
+        if built and built.get("props"):
+            _merge_payload(built, gid)
+            continue
+
+        raw = _load_raw_event(gid, game_date)
+        if raw and _raw_event_fresh(raw) and raw.get("event"):
+            built = build_game_props(
+                gid,
+                game_date=game_date,
+                refresh=False,
+                bookmaker=book,
+                include_alternates=include_alternates,
+            )
+            _merge_payload(built, gid)
+
+    pool = list(pool_by_key.values())
+    if not pool:
+        pool = _aggregate_repo_game_props(game_date, book)
+        for prop in pool:
+            gid = str(prop.get("game_id") or "")
+            if gid:
+                key = (
+                    gid,
+                    prop.get("player"),
+                    prop.get("market_type"),
+                    prop.get("line"),
+                    prop.get("recommended_side"),
+                )
+                pool_by_key[key] = prop
+        pool = list(pool_by_key.values())
     if not pool:
         picks, _, _ = _load_best_slate_props(game_date, book)
         pool = picks or (
@@ -2239,9 +2305,20 @@ def search_daily_props(
     ]
     filtered.sort(key=prop_rank_key)
 
+    if pool and not games_with_props:
+        games_with_props = len(
+            {str(p.get("game_id")) for p in pool if p.get("game_id")}
+        )
+
     hint = base.get("hint")
     if line_kind == "alternate" and not include_alternates:
         hint = "Alternate lines require a refresh with alternates enabled."
+    elif games_on_slate and games_with_props < games_on_slate:
+        coverage = f"{games_with_props}/{games_on_slate} games"
+        hint = (
+            f"Props loaded from {coverage}. "
+            "Use Refresh lines to scan games missing cached props."
+        )
 
     very_strong_matched = sum(1 for prop in filtered if is_very_strong_prop(prop))
 
@@ -2252,6 +2329,10 @@ def search_daily_props(
         "market_types": list_prop_market_types(),
         "total_matched": len(filtered),
         "total_very_strong": very_strong_matched,
+        "total_in_pool": len(pool),
+        "games_on_slate": games_on_slate,
+        "games_scanned": games_scanned,
+        "games_with_props": games_with_props,
         "props": filtered[:limit],
         "source": base.get("source"),
         "hint": hint,

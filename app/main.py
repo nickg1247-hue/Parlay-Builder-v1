@@ -96,7 +96,8 @@ from app.services.model_lab import (
     run_experiment,
     run_until_within_goal,
 )
-from app.services.player_context import get_player_prop_context, resolve_player_id_for_name
+from app.services.performance_charts import model_vs_market_chart, performance_trend_chart
+from app.services.prop_parlay_builder import build_auto_prop_parlay
 from app.services.player_profile import get_player_profile
 from app.services.slip_optimizer import suggest_prop_slip_swap
 from app.services.matchup_preview import build_matchup_preview
@@ -304,6 +305,16 @@ class PropParlayEvalRequest(BaseModel):
 
 class PropParlayOptimizeRequest(BaseModel):
     legs: list[PropParlayLeg] = Field(default_factory=list)
+
+
+class PropParlayBuildRequest(BaseModel):
+    leg_count: int = Field(..., ge=2, le=25)
+    target_american: int | None = Field(
+        None,
+        description="Target combined American payout (e.g. 5000 for +5000).",
+    )
+    bookmaker: str | None = None
+    date: str | None = Field(None, description="ISO date (default today).")
 
 
 class PropSlipExportRequest(BaseModel):
@@ -885,7 +896,7 @@ async def props_search(
     actionable_only: bool = Query(False),
     very_strong_only: bool = Query(False),
     include_alternates: bool = Query(False),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = Query(200, ge=1, le=500),
     scan: bool = Query(False),
     refresh: bool = Query(False),
 ):
@@ -934,6 +945,19 @@ async def prop_parlay_eval(body: PropParlayEvalRequest):
 async def prop_parlay_optimize(body: PropParlayOptimizeRequest):
     legs = [leg.model_dump() for leg in body.legs]
     return suggest_prop_slip_swap(legs)
+
+
+@app.post("/api/parlay/props/build")
+async def prop_parlay_build(body: PropParlayBuildRequest):
+    game_date = (
+        date_type.fromisoformat(body.date) if body.date else date_type.today()
+    )
+    return build_auto_prop_parlay(
+        body.leg_count,
+        target_american=body.target_american,
+        bookmaker=body.bookmaker,
+        game_date=game_date,
+    )
 
 
 @app.post("/api/props/slip/export")
@@ -1051,7 +1075,14 @@ async def daily_board(
 async def performance_summary(days: int = Query(30, ge=1, le=365)):
     summary = summarize_prop_tracker(days=days)
     clv = summarize_mlb_clv(days=days)
-    return {"prop_tracker": summary, "clv": clv}
+    return {
+        "prop_tracker": summary,
+        "clv": clv,
+        "charts": {
+            "model_vs_market": model_vs_market_chart(),
+            "performance_trend": performance_trend_chart(days=days),
+        },
+    }
 
 
 @app.get("/api/performance/picks")

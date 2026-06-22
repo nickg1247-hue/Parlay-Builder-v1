@@ -22,7 +22,7 @@
       actionable_only: !!actionableEl?.checked,
       very_strong_only: !!veryStrongEl?.checked,
       include_alternates: !!alternatesEl?.checked || lineKindEl?.value === "alternate",
-      limit: 100,
+      limit: 200,
       scan: !!refresh,
       refresh: !!refresh,
     };
@@ -56,7 +56,11 @@
       const data = await res.json();
       const hint = data.hint ? ` ${data.hint}` : "";
       if (metaEl) {
-        metaEl.textContent = `${data.total_matched || 0} props · ${data.total_very_strong || 0} very strong · ${data.bookmaker_label || "Consensus"}${hint}`;
+        const coverage =
+          data.games_on_slate && data.games_with_props != null
+            ? ` · ${data.games_with_props}/${data.games_on_slate} games`
+            : "";
+        metaEl.textContent = `${data.total_matched || 0} props · ${data.total_very_strong || 0} very strong · ${data.bookmaker_label || "Consensus"}${coverage}${hint}`;
       }
       renderPropExplorerList(resultsEl, data.props || [], {
         emptyMessage: data.hint || "No props match these filters. Try a different book or refresh lines.",
@@ -90,6 +94,89 @@
     }
   }
 
+  async function buildParlay(e) {
+    e?.preventDefault();
+    const meta = document.getElementById("parlay-builder-meta");
+    const results = document.getElementById("parlay-builder-results");
+    const legCount = Math.max(2, Math.min(25, Number(document.getElementById("parlay-leg-count")?.value) || 5));
+    const targetRaw = document.getElementById("parlay-target-odds")?.value;
+    const targetAmerican = targetRaw !== "" && targetRaw != null ? Number(targetRaw) : null;
+    const bookmaker = bookEl?.value || "draftkings";
+
+    if (meta) meta.textContent = "Scanning slate and building parlay…";
+    if (results) results.innerHTML = "";
+
+    try {
+      const res = await fetch("/api/parlay/props/build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leg_count: legCount,
+          target_american: targetAmerican,
+          bookmaker,
+        }),
+      });
+      if (res.status === 401) {
+        if (meta) meta.textContent = "Sign in required to build parlays.";
+        return;
+      }
+      const data = await res.json();
+      if (data.status !== "ok") {
+        if (meta) meta.textContent = data.message || "Could not build parlay.";
+        return;
+      }
+
+      const evalData = data.eval || {};
+      const american =
+        typeof fmtAmericanOdds === "function"
+          ? fmtAmericanOdds(evalData.american_payout)
+          : evalData.american_payout ?? "—";
+      const delta =
+        data.target_delta != null
+          ? ` (${data.target_delta >= 0 ? "+" : ""}${data.target_delta} vs target)`
+          : "";
+      if (meta) {
+        meta.textContent = `${data.leg_count} legs · ${american}${delta} · pool ${data.pool_size || "—"} · ${data.games_with_props || "?"}/${data.games_on_slate || "?"} games`;
+      }
+
+      const legs = data.legs || [];
+      const legHtml = legs
+        .map((leg, i) => {
+          const odds =
+            typeof fmtAmericanOdds === "function"
+              ? fmtAmericanOdds(leg.american_odds)
+              : leg.american_odds;
+          const side = leg.side === "under" ? "U" : "O";
+          return `<div class="parlay-builder-leg">
+            <span class="parlay-builder-leg-num">${i + 1}</span>
+            <div class="parlay-builder-leg-copy">
+              <strong>${leg.player}</strong>
+              <span>${leg.market_label || leg.market_type} ${side} ${leg.line} · ${odds}</span>
+            </div>
+          </div>`;
+        })
+        .join("");
+
+      if (results) {
+        results.innerHTML = `
+          <div class="parlay-builder-legs">${legHtml}</div>
+          <div class="parlay-builder-actions">
+            <button type="button" id="parlay-add-slip" class="home-props-fill-btn">Add to prop slip</button>
+            <a class="home-props-fill-btn home-props-fill-btn-ghost" href="/prop_slip.html">Open slip</a>
+          </div>`;
+        document.getElementById("parlay-add-slip")?.addEventListener("click", () => {
+          if (typeof savePropSlipLegs === "function") {
+            savePropSlipLegs(legs);
+            if (typeof renderPropSlipPanel === "function") renderPropSlipPanel();
+            document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
+          }
+        });
+      }
+    } catch (err) {
+      if (meta) meta.textContent = err.message || "Build failed.";
+    }
+  }
+
   async function init() {
     await loadPublicFeatures();
     initSiteChrome();
@@ -115,6 +202,8 @@
     });
 
     refreshBtn?.addEventListener("click", () => runSearch(true));
+
+    document.getElementById("parlay-builder-form")?.addEventListener("submit", buildParlay);
 
     await loadTracker();
     await runSearch(false);

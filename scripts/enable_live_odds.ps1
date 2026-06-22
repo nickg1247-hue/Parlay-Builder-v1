@@ -13,7 +13,7 @@ Write-Host "Before running, set these in .env (edit manually; this script does n
 Write-Host "  USE_LIVE_ODDS=true"
 Write-Host "  ODDS_API_KEY=<your key from the-odds-api.com>"
 Write-Host "  ODDS_HOURLY_REFRESH=true          # optional: in-app hourly refresh"
-Write-Host "  ODDS_API_MAX_PER_HOUR=20          # UTC hour cap"
+Write-Host "  ODDS_API_MAX_PER_HOUR=25          # UTC hour cap"
 Write-Host "  ODDS_API_MAX_PER_DAY=500          # UTC day cap"
 Write-Host ""
 

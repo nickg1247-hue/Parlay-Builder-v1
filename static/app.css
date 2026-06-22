@@ -1887,6 +1887,82 @@ body.slate-mlb .app-main > * {
   color: var(--muted);
 }
 
+.parlay-builder-panel {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 0.95rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.parlay-builder-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.parlay-builder-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.65rem;
+}
+
+.parlay-builder-meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.parlay-builder-legs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.parlay-builder-leg {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.parlay-builder-leg-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 1.1rem;
+}
+
+.parlay-builder-leg-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.82rem;
+}
+
+.parlay-builder-leg-copy span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.parlay-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.home-props-fill-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 .props-tracker-panel {
   margin: 0 0 1.25rem;
   padding: 0.85rem 0.95rem;

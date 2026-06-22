@@ -26,6 +26,48 @@
 
 
 
+  function chartSeriesPolyline(values, width, height, pad = 4) {
+
+    const nums = (values || [])
+
+      .filter((v) => v != null && !Number.isNaN(Number(v)))
+
+      .map(Number);
+
+    if (!nums.length) return null;
+
+    const min = Math.min(...nums);
+
+    const max = Math.max(...nums);
+
+    const span = max - min || 1;
+
+    const innerW = width - pad * 2;
+
+    const innerH = height - pad * 2;
+
+    const step = nums.length > 1 ? innerW / (nums.length - 1) : 0;
+
+    const points = nums
+
+      .map((v, i) => {
+
+        const x = pad + i * step;
+
+        const y = pad + innerH * (1 - (v - min) / span);
+
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+
+      })
+
+      .join(" ");
+
+    return { points, latest: nums[nums.length - 1] };
+
+  }
+
+
+
   function avgEdge(singles) {
 
     const rows = (singles || []).filter((p) => p.edge != null);
@@ -462,7 +504,7 @@
 
 
 
-  function renderDashboardHeroWidgets(el, { games, summary, propsData }) {
+  function renderDashboardHeroWidgets(el, { games, summary, propsData, charts }) {
 
     if (!el) return;
 
@@ -624,27 +666,69 @@
 
 
 
-    const boardRow = summary?.slate_by_game_id
+    const mvPoints = charts?.model_vs_market?.points || [];
 
-      ? Object.values(summary.slate_by_game_id)[0]
+    let modelPct = 58;
 
-      : null;
+    let marketPct = 52;
 
-    const modelPct =
+    let modelLine = "";
 
-      boardRow?.model_prob_home != null
+    let marketLine = "";
 
-        ? Math.round(Number(boardRow.model_prob_home) * 100)
+    if (mvPoints.length) {
 
-        : 58;
+      const modelSeries = chartSeriesPolyline(
 
-    const marketPct =
+        mvPoints.map((p) => p.model_pct),
 
-      boardRow?.market_prob_home != null
+        120,
 
-        ? Math.round(Number(boardRow.market_prob_home) * 100)
+        48
 
-        : 52;
+      );
+
+      const marketSeries = chartSeriesPolyline(
+
+        mvPoints.map((p) => p.market_pct),
+
+        120,
+
+        48
+
+      );
+
+      if (modelSeries) modelLine = modelSeries.points;
+
+      if (marketSeries) marketLine = marketSeries.points;
+
+      const last = mvPoints[mvPoints.length - 1];
+
+      modelPct = Math.round(Number(last.model_pct));
+
+      marketPct = Math.round(Number(last.market_pct));
+
+    } else {
+
+      const boardRow = summary?.slate_by_game_id
+
+        ? Object.values(summary.slate_by_game_id)[0]
+
+        : null;
+
+      if (boardRow?.model_prob_home != null) {
+
+        modelPct = Math.round(Number(boardRow.model_prob_home) * 100);
+
+      }
+
+      if (boardRow?.market_prob_home != null) {
+
+        marketPct = Math.round(Number(boardRow.market_prob_home) * 100);
+
+      }
+
+    }
 
     const chartHtml = `<div class="dash-widget dash-widget-chart">
 
@@ -652,9 +736,9 @@
 
       <svg class="dash-mini-chart" viewBox="0 0 120 48" aria-hidden="true">
 
-        <polyline class="dash-chart-market" points="0,32 30,28 60,26 90,24 120,22" fill="none" stroke-width="2"/>
+        ${marketLine ? `<polyline class="dash-chart-market" points="${marketLine}" fill="none" stroke-width="2"/>` : ""}
 
-        <polyline class="dash-chart-model" points="0,36 30,30 60,22 90,18 120,12" fill="none" stroke-width="2"/>
+        ${modelLine ? `<polyline class="dash-chart-model" points="${modelLine}" fill="none" stroke-width="2"/>` : ""}
 
       </svg>
 
@@ -981,27 +1065,67 @@
 
 
 
-  function renderDashboardPerformance(el, trackerSummary, perfSummary) {
+  function renderDashboardPerformance(el, trackerSummary, perfSummary, charts) {
 
     if (!el) return;
 
     const pt = trackerSummary || perfSummary?.prop_tracker || {};
 
-    const hitRate = pt.overall_hit_rate;
+    const trend = charts?.performance_trend || perfSummary?.charts?.performance_trend || {};
 
-    const settled = pt.props_settled ?? 0;
+    const series = trend.series || [];
 
-    const hits = Object.values(pt.line_strength || {}).reduce(
+    const hitRate = pt.overall_hit_rate ?? (trend.overall_hit_rate_pct != null ? trend.overall_hit_rate_pct / 100 : null);
 
-      (s, b) => s + (b?.hits || 0),
+    const settled = pt.props_settled ?? trend.settled ?? 0;
 
-      0
+    const hrPct =
+
+      hitRate != null
+
+        ? Math.round(hitRate * 100)
+
+        : trend.overall_hit_rate_pct != null
+
+          ? Math.round(trend.overall_hit_rate_pct)
+
+          : null;
+
+    const roiPct =
+
+      trend.overall_roi_pct != null
+
+        ? Number(trend.overall_roi_pct).toFixed(1)
+
+        : null;
+
+    const hitSeries = chartSeriesPolyline(
+
+      series.map((row) => row.hit_rate_pct),
+
+      200,
+
+      80
 
     );
 
-    const hrPct = hitRate != null ? Math.round(hitRate * 100) : 68;
+    const roiSeries = chartSeriesPolyline(
 
-    const roiPct = settled > 0 ? ((hits / Math.max(settled, 1)) * 14.2).toFixed(1) : "14.2";
+      series.map((row) => row.roi_pct),
+
+      200,
+
+      80
+
+    );
+
+    const hitLine = hitSeries?.points || "";
+
+    const roiLine = roiSeries?.points || "";
+
+    const hrDisplay = hrPct != null ? `${hrPct}%` : "—";
+
+    const roiDisplay = roiPct != null ? `${Number(roiPct) >= 0 ? "+" : ""}${roiPct}%` : "—";
 
 
 
@@ -1013,17 +1137,17 @@
 
           <svg class="dash-perf-chart" viewBox="0 0 200 80" aria-hidden="true">
 
-            <polyline class="dash-perf-line-hit" points="0,60 40,52 80,44 120,38 160,32 200,28" fill="none" stroke-width="2.5"/>
+            ${hitLine ? `<polyline class="dash-perf-line-hit" points="${hitLine}" fill="none" stroke-width="2.5"/>` : ""}
 
-            <polyline class="dash-perf-line-roi" points="0,70 40,62 80,50 120,42 160,36 200,30" fill="none" stroke-width="2.5"/>
+            ${roiLine ? `<polyline class="dash-perf-line-roi" points="${roiLine}" fill="none" stroke-width="2.5"/>` : ""}
 
           </svg>
 
           <div class="dash-perf-chart-labels">
 
-            <span>Hit Rate (30D)</span>
+            <span>Hit Rate (${trend.days || 30}D)</span>
 
-            <span>ROI (30D)</span>
+            <span>ROI (${trend.days || 30}D)</span>
 
           </div>
 
@@ -1033,7 +1157,7 @@
 
           <div class="dash-perf-stat">
 
-            <span class="dash-perf-stat-num">${hrPct}%</span>
+            <span class="dash-perf-stat-num">${hrDisplay}</span>
 
             <span class="dash-perf-stat-lbl">Hit Rate</span>
 
@@ -1041,13 +1165,15 @@
 
           <div class="dash-perf-stat dash-perf-stat-gold">
 
-            <span class="dash-perf-stat-num">+${roiPct}%</span>
+            <span class="dash-perf-stat-num">${roiDisplay}</span>
 
             <span class="dash-perf-stat-lbl">ROI</span>
 
           </div>
 
         </div>
+
+        ${settled ? `<p class="dash-perf-footnote">${settled} graded props</p>` : `<p class="dash-perf-footnote">Grading starts after games finish</p>`}
 
       </div>`;
 

@@ -196,7 +196,7 @@ All API calls go through `fetch_from_api_if_allowed()` in `app/odds/odds_reposit
 USE_LIVE_ODDS=true
 ODDS_API_KEY=your_key_here
 ODDS_HOURLY_REFRESH=true
-ODDS_API_MAX_PER_HOUR=20
+ODDS_API_MAX_PER_HOUR=25
 ODDS_API_MAX_PER_DAY=500
 ```
 
@@ -402,7 +402,7 @@ Tracking file: `data/processed/odds_repository/quota.json`
 
 | Rule | Default |
 |------|---------|
-| Max calls per **UTC calendar hour** | 20 (`ODDS_API_MAX_PER_HOUR`) |
+| Max calls per **UTC calendar hour** | 25 (`ODDS_API_MAX_PER_HOUR`) |
 | Max calls per **UTC calendar day** | 500 (`ODDS_API_MAX_PER_DAY`) |
 | Min seconds between live pulls (same date) | 300 (`ODDS_REPO_MIN_REFRESH_SECONDS`) |
 | Successful HTTP only | Failed 4xx/5xx releases reserved slot (no credit counted) |

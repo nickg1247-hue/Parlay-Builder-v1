@@ -65,6 +65,25 @@ h1, h2, h3, .app-section-title, .slate-header h1 {
   color: var(--sport-accent, var(--accent));
 }
 
+.sport-pill,
+.sport-pill-disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sport-pill-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.sport-pill-active .sport-pill-icon,
+.sport-pill:hover:not(.sport-pill-disabled) .sport-pill-icon {
+  color: var(--sport-accent, var(--accent));
+}
+
 .density-toggle {
   border: 1px solid var(--border);
   background: transparent;

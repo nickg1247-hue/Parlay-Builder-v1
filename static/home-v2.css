@@ -3,8 +3,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --dash-bg: #070b12;
-  --dash-panel: #0d1219;
+  --dash-bg: #020510;
+  --dash-panel: #060c18;
   --dash-border: rgba(255, 255, 255, 0.08);
   --dash-blue: #2563eb;
   --dash-blue-bright: #3b82f6;
@@ -14,6 +14,7 @@
   --dash-gold-dim: rgba(251, 191, 36, 0.15);
   --dash-text: #f1f5f9;
   --dash-muted: #94a3b8;
+  --dash-hero-stadium: url("/static/assets/hero-stadium-field-level-50.png?v=20260712");
 }
 
 body.home-dashboard {
@@ -24,16 +25,17 @@ body.home-dashboard {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.home-dashboard .app-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
 body.home-dashboard .app-brand,
 body.home-dashboard h1,
 body.home-dashboard h2,
 body.home-dashboard .dash-btn {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-body.home-dashboard .app-shell {
-  max-width: 1440px;
-  margin: 0 auto;
 }
 
 body.home-dashboard #live-ticker,
@@ -47,10 +49,10 @@ body.home-dashboard #headline-ticker {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(7, 11, 18, 0.92);
+  background: rgba(2, 5, 16, 0.94);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--dash-border);
-  padding: 0 var(--app-gutter);
+  padding: 0 clamp(1rem, 3vw, 2.75rem);
 }
 
 .dash-nav-row {
@@ -109,7 +111,11 @@ body.home-dashboard #headline-ticker {
   gap: 0.4rem;
 }
 
-.dash-sport-pills .sport-pill {
+.dash-sport-pills .sport-pill,
+.dash-sport-pills .sport-pill-disabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.35rem 0.85rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -118,6 +124,17 @@ body.home-dashboard #headline-ticker {
   background: rgba(255, 255, 255, 0.03);
   color: var(--dash-muted);
   text-decoration: none;
+}
+
+.dash-sport-pills .sport-pill-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.dash-sport-pills .sport-pill-active .sport-pill-icon {
+  color: var(--dash-cyan);
 }
 
 .dash-sport-pills .sport-pill-active {
@@ -161,18 +178,81 @@ body.home-dashboard #headline-ticker {
 /* --- Hero --- */
 
 .dash-hero {
-  padding: 1.75rem var(--app-gutter) 1.5rem;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(37, 99, 235, 0.12), transparent 55%),
-    linear-gradient(180deg, rgba(13, 18, 25, 0.6) 0%, var(--dash-bg) 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 1.75rem clamp(1rem, 3vw, 2.75rem) 1.5rem;
   border-bottom: 1px solid var(--dash-border);
 }
 
+.dash-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dash-hero-bg-solid {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 0%, rgba(37, 99, 235, 0.14), transparent 55%),
+    var(--dash-bg);
+}
+
+.dash-hero-bg-stadium {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(62%, 920px);
+  height: 100%;
+  background: var(--dash-hero-stadium) center 42% / cover no-repeat;
+  clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.dash-hero-bg-stadium-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(62%, 920px);
+  height: 100%;
+  background: linear-gradient(
+    118deg,
+    var(--dash-bg) 0%,
+    rgba(2, 5, 16, 0.88) 16%,
+    rgba(2, 5, 16, 0.45) 40%,
+    rgba(2, 5, 16, 0.28) 100%
+  );
+  clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.dash-hero-bg-split {
+  position: absolute;
+  top: -8%;
+  bottom: -8%;
+  left: calc(100% - min(62%, 920px) + min(62%, 920px) * 0.14 - 1px);
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.55) 35%,
+    rgba(37, 99, 235, 0.75) 50%,
+    rgba(56, 189, 248, 0.55) 65%,
+    transparent 100%
+  );
+  transform: rotate(7deg);
+  transform-origin: center;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+}
+
 .dash-hero-inner {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 480px);
+  gap: clamp(1rem, 3vw, 2.5rem);
   align-items: center;
+  width: 100%;
+  max-width: none;
 }
 
 .dash-hero-copy h1 {
@@ -240,20 +320,25 @@ body.home-dashboard #headline-ticker {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
+  position: relative;
+  z-index: 1;
 }
 
 .dash-widget {
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
-  border: 1px solid var(--dash-border);
-  background: rgba(13, 18, 25, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(2, 5, 16, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   text-decoration: none;
   color: var(--dash-text);
   min-height: 96px;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .dash-widget:hover {
@@ -469,7 +554,9 @@ body.home-dashboard #headline-ticker {
 /* --- Metrics --- */
 
 .dash-main {
-  padding: 1.25rem var(--app-gutter) 2.5rem;
+  padding: 1.25rem clamp(1rem, 3vw, 2.75rem) 2.5rem;
+  width: 100%;
+  max-width: none;
 }
 
 .dash-metrics {
@@ -1002,6 +1089,13 @@ body.home-dashboard #headline-ticker {
   color: var(--dash-gold);
 }
 
+.dash-perf-footnote {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--dash-muted);
+  grid-column: 1 / -1;
+}
+
 .dash-empty {
   padding: 1rem;
   font-size: 0.82rem;
@@ -1252,6 +1346,21 @@ body.home-dashboard *::-webkit-scrollbar-thumb:hover {
   .dash-hero-inner,
   .dash-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dash-hero-bg-stadium,
+  .dash-hero-bg-stadium-overlay {
+    width: 100%;
+    clip-path: polygon(0 42%, 100% 28%, 100% 100%, 0 100%);
+    opacity: 0.85;
+  }
+
+  .dash-hero-bg-split {
+    display: none;
+  }
+
+  .dash-hero-widgets {
+    margin-top: 0.5rem;
   }
 
   .dash-metrics-grid {

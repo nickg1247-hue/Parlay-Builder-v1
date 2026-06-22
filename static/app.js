@@ -2242,7 +2242,12 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
       renderDashboardMetrics(els.glance, summary, counts, { veryStrongCount, hitRate });
     }
     if (typeof renderDashboardHeroWidgets === "function") {
-      renderDashboardHeroWidgets(els.heroBento, { games: scores.games, summary, propsData });
+      renderDashboardHeroWidgets(els.heroBento, {
+        games: scores.games,
+        summary,
+        propsData,
+        charts: perfSummary?.charts,
+      });
     }
     if (els.veryStrongWrap && els.veryStrongEl) {
       if (veryStrong.length) {
@@ -2268,7 +2273,12 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
       );
     }
     if (typeof renderDashboardPerformance === "function") {
-      renderDashboardPerformance(els.performance, trackerSummary, perfSummary);
+      renderDashboardPerformance(
+        els.performance,
+        trackerSummary,
+        perfSummary,
+        perfSummary?.charts
+      );
     }
     if (typeof renderDashboardParlayPreview === "function") {
       renderDashboardParlayPreview(els.parlayPreview, propsData, scores.games);
@@ -2470,33 +2480,51 @@ function renderMainNav(container, path) {
   });
 }
 
+function sportPillIcon(sport) {
+  const icons = {
+    mlb:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5c1.4 2.4 1.4 14.6 0 17"/><path d="M12 3.5c-1.4 2.4-1.4 14.6 0 17"/><path d="M8 7.5c2.4 1 5.6 1 8 0"/><path d="M8 16.5c2.4-1 5.6-1 8 0"/></svg>',
+    nba:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5v17"/><path d="M5.5 6.5c3 2 3 9 0 11"/><path d="M18.5 6.5c-3 2-3 9 0 11"/></svg>',
+    cfb:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
+    nfl:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
+    nhl:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V8c0-2 1.5-3.5 3.5-3.5H15c1.8 0 3 1.2 3 3v3"/><path d="M18 11l3 3-2 2-4-3"/><circle cx="7" cy="19" r="1.5"/></svg>',
+  };
+  return icons[sport] || "";
+}
+
+function sportPillLabel(spec) {
+  const icon = spec.sport ? sportPillIcon(spec.sport) : "";
+  if (!icon) return spec.label;
+  return `${icon}<span class="sport-pill-text">${spec.label}</span>`;
+}
+
 function renderSportPills(container, path) {
   const specs = [
-    { href: "/mlb", label: "MLB" },
-    { href: "/nba", label: "NBA" },
-    { href: "/cfb", label: "CFB" },
+    { href: "/mlb", label: "MLB", sport: "mlb" },
+    { href: "/nba", label: "NBA", sport: "nba" },
+    { href: "/cfb", label: "CFB", sport: "cfb" },
     { href: "/mlb/props", label: "Props" },
+    { disabled: true, label: "NFL", sport: "nfl", title: "Coming soon" },
+    { disabled: true, label: "NHL", sport: "nhl", title: "Coming soon" },
   ];
-  if (!document.body.classList.contains("home-dashboard")) {
-    specs.push(
-      { disabled: true, label: "NFL", title: "Coming soon" },
-      { disabled: true, label: "NHL", title: "Coming soon" }
-    );
-  }
   container.replaceChildren();
   specs.forEach((spec) => {
     if (spec.disabled) {
       const span = document.createElement("span");
       span.className = "sport-pill sport-pill-disabled";
       span.title = spec.title || "Coming soon";
-      span.textContent = spec.label;
+      span.innerHTML = sportPillLabel(spec);
       container.appendChild(span);
       return;
     }
     const link = document.createElement("a");
     link.className = "sport-pill";
     link.href = spec.href;
-    link.textContent = spec.label;
+    link.innerHTML = sportPillLabel(spec);
     if (sportPillIsActive(spec.href, path)) {
       link.classList.add("sport-pill-active");
     }
@@ -3355,6 +3383,8 @@ function initPropSlipUi() {
   window.formatPropSlipExport = formatPropSlipExport;
   window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
   window.getPropSlipLegs = getPropSlipLegs;
+  window.savePropSlipLegs = savePropSlipLegs;
+  window.renderPropSlipPanel = renderPropSlipPanel;
   window.clientParlayDecimal = clientParlayDecimal;
   loadPropSlipFromShareParam();
   renderPropSlipPanel();

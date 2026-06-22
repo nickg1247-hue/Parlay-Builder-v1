@@ -119,7 +119,7 @@ def quota_path() -> Path:
 
 def quota_limits() -> tuple[int, int]:
     return (
-        int(os.getenv("ODDS_API_MAX_PER_HOUR", "20")),
+        int(os.getenv("ODDS_API_MAX_PER_HOUR", "25")),
         int(os.getenv("ODDS_API_MAX_PER_DAY", "500")),
     )
 

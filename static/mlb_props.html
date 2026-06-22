@@ -72,6 +72,24 @@
 
       <p id="props-search-meta" class="props-search-meta">Loading props…</p>
 
+      <section id="parlay-builder-panel" class="parlay-builder-panel" aria-label="Auto parlay builder">
+        <p class="app-section-title">Parlay builder</p>
+        <p class="parlay-builder-note">Auto-build a multi-leg parlay from today&apos;s best bettable props. One leg per player.</p>
+        <form id="parlay-builder-form" class="parlay-builder-form">
+          <label class="props-filter-field">
+            <span>Legs</span>
+            <input id="parlay-leg-count" type="number" min="2" max="25" value="5" class="home-props-select props-filter-input" />
+          </label>
+          <label class="props-filter-field">
+            <span>Target odds (American, optional)</span>
+            <input id="parlay-target-odds" type="number" step="1" placeholder="e.g. 5000 for +5000" class="home-props-select props-filter-input" />
+          </label>
+          <button type="submit" class="home-props-fill-btn">Build parlay</button>
+        </form>
+        <p id="parlay-builder-meta" class="parlay-builder-meta"></p>
+        <div id="parlay-builder-results" class="parlay-builder-results"></div>
+      </section>
+
       <section id="props-tracker-panel" class="props-tracker-panel" aria-label="Prop line accuracy">
         <p class="app-section-title">Line accuracy tracker</p>
         <p class="props-tracker-note">Tracks strong and moderate props we offer, then grades them after games finish.</p>
@@ -83,6 +101,6 @@
   </div>
   <script src="/static/player_prop_modal.js?v=20260703"></script>
   <script src="/static/app.js?v=20260701"></script>
-  <script src="/static/mlb_props.js?v=20260701"></script>
+  <script src="/static/mlb_props.js?v=20260702"></script>
 </body>
 </html>
