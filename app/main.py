@@ -99,6 +99,7 @@ from app.services.model_lab import (
 from app.services.performance_charts import model_vs_market_chart, performance_trend_chart
 from app.services.prop_parlay_builder import build_auto_prop_parlay
 from app.services.player_profile import get_player_profile
+from app.services.player_context import get_player_prop_context, resolve_player_id_for_name
 from app.services.slip_optimizer import suggest_prop_slip_swap
 from app.services.matchup_preview import build_matchup_preview
 from app.services.user_teams import (
