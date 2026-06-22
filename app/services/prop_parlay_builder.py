@@ -155,6 +155,7 @@ def build_auto_prop_parlay(
         "target_american": target_american,
         "target_delta": target_delta,
         "legs": legs,
+        "props": selected,
         "eval": eval_out,
         "pool_size": len(candidates),
         "games_scanned": search.get("games_scanned"),

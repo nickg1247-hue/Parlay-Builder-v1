@@ -127,50 +127,29 @@
       }
 
       const evalData = data.eval || {};
-      const american =
-        typeof fmtAmericanOdds === "function"
-          ? fmtAmericanOdds(evalData.american_payout)
-          : evalData.american_payout ?? "—";
-      const delta =
-        data.target_delta != null
-          ? ` (${data.target_delta >= 0 ? "+" : ""}${data.target_delta} vs target)`
-          : "";
+      const delta = data.target_delta;
       if (meta) {
-        meta.textContent = `${data.leg_count} legs · ${american}${delta} · pool ${data.pool_size || "—"} · ${data.games_with_props || "?"}/${data.games_on_slate || "?"} games`;
+        const americanPreview =
+          typeof fmtAmericanOdds === "function"
+            ? fmtAmericanOdds(evalData.american_payout)
+            : evalData.american_payout ?? "—";
+        const deltaText =
+          delta != null ? ` (${delta >= 0 ? "+" : ""}${delta} vs target)` : "";
+        meta.textContent = `${data.leg_count} legs · ${americanPreview}${deltaText} · pool ${data.pool_size || "—"} · ${data.games_with_props || "?"}/${data.games_on_slate || "?"} games`;
       }
 
-      const legs = data.legs || [];
-      const legHtml = legs
-        .map((leg, i) => {
-          const odds =
-            typeof fmtAmericanOdds === "function"
-              ? fmtAmericanOdds(leg.american_odds)
-              : leg.american_odds;
-          const side = leg.side === "under" ? "U" : "O";
-          return `<div class="parlay-builder-leg">
-            <span class="parlay-builder-leg-num">${i + 1}</span>
-            <div class="parlay-builder-leg-copy">
-              <strong>${leg.player}</strong>
-              <span>${leg.market_label || leg.market_type} ${side} ${leg.line} · ${odds}</span>
-            </div>
-          </div>`;
-        })
-        .join("");
-
       if (results) {
-        results.innerHTML = `
-          <div class="parlay-builder-legs">${legHtml}</div>
-          <div class="parlay-builder-actions">
-            <button type="button" id="parlay-add-slip" class="home-props-fill-btn">Add to prop slip</button>
-            <a class="home-props-fill-btn home-props-fill-btn-ghost" href="/prop_slip.html">Open slip</a>
-          </div>`;
-        document.getElementById("parlay-add-slip")?.addEventListener("click", () => {
-          if (typeof savePropSlipLegs === "function") {
-            savePropSlipLegs(legs);
-            if (typeof renderPropSlipPanel === "function") renderPropSlipPanel();
-            document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
-          }
-        });
+        if (typeof renderBuiltParlayResults === "function") {
+          renderBuiltParlayResults(results, {
+            legs: data.legs || [],
+            props: data.props || [],
+            eval: evalData,
+            legCount: data.leg_count,
+            targetDelta: delta,
+          });
+        } else {
+          results.textContent = "Parlay built — refresh the page to see the full layout.";
+        }
       }
     } catch (err) {
       if (meta) meta.textContent = err.message || "Build failed.";

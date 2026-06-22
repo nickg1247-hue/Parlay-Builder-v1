@@ -1889,14 +1889,19 @@ body.slate-mlb .app-main > * {
 
 .parlay-builder-panel {
   margin: 0 0 1.25rem;
-  padding: 0.85rem 0.95rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(2, 5, 16, 0.96));
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.parlay-builder-head {
+  margin-bottom: 0.75rem;
 }
 
 .parlay-builder-note {
-  margin: 0 0 0.75rem;
+  margin: 0.25rem 0 0;
   font-size: 0.82rem;
   color: var(--muted);
 }
@@ -1915,52 +1920,64 @@ body.slate-mlb .app-main > * {
   color: var(--muted);
 }
 
-.parlay-builder-legs {
-  display: flex;
+.parlay-builder-results {
+  margin-top: 0.35rem;
+}
+
+.parlay-builder-results .dash-parlay-sublabel {
+  margin-bottom: 0.65rem;
+}
+
+.parlay-builder-results .dash-parlay-legs {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.parlay-builder-leg-card {
+  display: inline-flex;
   flex-direction: column;
-  gap: 0.45rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 5.75rem;
+  max-width: 7.5rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: inherit;
 }
 
-.parlay-builder-leg {
-  display: flex;
-  gap: 0.55rem;
-  align-items: flex-start;
-  padding: 0.5rem 0.65rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
+.parlay-builder-leg-card strong {
+  font-size: 0.68rem;
+  text-align: center;
+  line-height: 1.25;
 }
 
-.parlay-builder-leg-num {
-  font-size: 0.75rem;
-  font-weight: 700;
+.parlay-builder-leg-card span {
+  font-size: 0.62rem;
   color: var(--muted);
-  min-width: 1.1rem;
-}
-
-.parlay-builder-leg-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  font-size: 0.82rem;
-}
-
-.parlay-builder-leg-copy span {
-  color: var(--muted);
-  font-size: 0.78rem;
+  text-align: center;
 }
 
 .parlay-builder-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 0.85rem;
+  align-items: center;
 }
 
 .home-props-fill-btn-ghost {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.home-props-fill-btn-ghost:hover {
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 .props-tracker-panel {

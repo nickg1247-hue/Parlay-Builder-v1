@@ -1941,6 +1941,71 @@ function populatePropSlipFromProps(props, count, { replace = true } = {}) {
 
 window.populatePropSlipFromProps = populatePropSlipFromProps;
 
+function renderBuiltParlayResults(container, { legs, props, eval: evalData, legCount, targetDelta }) {
+  if (!container) return;
+  const rows = props?.length ? props : legs || [];
+  if (!rows.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const american =
+    typeof fmtAmericanOdds === "function"
+      ? fmtAmericanOdds(evalData?.american_payout)
+      : evalData?.american_payout ?? "—";
+  const delta =
+    targetDelta != null
+      ? ` (${targetDelta >= 0 ? "+" : ""}${targetDelta} vs target)`
+      : "";
+
+  const legHtml = rows
+    .map((row, i) => {
+      const leg = legs?.[i] || row;
+      const side = (leg.side || row.recommended_side || "over") === "under" ? "U" : "O";
+      const odds =
+        typeof fmtAmericanOdds === "function"
+          ? fmtAmericanOdds(leg.american_odds ?? row.recommended_odds)
+          : leg.american_odds ?? row.recommended_odds ?? "—";
+      const href = leg.game_id
+        ? `/mlb/game/${encodeURIComponent(leg.game_id)}`
+        : "/mlb/props";
+      const photo = row.photo_url
+        ? `<img class="dash-player-photo" src="${row.photo_url}" alt="" width="36" height="36" loading="lazy" />`
+        : "";
+      return `<a class="dash-parlay-leg-card parlay-builder-leg-card" href="${href}">
+        ${photo}
+        <strong>${leg.player || row.player}</strong>
+        <span>${row.market_label || leg.market_label || leg.market_type || row.market_type} ${side}${leg.line ?? row.line}</span>
+        <span>${odds}</span>
+      </a>${i < rows.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
+    })
+    .join("");
+
+  container.innerHTML = `
+    <p class="dash-parlay-sublabel">Built from best L5 · L10 · season form · ${legCount || rows.length} legs${delta}</p>
+    <div class="dash-parlay-legs parlay-builder-legs">${legHtml}</div>
+    <div class="dash-parlay-foot parlay-builder-actions">
+      <div class="dash-parlay-odds">
+        <span class="dash-parlay-odds-lbl">Parlay odds</span>
+        <strong>${american}</strong>
+      </div>
+      <div class="parlay-builder-actions">
+        <button type="button" id="parlay-add-slip" class="home-props-fill-btn dash-btn dash-btn-primary">Add to prop slip</button>
+        <a class="home-props-fill-btn home-props-fill-btn-ghost" href="/prop_slip.html">Open slip</a>
+      </div>
+    </div>`;
+
+  document.getElementById("parlay-add-slip")?.addEventListener("click", () => {
+    if (typeof savePropSlipLegs === "function") {
+      savePropSlipLegs(legs || []);
+      if (typeof renderPropSlipPanel === "function") renderPropSlipPanel();
+      document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
+    }
+  });
+}
+
+window.renderBuiltParlayResults = renderBuiltParlayResults;
+
 function renderWatchedGamesSection(el, games, options = {}) {
   if (!el) return;
   const ids = new Set(getWatchedGameIds());

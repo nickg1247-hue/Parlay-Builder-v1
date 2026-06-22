@@ -58,7 +58,7 @@ if [ "$HTTP" = "401" ]; then
 fi
 
 echo "==> key files"
-for f in app/services/props_mlb.py app/services/prop_scoring.py static/index.html static/app.js data/processed/props_repository; do
+for f in app/services/props_mlb.py app/services/prop_scoring.py static/index.html static/app.js static/mlb_props.html static/app.css static/home-v2.css; do
   if [ -e "$f" ]; then echo "  ok $f"; else echo "  MISSING $f"; exit 1; fi
 done
 
