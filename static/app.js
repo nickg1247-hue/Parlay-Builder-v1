@@ -1623,12 +1623,7 @@ function renderBestProps(el, topProps, options = {}) {
     const open = () => {
       const prop = props[idx];
       if (typeof window.openPropModal === "function" && prop) {
-        window.openPropModal(
-          typeof window.normalizePropForModal === "function"
-            ? window.normalizePropForModal(prop)
-            : prop,
-          "mlb"
-        );
+        window.openPropModal(prop, "mlb");
       }
     };
     card.addEventListener("click", (e) => {
@@ -1717,6 +1712,7 @@ function renderPropExplorerList(el, props, options = {}) {
         ${why}
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}
         <div class="prop-explorer-actions">
+          <button type="button" class="btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View stats</button>
           <a class="btn-ghost" href="${gameHref}">Game</a>
           ${
             isPropSlipPublic() && p.actionable && p.recommended_odds != null
@@ -1740,17 +1736,23 @@ function renderPropExplorerList(el, props, options = {}) {
     });
   });
 
+  el.querySelectorAll(".prop-view-stats-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.propIdx);
+      const prop = rows[idx];
+      if (typeof window.openPropModal === "function" && prop) {
+        window.openPropModal(prop, "mlb");
+      }
+    });
+  });
+
   el.querySelectorAll(".prop-explorer-card.prop-card-clickable").forEach((card) => {
     const idx = Number(card.getAttribute("data-prop-idx"));
     const open = () => {
       const prop = rows[idx];
       if (typeof window.openPropModal === "function" && prop) {
-        window.openPropModal(
-          typeof window.normalizePropForModal === "function"
-            ? window.normalizePropForModal(prop)
-            : prop,
-          "mlb"
-        );
+        window.openPropModal(prop, "mlb");
       }
     };
     card.addEventListener("click", (e) => {

@@ -139,6 +139,8 @@
       });
     });
   }
+
+  function ensureOverlay() {
     if (_overlay) return _overlay;
     _overlay = document.createElement("div");
     _overlay.id = "player-prop-modal";
