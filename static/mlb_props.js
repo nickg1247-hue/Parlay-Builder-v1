@@ -71,9 +71,73 @@
     }
   }
 
+  function fmtOdds(value) {
+    if (typeof window.fmtAmericanOdds === "function") return window.fmtAmericanOdds(value);
+    if (value == null || Number.isNaN(Number(value))) return "—";
+    const n = Number(value);
+    return n > 0 ? `+${n}` : String(n);
+  }
+
+  function renderParlayBuilderResults(container, { legs, props, evalData, legCount, targetDelta }) {
+    if (!container) return;
+    const rows = props?.length ? props : legs || [];
+    if (!rows.length) {
+      container.innerHTML = "";
+      return;
+    }
+
+    const american = fmtOdds(evalData?.american_payout);
+    const delta =
+      targetDelta != null
+        ? ` (${targetDelta >= 0 ? "+" : ""}${targetDelta} vs target)`
+        : "";
+
+    const legHtml = rows
+      .map((row, i) => {
+        const leg = legs?.[i] || row;
+        const side = (leg.side || row.recommended_side || "over") === "under" ? "U" : "O";
+        const odds = fmtOdds(leg.american_odds ?? row.recommended_odds);
+        const href = leg.game_id
+          ? `/mlb/game/${encodeURIComponent(leg.game_id)}`
+          : "/mlb/props";
+        const photo = row.photo_url
+          ? `<img class="dash-player-photo" src="${row.photo_url}" alt="" width="36" height="36" loading="lazy" />`
+          : "";
+        return `<a class="dash-parlay-leg-card parlay-builder-leg-card" href="${href}">
+          ${photo}
+          <strong>${leg.player || row.player}</strong>
+          <span>${row.market_label || leg.market_label || leg.market_type || row.market_type} ${side}${leg.line ?? row.line}</span>
+          <span>${odds}</span>
+        </a>${i < rows.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
+      })
+      .join("");
+
+    container.innerHTML = `
+      <p class="dash-parlay-sublabel">Built from best L5 · L10 · season form · ${legCount || rows.length} legs${delta}</p>
+      <div class="dash-parlay-legs parlay-builder-legs">${legHtml}</div>
+      <div class="dash-parlay-foot parlay-builder-actions">
+        <div class="dash-parlay-odds">
+          <span class="dash-parlay-odds-lbl">Parlay odds</span>
+          <strong>${american}</strong>
+        </div>
+        <div class="parlay-builder-actions">
+          <button type="button" id="parlay-add-slip" class="home-props-fill-btn dash-btn dash-btn-primary">Add to prop slip</button>
+          <a class="home-props-fill-btn home-props-fill-btn-ghost" href="/prop_slip.html">Open slip</a>
+        </div>
+      </div>`;
+
+    document.getElementById("parlay-add-slip")?.addEventListener("click", () => {
+      const slipLegs = legs || [];
+      if (typeof window.savePropSlipLegs === "function") {
+        window.savePropSlipLegs(slipLegs);
+        if (typeof window.renderPropSlipPanel === "function") window.renderPropSlipPanel();
+        document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
+      }
+    });
+  }
+
   async function loadTracker() {
     const el = document.getElementById("props-tracker-stats");
-    if (!el) return;
     try {
       const data = await fetchJSON("/api/props/tracker/summary?days=30");
       const buckets = data.line_strength || {};
@@ -129,27 +193,20 @@
       const evalData = data.eval || {};
       const delta = data.target_delta;
       if (meta) {
-        const americanPreview =
-          typeof fmtAmericanOdds === "function"
-            ? fmtAmericanOdds(evalData.american_payout)
-            : evalData.american_payout ?? "—";
+        const americanPreview = fmtOdds(evalData.american_payout);
         const deltaText =
           delta != null ? ` (${delta >= 0 ? "+" : ""}${delta} vs target)` : "";
         meta.textContent = `${data.leg_count} legs · ${americanPreview}${deltaText} · pool ${data.pool_size || "—"} · ${data.games_with_props || "?"}/${data.games_on_slate || "?"} games`;
       }
 
       if (results) {
-        if (typeof renderBuiltParlayResults === "function") {
-          renderBuiltParlayResults(results, {
-            legs: data.legs || [],
-            props: data.props || [],
-            eval: evalData,
-            legCount: data.leg_count,
-            targetDelta: delta,
-          });
-        } else {
-          results.textContent = "Parlay built — refresh the page to see the full layout.";
-        }
+        renderParlayBuilderResults(results, {
+          legs: data.legs || [],
+          props: data.props || [],
+          evalData,
+          legCount: data.leg_count,
+          targetDelta: delta,
+        });
       }
     } catch (err) {
       if (meta) meta.textContent = err.message || "Build failed.";
