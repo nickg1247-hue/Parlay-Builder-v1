@@ -1350,6 +1350,9 @@
 
   loadTeamColors()
     .then(async () => {
+      if (typeof window.ensureAppReady === "function") {
+        await window.ensureAppReady();
+      }
       if (typeof initDesignSystem === "function") initDesignSystem();
       if (typeof initGameStickyNav === "function") initGameStickyNav();
       const propBookSelect = document.getElementById("prop-book-select");

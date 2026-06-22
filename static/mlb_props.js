@@ -214,9 +214,13 @@
   }
 
   async function init() {
-    await loadPublicFeatures();
+    if (typeof window.ensureAppReady === "function") {
+      await window.ensureAppReady();
+    } else {
+      await loadPublicFeatures();
+      initPropSlipUi();
+    }
     initSiteChrome();
-    initPropSlipUi();
     initLiveTicker("live-ticker", { sport: "mlb" });
     await initPropBookSelect(bookEl);
 

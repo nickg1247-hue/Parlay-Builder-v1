@@ -20,11 +20,8 @@ settings = Settings()
 
 
 def prop_slip_public_enabled() -> bool:
-    """Prop slip UI + sportsbook export. Off in production unless PROP_SLIP_PUBLIC=true."""
+    """Prop slip UI + sportsbook export. Enabled by default; set PROP_SLIP_PUBLIC=false to disable."""
     explicit = os.getenv("PROP_SLIP_PUBLIC", "").strip().lower()
-    if explicit in ("1", "true", "yes"):
-        return True
     if explicit in ("0", "false", "no"):
         return False
-    app_env = os.getenv("APP_ENV", settings.app_env).strip().lower()
-    return app_env != "production"
+    return True

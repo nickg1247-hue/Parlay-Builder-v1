@@ -1,70 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260704" type="image/svg+xml">
-  <title>Prop parlay — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260704">
-  <link rel="stylesheet" href="/static/app.css?v=20260704">
-  <link rel="stylesheet" href="/static/design.css?v=20260704">
-</head>
-<body>
-  <div class="app-shell">
-    <header class="app-topbar">
-      <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links"></nav>
-      </div>
-      <div class="sport-pills"></div>
-    </header>
-
-    <main class="app-main prop-slip-page-main">
-      <header class="prop-slip-page-head">
-        <h1>Prop parlay builder</h1>
-        <p style="color:var(--muted)">Cross-game player prop parlays with swap suggestions, share links, and sportsbook export.</p>
-      </header>
-
-      <div id="prop-slip-locked" class="empty-state-card hidden" style="padding:1rem;margin-top:1rem;">
-        <p>Prop slip is disabled on this server. Set <code>PROP_SLIP_PUBLIC=true</code> to enable.</p>
-        <p><a href="/mlb/props">Browse props →</a></p>
-      </div>
-
-      <div id="prop-slip-root" class="prop-slip-page-root hidden">
-        <div id="prop-slip-panel" class="prop-slip-panel prop-slip-panel--open prop-slip-panel--page">
-          <div id="prop-slip-legs" class="prop-slip-legs"></div>
-          <div id="prop-slip-export-row" class="prop-slip-export-row hidden">
-            <label class="prop-slip-export-label" for="prop-slip-export-book">Export for</label>
-            <select id="prop-slip-export-book" class="prop-slip-export-select"></select>
-          </div>
-          <div id="prop-slip-totals" class="prop-slip-totals"></div>
-        </div>
-      </div>
-
-      <p style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">
-        Add legs from the <a href="/">home page</a>, <a href="/mlb/props">props explorer</a>, or any game page.
-      </p>
-    </main>
-  </div>
-  <script src="/static/player_prop_modal.js?v=20260704"></script>
-  <script src="/static/app.js?v=20260704"></script>
-  <script>
-    loadPublicFeatures().then(() => {
-      initSiteChrome();
-      if (!isPropSlipPublic()) {
-        document.getElementById("prop-slip-locked")?.classList.remove("hidden");
-        return;
-      }
-      document.getElementById("prop-slip-root")?.classList.remove("hidden");
-      initPropSlipExportSelect(document.getElementById("prop-slip-export-book"));
-      if (loadPropSlipFromShareParam()) {
-        renderPropSlipPanel();
-      } else {
-        renderPropSlipPanel();
-        syncPropSlipShareUrl(getPropSlipLegs());
-      }
-    });
-  </script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/ntg-mark.svg?v=20260704" type="image/svg+xml">
+  <title>Prop parlay — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260704">
+  <link rel="stylesheet" href="/static/app.css?v=20260704">
+  <link rel="stylesheet" href="/static/design.css?v=20260704">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG Sports</a>
+        <nav class="app-nav-links"></nav>
+      </div>
+      <div class="sport-pills"></div>
+    </header>
+
+    <main class="app-main prop-slip-page-main">
+      <header class="prop-slip-page-head">
+        <h1>Prop parlay builder</h1>
+        <p style="color:var(--muted)">Cross-game player prop parlays with swap suggestions, share links, and sportsbook export.</p>
+      </header>
+
+      <div id="prop-slip-locked" class="empty-state-card hidden" style="padding:1rem;margin-top:1rem;">
+        <p>Prop slip is disabled on this server. Set <code>PROP_SLIP_PUBLIC=false</code> was used — remove it or set to true, then restart.</p>
+        <p><a href="/mlb/props">Browse props →</a></p>
+      </div>
+
+      <div id="prop-slip-root" class="prop-slip-page-root hidden">
+        <div id="prop-slip-panel" class="prop-slip-panel prop-slip-panel--open prop-slip-panel--page">
+          <div id="prop-slip-legs" class="prop-slip-legs"></div>
+          <div id="prop-slip-export-row" class="prop-slip-export-row hidden">
+            <label class="prop-slip-export-label" for="prop-slip-export-book">Export for</label>
+            <select id="prop-slip-export-book" class="prop-slip-export-select"></select>
+          </div>
+          <div id="prop-slip-totals" class="prop-slip-totals"></div>
+        </div>
+      </div>
+
+      <p style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">
+        Add legs from the <a href="/">home page</a>, <a href="/mlb/props">props explorer</a>, or any game page.
+      </p>
+    </main>
+  </div>
+  <script src="/static/player_prop_modal.js?v=20260704"></script>
+  <script src="/static/app.js?v=20260704"></script>
+  <script>
+    loadPublicFeatures().then(() => {
+      initSiteChrome();
+      if (!isPropSlipPublic()) {
+        document.getElementById("prop-slip-locked")?.classList.remove("hidden");
+        return;
+      }
+      document.getElementById("prop-slip-root")?.classList.remove("hidden");
+      initPropSlipExportSelect(document.getElementById("prop-slip-export-book"));
+      if (loadPropSlipFromShareParam()) {
+        renderPropSlipPanel();
+      } else {
+        renderPropSlipPanel();
+        syncPropSlipShareUrl(getPropSlipLegs());
+      }
+    });
+  </script>
+</body>
+</html>
 

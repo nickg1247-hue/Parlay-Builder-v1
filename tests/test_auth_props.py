@@ -49,7 +49,8 @@ def test_prop_slip_export_public_when_auth_enabled(production_auth, monkeypatch)
     assert resp.status_code != 401
 
 
-def test_prop_slip_export_hidden_in_production_by_default(production_auth, monkeypatch):
+def test_prop_slip_export_hidden_when_disabled(production_auth, monkeypatch):
+    monkeypatch.setenv("PROP_SLIP_PUBLIC", "false")
     monkeypatch.setenv("PROPS_REQUIRE_VERIFIED_USER", "false")
     with patch.object(admin_auth, "auth_enabled", return_value=True):
         with patch.object(admin_auth, "is_authenticated", return_value=False):

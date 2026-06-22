@@ -2539,7 +2539,7 @@ function renderMainNav(container, path) {
     if (mainNavIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
     if (spec.feature === "prop_slip" && !isPropSlipPublic()) {
       link.classList.add("main-nav-link-locked");
-      link.title = "Prop slip requires server flag PROP_SLIP_PUBLIC=true";
+      link.title = "Prop slip is disabled on this server";
     }
     container.appendChild(link);
   });
@@ -3392,16 +3392,20 @@ function renderPropSlipPanel() {
 }
 
 function addPropToSlip(leg) {
-  if (!leg?.id || leg.american_odds == null) return;
+  if (!leg?.id || leg.american_odds == null) return false;
   const legs = getPropSlipLegs();
-  if (legs.some((l) => l.id === leg.id)) return;
+  if (legs.some((l) => l.id === leg.id)) return false;
   const playerKey = propSlipPlayerKey(leg.player);
-  if (playerKey && legs.some((l) => propSlipPlayerKey(l.player) === playerKey)) return;
+  if (playerKey && legs.some((l) => propSlipPlayerKey(l.player) === playerKey)) return false;
   legs.push(leg);
   savePropSlipLegs(legs);
+  if (isPropSlipPublic() && !document.getElementById("prop-slip-root")) {
+    initPropSlipUi();
+  }
   renderPropSlipPanel();
   const panel = document.getElementById("prop-slip-panel");
   panel?.classList.add("prop-slip-panel--open");
+  return true;
 }
 
 function removePropFromSlip(legId) {
@@ -3410,9 +3414,39 @@ function removePropFromSlip(legId) {
   renderPropSlipPanel();
 }
 
+function registerPropSlipGlobals() {
+  window.addPropToSlip = addPropToSlip;
+  window.removePropFromSlip = removePropFromSlip;
+  window.propSlipLegFromProp = propSlipLegFromProp;
+  window.formatPropSlipExport = formatPropSlipExport;
+  window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
+  window.getPropSlipLegs = getPropSlipLegs;
+  window.savePropSlipLegs = savePropSlipLegs;
+  window.renderPropSlipPanel = renderPropSlipPanel;
+  window.clientParlayDecimal = clientParlayDecimal;
+}
+
+registerPropSlipGlobals();
+
+let ntgAppReadyPromise = null;
+
+function ensureAppReady() {
+  if (!ntgAppReadyPromise) {
+    ntgAppReadyPromise = loadPublicFeatures().then(() => {
+      initPropSlipUi();
+    });
+  }
+  return ntgAppReadyPromise;
+}
+
+window.ensureAppReady = ensureAppReady;
+
 function initPropSlipUi() {
   if (!isPropSlipPublic()) return;
-  if (document.getElementById("prop-slip-root")) return;
+  if (document.getElementById("prop-slip-root")) {
+    renderPropSlipPanel();
+    return;
+  }
 
   const root = document.createElement("div");
   root.id = "prop-slip-root";
@@ -3443,14 +3477,6 @@ function initPropSlipUi() {
     document.getElementById("prop-slip-panel")?.classList.remove("prop-slip-panel--open");
   });
 
-  window.addPropToSlip = addPropToSlip;
-  window.propSlipLegFromProp = propSlipLegFromProp;
-  window.formatPropSlipExport = formatPropSlipExport;
-  window.propSlipLegSportsbookLine = propSlipLegSportsbookLine;
-  window.getPropSlipLegs = getPropSlipLegs;
-  window.savePropSlipLegs = savePropSlipLegs;
-  window.renderPropSlipPanel = renderPropSlipPanel;
-  window.clientParlayDecimal = clientParlayDecimal;
   loadPropSlipFromShareParam();
   renderPropSlipPanel();
 }
@@ -3548,11 +3574,8 @@ function bootNTGSplash() {
   const homeCritical = isHomePage()
     ? loadHomePageCritical(homeProgress)
     : Promise.resolve(null);
-  const splashReady = Promise.all([loadPublicFeatures(), homeCritical]).then(() => {
-    window.getPropSlipLegs = getPropSlipLegs;
-    window.clientParlayDecimal = clientParlayDecimal;
+  const splashReady = Promise.all([ensureAppReady(), homeCritical]).then(() => {
     initSiteChrome();
-    initPropSlipUi();
   });
 
   if (document.querySelector(".app-shell") && shouldPlayNTGSplash()) {
