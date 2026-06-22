@@ -108,16 +108,22 @@
     const legHtml = modalProps
       .map((prop, i) => {
         const leg = legs?.[i] || prop;
-        const side = (prop.recommended_side || leg.side || "over") === "under" ? "U" : "O";
+        const sideRaw = prop.recommended_side || leg.side || "over";
+        const side = sideRaw === "under" ? "U" : "O";
         const odds = fmtOdds(prop.recommended_odds ?? leg.american_odds);
         const photo = prop.photo_url
           ? `<img class="dash-player-photo" src="${prop.photo_url}" alt="" width="36" height="36" loading="lazy" />`
           : "";
+        const formRow =
+          typeof window.propFormRowCompact === "function"
+            ? window.propFormRowCompact(prop, sideRaw)
+            : "";
         return `<button type="button" class="dash-parlay-leg-card parlay-builder-leg-card" data-open-parlay-prop="${i}" aria-label="View ${prop.player} stats">
           ${photo}
           <strong>${prop.player || leg.player}</strong>
-          <span>${prop.market_label || leg.market_label || prop.market_type || leg.market_type} ${side}${prop.line ?? leg.line}</span>
-          <span>${odds}</span>
+          <span class="parlay-leg-line">${prop.market_label || leg.market_label || prop.market_type || leg.market_type} ${side}${prop.line ?? leg.line}</span>
+          ${formRow}
+          <span class="parlay-leg-odds">${odds}</span>
         </button>${i < modalProps.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
       })
       .join("");

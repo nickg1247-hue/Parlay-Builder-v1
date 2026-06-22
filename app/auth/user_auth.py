@@ -52,11 +52,7 @@ USER_AUTH_PUBLIC_PATHS = frozenset({
 def props_require_verified_user() -> bool:
     """When true, player props require a signed-in user account (soft gate — site stays public)."""
     explicit = os.getenv("PROPS_REQUIRE_VERIFIED_USER", "").strip().lower()
-    if explicit in ("1", "true", "yes", "on"):
-        return True
-    if explicit in ("0", "false", "no", "off"):
-        return False
-    return os.getenv("APP_ENV", "development").lower() == "production"
+    return explicit in ("1", "true", "yes", "on")
 
 
 def user_registration_enabled() -> bool:

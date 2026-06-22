@@ -1439,6 +1439,18 @@ function propHitRatesHtml(prop, side) {
   return `<span class="hit-rate-row">${propHitRateChip("L5", l5)}${propHitRateChip("L10", l10)}${propHitRateChip("Season", season)}${propHitRateChip("All-time", alltime)}</span>`;
 }
 
+function propFormRowCompact(prop, side) {
+  const pickSide = side || prop?.recommended_side || prop?.side || "over";
+  const { l5, l10, season } = propSideFormRates(prop, pickSide);
+  const chip = (label, rate) => {
+    const tier = propHitRateTier(rate, label);
+    const pct = rate != null ? `${Math.round(rate * 100)}%` : "—";
+    const tierCls = tier ? ` dash-form-chip--${tier}` : "";
+    return `<span class="dash-form-chip${tierCls}"><span class="dash-form-chip-lbl">${label}</span>${pct}</span>`;
+  };
+  return `<span class="dash-form-row dash-form-row--parlay">${chip("L5", l5)}${chip("L10", l10)}${chip("Szn", season)}</span>`;
+}
+
 function teamWinRatesHtml(pick) {
   return `<span class="hit-rate-row">${hitRateChip("L5", pick.win_rate_l5)}${hitRateChip("L10", pick.win_rate_l10)}${hitRateChip("Season", pick.win_rate_season)}</span>`;
 }
@@ -1463,6 +1475,7 @@ function propVeryStrongClass(prop) {
 window.hitRateChip = hitRateChip;
 window.propHitRateChip = propHitRateChip;
 window.propHitRatesHtml = propHitRatesHtml;
+window.propFormRowCompact = propFormRowCompact;
 window.teamWinRatesHtml = teamWinRatesHtml;
 window.lineStrengthHtml = lineStrengthHtml;
 window.propVeryStrongClass = propVeryStrongClass;
@@ -1999,7 +2012,8 @@ function renderBuiltParlayResults(container, { legs, props, eval: evalData, legC
   const legHtml = modalProps
     .map((prop, i) => {
       const leg = legs?.[i] || prop;
-      const side = (prop.recommended_side || leg.side || "over") === "under" ? "U" : "O";
+      const sideRaw = prop.recommended_side || leg.side || "over";
+      const side = sideRaw === "under" ? "U" : "O";
       const odds =
         typeof fmtAmericanOdds === "function"
           ? fmtAmericanOdds(prop.recommended_odds ?? leg.american_odds)
@@ -2007,11 +2021,14 @@ function renderBuiltParlayResults(container, { legs, props, eval: evalData, legC
       const photo = prop.photo_url
         ? `<img class="dash-player-photo" src="${prop.photo_url}" alt="" width="36" height="36" loading="lazy" />`
         : "";
+      const formRow =
+        typeof propFormRowCompact === "function" ? propFormRowCompact(prop, sideRaw) : "";
       return `<button type="button" class="dash-parlay-leg-card parlay-builder-leg-card" data-open-parlay-prop="${i}" aria-label="View ${prop.player} stats">
         ${photo}
         <strong>${prop.player || leg.player}</strong>
-        <span>${prop.market_label || leg.market_label || prop.market_type || leg.market_type} ${side}${prop.line ?? leg.line}</span>
-        <span>${odds}</span>
+        <span class="parlay-leg-line">${prop.market_label || leg.market_label || prop.market_type || leg.market_type} ${side}${prop.line ?? leg.line}</span>
+        ${formRow}
+        <span class="parlay-leg-odds">${odds}</span>
       </button>${i < modalProps.length - 1 ? '<span class="dash-parlay-plus">+</span>' : ""}`;
     })
     .join("");

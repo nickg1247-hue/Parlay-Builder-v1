@@ -17,20 +17,28 @@ else
   PY="python3"
 fi
 
-echo "==> restart service (if systemd unit exists)"
-if systemctl is-enabled parlay-builder >/dev/null 2>&1; then
-  sudo systemctl restart parlay-builder
-  sleep 2
-fi
-
 PORT="${PORT:-8000}"
 BASE="${DEPLOY_URL:-http://127.0.0.1:${PORT}}"
 
+echo "==> restart service (if systemd unit exists)"
+if systemctl is-enabled parlay-builder >/dev/null 2>&1; then
+  sudo systemctl restart parlay-builder
+  for i in 1 2 3 4 5 6; do
+    sleep 2
+    if curl -sf "${BASE}/health" >/dev/null 2>&1; then
+      break
+    fi
+    if [ "$i" -eq 6 ]; then
+      echo "WARN: service not responding on /health yet — check: sudo systemctl status parlay-builder"
+    fi
+  done
+fi
+
 echo "==> verify build endpoint"
-BUILD_JSON=$($PY - <<'PY' || true
+BUILD_JSON=$($PY - <<PY || true
 import json, urllib.request
 try:
-    with urllib.request.urlopen("http://127.0.0.1:8000/api/build", timeout=10) as r:
+    with urllib.request.urlopen("${BASE}/api/build", timeout=10) as r:
         print(r.read().decode())
 except Exception as e:
     print(json.dumps({"error": str(e)}))
@@ -39,10 +47,10 @@ PY
 echo "$BUILD_JSON"
 
 echo "==> verify props API (must not be 401)"
-HTTP=$($PY - <<'PY'
+HTTP=$($PY - <<PY
 import urllib.request, urllib.error
 try:
-    req = urllib.request.Request("http://127.0.0.1:8000/api/daily/props?limit=1")
+    req = urllib.request.Request("${BASE}/api/daily/props?limit=1")
     with urllib.request.urlopen(req, timeout=15) as r:
         print(r.status)
 except urllib.error.HTTPError as e:
@@ -53,7 +61,27 @@ PY
 )
 echo "GET /api/daily/props -> HTTP $HTTP"
 if [ "$HTTP" = "401" ]; then
-  echo "ERROR: props API blocked by auth — update app/auth/admin_auth.py on server"
+  echo "ERROR: props API returned 401 (user props auth)."
+  echo "  Fix: git pull latest, or set PROPS_REQUIRE_VERIFIED_USER=false in .env and restart."
+  exit 1
+fi
+
+echo "==> verify player stats API (must not be 401)"
+PLAYER_HTTP=$($PY - <<PY
+import urllib.request, urllib.error
+try:
+    req = urllib.request.Request("${BASE}/api/players/mlb/592450/prop-context?market_type=batter_hits&line=0.5&side=over")
+    with urllib.request.urlopen(req, timeout=15) as r:
+        print(r.status)
+except urllib.error.HTTPError as e:
+    print(e.code)
+except Exception:
+    print("ERR")
+PY
+)
+echo "GET /api/players/.../prop-context -> HTTP $PLAYER_HTTP"
+if [ "$PLAYER_HTTP" = "401" ]; then
+  echo "ERROR: player stats API returned 401 — deploy latest app/auth/user_auth.py"
   exit 1
 fi
 

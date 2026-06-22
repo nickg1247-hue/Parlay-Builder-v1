@@ -26,6 +26,14 @@ def test_daily_props_public_when_props_gate_disabled(production_auth, monkeypatc
     assert resp.status_code != 401
 
 
+def test_daily_props_public_by_default_in_production(production_auth, monkeypatch):
+    monkeypatch.delenv("PROPS_REQUIRE_VERIFIED_USER", raising=False)
+    with patch.object(admin_auth, "auth_enabled", return_value=True):
+        with patch.object(admin_auth, "is_authenticated", return_value=False):
+            resp = client.get("/api/daily/props?limit=1")
+    assert resp.status_code != 401
+
+
 def test_daily_board_still_protected_when_auth_enabled(production_auth):
     with patch.object(admin_auth, "auth_enabled", return_value=True):
         with patch.object(admin_auth, "is_authenticated", return_value=False):
