@@ -652,11 +652,13 @@ def test_load_best_slate_props_same_day_only(isolated_props):
 
 def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
     import json
-    from datetime import date
+    from datetime import date, datetime, timezone
 
     (isolated_props / "slate_2026-06-17.draftkings.json").write_text(
         json.dumps(
             {
+                "date": "2026-06-17",
+                "cached_at": datetime.now(timezone.utc).isoformat(),
                 "all_props": [
                     {
                         "recommended_hit_rate": 0.75,
@@ -682,6 +684,49 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
     assert out["total_actionable"] == 1
     assert out["source"] == "slate_cache"
     assert out["bookmaker"] == "draftkings"
+
+
+def test_load_best_slate_props_rejects_stale_cache(isolated_props):
+    import json
+    from datetime import date, datetime, timedelta, timezone
+
+    stale_at = (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat()
+    (isolated_props / "slate_2026-06-17.draftkings.json").write_text(
+        json.dumps(
+            {
+                "date": "2026-06-17",
+                "cached_at": stale_at,
+                "all_props": [{"player": "A", "game_id": "1", "actionable": True}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    picks, source, _ = props_mlb._load_best_slate_props(date(2026, 6, 17), "draftkings")
+    assert source == "stale_slate_cache"
+    assert picks == []
+
+
+def test_load_cached_game_props_rejects_wrong_date(isolated_props):
+    import json
+    from datetime import date, datetime, timezone
+
+    path = isolated_props / "777001.draftkings.json"
+    path.write_text(
+        json.dumps(
+            {
+                "date": "2026-06-16",
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "props": [{"player": "A", "market_type": "batter_hits", "line": 0.5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert props_mlb._load_cached_game_props(
+        "777001", "draftkings", game_date=date(2026, 6, 17)
+    ) is None
+    assert props_mlb._load_cached_game_props(
+        "777001", "draftkings", game_date=date(2026, 6, 16)
+    ) is not None
 
 
 def test_evaluate_prop_parlay():

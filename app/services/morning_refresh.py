@@ -208,6 +208,24 @@ def run_morning_refresh(
             odds_source = board.get("odds_source", "none")
             refresh_schedule_cache(game_date)
 
+            from app.services.props_mlb import build_daily_top_props
+
+            if live_odds_enabled():
+                try:
+                    props_out = build_daily_top_props(
+                        game_date,
+                        limit=50,
+                        scan=True,
+                        refresh=True,
+                    )
+                    logger.info(
+                        "Morning props scan: %s actionable props (%s games fetched)",
+                        props_out.get("total_actionable", 0),
+                        props_out.get("games_fetched", 0),
+                    )
+                except Exception as exc:
+                    logger.warning("Morning props scan failed: %s", exc)
+
         if "nba" in sport_list:
             from app.services.schedule_nba import refresh_schedule_cache as refresh_nba
 

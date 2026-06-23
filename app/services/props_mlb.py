@@ -563,6 +563,55 @@ def _cache_age_seconds(path: Path) -> float | None:
     return (_clock() - mtime).total_seconds()
 
 
+def _parse_cached_timestamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return ts
+
+
+def _slate_cache_fresh(cached: dict[str, Any] | None, game_date: date) -> bool:
+    """Slate aggregate is valid for this calendar day and within TTL."""
+    if not cached:
+        return False
+    cached_day = str(cached.get("date") or "")
+    if cached_day and cached_day != game_date.isoformat():
+        return False
+    ts = _parse_cached_timestamp(cached.get("cached_at"))
+    if ts is not None:
+        return (_clock() - ts).total_seconds() < DEFAULT_CACHE_TTL_SECONDS
+    path = _slate_cache_path(
+        game_date, _normalize_bookmaker(cached.get("bookmaker"))
+    )
+    age = _cache_age_seconds(path)
+    return age is not None and age < DEFAULT_CACHE_TTL_SECONDS
+
+
+def _game_props_cache_fresh(
+    payload: dict[str, Any] | None,
+    game_date: date,
+    *,
+    path: Path | None = None,
+) -> bool:
+    if not payload or not payload.get("props"):
+        return False
+    cached_day = str(payload.get("date") or "")
+    if cached_day and cached_day != game_date.isoformat():
+        return False
+    ts = _parse_cached_timestamp(payload.get("fetched_at"))
+    if ts is not None:
+        return (_clock() - ts).total_seconds() < DEFAULT_CACHE_TTL_SECONDS
+    if path is not None:
+        age = _cache_age_seconds(path)
+        return age is not None and age < DEFAULT_CACHE_TTL_SECONDS
+    return True
+
+
 def _props_cache_path(game_id: str, bookmaker: str = DEFAULT_PROP_BOOKMAKER) -> Path:
     book = _normalize_bookmaker(bookmaker)
     return PROPS_DIR / f"{game_id}.{book}.json"
@@ -733,32 +782,54 @@ def wipe_props_bet_cache() -> dict[str, Any]:
 
 def get_props_cache_meta() -> dict[str, Any]:
     meta = _load_json(PROPS_CACHE_META_PATH) or {}
+    today = date.today()
+    book = DEFAULT_DISPLAY_BOOKMAKER
+    slate = _load_json(_slate_cache_path(today, book))
+    stale_generation = meta.get("generation") != PROPS_CACHE_GENERATION
+    stale_day = bool(meta.get("slate_date")) and meta.get("slate_date") != today.isoformat()
+    stale_slate = slate is not None and not _slate_cache_fresh(slate, today)
+    requires = bool(
+        meta.get("requires_refresh") or stale_generation or stale_day or stale_slate
+    )
     return {
         "generation": str(meta.get("generation") or ""),
         "expected_generation": PROPS_CACHE_GENERATION,
-        "requires_refresh": bool(meta.get("requires_refresh")),
+        "requires_refresh": requires,
         "wiped_at": meta.get("wiped_at"),
         "refreshed_at": meta.get("refreshed_at"),
         "removed_files": meta.get("removed_files"),
+        "slate_date": meta.get("slate_date"),
+        "slate_cached_at": slate.get("cached_at") if slate else None,
     }
 
 
-def mark_props_cache_refreshed() -> None:
+def mark_props_cache_refreshed(game_date: date | None = None) -> None:
     meta = _load_json(PROPS_CACHE_META_PATH) or {}
     meta["generation"] = PROPS_CACHE_GENERATION
     meta["requires_refresh"] = False
     meta["refreshed_at"] = _clock().isoformat()
+    meta["slate_date"] = (game_date or date.today()).isoformat()
     _write_json(PROPS_CACHE_META_PATH, meta)
 
 
 def ensure_props_cache_generation() -> dict[str, Any] | None:
-    """On deploy/restart, wipe stale prop caches when generation changes."""
+    """On deploy/restart, wipe stale prop caches when generation changes or day rolls over."""
     meta = _load_json(PROPS_CACHE_META_PATH) or {}
-    if meta.get("generation") == PROPS_CACHE_GENERATION and not meta.get("requires_refresh"):
-        return None
-    if meta.get("generation") == PROPS_CACHE_GENERATION and meta.get("requires_refresh"):
+    today = date.today().isoformat()
+    if meta.get("generation") != PROPS_CACHE_GENERATION:
+        return wipe_props_bet_cache()
+    if meta.get("slate_date") and meta.get("slate_date") != today:
+        meta["requires_refresh"] = True
+        _write_json(PROPS_CACHE_META_PATH, meta)
+        logger.info(
+            "Props cache marked for refresh (slate date %s -> %s)",
+            meta.get("slate_date"),
+            today,
+        )
         return meta
-    return wipe_props_bet_cache()
+    if meta.get("requires_refresh"):
+        return meta
+    return None
 
 
 def _line_balance_score(over_odds: int, under_odds: int) -> float:
@@ -1236,7 +1307,7 @@ def build_game_props(
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
         if not refresh:
-            cached = _load_cached_game_props(str(game_id), book)
+            cached = _load_cached_game_props(str(game_id), book, game_date=game_date)
             if cached:
                 cached = _trim_props_payload(cached, fetch_markets)
                 cached = _apply_published_line_filter(cached)
@@ -1275,7 +1346,7 @@ def build_game_props(
     }
 
     if not refresh:
-        cached = _load_cached_game_props(str(game_id), book)
+        cached = _load_cached_game_props(str(game_id), book, game_date=game_date)
         if cached and _markets_satisfy_request(
             str(cached.get("markets_requested") or ""),
             fetch_markets,
@@ -1560,7 +1631,15 @@ def _load_game_props_for_export(
 ) -> list[dict[str, Any]]:
     """Load props for slip export, backfilling deeplinks from raw cache or live refresh."""
     book = _resolve_bookmaker(bookmaker)
-    cached_payload = _load_cached_game_props(str(game_id), book)
+    try_date = None
+    if leg and leg.get("game_date"):
+        try:
+            try_date = date.fromisoformat(str(leg["game_date"])[:10])
+        except ValueError:
+            try_date = None
+    cached_payload = _load_cached_game_props(
+        str(game_id), book, game_date=try_date
+    )
     props = (cached_payload or {}).get("props") or []
     resolved_date: date | None = None
 
@@ -1830,15 +1909,27 @@ def export_slip_for_bookmaker(
 def _load_cached_game_props(
     game_id: str,
     bookmaker: str = DEFAULT_PROP_BOOKMAKER,
+    *,
+    game_date: date | None = None,
 ) -> dict[str, Any] | None:
-    """Return on-disk game props whenever present (git-deployed cache may be older than TTL)."""
+    """Return on-disk game props when present, fresh, and for the requested slate date."""
     book = _normalize_bookmaker(bookmaker)
-    payload = _load_json(_props_cache_path(game_id, book))
+    path = _props_cache_path(game_id, book)
+    payload = _load_json(path)
     if payload and payload.get("props"):
+        if game_date is not None and not _game_props_cache_fresh(
+            payload, game_date, path=path
+        ):
+            return None
         return payload
     if book == DEFAULT_PROP_BOOKMAKER:
-        legacy = _load_json(PROPS_DIR / f"{game_id}.json")
+        legacy_path = PROPS_DIR / f"{game_id}.json"
+        legacy = _load_json(legacy_path)
         if legacy and legacy.get("props"):
+            if game_date is not None and not _game_props_cache_fresh(
+                legacy, game_date, path=legacy_path
+            ):
+                return None
             return legacy
     return None
 
@@ -1851,10 +1942,14 @@ def _load_best_slate_props(
     book = _normalize_bookmaker(bookmaker)
     cached = _load_json(_slate_cache_path(game_date, book))
     if cached and cached.get("all_props") is not None:
+        if not _slate_cache_fresh(cached, game_date):
+            return [], "stale_slate_cache", cached
         return cached["all_props"] or [], "slate_cache", cached
     if book == DEFAULT_PROP_BOOKMAKER:
         legacy = _load_json(PROPS_DIR / f"slate_{game_date.isoformat()}.json")
         if legacy and legacy.get("all_props") is not None:
+            if not _slate_cache_fresh(legacy, game_date):
+                return [], "stale_slate_cache", legacy
             return legacy["all_props"] or [], "slate_cache", legacy
     return [], "none", None
 
@@ -1977,7 +2072,7 @@ def build_daily_top_props(
 
     if not scan and not refresh:
         picks, source, meta = _load_best_slate_props(game_date, book)
-        if picks:
+        if picks and source != "stale_slate_cache":
             picks = _normalize_scored_props(
                 _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
             )
@@ -1997,6 +2092,8 @@ def build_daily_top_props(
                 cached_at=meta.get("cached_at") if meta else None,
                 bookmaker=book,
             )
+        if source == "stale_slate_cache":
+            scan = True
 
     schedule = get_mlb_schedule(game_date)
     games = schedule.get("games") or []
@@ -2014,7 +2111,9 @@ def build_daily_top_props(
         gid = str(game.get("game_id"))
         if not gid:
             continue
-        cached_payload = None if refresh else _load_cached_game_props(gid, book)
+        cached_payload = None if refresh else _load_cached_game_props(
+            gid, book, game_date=game_date
+        )
         if cached_payload:
             cached_payload = _trim_props_payload(cached_payload, DEFAULT_MLB_PROP_MARKETS)
         payload = cached_payload
@@ -2079,7 +2178,7 @@ def build_daily_top_props(
         )
 
     if refresh and games_fetched > 0:
-        mark_props_cache_refreshed()
+        mark_props_cache_refreshed(game_date)
 
     return _daily_props_payload(
         game_date=game_date,
@@ -2231,7 +2330,9 @@ def search_daily_props(
         gid = str(game.get("game_id") or "")
         if not gid:
             continue
-        payload = None if refresh else _load_cached_game_props(gid, book)
+        payload = None if refresh else _load_cached_game_props(
+            gid, book, game_date=game_date
+        )
         if payload and payload.get("props"):
             _merge_payload(payload, gid)
             continue

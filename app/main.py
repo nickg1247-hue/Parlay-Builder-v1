@@ -904,6 +904,10 @@ async def props_search(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
+    cache_meta = get_props_cache_meta()
+    if cache_meta.get("requires_refresh"):
+        scan = True
+        refresh = True
     result = search_daily_props(
         game_date,
         bookmaker=bookmaker,
