@@ -1,6 +1,8 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260708";
+const NTG_ASSET_V = "20260719";
+const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
+window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
 (function ensureChromeStylesEarly() {
   for (const file of ["brand.css", "design.css"]) {
@@ -180,30 +182,38 @@ function ensureSiteStyles() {
     link.href = `/static/${file}?v=${v}`;
     document.head.appendChild(link);
   }
-  if (!document.querySelector('link[rel="icon"][href*="ntg-mark"]')) {
+  if (!document.querySelector('link[rel="icon"][href*="ntg"]')) {
     const icon = document.createElement("link");
     icon.rel = "icon";
-    icon.type = "image/svg+xml";
-    icon.href = `/static/ntg-mark.svg?v=${v}`;
+    icon.type = "image/png";
+    icon.href = NTG_LOGO_SRC;
     document.head.appendChild(icon);
   }
 }
 
-function ntgBrandWordmarkInner() {
+function ntgBrandLockupHtml() {
+  const dash = document.body.classList.contains("home-dashboard");
+  const src = window.NTG_LOGO_SRC || `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
+  if (dash) {
+    return `<img class="app-brand-logo app-brand-logo--dash" src="${src}" alt="NTG Sports" width="56" height="56" />`;
+  }
   return `
-    <span class="ntg-brand-wordmark">
-      <span class="ntg-brand-wordmark-lockup">
-        <span class="ntg-brand-wordmark-ntg">NTG</span>
-        <span class="ntg-brand-wordmark-sports">SPORTS</span>
-      </span>
-      <span class="ntg-brand-wordmark-accent" aria-hidden="true"></span>
+    <img class="app-brand-logo" src="${src}" alt="" width="44" height="44" />
+    <span class="app-brand-text">
+      <span class="app-brand-ntg">NTG</span><span class="app-brand-sports">Sports</span>
     </span>`;
+}
+
+function ntgBrandWordmarkInner() {
+  return ntgBrandLockupHtml();
 }
 
 function upgradeBrandLinks() {
   document.querySelectorAll("a.app-brand").forEach((el) => {
-    el.innerHTML = ntgBrandWordmarkInner();
+    el.innerHTML = ntgBrandLockupHtml();
+    el.classList.add("app-brand--lockup");
     el.setAttribute("aria-label", "NTG Sports home");
+    el.dataset.brandInit = "1";
   });
 }
 
@@ -2156,7 +2166,7 @@ function imgLogo(teamId, alt) {
   return img;
 }
 
-const NTG_SPLASH_MARK = "/static/ntg-mark.svg?v=20260622";
+const NTG_SPLASH_MARK = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 const NTG_SPLASH_MAX_MS = 35000;
 
 function buildNTGSplashElement(reducedMotion) {
@@ -2730,11 +2740,16 @@ function renderSiteFooter() {
 async function initSiteRefreshBar(bar) {
   if (!bar) return;
   const useDashboardStrip = document.body.classList.contains("home-dashboard");
+  const progressFill = document.getElementById("dash-progress-fill");
   async function apply(status) {
     bar.textContent = useDashboardStrip
       ? formatDashboardSyncStrip(status)
       : formatRefreshStrip(status);
-    bar.classList.toggle("ok", Boolean(status?.ok || status?.display_updated_at));
+    const ready = Boolean(status?.ok || status?.display_updated_at);
+    bar.classList.toggle("ok", ready);
+    if (progressFill) {
+      progressFill.style.width = ready ? "100%" : status ? "62%" : "18%";
+    }
   }
   async function tick() {
     try {

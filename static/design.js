@@ -138,20 +138,28 @@
   }
 
   function initBrandMarks() {
+    const src =
+      window.NTG_LOGO_SRC || `/static/assets/ntg-logo.png?v=20260719`;
     document.querySelectorAll(".app-brand").forEach((brand) => {
       if (brand.dataset.brandInit === "1") return;
       brand.dataset.brandInit = "1";
-      const mark = document.createElement("img");
-      mark.src = "/static/ntg-mark.svg?v=20260622";
-      mark.alt = "NTG Sports";
-      mark.className = "app-brand-mark";
-      mark.width = 34;
-      mark.height = 34;
-      const text = document.createElement("span");
-      text.className = "app-brand-text";
-      text.innerHTML =
-        '<span class="app-brand-ntg">NTG</span><span class="app-brand-sports">Sports</span>';
-      brand.replaceChildren(mark, text);
+      const dash = document.body.classList.contains("home-dashboard");
+      if (dash) {
+        brand.innerHTML = `<img class="app-brand-logo app-brand-logo--dash" src="${src}" alt="NTG Sports" width="56" height="56" />`;
+      } else {
+        const mark = document.createElement("img");
+        mark.src = src;
+        mark.alt = "";
+        mark.className = "app-brand-logo";
+        mark.width = 44;
+        mark.height = 44;
+        const text = document.createElement("span");
+        text.className = "app-brand-text";
+        text.innerHTML =
+          '<span class="app-brand-ntg">NTG</span><span class="app-brand-sports">Sports</span>';
+        brand.replaceChildren(mark, text);
+      }
+      brand.classList.add("app-brand--lockup");
     });
   }
 
