@@ -46,6 +46,7 @@ USER_AUTH_PUBLIC_PATHS = frozenset({
     "/my-team",
     "/login",
     "/health",
+    "/pricing",
 })
 
 

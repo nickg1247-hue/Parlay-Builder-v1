@@ -394,8 +394,34 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
 
 def test_split_slate_props_and_daily_payload():
     picks = [
-        {"line_strength": "very_strong", "recommended_side": "over", "hit_rate_over_l10": 1.0, "hit_rate_over_l5": 1.0, "hit_rate_over_season": 1.0},
-        {"line_strength": "strong", "recommended_side": "over", "hit_rate_over_l10": 0.8, "hit_rate_over_l5": 0.7, "hit_rate_over_season": 0.75},
+        {
+            "line_strength": "very_strong",
+            "actionable": True,
+            "recommended_side": "over",
+            "hit_rate_over_l10": 1.0,
+            "hit_rate_over_l5": 1.0,
+            "hit_rate_over_season": 1.0,
+        },
+        {
+            "line_strength": "strong",
+            "actionable": True,
+            "recommended_side": "over",
+            "recommended_hit_rate": 0.8,
+            "score": 72.0,
+            "hit_rate_over_l10": 0.8,
+            "hit_rate_over_l5": 0.7,
+            "hit_rate_over_season": 0.75,
+        },
+        {
+            "line_strength": "moderate",
+            "actionable": True,
+            "recommended_side": "over",
+            "recommended_hit_rate": 0.58,
+            "score": 58.0,
+            "hit_rate_over_l10": 0.58,
+            "hit_rate_over_l5": 0.6,
+            "hit_rate_over_season": 0.55,
+        },
     ]
     very, regular = props_mlb._split_slate_props(picks)
     assert len(very) == 1
@@ -527,6 +553,29 @@ def test_passes_prop_search_filters_min_odds_and_line_kind():
     )
 
 
+def test_prop_rank_key_sorts_by_l5_l10_season_average():
+    """Higher L5/L10/season average ranks first (100/92/90 beats 100/90/90)."""
+    higher_avg = {
+        "recommended_side": "over",
+        "recommended_hit_rate": 0.92,
+        "hit_rate_over_l5": 1.0,
+        "hit_rate_over_l10": 0.92,
+        "hit_rate_over_season": 0.90,
+    }
+    lower_avg = {
+        "recommended_side": "over",
+        "recommended_hit_rate": 0.90,
+        "hit_rate_over_l5": 1.0,
+        "hit_rate_over_l10": 0.90,
+        "hit_rate_over_season": 0.90,
+    }
+    assert prop_scoring.prop_form_average_from_prop(higher_avg) > prop_scoring.prop_form_average_from_prop(
+        lower_avg
+    )
+    ranked = sorted([lower_avg, higher_avg], key=props_mlb.prop_rank_key)
+    assert ranked[0] is higher_avg
+
+
 def test_prop_rank_key_hit_rate_first():
     lower_l10 = {
         "recommended_side": "over",
@@ -616,12 +665,14 @@ def test_prop_is_bettable_requires_listed_side_odds():
 
 def test_load_best_slate_props_same_day_only(isolated_props):
     import json
-    from datetime import date
+    from datetime import date, datetime, timezone
 
     slate_path = isolated_props / "slate_2026-06-16.json"
     slate_path.write_text(
         json.dumps(
             {
+                "date": "2026-06-16",
+                "cached_at": datetime.now(timezone.utc).isoformat(),
                 "all_props": [
                     {
                         "recommended_hit_rate": 0.8,
@@ -1001,6 +1052,23 @@ def test_build_game_props_fetches_and_caches(
 
 @patch("app.services.prop_scoring._search_player_id", return_value=592450)
 @patch("app.services.prop_scoring._season_game_log_values")
+def test_score_prop_rejects_weak_l5_on_offered_side(mock_logs, _pid):
+    # Strong L10 over but cold L5 over (2/5 hits)
+    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 2, 2])
+    result = prop_scoring.score_prop(
+        player="Aaron Judge",
+        market_type="batter_hits",
+        line=1.5,
+        over_odds=-110,
+        under_odds=-110,
+        season=2026,
+    )
+    assert result["actionable"] is False
+    assert "L5" in (result["actionable_reason"] or "")
+
+
+@patch("app.services.prop_scoring._search_player_id", return_value=592450)
+@patch("app.services.prop_scoring._season_game_log_values")
 def test_score_prop_recommends_over_on_hot_form(mock_logs, _pid):
     mock_logs.return_value = tuple([2, 2, 1, 3, 2, 2, 1, 2, 3, 2])
     result = prop_scoring.score_prop(
@@ -1076,9 +1144,10 @@ def test_refresh_prop_line_strength_upgrades_stale_strong_label(mock_logs, _pid)
     assert fixed["line_strength_label"] == "Very strong"
 
 
-def test_form_score_is_l10_hit_rate_percent():
-    assert prop_scoring._compute_rank_score(hit_rate=0.8) == 80.0
-    assert prop_scoring._compute_rank_score(hit_rate=1.0) == 100.0
+def test_form_score_is_average_hit_rate_percent():
+    assert prop_scoring._compute_rank_score(hit_rate=0.8, l5=0.8, season=0.75) == round(
+        (0.8 + 0.8 + 0.75) / 3 * 100.0, 1
+    )
 
 
 def test_recent_game_window_uses_most_recent_games():

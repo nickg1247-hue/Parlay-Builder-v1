@@ -15,6 +15,22 @@ function showAuthNote(el, text, isError) {
   }
 }
 
+function showDevVerificationLink(el, url) {
+  if (!el || !url) return;
+  el.replaceChildren();
+  el.append("Local dev — no email was sent. ");
+  const link = document.createElement("a");
+  link.href = url;
+  link.textContent = "Click here to verify your email";
+  el.appendChild(link);
+  el.classList.remove("hidden");
+  el.classList.add("auth-note");
+  el.classList.remove("auth-error");
+  try {
+    sessionStorage.setItem("dev_verification_url", url);
+  } catch (_) {}
+}
+
 function initSignInPage() {
   const form = document.getElementById("signin-form");
   const errorEl = document.getElementById("signin-error");
@@ -84,6 +100,10 @@ function initSignUpPage() {
         return;
       }
       showAuthNote(noteEl, body.message || "Check your email to verify your account.", false);
+      if (body.dev_verification_url) {
+        showDevVerificationLink(noteEl, body.dev_verification_url);
+        return;
+      }
       window.setTimeout(() => {
         window.location.href = authNextPath("/verify-email?email=" + encodeURIComponent(body.email || document.getElementById("email").value));
       }, 1200);
@@ -109,7 +129,21 @@ function initVerifyEmailPage() {
 
   async function verifyNow() {
     if (!token) {
-      intro.textContent = "Enter your email to resend a verification link, or open the link from your inbox.";
+      intro.textContent = "Verify your email to subscribe and unlock full picks.";
+      const devUrl = (() => {
+        try {
+          return sessionStorage.getItem("dev_verification_url");
+        } catch (_) {
+          return null;
+        }
+      })();
+      if (devUrl) {
+        showDevVerificationLink(noteEl, devUrl);
+        intro.textContent = "Local dev — no email was sent. Use the link below:";
+      } else {
+        intro.textContent =
+          "Enter your email to get a verification link, or open the link from your inbox.";
+      }
       resendForm?.classList.remove("hidden");
       return;
     }
@@ -156,6 +190,9 @@ function initVerifyEmailPage() {
         return;
       }
       showAuthNote(noteEl, body.message || "Verification email sent.", false);
+      if (body.dev_verification_url) {
+        showDevVerificationLink(noteEl, body.dev_verification_url);
+      }
     } catch {
       showAuthNote(errorEl, "Network error — try again", true);
     } finally {

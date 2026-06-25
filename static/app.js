@@ -1406,6 +1406,16 @@ function propHasPerfectForm(prop, side) {
   return [l5, l10, season].every((r) => r != null && Math.round(r * 100) >= 100);
 }
 
+function propFormComposite(prop) {
+  if (prop?.form_average != null) return Number(prop.form_average);
+  const { l5, l10, season } = propSideFormRates(prop, prop?.recommended_side || "over");
+  const vals = [l5, l10, season].filter((r) => r != null);
+  if (!vals.length) return prop?.recommended_hit_rate ?? 0;
+  return vals.reduce((s, r) => s + Number(r), 0) / vals.length;
+}
+
+window.propFormComposite = propFormComposite;
+
 function propEffectiveStrength(prop) {
   if (!prop?.actionable) return prop;
   if (prop.line_strength === "very_strong" || propHasPerfectForm(prop)) {
@@ -2672,6 +2682,13 @@ function initUtilityNav(nav, path) {
   nav.classList.add("app-nav-utility");
 
   const userAuth = window.pbUserAuth || {};
+  const upgradeLink = document.createElement("a");
+  upgradeLink.href = "/pricing";
+  upgradeLink.className = "app-nav-upgrade";
+  upgradeLink.textContent = userAuth.is_premium ? "Premium" : "Upgrade";
+  if (path === "/pricing") upgradeLink.classList.add("active");
+  nav.appendChild(upgradeLink);
+
   if (pbFeatures.props_require_verified_user) {
     const userEl = document.createElement("span");
     userEl.className = "app-nav-user";
@@ -2725,6 +2742,7 @@ function renderSiteFooter() {
         <nav class="site-footer-nav" aria-label="Footer links">
           <a href="/methodology">Methodology</a>
           <a href="/performance">Performance</a>
+          <a href="/pricing">Upgrade</a>
           <a href="/updates">Updates</a>
           <a href="mailto:contact@ntgsports.com">Contact</a>
           <a href="/privacy">Privacy</a>

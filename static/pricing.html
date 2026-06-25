@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>NTG Premium</h1>
+      <p class="pricing-lead">Daily MLB model picks with edge vs the market, full game insights, and player props.</p>
+      <ul class="pricing-features">
+        <li>Full daily best bets + EV flags</li>
+        <li>Game breakdowns and model vs market</li>
+        <li>Player props explorer and parlay tools</li>
+        <li>Complete performance history</li>
+      </ul>
+      <p class="pricing-price"><strong>$14.99</strong> / month · 7-day free trial</p>
+      <div id="pricing-status" class="auth-note hidden" role="status"></div>
+      <div id="pricing-error" class="auth-error" role="alert"></div>
+      <button type="button" class="auth-submit" id="pricing-checkout-btn">Upgrade — start free trial</button>
+      <button type="button" class="auth-submit auth-submit--secondary hidden" id="pricing-portal-btn">Manage subscription</button>
+      <p class="auth-switch">Free account? <a href="/signup">Sign up</a> · <a href="/signin">Sign in</a></p>
+      <p class="pricing-disclaimer">For entertainment and research only. Not gambling advice. Past performance does not guarantee future results.</p>
+      <a class="auth-back" href="/">← Back to home</a>
+    </div>
+  </div>
+  <script src="/static/pricing.js?v=2"></script>
+</body>
+</html>

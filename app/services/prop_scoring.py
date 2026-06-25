@@ -18,7 +18,10 @@ _http_client: httpx.Client | None = None
 MIN_GAMES_FOR_SCORE = 5
 MIN_ALLTIME_SEASON = 2018
 ALLTIME_SEASONS_BACK = 3
-MIN_ACTIONABLE_HIT_RATE = 0.55
+MIN_ACTIONABLE_HIT_RATE = 0.60
+MIN_L5_HIT_RATE = 0.50
+MIN_SEASON_HIT_RATE = 0.50
+MIN_TOP_PROP_SCORE = 65.0
 TRAP_UNOFFERED_GAP = 0.20
 TRAP_UNOFFERED_MIN = 0.70
 
@@ -371,9 +374,61 @@ def _matchup_adjustment(
     return pts, notes
 
 
-def _compute_rank_score(*, hit_rate: float, **_kwargs: Any) -> float:
-    """Form score for display and sorting: L10 hit rate as 0–100."""
-    return round(hit_rate * 100.0, 1)
+def prop_form_average(
+    l5: float | None,
+    l10: float | None,
+    season: float | None,
+) -> float:
+    """Simple mean of L5, L10, and season hit rates on the recommended side."""
+    vals = [float(v) for v in (l5, l10, season) if v is not None]
+    if not vals:
+        return 0.0
+    return round(sum(vals) / len(vals), 4)
+
+
+def prop_form_average_from_prop(prop: dict[str, Any]) -> float:
+    l5, l10, season = side_form_hit_rates(prop)
+    return prop_form_average(l5, l10, season)
+
+
+def prop_form_composite(
+    l5: float | None,
+    l10: float | None,
+    season: float | None,
+    *,
+    matchup_adjustment: float | None = None,
+) -> float:
+    """Alias for prop_form_average (kept for imports)."""
+    return prop_form_average(l5, l10, season)
+
+
+def prop_form_composite_from_prop(prop: dict[str, Any]) -> float:
+    return prop_form_average_from_prop(prop)
+
+
+def qualifies_for_top_props_list(prop: dict[str, Any]) -> bool:
+    """Non-very-strong picks must clear a higher composite score bar."""
+    if not prop.get("actionable"):
+        return False
+    l5, l10, season = side_form_hit_rates(prop)
+    score = prop.get("score")
+    if score is None or float(score) < MIN_TOP_PROP_SCORE:
+        return False
+    if (l5 or 0) < MIN_L5_HIT_RATE or (season or 0) < MIN_SEASON_HIT_RATE:
+        return False
+    return prop_form_average_from_prop(prop) >= MIN_ACTIONABLE_HIT_RATE
+
+
+def _compute_rank_score(
+    *,
+    hit_rate: float,
+    l5: float | None = None,
+    season: float | None = None,
+    matchup_adjustment: float | None = None,
+) -> float:
+    """Form score for display and sorting: L5/L10/season average as 0–100."""
+    avg = prop_form_average(l5, hit_rate, season)
+    return round(avg * 100.0, 1)
 
 
 def _choose_actionable_side(
@@ -388,11 +443,27 @@ def _choose_actionable_side(
     season_over: float | None,
     season_under: float | None,
 ) -> dict[str, Any]:
-    offered: list[tuple[str, float, int]] = []
+    offered: list[tuple[str, float, float, float, int]] = []
     if over_odds is not None and l10_over is not None:
-        offered.append(("over", l10_over, over_odds))
+        offered.append(
+            (
+                "over",
+                prop_form_average(l5_over, l10_over, season_over),
+                l10_over,
+                l5_over or 0.0,
+                over_odds,
+            )
+        )
     if under_odds is not None and l10_under is not None:
-        offered.append(("under", l10_under, under_odds))
+        offered.append(
+            (
+                "under",
+                prop_form_average(l5_under, l10_under, season_under),
+                l10_under,
+                l5_under or 0.0,
+                under_odds,
+            )
+        )
 
     if not offered:
         return {
@@ -403,8 +474,9 @@ def _choose_actionable_side(
             "actionable_reason": "No offered side with enough game history",
         }
 
-    best_offered = max(offered, key=lambda x: x[1])
-    side, hit_rate, odds = best_offered
+    best_offered = max(offered, key=lambda x: (x[1], x[2], x[3]))
+    side, _composite, hit_rate, side_l5, odds = best_offered
+    side_season = season_over if side == "over" else season_under
 
     unoffered: list[tuple[str, float]] = []
     if over_odds is None and l10_over is not None:
@@ -435,7 +507,25 @@ def _choose_actionable_side(
             "recommended_odds": odds,
             "recommended_hit_rate": hit_rate,
             "actionable": False,
-            "actionable_reason": f"L10 {hit_rate:.0%} on offered {side} — mixed form",
+            "actionable_reason": f"L10 {hit_rate:.0%} on offered {side} — below {MIN_ACTIONABLE_HIT_RATE:.0%} bar",
+        }
+
+    if side_l5 < MIN_L5_HIT_RATE:
+        return {
+            "recommended_side": side,
+            "recommended_odds": odds,
+            "recommended_hit_rate": hit_rate,
+            "actionable": False,
+            "actionable_reason": f"L5 {side_l5:.0%} on offered {side} — recent form too weak",
+        }
+
+    if side_season is not None and side_season < MIN_SEASON_HIT_RATE:
+        return {
+            "recommended_side": side,
+            "recommended_odds": odds,
+            "recommended_hit_rate": hit_rate,
+            "actionable": False,
+            "actionable_reason": f"Season {side_season:.0%} on offered {side} — not sustained enough",
         }
 
     return {
@@ -548,15 +638,21 @@ def score_prop(
     )
     factors.extend(matchup_notes)
 
-    score: float | None = None
-    rank_score: float | None = None
-    if choice["actionable"] and hit_rate is not None and side:
-        rank_score = _compute_rank_score(hit_rate=hit_rate)
-        score = rank_score
-
     side_l5 = l5_over if side == "over" else l5_under if side == "under" else None
     side_l10 = l10_over if side == "over" else l10_under if side == "under" else None
     side_season = season_over if side == "over" else season_under if side == "under" else None
+    form_average = prop_form_average(side_l5, side_l10, side_season)
+
+    score: float | None = None
+    rank_score: float | None = None
+    if choice["actionable"] and hit_rate is not None and side:
+        rank_score = _compute_rank_score(
+            hit_rate=hit_rate,
+            l5=side_l5,
+            season=side_season,
+        )
+        score = rank_score
+
     line_strength = _prop_line_strength(
         market_type=market_type,
         side=side,
@@ -599,6 +695,7 @@ def score_prop(
         "factors": factors,
         "market_label": market_label(market_type),
         "rank_score": rank_score,
+        "form_average": form_average,
         "matchup_adjustment": round(adj, 1) if adj else None,
         **line_strength,
     }

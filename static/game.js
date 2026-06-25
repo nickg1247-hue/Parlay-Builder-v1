@@ -530,6 +530,22 @@
 
 
 
+  function propFormAverage(prop) {
+    if (typeof window.propFormComposite === "function") {
+      return window.propFormComposite(prop);
+    }
+    if (prop?.form_average != null) return Number(prop.form_average);
+    const side = prop?.recommended_side || "over";
+    const over = side === "over";
+    const vals = [
+      over ? prop.hit_rate_over_l5 : prop.hit_rate_under_l5,
+      over ? prop.hit_rate_over_l10 : prop.hit_rate_under_l10,
+      over ? prop.hit_rate_over_season : prop.hit_rate_under_season,
+    ].filter((r) => r != null);
+    if (!vals.length) return prop?.recommended_hit_rate ?? 0;
+    return vals.reduce((s, r) => s + Number(r), 0) / vals.length;
+  }
+
   function propHitRatesHtml(prop, side) {
     if (typeof window.propHitRatesHtml === "function") {
       return window.propHitRatesHtml(prop, side);
@@ -607,6 +623,8 @@
       .join("");
 
     all = all.slice().sort((a, b) => {
+      const avgDiff = propFormAverage(b) - propFormAverage(a);
+      if (avgDiff !== 0) return avgDiff;
       const ma = marketLabel(a.market_type);
       const mb = marketLabel(b.market_type);
       if (ma !== mb) return ma.localeCompare(mb);

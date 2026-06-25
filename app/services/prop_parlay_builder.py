@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any
 
 from app.odds.odds_math import american_to_decimal
+from app.services.prop_scoring import prop_form_average_from_prop
 from app.services.props_mlb import (
     evaluate_prop_parlay,
     prop_is_bettable,
@@ -21,18 +22,7 @@ def _norm_player(name: str | None) -> str:
 
 
 def _form_score(prop: dict[str, Any]) -> float:
-    l5, l10, season = prop.get("hit_rate_over_l10"), prop.get("hit_rate_over_l10"), prop.get("hit_rate_over_season")
-    side = prop.get("recommended_side") or "over"
-    if side == "under":
-        l5 = prop.get("hit_rate_under_l5")
-        l10 = prop.get("hit_rate_under_l10") or prop.get("recommended_hit_rate")
-        season = prop.get("hit_rate_under_season")
-    else:
-        l5 = prop.get("hit_rate_over_l5")
-        l10 = prop.get("hit_rate_over_l10") or prop.get("recommended_hit_rate")
-        season = prop.get("hit_rate_over_season")
-    l5f, l10f, sf = float(l5 or 0), float(l10 or 0), float(season or 0)
-    return l10f * 0.55 + l5f * 0.30 + sf * 0.15
+    return prop_form_average_from_prop(prop)
 
 
 def _best_prop_per_player(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:

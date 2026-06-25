@@ -3643,6 +3643,19 @@ body.slate-mlb .app-main > * {
   flex-shrink: 0;
 }
 
+.app-nav-upgrade {
+  font-weight: 600;
+  color: var(--accent, #c9a227);
+}
+
+.app-nav-upgrade:hover {
+  color: var(--accent-bright, #e8c547);
+}
+
+.app-nav-upgrade.active {
+  text-decoration: underline;
+}
+
 @media (max-width: 900px) {
   .app-topbar-row--main {
     flex-wrap: wrap;

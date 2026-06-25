@@ -14,6 +14,13 @@ def _smtp_configured() -> bool:
     return bool(os.getenv("SMTP_HOST", "").strip())
 
 
+def dev_expose_verification_url() -> bool:
+    """In local dev without SMTP, return the verify link in API responses."""
+    if os.getenv("APP_ENV", "development").strip().lower() != "development":
+        return False
+    return not _smtp_configured()
+
+
 def public_site_url() -> str:
     return os.getenv("PUBLIC_SITE_URL", "http://127.0.0.1:8000").rstrip("/")
 

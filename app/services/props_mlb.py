@@ -24,10 +24,13 @@ from app.odds.the_odds_api import (
 )
 from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
 from app.services.prop_scoring import (
+    MIN_TOP_PROP_SCORE,
     _player_team_id,
     _search_player_id,
     is_perfect_l5_l10_season,
     market_label,
+    prop_form_average_from_prop,
+    qualifies_for_top_props_list,
     refresh_prop_line_strength,
     score_prop,
     side_form_hit_rates,
@@ -234,7 +237,7 @@ def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
         total_actionable += 1
         if is_very_strong_prop(prop):
             very_strong.append(prop)
-        elif prop.get("score") is not None and prop.get("score", 0) >= 60:
+        elif qualifies_for_top_props_list(prop):
             top_picks.append(prop)
     very_strong.sort(key=prop_rank_key)
     top_picks.sort(key=prop_rank_key)
@@ -250,7 +253,7 @@ def _split_slate_props(
     picks: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     very_strong = [p for p in picks if is_very_strong_prop(p)]
-    regular = [p for p in picks if not is_very_strong_prop(p)]
+    regular = [p for p in picks if qualifies_for_top_props_list(p)]
     very_strong.sort(key=prop_rank_key)
     regular.sort(key=prop_rank_key)
     return very_strong, regular
@@ -364,10 +367,11 @@ def prop_side_hit_rates(prop: dict[str, Any]) -> tuple[float, float, float]:
     return (float(l5 or 0), float(l10 or 0), float(season or 0))
 
 
-def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
-    """Sort actionable props: highest L10, then L5, then season hit rate."""
+def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float, float]:
+    """Sort props by L5/L10/season average (highest first), then tie-break windows."""
+    avg = prop_form_average_from_prop(prop)
     l5, l10, season = prop_side_hit_rates(prop)
-    return (-l10, -l5, -season)
+    return (-avg, -l10, -l5, -season)
 
 
 def prop_slip_leg(
@@ -414,6 +418,7 @@ def prop_slip_leg(
         "line_strength_label": prop.get("line_strength_label"),
         "line_insight": prop.get("line_insight"),
         "score": prop.get("score"),
+        "form_average": prop.get("form_average"),
         "bookmaker": bookmaker,
         "bookmaker_label": _bookmaker_label(bookmaker),
         "deeplink": prop.get(link_key) or prop.get("deeplink"),
@@ -490,7 +495,7 @@ def _mark_stale_props(payload: dict[str, Any]) -> dict[str, Any]:
                 "Cached lines expired — refresh props for current book prices"
             )
         props.append(item)
-    top = [p for p in props if p.get("actionable") and p.get("score", 0) >= 60][:12]
+    top = [p for p in props if qualifies_for_top_props_list(p)][:12]
     return {**payload, "props": props, "top_picks": top}
 
 
@@ -530,6 +535,8 @@ def _collect_actionable_props(payload: dict[str, Any], game_id: str) -> list[dic
             and offered
             and bookmaker not in offered
         ):
+            continue
+        if not row.get("actionable"):
             continue
         if row.get("recommended_hit_rate") is None:
             continue
@@ -2073,7 +2080,7 @@ def _daily_props_payload(
         "source": source,
         "cached_at": cached_at,
         "disclaimer": (
-            "Ranked by hit rate on the recommended side (L10, then L5, then season) "
+            "Ranked by L5/L10/season average hit rate on the recommended side "
             "— experimental, not betting advice."
         ),
         "live_odds_enabled": live_odds_enabled(),

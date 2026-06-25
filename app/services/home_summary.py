@@ -10,6 +10,7 @@ from typing import Any
 from app.config import PROJECT_ROOT
 from app.odds.odds_repository import get_today_snapshot
 from app.services.bet_context import enrich_ml_singles, form_composite_score
+from app.services.prop_scoring import prop_form_average_from_prop
 from app.services.daily_board import DAILY_BOARD_CACHE, _top_form_singles
 
 logger = logging.getLogger(__name__)
@@ -65,24 +66,7 @@ def _slate_index(slate: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 
 def _prop_form_composite(prop: dict[str, Any]) -> float:
-    side = prop.get("recommended_side") or "over"
-    if side == "over":
-        rates = [
-            prop.get("hit_rate_over_l5"),
-            prop.get("hit_rate_over_l10"),
-            prop.get("hit_rate_over_season"),
-        ]
-    else:
-        rates = [
-            prop.get("hit_rate_under_l5"),
-            prop.get("hit_rate_under_l10"),
-            prop.get("hit_rate_under_season"),
-        ]
-    vals = [float(r) for r in rates if r is not None]
-    if vals:
-        return sum(vals) / len(vals)
-    hr = prop.get("recommended_hit_rate")
-    return float(hr) if hr is not None else 0.0
+    return prop_form_average_from_prop(prop)
 
 
 def _dedupe_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]:

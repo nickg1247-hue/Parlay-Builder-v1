@@ -238,6 +238,8 @@
 
   function propFormComposite(prop) {
 
+    if (prop?.form_average != null) return Number(prop.form_average);
+
     const { l5, l10, season } = propSideFormRates(prop, prop.recommended_side);
 
     const vals = [l5, l10, season].filter((r) => r != null);

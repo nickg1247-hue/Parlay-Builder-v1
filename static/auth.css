@@ -87,7 +87,11 @@
 
 .auth-submit:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: not-allowed;
+}
+
+.auth-submit.pricing-btn-disabled:disabled {
+  cursor: not-allowed;
 }
 
 .auth-switch {
