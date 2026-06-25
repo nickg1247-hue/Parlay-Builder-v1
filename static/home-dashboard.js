@@ -765,6 +765,50 @@
     return pickFormComposite(p);
   }
 
+  function dashPropToSlipLeg(prop) {
+    if (typeof propSlipLegFromProp !== "function") return null;
+    const leg = propSlipLegFromProp(prop, { requireActionable: false });
+    if (!leg || leg.american_odds == null) return null;
+    return leg;
+  }
+
+  async function dashSendToDraftKings(props, btn) {
+    const slipLegs = (props || []).map(dashPropToSlipLeg).filter(Boolean);
+    if (!slipLegs.length) {
+      if (btn) btn.textContent = "No odds yet";
+      return { ok: false, reason: "no_legs" };
+    }
+    if (typeof savePropSlipLegs === "function") {
+      savePropSlipLegs(slipLegs);
+      if (typeof renderPropSlipPanel === "function") renderPropSlipPanel();
+    }
+    const orig = btn?.textContent;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+    }
+    const result =
+      typeof openPropSlipLegsInBook === "function"
+        ? await openPropSlipLegsInBook(slipLegs, { bookmaker: "draftkings" })
+        : { ok: false };
+    if (btn) {
+      btn.disabled = false;
+      if (result.reason === "opened_parlay" || result.reason === "opened_single") {
+        btn.textContent = "Opened in DK";
+      } else if (result.reason === "wizard") {
+        btn.textContent = "Add each leg →";
+      } else if (result.reason === "no_deeplinks") {
+        btn.textContent = result.ok ? "Copied list" : "Links unavailable";
+      } else {
+        btn.textContent = "Try again";
+      }
+      window.setTimeout(() => {
+        btn.textContent = orig;
+      }, 2800);
+    }
+    return result;
+  }
+
   function renderDashboardBestBets(el, picks, games) {
 
     if (!el) return;
@@ -811,7 +855,9 @@
 
             : "";
 
-          return `<a class="dash-bet-row dash-bet-row-prop" href="${href}">
+          return `<div class="dash-bet-row-wrap">
+
+          <a class="dash-bet-row dash-bet-row-prop" href="${href}">
 
           <div class="dash-bet-main">
 
@@ -833,7 +879,11 @@
 
           <span class="dash-bet-prob">prop</span>
 
-        </a>`;
+        </a>
+
+        <button type="button" class="dash-bet-dk-btn" data-dash-dk-idx="${i}" title="Send to DraftKings">→ DK</button>
+
+        </div>`;
 
         }
 
@@ -884,6 +934,17 @@
       })
 
       .join("");
+
+    const shown = rows.slice(0, 5);
+    el.querySelectorAll(".dash-bet-dk-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = Number(btn.dataset.dashDkIdx);
+        const prop = shown[idx];
+        if (prop) dashSendToDraftKings([prop], btn);
+      });
+    });
 
   }
 
@@ -1057,9 +1118,22 @@
 
         </div>
 
-        <a class="dash-btn dash-btn-sm dash-btn-primary" href="/mlb/props">View props</a>
+        <div class="dash-parlay-actions">
+
+          <button type="button" class="dash-btn dash-btn-sm dash-btn-dk" id="dash-parlay-send-dk">Send to DraftKings</button>
+
+          <a class="dash-btn dash-btn-sm dash-btn-ghost" href="/prop_slip.html">Open slip</a>
+
+          <a class="dash-btn dash-btn-sm dash-btn-ghost" href="/mlb/props">All props</a>
+
+        </div>
 
       </div>`;
+
+    const sendBtn = el.querySelector("#dash-parlay-send-dk");
+    if (sendBtn) {
+      sendBtn.addEventListener("click", () => dashSendToDraftKings(legs, sendBtn));
+    }
 
   }
 

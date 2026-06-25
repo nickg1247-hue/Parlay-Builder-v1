@@ -748,6 +748,18 @@ def test_parse_event_props_preserves_deeplinks():
     assert judge["over_link"] == "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over"
 
 
+def test_build_combined_parlay_deeplink():
+    legs = [
+        {"deeplink": "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-a"},
+        {"deeplink": "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-b"},
+    ]
+    url = props_mlb.build_combined_parlay_deeplink(legs, "draftkings")
+    assert url is not None
+    assert "outcomes=dk-a" in url
+    assert "outcomes=dk-b" in url
+    assert props_mlb.build_combined_parlay_deeplink(legs, "fanduel") is None
+
+
 def test_merge_deeplinks_into_props():
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
     cached = [{**row, "score": 80} for row in rows]
@@ -758,6 +770,38 @@ def test_merge_deeplinks_into_props():
     judge = next(r for r in merged if r["player"] == "Aaron Judge")
     assert judge["over_link"] == "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-judge-over"
     assert judge["score"] == 80
+
+
+@patch("app.services.props_mlb.build_game_props")
+def test_export_slip_parlay_deeplink_for_multi_leg(mock_build):
+    props = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
+    for row in props:
+        if row["player"] == "Gerrit Cole":
+            row["over_link"] = "https://sportsbook.draftkings.com/addToBetslip?outcomes=dk-cole-over"
+    mock_build.return_value = {"props": props}
+    legs = [
+        {
+            "game_id": "777001",
+            "player": "Aaron Judge",
+            "market_type": "batter_hits",
+            "side": "over",
+            "line": 1.5,
+            "american_odds": -115,
+        },
+        {
+            "game_id": "777001",
+            "player": "Gerrit Cole",
+            "market_type": "pitcher_strikeouts",
+            "side": "over",
+            "line": 5.5,
+            "american_odds": 110,
+        },
+    ]
+    out = props_mlb.export_slip_for_bookmaker(legs, "draftkings", refresh_links=False)
+    assert out["open_strategy"] == "parlay"
+    assert out["parlay_deeplink"] is not None
+    assert "outcomes=dk-judge-over" in out["parlay_deeplink"]
+    assert "outcomes=dk-cole-over" in out["parlay_deeplink"]
 
 
 def test_load_game_props_for_export_uses_cached_props_off_schedule(isolated_props):

@@ -1482,6 +1482,41 @@ def evaluate_prop_parlay(legs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _extract_draftkings_outcome_token(url: str | None) -> str | None:
+    """Parse a single outcome id from a DraftKings addToBetslip URL."""
+    if not url or "draftkings.com" not in url.lower():
+        return None
+    from urllib.parse import parse_qs, urlparse
+
+    parsed = urlparse(url)
+    outcomes = parse_qs(parsed.query).get("outcomes") or []
+    if not outcomes:
+        return None
+    token = str(outcomes[0]).strip()
+    return token or None
+
+
+def build_combined_parlay_deeplink(
+    legs: list[dict[str, Any]],
+    bookmaker: str,
+) -> str | None:
+    """One DraftKings URL with every leg pre-loaded (free Odds API deeplinks)."""
+    if _normalize_bookmaker(bookmaker) != "draftkings":
+        return None
+    tokens: list[str] = []
+    for leg in legs:
+        token = _extract_draftkings_outcome_token(leg.get("deeplink"))
+        if not token:
+            return None
+        tokens.append(token)
+    if not tokens:
+        return None
+    if len(tokens) == 1:
+        return legs[0].get("deeplink")
+    query = "&".join(f"outcomes={token}" for token in tokens)
+    return f"https://sportsbook.draftkings.com/addToBetslip?{query}"
+
+
 EXPORT_BOOK_HINTS: dict[str, str] = {
     "draftkings": "DraftKings: Parlay tab → search each player → add the matching selection.",
     "fanduel": "FanDuel: Same Game Parlay+ or parlay hub → search player → add each leg.",
@@ -1883,6 +1918,7 @@ def export_slip_for_bookmaker(
         )
 
     deeplink_legs = [leg for leg in repriced if leg.get("deeplink")]
+    parlay_deeplink = build_combined_parlay_deeplink(deeplink_legs, book)
     parlay = evaluate_prop_parlay([leg for leg in repriced if leg.get("available_at_book")])
     export_text = format_slip_export_text(
         repriced,
@@ -1890,6 +1926,14 @@ def export_slip_for_bookmaker(
         bookmaker_label=book_label,
         parlay=parlay,
     )
+    if parlay_deeplink and len(deeplink_legs) > 1:
+        open_strategy = "parlay"
+    elif len(deeplink_legs) == 1:
+        open_strategy = "single"
+    elif deeplink_legs:
+        open_strategy = "multi"
+    else:
+        open_strategy = "none"
     return {
         "bookmaker": book,
         "bookmaker_label": book_label,
@@ -1900,9 +1944,8 @@ def export_slip_for_bookmaker(
         "export_text": export_text,
         "deeplink_count": len(deeplink_legs),
         "can_open_in_book": bool(deeplink_legs),
-        "open_strategy": (
-            "single" if len(deeplink_legs) == 1 else "multi" if deeplink_legs else "none"
-        ),
+        "parlay_deeplink": parlay_deeplink,
+        "open_strategy": open_strategy,
     }
 
 

@@ -338,6 +338,22 @@ body.home-dashboard #headline-ticker {
   box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
 }
 
+.dash-btn-dk {
+  background: linear-gradient(135deg, #53d337, #3db828);
+  color: #0a1a08;
+  box-shadow: 0 4px 14px rgba(83, 211, 55, 0.25);
+}
+
+.dash-btn-dk:hover {
+  box-shadow: 0 6px 18px rgba(83, 211, 55, 0.35);
+}
+
+.dash-btn-ghost {
+  background: transparent;
+  color: var(--dash-muted);
+  border: 1px solid var(--dash-border);
+}
+
 .dash-btn-gold {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(251, 191, 36, 0.08));
   border: 1px solid rgba(251, 191, 36, 0.45);
@@ -863,6 +879,39 @@ body.home-dashboard #headline-ticker {
   padding: 0.35rem 0;
 }
 
+.dash-bet-row-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  border-bottom: 1px solid var(--dash-border);
+}
+
+.dash-bet-row-wrap:last-child {
+  border-bottom: none;
+}
+
+.dash-bet-row-wrap .dash-bet-row {
+  border-bottom: none;
+}
+
+.dash-bet-dk-btn {
+  align-self: center;
+  margin-right: 0.65rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(83, 211, 55, 0.45);
+  background: rgba(83, 211, 55, 0.12);
+  color: #7ee062;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dash-bet-dk-btn:hover {
+  background: rgba(83, 211, 55, 0.22);
+}
+
 .dash-bet-row {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -1053,9 +1102,17 @@ body.home-dashboard #headline-ticker {
 
 .dash-parlay-foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.dash-parlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
 }
 
 .dash-parlay-odds-lbl {

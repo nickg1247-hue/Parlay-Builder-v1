@@ -1548,7 +1548,7 @@ function propSlipLegFromProp(p, options = {}) {
     market_label: p.market_label,
     side,
     line: p.line,
-    american_odds: p.recommended_odds,
+    american_odds: Number(p.recommended_odds ?? p.american_odds),
     hit_rate: p.recommended_hit_rate,
     hit_rate_alltime: p[alltimeKey],
     line_strength: p.line_strength,
@@ -1557,7 +1557,10 @@ function propSlipLegFromProp(p, options = {}) {
     score: p.rank_score ?? p.score,
     bookmaker: p.bookmaker,
     bookmaker_label: p.bookmaker_label,
-    deeplink: p.deeplink,
+    deeplink:
+      p.deeplink ||
+      (side === "over" ? p.over_link : p.under_link) ||
+      null,
   };
 }
 
@@ -3178,11 +3181,8 @@ async function copyTextToClipboard(text) {
   }
 }
 
-async function fetchPropSlipExport() {
-  const legs = getPropSlipLegs();
-  if (!legs.length) return null;
-  const bookEl = document.getElementById("prop-slip-export-book");
-  const bookmaker = bookEl?.value || getPropSlipExportBook();
+async function fetchPropSlipExportForLegs(legs, bookmaker = "draftkings") {
+  if (!legs?.length) return null;
   try {
     const res = await fetch("/api/props/slip/export", {
       method: "POST",
@@ -3204,6 +3204,12 @@ async function fetchPropSlipExport() {
     deeplink_count: legs.filter((l) => l.deeplink).length,
     open_strategy: "none",
   };
+}
+
+async function fetchPropSlipExport() {
+  const bookEl = document.getElementById("prop-slip-export-book");
+  const bookmaker = bookEl?.value || getPropSlipExportBook();
+  return fetchPropSlipExportForLegs(getPropSlipLegs(), bookmaker);
 }
 
 function getPropSlipExportBookLabel() {
@@ -3275,9 +3281,17 @@ function showPropSlipBookWizard(exportData) {
   return true;
 }
 
-async function openPropSlipInBook() {
-  const exportData = await fetchPropSlipExport();
+async function openPropSlipLegsInBook(legs, options = {}) {
+  const exportData = await fetchPropSlipExportForLegs(
+    legs,
+    options.bookmaker || "draftkings"
+  );
   if (!exportData) return { ok: false, reason: "empty" };
+
+  if (exportData.parlay_deeplink) {
+    openSportsbookDeeplink(exportData.parlay_deeplink);
+    return { ok: true, reason: "opened_parlay", bookLabel: exportData.bookmaker_label };
+  }
 
   const deeplinkLegs = (exportData.legs || []).filter((l) => l.deeplink);
   if (!deeplinkLegs.length) {
@@ -3293,12 +3307,22 @@ async function openPropSlipInBook() {
 
   if (deeplinkLegs.length === 1) {
     openSportsbookDeeplink(deeplinkLegs[0].deeplink);
-    return { ok: true, reason: "opened_single" };
+    return { ok: true, reason: "opened_single", bookLabel: exportData.bookmaker_label };
   }
 
   showPropSlipBookWizard(exportData);
-  return { ok: true, reason: "wizard" };
+  return { ok: true, reason: "wizard", bookLabel: exportData.bookmaker_label };
 }
+
+async function openPropSlipInBook() {
+  const bookEl = document.getElementById("prop-slip-export-book");
+  return openPropSlipLegsInBook(getPropSlipLegs(), {
+    bookmaker: bookEl?.value || getPropSlipExportBook(),
+  });
+}
+
+window.openPropSlipLegsInBook = openPropSlipLegsInBook;
+window.propSlipLegFromProp = propSlipLegFromProp;
 
 async function copyPropSlipToClipboard() {
   const exportData = await fetchPropSlipExport();
@@ -3420,7 +3444,12 @@ function renderPropSlipPanel() {
         note.textContent = `No ${result.bookLabel || "sportsbook"} deeplinks available — copied list instead. Links may not be offered for these props, or odds API quota blocked a refresh.`;
       }
     } else if (result.ok) {
-      btn.textContent = result.reason === "wizard" ? "Follow steps →" : "Opened!";
+      btn.textContent =
+        result.reason === "wizard"
+          ? "Follow steps →"
+          : result.reason === "opened_parlay"
+            ? "Parlay opened!"
+            : "Opened!";
     } else {
       btn.textContent = "Failed";
     }
