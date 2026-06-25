@@ -134,19 +134,6 @@ from app.services.email_service import (
     dev_expose_verification_url,
     send_verification_email,
 )
-from app.services.abuse_guard import assert_expensive_query_allowed
-from app.services.billing import (
-    billing_enabled,
-    create_checkout_session,
-    create_portal_session,
-    handle_stripe_webhook,
-)
-from app.services.premium_gate import (
-    redact_pick_payload,
-    resolve_access_tier,
-)
-from app.services.rate_limit import check_rate_limit, client_ip
-from app.services.subscriptions import is_premium_user, subscription_summary
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -399,13 +386,10 @@ async def auth_logout():
 async def auth_status(request: Request):
     session = get_user_session(request)
     user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
-    sub = subscription_summary(user_row)
     return {
         "auth_enabled": auth_enabled(),
         "auth_misconfigured": auth_misconfigured(),
         "authenticated": is_authenticated(request),
-        "billing_enabled": billing_enabled(),
         "user_auth": {
             "registration_enabled": user_registration_enabled(),
             "props_require_verified_user": props_require_verified_user(),
@@ -413,22 +397,14 @@ async def auth_status(request: Request):
             "email": session["email"] if session else None,
             "email_verified": bool(user_row and user_row.get("email_verified_at")),
             "can_access_props": can_access_props(request, user_row=user_row),
-            "access_tier": tier.value,
-            **sub,
         },
     }
 
 
-def _rate_limit_or_429(request: Request, bucket: str, max_count: int, window_seconds: int) -> None:
-    if not check_rate_limit(bucket, max_count, window_seconds):
-        raise HTTPException(status_code=429, detail="Too many requests — try again later")
-
-
 @app.post("/api/auth/user/register")
-async def user_register(body: UserRegisterRequest, request: Request):
+async def user_register(body: UserRegisterRequest):
     if not user_registration_enabled():
         raise HTTPException(status_code=503, detail="Registration is disabled")
-    _rate_limit_or_429(request, f"register:{client_ip(request)}", 3, 3600)
     if not body.accept_terms:
         raise HTTPException(
             status_code=400,
@@ -456,8 +432,7 @@ async def user_register(body: UserRegisterRequest, request: Request):
 
 
 @app.post("/api/auth/user/login")
-async def user_login(body: UserLoginRequest, request: Request):
-    _rate_limit_or_429(request, f"login:{client_ip(request)}", 5, 900)
+async def user_login(body: UserLoginRequest):
     if not is_valid_email(body.email):
         raise HTTPException(status_code=400, detail="Invalid email address")
     user = verify_user_credentials(body.email, body.password)
@@ -497,9 +472,7 @@ async def user_verify_email(body: VerifyEmailRequest):
 
 
 @app.post("/api/auth/user/resend-verification")
-async def user_resend_verification(body: ResendVerificationRequest, request: Request):
-    email_key = body.email.strip().lower()
-    _rate_limit_or_429(request, f"resend:{email_key}", 2, 3600)
+async def user_resend_verification(body: ResendVerificationRequest):
     if not is_valid_email(body.email):
         raise HTTPException(status_code=400, detail="Invalid email address")
     user = get_user_by_email(body.email)
@@ -514,63 +487,6 @@ async def user_resend_verification(body: ResendVerificationRequest, request: Req
         payload["dev_verification_url"] = build_verification_url(token)
         payload["message"] = "Local dev mode — no email sent. Use the verification link below."
     return payload
-
-
-@app.post("/api/billing/checkout")
-async def billing_checkout(request: Request):
-    if not billing_enabled():
-        raise HTTPException(status_code=503, detail="Billing is not configured")
-    session = get_user_session(request)
-    if not session:
-        raise HTTPException(status_code=401, detail="Sign in to subscribe")
-    user = get_user_by_id(session["user_id"])
-    if not user:
-        raise HTTPException(status_code=401, detail="Sign in to subscribe")
-    if is_premium_user(user, request):
-        raise HTTPException(status_code=409, detail="You already have an active subscription")
-    try:
-        url = create_checkout_session(user)
-    except ValueError as exc:
-        if str(exc) == "email_not_verified":
-            raise HTTPException(
-                status_code=403,
-                detail="Verify your email before subscribing",
-            ) from exc
-        raise
-    return {"ok": True, "checkout_url": url}
-
-
-@app.post("/api/billing/portal")
-async def billing_portal(request: Request):
-    if not billing_enabled():
-        raise HTTPException(status_code=503, detail="Billing is not configured")
-    session = get_user_session(request)
-    if not session:
-        raise HTTPException(status_code=401, detail="Sign in to manage billing")
-    user = get_user_by_id(session["user_id"])
-    if not user:
-        raise HTTPException(status_code=401, detail="Sign in to manage billing")
-    try:
-        url = create_portal_session(user)
-    except ValueError as exc:
-        if str(exc) == "no_stripe_customer":
-            raise HTTPException(status_code=404, detail="No billing account found") from exc
-        raise
-    return {"ok": True, "portal_url": url}
-
-
-@app.post("/api/billing/webhook")
-async def billing_webhook(request: Request):
-    payload = await request.body()
-    signature = request.headers.get("stripe-signature", "")
-    if not signature:
-        raise HTTPException(status_code=400, detail="Missing Stripe signature")
-    try:
-        result = handle_stripe_webhook(payload, signature)
-    except Exception as exc:
-        logger.exception("Stripe webhook failed")
-        raise HTTPException(status_code=400, detail="Webhook rejected") from exc
-    return result
 
 
 @app.get("/health")
@@ -592,8 +508,8 @@ async def health():
 
 
 @app.get("/api/build")
-async def build_info(request: Request):
-    """Deploy verification: BUILD id + props cache health."""
+async def build_info():
+    """Deploy verification: BUILD id + props cache health (public)."""
     build_path = PROJECT_ROOT / "BUILD"
     build_id = build_path.read_text(encoding="utf-8").strip() if build_path.exists() else "unknown"
     props_dir = PROJECT_ROOT / "data" / "processed" / "props_repository"
@@ -616,15 +532,15 @@ async def build_info(request: Request):
             }
         except (json.JSONDecodeError, OSError):
             pass
-    payload: dict[str, Any] = {
+    return {
         "build_id": build_id,
+        "project_root": str(PROJECT_ROOT),
         "features": {
             "mlb_player_props": True,
             "home_prop_slip": prop_slip_public_enabled(),
             "prop_slip": prop_slip_public_enabled(),
             "props_require_verified_user": props_require_verified_user(),
             "user_registration_enabled": user_registration_enabled(),
-            "billing_enabled": billing_enabled(),
             "matchup_ranked_props": True,
             "bet_context_line_strength": True,
         },
@@ -636,9 +552,6 @@ async def build_info(request: Request):
             **slate_summary,
         },
     }
-    if is_authenticated(request):
-        payload["project_root"] = str(PROJECT_ROOT)
-    return payload
 
 
 @app.get("/api/backtest")
@@ -741,24 +654,19 @@ async def news_headlines(refresh: bool = Query(False)):
 
 @app.get("/api/home/today")
 async def home_today(
-    request: Request,
     date_param: str | None = Query(None, alias="date"),
 ):
     """Today at a glance + best bets from cached daily board (no rebuild)."""
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
     try:
-        payload = get_home_today_summary(game_date)
+        return get_home_today_summary(game_date)
     except Exception as exc:
         logger.exception("Home summary failed for %s", game_date)
         raise HTTPException(
             status_code=503, detail="Home summary temporarily unavailable"
         ) from exc
-    return redact_pick_payload(payload, tier)
 
 
 @app.get("/api/odds/today")
@@ -913,19 +821,14 @@ async def mlb_matchup_preview(
 
 @app.get("/api/games/mlb/{game_id}/insights")
 async def mlb_game_insights(
-    request: Request,
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
     use_cache: bool = Query(False),
     refresh: bool = Query(False),
 ):
-    assert_expensive_query_allowed(request, refresh=refresh)
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
     try:
         insights = build_game_insights(
             game_id,
@@ -938,12 +841,11 @@ async def mlb_game_insights(
         raise HTTPException(status_code=503, detail="Game insights temporarily unavailable") from exc
     if insights is None:
         raise HTTPException(status_code=404, detail="Game not found")
-    return redact_pick_payload(insights, tier)
+    return insights
 
 
 @app.get("/api/games/mlb/{game_id}/props")
 async def mlb_game_props(
-    request: Request,
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
@@ -956,13 +858,9 @@ async def mlb_game_props(
         description="Sportsbook key (default DraftKings; consensus = median across major books).",
     ),
 ):
-    assert_expensive_query_allowed(request, refresh=refresh)
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
     try:
         payload = build_game_props(
             game_id,
@@ -978,7 +876,7 @@ async def mlb_game_props(
         ) from exc
     if payload is None:
         raise HTTPException(status_code=404, detail="Game not found")
-    return redact_pick_payload(payload, tier)
+    return payload
 
 
 @app.get("/api/props/bookmakers")
@@ -993,7 +891,6 @@ async def prop_markets():
 
 @app.get("/api/props/search")
 async def props_search(
-    request: Request,
     date_param: str | None = Query(None, alias="date"),
     bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
     market_type: str | None = Query(None),
@@ -1019,18 +916,10 @@ async def props_search(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
     cache_meta = get_props_cache_meta()
-    effective_scan = scan
-    effective_refresh = refresh
-    if cache_meta.get("requires_refresh") and is_authenticated(request):
-        effective_scan = True
-        effective_refresh = True
-    assert_expensive_query_allowed(
-        request, refresh=effective_refresh, scan=effective_scan
-    )
+    if cache_meta.get("requires_refresh"):
+        scan = True
+        refresh = True
     result = search_daily_props(
         game_date,
         bookmaker=bookmaker,
@@ -1040,17 +929,12 @@ async def props_search(
         line_value=line_value,
         actionable_only=actionable_only,
         limit=limit,
-        scan=effective_scan,
-        refresh=effective_refresh,
+        scan=scan,
+        refresh=refresh,
         include_alternates=include_alternates,
         very_strong_only=very_strong_only,
     )
-    if (
-        not result.get("props")
-        and not effective_scan
-        and not effective_refresh
-        and is_authenticated(request)
-    ):
+    if not result.get("props") and not scan and not refresh:
         result = search_daily_props(
             game_date,
             bookmaker=bookmaker,
@@ -1065,7 +949,7 @@ async def props_search(
             very_strong_only=very_strong_only,
         )
         result["auto_scanned"] = True
-    return redact_pick_payload(result, tier)
+    return result
 
 
 @app.post("/api/parlay/props/eval")
@@ -1081,25 +965,20 @@ async def prop_parlay_optimize(body: PropParlayOptimizeRequest):
 
 
 @app.post("/api/parlay/props/build")
-async def prop_parlay_build(body: PropParlayBuildRequest, request: Request):
+async def prop_parlay_build(body: PropParlayBuildRequest):
     game_date = (
         date_type.fromisoformat(body.date) if body.date else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
-    result = build_auto_prop_parlay(
+    return build_auto_prop_parlay(
         body.leg_count,
         target_american=body.target_american,
         bookmaker=body.bookmaker,
         game_date=game_date,
     )
-    return redact_pick_payload(result, tier)
 
 
 @app.post("/api/props/slip/export")
-async def prop_slip_export(body: PropSlipExportRequest, request: Request):
-    assert_expensive_query_allowed(request, refresh=body.refresh_links)
+async def prop_slip_export(body: PropSlipExportRequest):
     if not prop_slip_public_enabled():
         raise HTTPException(status_code=404, detail="Prop slip export is not enabled")
     legs = [leg.model_dump() for leg in body.legs]
@@ -1117,7 +996,6 @@ async def props_cache_meta():
 
 @app.get("/api/daily/props")
 async def daily_top_props(
-    request: Request,
     date_param: str | None = Query(None, alias="date"),
     limit: int = Query(10, ge=1, le=30),
     scan: bool = Query(
@@ -1140,31 +1018,22 @@ async def daily_top_props(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    session = get_user_session(request)
-    user_row = get_user_by_id(session["user_id"]) if session else None
-    tier = resolve_access_tier(request, user_row)
     cache_meta = get_props_cache_meta()
-    effective_scan = scan
-    effective_refresh = refresh
-    if not cache_only and cache_meta.get("requires_refresh") and is_authenticated(request):
-        effective_scan = True
-        effective_refresh = True
-    assert_expensive_query_allowed(
-        request, refresh=effective_refresh, scan=effective_scan
-    )
+    if not cache_only and cache_meta.get("requires_refresh"):
+        scan = True
+        refresh = True
     result = build_daily_top_props(
         game_date,
         limit=limit,
-        scan=effective_scan,
-        refresh=effective_refresh,
+        scan=scan,
+        refresh=refresh,
         bookmaker=bookmaker,
     )
     if (
         not cache_only
         and not result.get("top_props")
-        and not effective_scan
-        and not effective_refresh
-        and is_authenticated(request)
+        and not scan
+        and not refresh
     ):
         result = build_daily_top_props(
             game_date,
@@ -1173,12 +1042,11 @@ async def daily_top_props(
             bookmaker=bookmaker,
         )
         result["auto_scanned"] = True
-    return redact_pick_payload(result, tier)
+    return result
 
 
 @app.get("/api/daily")
 async def daily_board(
-    request: Request,
     date_param: str | None = Query(None, alias="date"),
     use_cache: bool = Query(False),
     refresh: bool = Query(False),
@@ -1206,9 +1074,6 @@ async def daily_board(
         ),
     ),
 ):
-    assert_expensive_query_allowed(
-        request, refresh=refresh, live_test=live_test
-    )
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
@@ -1427,11 +1292,6 @@ async def user_player_unfollow(
         return unfollow_player(conn, session["user_id"], sport, player_id)
     finally:
         conn.close()
-
-
-@app.get("/pricing")
-async def pricing_page():
-    return _html_page("pricing.html")
 
 
 @app.get("/my-team")

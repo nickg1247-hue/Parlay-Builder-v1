@@ -90,10 +90,6 @@
   cursor: not-allowed;
 }
 
-.auth-submit.pricing-btn-disabled:disabled {
-  cursor: not-allowed;
-}
-
 .auth-switch {
   margin-top: 1rem;
   font-size: 0.9rem;

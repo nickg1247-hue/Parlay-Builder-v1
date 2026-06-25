@@ -2682,13 +2682,6 @@ function initUtilityNav(nav, path) {
   nav.classList.add("app-nav-utility");
 
   const userAuth = window.pbUserAuth || {};
-  const upgradeLink = document.createElement("a");
-  upgradeLink.href = "/pricing";
-  upgradeLink.className = "app-nav-upgrade";
-  upgradeLink.textContent = userAuth.is_premium ? "Premium" : "Upgrade";
-  if (path === "/pricing") upgradeLink.classList.add("active");
-  nav.appendChild(upgradeLink);
-
   if (pbFeatures.props_require_verified_user) {
     const userEl = document.createElement("span");
     userEl.className = "app-nav-user";
@@ -2742,7 +2735,6 @@ function renderSiteFooter() {
         <nav class="site-footer-nav" aria-label="Footer links">
           <a href="/methodology">Methodology</a>
           <a href="/performance">Performance</a>
-          <a href="/pricing">Upgrade</a>
           <a href="/updates">Updates</a>
           <a href="mailto:contact@ntgsports.com">Contact</a>
           <a href="/privacy">Privacy</a>

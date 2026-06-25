@@ -129,7 +129,7 @@ function initVerifyEmailPage() {
 
   async function verifyNow() {
     if (!token) {
-      intro.textContent = "Verify your email to subscribe and unlock full picks.";
+      intro.textContent = "Verify your email to unlock player props.";
       const devUrl = (() => {
         try {
           return sessionStorage.getItem("dev_verification_url");
