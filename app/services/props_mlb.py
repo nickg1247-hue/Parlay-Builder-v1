@@ -21,6 +21,7 @@ from app.odds.the_odds_api import (
     ALTERNATE_MLB_PROP_MARKETS,
     DEFAULT_MLB_PROP_MARKETS,
     EXTENDED_MLB_PROP_MARKETS,
+    SLATE_MLB_PROP_MARKETS,
 )
 from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
 from app.services.prop_engine.constants import ELITE_SCORE, MIN_PROP_SCORE, NO_ELITE_MESSAGE, VERY_STRONG_SCORE
@@ -46,8 +47,9 @@ logger = logging.getLogger(__name__)
 PROPS_DIR = PROJECT_ROOT / "data" / "processed" / "props_repository"
 EVENTS_DIR = PROPS_DIR / "events"
 PROPS_CACHE_META_PATH = PROPS_DIR / ".cache_meta.json"
+PROPS_SCAN_STATE_PATH = PROPS_DIR / ".scan_state.json"
 # Bump when prop line parsing or cache rules change — triggers wipe on server start.
-PROPS_CACHE_GENERATION = "20260624a"
+PROPS_CACHE_GENERATION = "20260624b"
 
 
 def _raw_events_dir() -> Path:
@@ -55,7 +57,8 @@ def _raw_events_dir() -> Path:
 
 
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
-MAX_PROP_LINES_TO_SCORE = int(os.getenv("MAX_PROP_LINES_TO_SCORE", "80"))
+_max_prop_lines = os.getenv("MAX_PROP_LINES_TO_SCORE", "0").strip()
+MAX_PROP_LINES_TO_SCORE = int(_max_prop_lines) if _max_prop_lines else 0
 RUNS_PROP_MARKET = "batter_runs_scored"
 DEFAULT_PROP_BOOKMAKER = "consensus"
 DEFAULT_DISPLAY_BOOKMAKER = "draftkings"
@@ -321,6 +324,76 @@ def _markets_for_fetch(*, include_alternates: bool, include_all_markets: bool = 
             )
         return f"{base},{alts}"
     return base
+
+
+def _slate_include_alternates() -> bool:
+    return os.getenv("PROP_SLATE_INCLUDE_ALTERNATES", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def _slate_fetch_bookmaker() -> str:
+    raw = os.getenv("PROP_SLATE_BOOKMAKER", DEFAULT_DISPLAY_BOOKMAKER).strip().lower()
+    if not raw:
+        return DEFAULT_DISPLAY_BOOKMAKER
+    return _normalize_bookmaker(raw)
+
+
+def markets_for_slate_fetch(*, include_alternates: bool | None = None) -> str:
+    """Full market set for slate scans — extended + runs (+ optional alternates)."""
+    use_alts = _slate_include_alternates() if include_alternates is None else include_alternates
+    base = SLATE_MLB_PROP_MARKETS
+    if not use_alts:
+        return base
+    alts = (
+        f"{ALTERNATE_MLB_PROP_MARKETS},pitcher_hits_allowed_alternate,"
+        "pitcher_earned_runs_alternate,pitcher_outs_alternate"
+    )
+    return f"{base},{alts}"
+
+
+def _load_scan_state() -> dict[str, Any]:
+    return _load_json(PROPS_SCAN_STATE_PATH) or {}
+
+
+def _save_scan_state(state: dict[str, Any]) -> None:
+    _write_json(PROPS_SCAN_STATE_PATH, state)
+
+
+def _game_props_cache_ok(
+    game_id: str,
+    book: str,
+    game_date: date,
+    markets: str,
+    *,
+    require_props: bool = True,
+) -> bool:
+    cached = _load_cached_game_props(game_id, book, game_date=game_date)
+    if not cached:
+        return False
+    if require_props and not cached.get("props"):
+        return False
+    if not _markets_satisfy_request(str(cached.get("markets_requested") or ""), markets):
+        return False
+    age = _cache_age_seconds(_props_cache_path(game_id, book))
+    if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
+        return False
+    return True
+
+
+def _payload_live_fetched(payload: dict[str, Any] | None) -> bool:
+    if not payload:
+        return False
+    source = str(payload.get("source") or "")
+    if source not in ("the_odds_api_live",):
+        return False
+    if payload.get("message") and not payload.get("props"):
+        msg = str(payload.get("message") or "")
+        if "quota" in msg.lower() or "disabled" in msg.lower():
+            return False
+    return True
 
 
 def _markets_satisfy_request(cached_markets: str, requested: str) -> bool:
@@ -1268,7 +1341,7 @@ def _enrich_props(
     game_id: str | None = None,
     home_team: str | None = None,
     away_team: str | None = None,
-    max_lines: int | None = MAX_PROP_LINES_TO_SCORE,
+    max_lines: int | None = MAX_PROP_LINES_TO_SCORE or None,
 ) -> list[dict[str, Any]]:
     if max_lines is not None and len(props) > max_lines:
         props = _sample_props_for_scoring(props, max_lines)
@@ -1470,6 +1543,10 @@ def _status_message(code: str | None) -> str:
         return "No sportsbook event found for this matchup yet."
     if code == "live_odds_disabled":
         return "Live odds disabled — set USE_LIVE_ODDS=true and ODDS_API_KEY."
+    if code == "hour_limit":
+        return "Odds API hourly call limit reached — showing cached lines if available."
+    if code in ("hour_credit_limit", "day_credit_limit"):
+        return "Odds API credit budget reached — run refresh again next hour or tomorrow."
     if code == "quota_denied" or (code and "quota" in code):
         return "Odds API quota reached — showing cached lines if available."
     return str(code)
@@ -2147,6 +2224,174 @@ def _daily_props_payload(
     return out
 
 
+def refresh_props_slate(
+    game_date: date | None = None,
+    *,
+    bookmaker: str | None = None,
+    force: bool = False,
+    include_alternates: bool | None = None,
+    max_games: int | None = None,
+) -> dict[str, Any]:
+    """
+    Fetch props for every game on the slate (resumable when quota stops mid-run).
+
+    Uses full market set (extended + runs). Pending games are saved to .scan_state.json
+    and picked up on the next call.
+    """
+    from app.odds.live_odds import live_odds_enabled
+    from app.odds.odds_repository import get_quota_summary
+
+    game_date = game_date or date.today()
+    book = _resolve_bookmaker(bookmaker or _slate_fetch_bookmaker())
+    markets = markets_for_slate_fetch(include_alternates=include_alternates)
+    schedule = get_mlb_schedule(game_date)
+    games = schedule.get("games") or []
+    all_ids = [str(g.get("game_id") or "") for g in games if g.get("game_id")]
+
+    if not all_ids:
+        return {
+            "date": game_date.isoformat(),
+            "bookmaker": book,
+            "markets_requested": markets,
+            "games_on_slate": 0,
+            "games_fetched": 0,
+            "games_with_props": 0,
+            "pending_game_ids": [],
+            "quota_stopped": False,
+            "live_odds_enabled": live_odds_enabled(),
+            "hint": "No MLB games on today's schedule.",
+        }
+
+    state = _load_scan_state()
+    same_run = (
+        state.get("date") == game_date.isoformat()
+        and state.get("bookmaker") == book
+        and state.get("markets_requested") == markets
+    )
+
+    completed = [
+        gid
+        for gid in all_ids
+        if not force and _game_props_cache_ok(gid, book, game_date, markets)
+    ]
+    if force:
+        pending = list(all_ids)
+        completed = []
+    elif same_run and state.get("pending_game_ids"):
+        pending = [
+            gid
+            for gid in state["pending_game_ids"]
+            if gid in all_ids and gid not in completed
+        ]
+    else:
+        pending = [gid for gid in all_ids if gid not in completed]
+
+    _day_probable_pitchers(game_date)
+
+    games_fetched = 0
+    games_with_props = len(
+        [
+            gid
+            for gid in completed
+            if (_load_cached_game_props(gid, book, game_date=game_date) or {}).get("props")
+        ]
+    )
+    quota_stopped = False
+    stop_reason: str | None = None
+    errors: list[str] = []
+
+    for gid in list(pending):
+        if max_games is not None and games_fetched >= max_games:
+            break
+
+        built = build_game_props(
+            gid,
+            game_date=game_date,
+            refresh=True,
+            markets=markets,
+            include_all_markets=True,
+            include_alternates=bool(
+                include_alternates
+                if include_alternates is not None
+                else _slate_include_alternates()
+            ),
+            bookmaker=book,
+        )
+        if built and built.get("message"):
+            msg = str(built["message"])
+            if (
+                "quota" in msg.lower()
+                or "credit" in msg.lower()
+                or "limit" in msg.lower()
+                or msg == "hour_limit"
+            ):
+                quota_stopped = True
+                stop_reason = msg
+                errors.append(f"{gid}: {msg}")
+                break
+            if not built.get("props") and msg not in errors:
+                errors.append(msg)
+
+        if _payload_live_fetched(built):
+            games_fetched += 1
+
+        if built and built.get("props"):
+            if gid not in completed:
+                completed.append(gid)
+            games_with_props = len(
+                [
+                    g
+                    for g in completed
+                    if (_load_cached_game_props(g, book, game_date=game_date) or {}).get(
+                        "props"
+                    )
+                ]
+            )
+        elif built and built.get("status") == "empty" and not quota_stopped:
+            if gid not in completed:
+                completed.append(gid)
+
+    remaining = [gid for gid in all_ids if gid not in completed]
+    scan_state = {
+        "date": game_date.isoformat(),
+        "bookmaker": book,
+        "markets_requested": markets,
+        "pending_game_ids": remaining,
+        "completed_game_ids": completed,
+        "games_on_slate": len(all_ids),
+        "games_fetched_last_run": games_fetched,
+        "games_with_props": games_with_props,
+        "quota_stopped": quota_stopped,
+        "stop_reason": stop_reason,
+        "errors": errors[:10],
+        "last_run_at": _clock().isoformat(),
+    }
+    _save_scan_state(scan_state)
+
+    if games_fetched > 0 or not remaining:
+        mark_props_cache_refreshed(game_date)
+
+    quota = get_quota_summary()
+    hint: str | None = None
+    if quota_stopped and remaining:
+        hint = (
+            f"Fetched {games_with_props}/{len(all_ids)} games — quota stopped with "
+            f"{len(remaining)} pending. Run refresh again to continue."
+        )
+    elif remaining:
+        hint = f"Props loaded for {games_with_props}/{len(all_ids)} games — {len(remaining)} still pending."
+    elif games_with_props < len(all_ids):
+        hint = f"Props on {games_with_props}/{len(all_ids)} games (books may not have posted yet)."
+
+    return {
+        **scan_state,
+        "games_fetched": games_fetched,
+        "quota": quota,
+        "hint": hint,
+        "live_odds_enabled": live_odds_enabled(),
+    }
+
+
 def build_daily_top_props(
     game_date: date | None = None,
     *,
@@ -2198,52 +2443,42 @@ def build_daily_top_props(
 
     schedule = get_mlb_schedule(game_date)
     games = schedule.get("games") or []
-    fetch_limit = _max_slate_prop_fetch(len(games))
-    if scan:
-        _day_probable_pitchers(game_date)
-
-    picks: list[dict[str, Any]] = []
-    games_scanned = 0
+    slate_markets = markets_for_slate_fetch(
+        include_alternates=include_alternates or _slate_include_alternates()
+    )
+    scan_meta: dict[str, Any] = {}
     games_fetched = 0
     fetch_cap_hit = False
     fetch_errors: list[str] = []
 
+    if scan:
+        scan_meta = refresh_props_slate(
+            game_date,
+            bookmaker=book,
+            force=refresh,
+            include_alternates=include_alternates or None,
+        )
+        games_fetched = int(scan_meta.get("games_fetched") or 0)
+        fetch_cap_hit = bool(scan_meta.get("quota_stopped"))
+        if scan_meta.get("hint"):
+            fetch_errors.append(str(scan_meta["hint"]))
+
+    picks: list[dict[str, Any]] = []
+    games_scanned = 0
+
     for game in games:
-        gid = str(game.get("game_id"))
+        gid = str(game.get("game_id") or "")
         if not gid:
             continue
-        cached_payload = None if refresh else _load_cached_game_props(
-            gid, book, game_date=game_date
-        )
-        if cached_payload:
-            cached_payload = _trim_props_payload(cached_payload, DEFAULT_MLB_PROP_MARKETS)
-        payload = cached_payload
-
-        if scan and (refresh or not cached_payload):
-            if games_fetched >= fetch_limit:
-                fetch_cap_hit = True
-                continue
-            built = build_game_props(
-                gid,
-                game_date=game_date,
-                refresh=True,
-                bookmaker=book,
-                include_alternates=include_alternates,
-            )
-            if built:
-                payload = built
-                games_fetched += 1
-                msg = built.get("message")
-                if msg and not built.get("props"):
-                    fetch_errors.append(msg)
-        elif not payload or not payload.get("props"):
+        payload = _load_cached_game_props(gid, book, game_date=game_date)
+        if not payload or not payload.get("props"):
             continue
-
+        payload = _trim_props_payload(payload, slate_markets)
         games_scanned += 1
         picks.extend(_collect_scored_props_from_payload(payload, gid))
 
     source = "scan" if scan else "game_cache"
-    hint: str | None = None
+    hint: str | None = scan_meta.get("hint") if scan_meta else None
 
     if not picks and not refresh:
         picks = _aggregate_repo_game_props(game_date, book)
@@ -2270,6 +2505,9 @@ def build_daily_top_props(
                 "games_on_slate": len(games),
                 "games_scanned": games_scanned,
                 "games_fetched": games_fetched,
+                "games_with_props": scan_meta.get("games_with_props", games_scanned),
+                "pending_game_ids": scan_meta.get("pending_game_ids", []),
+                "quota_stopped": scan_meta.get("quota_stopped", False),
                 "all_props": picks,
                 "elite_props": elite,
                 "very_strong_props": very_strong,
@@ -2280,9 +2518,6 @@ def build_daily_top_props(
                 "total_very_strong": len(very_strong),
             },
         )
-
-    if refresh and games_fetched > 0:
-        mark_props_cache_refreshed(game_date)
 
     return _daily_props_payload(
         game_date=game_date,
@@ -2401,25 +2636,23 @@ def search_daily_props(
         include_alternates=include_alternates,
     )
 
-    markets = _markets_for_fetch(include_alternates=include_alternates)
+    markets = markets_for_slate_fetch(include_alternates=include_alternates)
     schedule = get_mlb_schedule(game_date)
     games = schedule.get("games") or []
     games_on_slate = len([g for g in games if g.get("game_id")])
-    fetch_limit = _max_slate_prop_fetch(games_on_slate)
-    games_fetched = 0
-    games_scanned = 0
+    games_fetched = int(base.get("games_fetched") or 0)
+    games_scanned = int(base.get("games_scanned") or 0)
     games_with_props = 0
     pool_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
 
     def _merge_payload(payload: dict[str, Any] | None, gid: str) -> None:
-        nonlocal games_scanned, games_with_props
+        nonlocal games_with_props
         if not payload:
             return
         payload = _trim_props_payload(payload, markets)
         props = payload.get("props") or []
         if not props:
             return
-        games_scanned += 1
         games_with_props += 1
         for row in _collect_scored_props_from_payload(payload, gid):
             key = (
@@ -2435,47 +2668,9 @@ def search_daily_props(
         gid = str(game.get("game_id") or "")
         if not gid:
             continue
-        payload = None if refresh else _load_cached_game_props(
-            gid, book, game_date=game_date
-        )
+        payload = _load_cached_game_props(gid, book, game_date=game_date)
         if payload and payload.get("props"):
             _merge_payload(payload, gid)
-            continue
-
-        if scan and games_fetched < fetch_limit:
-            built = build_game_props(
-                gid,
-                game_date=game_date,
-                refresh=True,
-                bookmaker=book,
-                include_alternates=include_alternates,
-            )
-            if built:
-                games_fetched += 1
-                _merge_payload(built, gid)
-            continue
-
-        built = build_game_props(
-            gid,
-            game_date=game_date,
-            refresh=False,
-            bookmaker=book,
-            include_alternates=include_alternates,
-        )
-        if built and built.get("props"):
-            _merge_payload(built, gid)
-            continue
-
-        raw = _load_raw_event(gid, game_date)
-        if raw and _raw_event_fresh(raw) and raw.get("event"):
-            built = build_game_props(
-                gid,
-                game_date=game_date,
-                refresh=False,
-                bookmaker=book,
-                include_alternates=include_alternates,
-            )
-            _merge_payload(built, gid)
 
     pool = list(pool_by_key.values())
     if not pool:
@@ -2555,6 +2750,9 @@ def search_daily_props(
         "games_on_slate": games_on_slate,
         "games_scanned": games_scanned,
         "games_with_props": games_with_props,
+        "games_fetched": games_fetched,
+        "pending_game_ids": (_load_scan_state() or {}).get("pending_game_ids", []),
+        "quota_stopped": bool((_load_scan_state() or {}).get("quota_stopped")),
         "props": filtered[:limit],
         "elite_message": None if any(is_elite_prop(p) for p in filtered) else NO_ELITE_MESSAGE,
         "source": base.get("source"),

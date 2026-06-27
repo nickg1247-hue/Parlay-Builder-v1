@@ -19,10 +19,12 @@ from app.odds.live_odds import live_odds_enabled
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
 from app.odds.the_odds_api import (
     DEFAULT_MLB_PROP_MARKETS,
+    estimate_odds_api_credits,
     fetch_historical_mlb_odds,
     fetch_live_mlb_odds,
     fetch_mlb_event_odds,
     fetch_mlb_events,
+    prop_regions,
 )
 
 logger = logging.getLogger(__name__)
@@ -118,9 +120,22 @@ def quota_path() -> Path:
 
 
 def quota_limits() -> tuple[int, int]:
+    """HTTP call caps (secondary guardrail; credit caps are the main budget)."""
     return (
         int(os.getenv("ODDS_API_MAX_PER_HOUR", "25")),
-        int(os.getenv("ODDS_API_MAX_PER_DAY", "500")),
+        int(os.getenv("ODDS_API_MAX_PER_DAY", "100")),
+    )
+
+
+def quota_credit_limits() -> tuple[int, int]:
+    """
+    The Odds API bills event-odds as markets × regions; board calls ≈ 3 credits.
+
+    Defaults target ~20k credits/month: ~650/day × 30 ≈ 19.5k (see .env.example).
+    """
+    return (
+        int(os.getenv("ODDS_API_MAX_CREDITS_PER_HOUR", "200")),
+        int(os.getenv("ODDS_API_MAX_CREDITS_PER_DAY", "650")),
     )
 
 
@@ -146,8 +161,10 @@ def _default_quota() -> dict[str, Any]:
     return {
         "day": day,
         "day_count": 0,
+        "day_credits": 0,
         "hour_bucket": hour_bucket,
         "hour_count": 0,
+        "hour_credits": 0,
         "last_call_at": None,
         "last_denied_at": None,
         "last_denied_reason": None,
@@ -161,9 +178,13 @@ def _roll_quota(quota: dict[str, Any]) -> dict[str, Any]:
     if quota.get("day") != day:
         quota["day"] = day
         quota["day_count"] = 0
+        quota["day_credits"] = 0
     if quota.get("hour_bucket") != hour_bucket:
         quota["hour_bucket"] = hour_bucket
         quota["hour_count"] = 0
+        quota["hour_credits"] = 0
+    quota.setdefault("day_credits", 0)
+    quota.setdefault("hour_credits", 0)
     return quota
 
 
@@ -186,6 +207,7 @@ def save_quota(quota: dict[str, Any]) -> None:
 
 def get_quota_summary() -> dict[str, Any]:
     max_hour, max_day = quota_limits()
+    max_hour_credits, max_day_credits = quota_credit_limits()
     with _lock:
         q = load_quota()
     return {
@@ -193,8 +215,12 @@ def get_quota_summary() -> dict[str, Any]:
         "hour_bucket": q.get("hour_bucket"),
         "hour_count": q.get("hour_count", 0),
         "hour_max": max_hour,
+        "hour_credits": q.get("hour_credits", 0),
+        "hour_credits_max": max_hour_credits,
         "day_count": q.get("day_count", 0),
         "day_max": max_day,
+        "day_credits": q.get("day_credits", 0),
+        "day_credits_max": max_day_credits,
         "denied": False,
         "last_denied_at": q.get("last_denied_at"),
         "last_denied_reason": q.get("last_denied_reason"),
@@ -202,10 +228,14 @@ def get_quota_summary() -> dict[str, Any]:
     }
 
 
-def _try_acquire_quota_slot() -> tuple[bool, str | None]:
+def _try_acquire_quota_slot(*, credit_cost: int = 1) -> tuple[bool, str | None]:
     max_hour, max_day = quota_limits()
+    max_hour_credits, max_day_credits = quota_credit_limits()
+    cost = max(1, int(credit_cost))
     with _lock:
         q = _roll_quota(load_quota())
+        hour_credits = int(q.get("hour_credits", 0))
+        day_credits = int(q.get("day_credits", 0))
         if q["hour_count"] >= max_hour:
             q["last_denied_at"] = _clock().isoformat()
             q["last_denied_reason"] = "hour_limit"
@@ -217,6 +247,18 @@ def _try_acquire_quota_slot() -> tuple[bool, str | None]:
                 q["hour_bucket"],
             )
             return False, "hour_limit"
+        if hour_credits + cost > max_hour_credits:
+            q["last_denied_at"] = _clock().isoformat()
+            q["last_denied_reason"] = "hour_credit_limit"
+            save_quota(q)
+            logger.warning(
+                "Odds API denied: hour_credit_limit (%s+%s>%s) bucket=%s",
+                hour_credits,
+                cost,
+                max_hour_credits,
+                q["hour_bucket"],
+            )
+            return False, "hour_credit_limit"
         if q["day_count"] >= max_day:
             q["last_denied_at"] = _clock().isoformat()
             q["last_denied_reason"] = "day_limit"
@@ -228,19 +270,36 @@ def _try_acquire_quota_slot() -> tuple[bool, str | None]:
                 q["day"],
             )
             return False, "day_limit"
+        if day_credits + cost > max_day_credits:
+            q["last_denied_at"] = _clock().isoformat()
+            q["last_denied_reason"] = "day_credit_limit"
+            save_quota(q)
+            logger.warning(
+                "Odds API denied: day_credit_limit (%s+%s>%s) day=%s",
+                day_credits,
+                cost,
+                max_day_credits,
+                q["day"],
+            )
+            return False, "day_credit_limit"
         q["hour_count"] += 1
         q["day_count"] += 1
+        q["hour_credits"] = hour_credits + cost
+        q["day_credits"] = day_credits + cost
         q["last_call_at"] = _clock().isoformat()
         q["last_denied_reason"] = None
         save_quota(q)
         return True, None
 
 
-def _release_quota_slot() -> None:
+def _release_quota_slot(*, credit_cost: int = 1) -> None:
+    cost = max(1, int(credit_cost))
     with _lock:
         q = _roll_quota(load_quota())
         q["hour_count"] = max(0, int(q.get("hour_count", 0)) - 1)
         q["day_count"] = max(0, int(q.get("day_count", 0)) - 1)
+        q["hour_credits"] = max(0, int(q.get("hour_credits", 0)) - cost)
+        q["day_credits"] = max(0, int(q.get("day_credits", 0)) - cost)
         save_quota(q)
 
 
@@ -251,6 +310,7 @@ class ApiFetchResult:
     denied: bool = False
     denied_reason: str | None = None
     error: str | None = None
+    credit_cost: int = 1
 
 
 def _historical_snapshot_date(game_date: date) -> str:
@@ -829,23 +889,34 @@ def fetch_mlb_event_props_if_allowed(
     event_id: str,
     markets: str = DEFAULT_MLB_PROP_MARKETS,
     bookmakers: str | None = None,
+    *,
+    regions: str | None = None,
 ) -> ApiFetchResult:
     """Quota-gated player props for one MLB event."""
     if not live_odds_enabled():
         return ApiFetchResult(denied=True, denied_reason="live_odds_disabled")
-    allowed, deny_reason = _try_acquire_quota_slot()
+    region_str = regions if regions is not None else prop_regions()
+    credit_cost = estimate_odds_api_credits(markets, region_str)
+    allowed, deny_reason = _try_acquire_quota_slot(credit_cost=credit_cost)
     if not allowed:
         return ApiFetchResult(denied=True, denied_reason=deny_reason)
     try:
         event = fetch_mlb_event_odds(
-            event_id, markets=markets, bookmakers=bookmakers
+            event_id,
+            markets=markets,
+            bookmakers=bookmakers,
+            regions=region_str,
         )
         if not event:
-            _release_quota_slot()
+            _release_quota_slot(credit_cost=credit_cost)
             return ApiFetchResult(error="empty_response")
-        return ApiFetchResult(events=[event], source="the_odds_api_live")
+        return ApiFetchResult(
+            events=[event],
+            source="the_odds_api_live",
+            credit_cost=credit_cost,
+        )
     except httpx.HTTPStatusError as exc:
-        _release_quota_slot()
+        _release_quota_slot(credit_cost=credit_cost)
         detail = exc.response.text[:200] if exc.response is not None else str(exc)
         logger.warning(
             "Odds API event props HTTP %s for %s: %s",
@@ -859,6 +930,6 @@ def fetch_mlb_event_props_if_allowed(
             )
         return ApiFetchResult(error=f"odds_api_http_{exc.response.status_code}")
     except Exception as exc:
-        _release_quota_slot()
+        _release_quota_slot(credit_cost=credit_cost)
         logger.warning("Odds API event props failed for %s: %s", event_id, exc)
         return ApiFetchResult(error=str(exc))

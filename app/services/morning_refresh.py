@@ -208,19 +208,18 @@ def run_morning_refresh(
             odds_source = board.get("odds_source", "none")
             refresh_schedule_cache(game_date)
 
-            from app.services.props_mlb import build_daily_top_props
+            from app.services.props_mlb import refresh_props_slate
 
             if live_odds_enabled():
                 try:
-                    props_out = build_daily_top_props(
+                    props_out = refresh_props_slate(
                         game_date,
-                        limit=50,
-                        scan=True,
-                        refresh=True,
+                        force=False,
                     )
                     logger.info(
-                        "Morning props scan: %s actionable props (%s games fetched)",
-                        props_out.get("total_actionable", 0),
+                        "Morning props scan: %s/%s games with props (%s fetched this run)",
+                        props_out.get("games_with_props", 0),
+                        props_out.get("games_on_slate", 0),
                         props_out.get("games_fetched", 0),
                     )
                 except Exception as exc:

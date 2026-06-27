@@ -38,7 +38,24 @@ EXTENDED_MLB_PROP_MARKETS = (
     "pitcher_hits_allowed,pitcher_earned_runs,pitcher_outs"
 )
 OPTIONAL_MLB_PROP_MARKETS = "batter_runs_scored"
-DEFAULT_MLB_PROP_REGIONS = os.getenv("ODDS_PROP_REGIONS", "us,us2")
+# Single US region by default — each extra region doubles event-odds credit cost.
+DEFAULT_MLB_PROP_REGIONS = os.getenv("ODDS_PROP_REGIONS", "us")
+# Full slate pull: extended pitcher markets + batter runs (used by props_slate_refresh).
+SLATE_MLB_PROP_MARKETS = f"{EXTENDED_MLB_PROP_MARKETS},{OPTIONAL_MLB_PROP_MARKETS}"
+
+
+def estimate_odds_api_credits(markets: str, regions: str | None = None) -> int:
+    """Odds API bills event-odds as markets × regions (empty markets return 0 cost)."""
+    region_str = regions if regions is not None else DEFAULT_MLB_PROP_REGIONS
+    market_count = len([m for m in str(markets).split(",") if m.strip()])
+    region_count = len([r for r in str(region_str).split(",") if r.strip()]) or 1
+    if market_count == 0:
+        return 0
+    return market_count * region_count
+
+
+def prop_regions() -> str:
+    return os.getenv("ODDS_PROP_REGIONS", DEFAULT_MLB_PROP_REGIONS).strip() or "us"
 
 
 def clear_odds_cache() -> None:
@@ -129,7 +146,7 @@ def fetch_mlb_events(
 def fetch_mlb_event_odds(
     event_id: str,
     api_key: str | None = None,
-    regions: str = DEFAULT_MLB_PROP_REGIONS,
+    regions: str | None = None,
     markets: str = DEFAULT_MLB_PROP_MARKETS,
     bookmakers: str | None = None,
 ) -> dict[str, Any] | None:
@@ -139,10 +156,11 @@ def fetch_mlb_event_odds(
     key = _api_key(api_key)
     if not key or not event_id:
         return None
+    region_str = regions if regions is not None else prop_regions()
     url = f"{ODDS_API_BASE}/sports/{SPORT_MLB}/events/{event_id}/odds"
     params = {
         "apiKey": key,
-        "regions": regions,
+        "regions": region_str,
         "markets": markets,
         "oddsFormat": "american",
         "includeLinks": "true",

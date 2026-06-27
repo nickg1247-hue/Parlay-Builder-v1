@@ -72,6 +72,7 @@ from app.services.props_mlb import (
     get_props_cache_meta,
     list_prop_bookmakers,
     list_prop_market_types,
+    refresh_props_slate,
     search_daily_props,
 )
 from app.services.home_summary import get_home_today_summary
@@ -943,7 +944,7 @@ async def props_search(
     cache_meta = get_props_cache_meta()
     if cache_meta.get("requires_refresh"):
         scan = True
-        refresh = True
+        refresh = False
     result = search_daily_props(
         game_date,
         bookmaker=bookmaker,
@@ -1018,6 +1019,38 @@ async def props_cache_meta():
     return get_props_cache_meta()
 
 
+@app.post("/api/props/slate/refresh")
+async def props_slate_refresh(
+    date_param: str | None = Query(None, alias="date"),
+    bookmaker: str | None = Query(
+        None,
+        description="Sportsbook key (default PROP_SLATE_BOOKMAKER / DraftKings).",
+    ),
+    force: bool = Query(
+        False,
+        description="Re-fetch all games even when cache is fresh.",
+    ),
+    include_alternates: bool = Query(False),
+):
+    """Pull full-market props for every game on the slate (resumable if quota stops)."""
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return refresh_props_slate(
+        game_date,
+        bookmaker=bookmaker,
+        force=force,
+        include_alternates=include_alternates or None,
+    )
+
+
+@app.get("/api/props/scan-state")
+async def props_scan_state():
+    from app.services.props_mlb import _load_scan_state
+
+    return _load_scan_state()
+
+
 @app.get("/api/daily/props")
 async def daily_top_props(
     date_param: str | None = Query(None, alias="date"),
@@ -1045,7 +1078,7 @@ async def daily_top_props(
     cache_meta = get_props_cache_meta()
     if not cache_only and cache_meta.get("requires_refresh"):
         scan = True
-        refresh = True
+        refresh = False
     result = build_daily_top_props(
         game_date,
         limit=limit,
