@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prop Model Debug</title>
+  <link rel="stylesheet" href="/static/brand.css?v=20260624a">
+  <link rel="stylesheet" href="/static/app.css?v=20260624a">
+  <style>
+    body { background: #0a0a0a; color: #e5e7eb; }
+    .debug-wrap { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+    .debug-toolbar { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .debug-toolbar input, .debug-toolbar select { background: #111; color: #fff; border: 1px solid #333; padding: .45rem .6rem; border-radius: 8px; }
+    .debug-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .debug-table th, .debug-table td { border-bottom: 1px solid #222; padding: .45rem .35rem; vertical-align: top; }
+    .debug-table th { text-align: left; color: #9ca3af; position: sticky; top: 0; background: #0a0a0a; }
+    .tier-elite { color: #39ff14; font-weight: 700; }
+    .tier-very_strong { color: #a3e635; }
+    .tier-rejected { color: #888; }
+    .debug-json { font-family: ui-monospace, monospace; font-size: .72rem; color: #cbd5e1; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main class="debug-wrap">
+    <h1>Prop Model Debug</h1>
+    <p class="text-muted">Audit every prop: component scores, edges, projections, and rejection reasons.</p>
+    <div class="debug-toolbar">
+      <input type="date" id="debug-date">
+      <input type="text" id="debug-game-id" placeholder="Game ID (optional)">
+      <select id="debug-book">
+        <option value="draftkings">DraftKings</option>
+        <option value="consensus">Consensus</option>
+        <option value="fanduel">FanDuel</option>
+      </select>
+      <button class="btn-primary" id="debug-load">Load audit</button>
+    </div>
+    <p id="debug-meta"></p>
+    <div style="overflow:auto; max-height: 80vh;">
+      <table class="debug-table" id="debug-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Market</th>
+            <th>Line</th>
+            <th>Side</th>
+            <th>Score</th>
+            <th>Tier</th>
+            <th>Proj</th>
+            <th>Model%</th>
+            <th>Mkt%</th>
+            <th>Edge</th>
+            <th>Form</th>
+            <th>Match</th>
+            <th>LineVal</th>
+            <th>Risk</th>
+            <th>Reason / Rejection</th>
+          </tr>
+        </thead>
+        <tbody id="debug-body"></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/static/prop_debug.js?v=20260624a"></script>
+</body>
+</html>

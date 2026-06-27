@@ -636,9 +636,10 @@
       .map((p, i) => {
         const side = p.recommended_side || "over";
         const odds = side === "over" ? p.over_odds : p.under_odds;
-        const score = p.score != null ? `${Math.round(p.score)}` : "—";
+        const score = p.prop_score != null ? `${Math.round(p.prop_score)}` : p.score != null ? `${Math.round(p.score)}` : "—";
         const hitRates = propHitRatesHtml(p, side);
         const lineStrength = propLineStrengthHtml(p);
+        const modelMeta = typeof window.propModelMetaHtml === "function" ? window.propModelMetaHtml(p) : "";
         const actionable = p.actionable
           ? ""
           : `<span class="prop-skip-tag" title="${p.actionable_reason || "Not recommended"}">Skip</span>`;
@@ -654,7 +655,7 @@
           <td>${side} ${fmtOdds(odds)} ${actionable}</td>
           <td>${score}</td>
           <td class="prop-hit-rates">${hitRates}</td>
-          <td class="prop-line-strength">${lineStrength}${p.line_insight ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>
+          <td class="prop-line-strength">${lineStrength}${modelMeta}${p.line_insight && !modelMeta ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>
           <td class="props-actions">${propActionButtons(p, i, "all")}</td>
         </tr>`;
       })

@@ -63,6 +63,7 @@ from app.services.prop_tracker_refresh import (
 from app.services.game_insights import build_game_insights
 from app.services.props_mlb import (
     build_daily_top_props,
+    build_prop_debug_report,
     DEFAULT_DISPLAY_BOOKMAKER,
     build_game_props,
     ensure_props_cache_generation,
@@ -887,6 +888,29 @@ async def prop_bookmakers():
 @app.get("/api/props/markets")
 async def prop_markets():
     return {"markets": list_prop_market_types()}
+
+
+@app.get("/api/props/debug")
+async def props_debug(
+    date_param: str | None = Query(None, alias="date"),
+    game_id: str | None = Query(None),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
+    limit: int = Query(500, ge=1, le=1000),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_prop_debug_report(
+        game_date,
+        game_id=game_id,
+        bookmaker=bookmaker,
+        limit=limit,
+    )
+
+
+@app.get("/mlb/props/debug")
+async def mlb_props_debug_page():
+    return _html_page("prop_debug.html")
 
 
 @app.get("/api/props/search")

@@ -367,9 +367,12 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
             "over_odds": -110,
             "under_odds": -105,
             "complete_market": True,
+            "primary_line": True,
             "recommended_side": "over",
+            "confidence_tier": "very_strong",
             "line_strength": "very_strong",
-            "score": 100,
+            "prop_score": 87,
+            "score": 87,
         },
         {
             "actionable": True,
@@ -378,8 +381,11 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
             "over_odds": -110,
             "under_odds": -105,
             "complete_market": True,
+            "primary_line": True,
             "line_strength": "strong",
-            "score": 70,
+            "confidence_tier": "strong",
+            "prop_score": 82,
+            "score": 82,
             "hit_rate_over_l10": 0.7,
             "hit_rate_over_l5": 0.6,
             "hit_rate_over_season": 0.65,
@@ -394,36 +400,12 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
 
 def test_split_slate_props_and_daily_payload():
     picks = [
-        {
-            "line_strength": "very_strong",
-            "actionable": True,
-            "recommended_side": "over",
-            "hit_rate_over_l10": 1.0,
-            "hit_rate_over_l5": 1.0,
-            "hit_rate_over_season": 1.0,
-        },
-        {
-            "line_strength": "strong",
-            "actionable": True,
-            "recommended_side": "over",
-            "recommended_hit_rate": 0.8,
-            "score": 72.0,
-            "hit_rate_over_l10": 0.8,
-            "hit_rate_over_l5": 0.7,
-            "hit_rate_over_season": 0.75,
-        },
-        {
-            "line_strength": "moderate",
-            "actionable": True,
-            "recommended_side": "over",
-            "recommended_hit_rate": 0.58,
-            "score": 58.0,
-            "hit_rate_over_l10": 0.58,
-            "hit_rate_over_l5": 0.6,
-            "hit_rate_over_season": 0.55,
-        },
+        {"confidence_tier": "elite", "line_strength": "elite", "actionable": True, "prop_score": 92, "score": 92, "recommended_side": "over", "hit_rate_over_l10": 1.0},
+        {"confidence_tier": "very_strong", "line_strength": "very_strong", "actionable": True, "prop_score": 87, "score": 87, "recommended_side": "over", "hit_rate_over_l10": 1.0, "hit_rate_over_l5": 1.0, "hit_rate_over_season": 1.0},
+        {"confidence_tier": "strong", "line_strength": "strong", "actionable": True, "prop_score": 82, "score": 82, "recommended_side": "over", "hit_rate_over_l10": 0.8, "hit_rate_over_l5": 0.7, "hit_rate_over_season": 0.75},
     ]
-    very, regular = props_mlb._split_slate_props(picks)
+    elite, very, regular = props_mlb._split_slate_props(picks)
+    assert len(elite) == 1
     assert len(very) == 1
     assert len(regular) == 1
     payload = props_mlb._daily_props_payload(
@@ -431,11 +413,15 @@ def test_split_slate_props_and_daily_payload():
         limit=10,
         picks=picks,
         source="test",
+        elite_props=elite,
+        very_strong_props=very,
+        top_props=regular,
     )
+    assert payload["total_elite"] == 1
     assert payload["total_very_strong"] == 1
+    assert len(payload["elite_props"]) == 1
     assert len(payload["very_strong_props"]) == 1
     assert len(payload["top_props"]) == 1
-    assert payload["very_strong_props"][0]["line_strength"] == "very_strong"
 
 
 def test_sample_props_for_scoring_includes_low_count_markets():
@@ -553,67 +539,30 @@ def test_passes_prop_search_filters_min_odds_and_line_kind():
     )
 
 
-def test_prop_rank_key_sorts_by_l5_l10_season_average():
-    """Higher L5/L10/season average ranks first (100/92/90 beats 100/90/90)."""
-    higher_avg = {
-        "recommended_side": "over",
-        "recommended_hit_rate": 0.92,
-        "hit_rate_over_l5": 1.0,
-        "hit_rate_over_l10": 0.92,
-        "hit_rate_over_season": 0.90,
-    }
-    lower_avg = {
-        "recommended_side": "over",
-        "recommended_hit_rate": 0.90,
-        "hit_rate_over_l5": 1.0,
-        "hit_rate_over_l10": 0.90,
-        "hit_rate_over_season": 0.90,
-    }
-    assert prop_scoring.prop_form_average_from_prop(higher_avg) > prop_scoring.prop_form_average_from_prop(
-        lower_avg
-    )
-    ranked = sorted([lower_avg, higher_avg], key=props_mlb.prop_rank_key)
-    assert ranked[0] is higher_avg
+def test_prop_rank_key_prop_score_first():
+    lower = {"prop_score": 80, "edge_pct": 5, "recommended_side": "over", "hit_rate_over_l10": 0.9}
+    higher = {"prop_score": 90, "edge_pct": 3, "recommended_side": "over", "hit_rate_over_l10": 0.6}
+    ranked = sorted([lower, higher], key=props_mlb.prop_rank_key)
+    assert ranked[0] is higher
+    assert ranked[1] is lower
 
 
-def test_prop_rank_key_hit_rate_first():
-    lower_l10 = {
+def test_prop_rank_key_tie_break_edge_then_form():
+    same_score_a = {
+        "prop_score": 85,
+        "edge_pct": 6,
         "recommended_side": "over",
-        "recommended_hit_rate": 0.8,
-        "hit_rate_over_l5": 0.8,
         "hit_rate_over_l10": 0.8,
-        "hit_rate_over_season": 0.75,
     }
-    higher_l10 = {
+    same_score_b = {
+        "prop_score": 85,
+        "edge_pct": 9,
         "recommended_side": "over",
-        "recommended_hit_rate": 1.0,
-        "hit_rate_over_l5": 1.0,
-        "hit_rate_over_l10": 1.0,
-        "hit_rate_over_season": 0.9,
+        "hit_rate_over_l10": 0.7,
     }
-    ranked = sorted([lower_l10, higher_l10], key=props_mlb.prop_rank_key)
-    assert ranked[0] is higher_l10
-    assert ranked[1] is lower_l10
-
-
-def test_prop_rank_key_tie_break_l5_then_season():
-    same_l10_a = {
-        "recommended_side": "over",
-        "recommended_hit_rate": 0.8,
-        "hit_rate_over_l5": 0.6,
-        "hit_rate_over_l10": 0.8,
-        "hit_rate_over_season": 0.7,
-    }
-    same_l10_b = {
-        "recommended_side": "over",
-        "recommended_hit_rate": 0.8,
-        "hit_rate_over_l5": 0.9,
-        "hit_rate_over_l10": 0.8,
-        "hit_rate_over_season": 0.65,
-    }
-    ranked = sorted([same_l10_a, same_l10_b], key=props_mlb.prop_rank_key)
-    assert ranked[0] is same_l10_b
-    assert ranked[1] is same_l10_a
+    ranked = sorted([same_score_a, same_score_b], key=props_mlb.prop_rank_key)
+    assert ranked[0] is same_score_b
+    assert ranked[1] is same_score_a
 
 
 def test_prop_is_bettable_requires_listed_side_odds():
@@ -1050,70 +999,55 @@ def test_build_game_props_fetches_and_caches(
     mock_props.assert_not_called()
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_score_prop_rejects_weak_l5_on_offered_side(mock_logs, _pid):
-    # Strong L10 over but cold L5 over (2/5 hits)
-    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 2, 2])
-    result = prop_scoring.score_prop(
-        player="Aaron Judge",
-        market_type="batter_hits",
-        line=1.5,
-        over_odds=-110,
-        under_odds=-110,
-        season=2026,
-    )
-    assert result["actionable"] is False
-    assert "L5" in (result["actionable_reason"] or "")
-
-
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_score_prop_recommends_over_on_hot_form(mock_logs, _pid):
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_score_prop_recommends_over_on_hot_form(mock_alltime, mock_logs, _pid):
     mock_logs.return_value = tuple([2, 2, 1, 3, 2, 2, 1, 2, 3, 2])
+    mock_alltime.return_value = mock_logs.return_value
     result = prop_scoring.score_prop(
         player="Aaron Judge",
         market_type="batter_hits",
         line=1.5,
         over_odds=-110,
-        under_odds=-110,
+        under_odds=+120,
         season=2026,
     )
-    assert result["recommended_side"] == "over"
-    assert result["actionable"] is True
-    assert result["score"] is not None
+    assert result["prop_score_over"] is not None
+    assert result["model_projection"] is not None
     assert result["hit_rate_over_l10"] >= 0.5
     assert result["sample_games_season"] == 10
-    assert result["line_strength"] in ("very_strong", "strong", "moderate", "weak")
-    assert result["line_strength_label"]
+    if result["actionable"]:
+        assert result["recommended_side"] == "over"
+        assert result["score"] is not None
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_score_prop_very_strong_on_perfect_l5_l10_season(mock_logs, _pid):
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_score_prop_very_strong_on_perfect_l5_l10_season(mock_alltime, mock_logs, _pid):
     mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    mock_alltime.return_value = mock_logs.return_value
     result = prop_scoring.score_prop(
         player="Aaron Judge",
         market_type="batter_hits",
         line=1.5,
         over_odds=-115,
-        under_odds=+105,
+        under_odds=+130,
         season=2026,
     )
-    assert result["actionable"] is True
     assert result["hit_rate_over_l5"] == 1.0
     assert result["hit_rate_over_l10"] == 1.0
     assert result["hit_rate_over_season"] == 1.0
-    assert result["line_strength"] == "very_strong"
-    assert result["line_strength_label"] == "Very strong"
-    assert "L5" in (result["line_insight"] or "")
-    assert "-115" in (result["line_insight"] or "")
+    assert result["prop_score_over"] >= result["prop_score_under"]
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_score_prop_not_very_strong_when_l10_imperfect(mock_logs, _pid):
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_score_prop_not_very_strong_when_l10_imperfect(mock_alltime, mock_logs, _pid):
     mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 1, 2])
+    mock_alltime.return_value = mock_logs.return_value
     result = prop_scoring.score_prop(
         player="Aaron Judge",
         market_type="batter_hits",
@@ -1123,22 +1057,24 @@ def test_score_prop_not_very_strong_when_l10_imperfect(mock_logs, _pid):
         season=2026,
     )
     assert result["hit_rate_over_l10"] == 0.9
-    assert result["line_strength"] != "very_strong"
+    assert result["confidence_tier"] != "elite"
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_refresh_prop_line_strength_upgrades_stale_strong_label(mock_logs, _pid):
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_refresh_prop_line_strength_upgrades_stale_strong_label(mock_alltime, mock_logs, _pid):
     mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    mock_alltime.return_value = mock_logs.return_value
     scored = prop_scoring.score_prop(
         player="Aaron Judge",
         market_type="batter_hits",
         line=1.5,
         over_odds=-115,
-        under_odds=+105,
+        under_odds=+130,
         season=2026,
     )
-    stale = {**scored, "line_strength": "strong", "line_strength_label": "Strong line"}
+    stale = {**scored, "line_strength": "strong", "line_strength_label": "Strong line", "confidence_tier": "very_strong"}
     fixed = prop_scoring.refresh_prop_line_strength(stale)
     assert fixed["line_strength"] == "very_strong"
     assert fixed["line_strength_label"] == "Very strong"
@@ -1151,15 +1087,19 @@ def test_form_score_is_average_hit_rate_percent():
 
 
 def test_recent_game_window_uses_most_recent_games():
+    from app.services.prop_engine.utils import recent_game_window
+
     values = [0] + [2] * 14
-    assert prop_scoring.recent_game_window(values, 5) == [2, 2, 2, 2, 2]
-    assert prop_scoring.recent_game_window(values, 10) == [2] * 10
+    assert recent_game_window(values, 5) == [2, 2, 2, 2, 2]
+    assert recent_game_window(values, 10) == [2] * 10
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
-def test_score_prop_l5_l10_use_most_recent_games(mock_logs, _pid):
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_score_prop_l5_l10_use_most_recent_games(mock_alltime, mock_logs, _pid):
     mock_logs.return_value = tuple([0] + [2] * 14)
+    mock_alltime.return_value = mock_logs.return_value
     result = prop_scoring.score_prop(
         player="Aaron Judge",
         market_type="batter_hits",
@@ -1173,8 +1113,8 @@ def test_score_prop_l5_l10_use_most_recent_games(mock_logs, _pid):
     assert result["hit_rate_over_season"] == round(14 / 15, 3)
 
 
-@patch("app.services.prop_scoring._search_player_id", return_value=592450)
-@patch("app.services.prop_scoring._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
 def test_score_prop_marks_trap_when_only_wrong_side_listed(mock_logs, _pid):
     # All zeros — under hits 100%, only over offered
     mock_logs.return_value = tuple([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])

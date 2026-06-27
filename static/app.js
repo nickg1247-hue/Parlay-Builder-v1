@@ -1418,7 +1418,11 @@ window.propFormComposite = propFormComposite;
 
 function propEffectiveStrength(prop) {
   if (!prop?.actionable) return prop;
-  if (prop.line_strength === "very_strong" || propHasPerfectForm(prop)) {
+  const tier = prop.confidence_tier || prop.confidence;
+  if (tier === "elite") {
+    return { ...prop, line_strength: "elite", line_strength_label: "Elite" };
+  }
+  if (tier === "very_strong" || prop.line_strength === "very_strong" || propHasPerfectForm(prop)) {
     return {
       ...prop,
       line_strength: "very_strong",
@@ -1426,6 +1430,34 @@ function propEffectiveStrength(prop) {
     };
   }
   return prop;
+}
+
+function propModelMetaHtml(prop) {
+  const score = prop?.prop_score ?? prop?.score;
+  const tier = prop?.confidence_tier || prop?.confidence || "—";
+  const proj = prop?.model_projection;
+  const edge = prop?.edge_pct;
+  const side = prop?.recommended_side;
+  const modelPct =
+    side === "over"
+      ? prop?.model_probability_over
+      : side === "under"
+        ? prop?.model_probability_under
+        : prop?.recommended_probability;
+  const mktPct =
+    side === "over" ? prop?.market_probability_over : prop?.market_probability_under;
+  const fmtPct = (v) => (v != null ? `${Math.round(Number(v) * 100)}%` : "—");
+  const parts = [
+    score != null ? `<span class="prop-score-chip">Score ${Math.round(score)}</span>` : "",
+    `<span class="prop-tier-chip prop-tier-${tier}">${tier}</span>`,
+    proj != null ? `<span class="prop-proj-chip">Proj ${proj}</span>` : "",
+    modelPct != null ? `<span class="prop-model-chip">Mdl ${fmtPct(modelPct)}</span>` : "",
+    mktPct != null ? `<span class="prop-mkt-chip">Mkt ${fmtPct(mktPct)}</span>` : "",
+    edge != null ? `<span class="prop-edge-chip">Edge ${edge}%</span>` : "",
+    prop?.risk_flag ? `<span class="prop-risk-chip">${prop.risk_flag}</span>` : "",
+  ].filter(Boolean);
+  const reason = prop?.best_reason || prop?.line_insight || "";
+  return `<div class="prop-model-meta">${parts.join("")}${reason ? `<div class="prop-best-reason">${reason}</div>` : ""}</div>`;
 }
 
 function hitRateTier(rate) {
@@ -1500,6 +1532,7 @@ window.teamWinRatesHtml = teamWinRatesHtml;
 window.lineStrengthHtml = lineStrengthHtml;
 window.propVeryStrongClass = propVeryStrongClass;
 window.propEffectiveStrength = propEffectiveStrength;
+window.propModelMetaHtml = propModelMetaHtml;
 window.propHasPerfectForm = propHasPerfectForm;
 
 function renderBestBets(el, topSingles) {

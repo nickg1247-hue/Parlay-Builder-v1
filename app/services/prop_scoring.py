@@ -134,11 +134,7 @@ def _split_game_date_iso(split: dict[str, Any]) -> str:
     return str(raw)[:10]
 
 
-def recent_game_window(values: list[float] | tuple[float, ...], n: int) -> list[float]:
-    """Most recent n games from a chronological (oldest-first) log."""
-    if not values or n <= 0:
-        return []
-    return list(values[-n:])
+from app.services.prop_engine.utils import recent_game_window
 
 
 def displays_as_perfect_pct(rate: float | None) -> bool:
@@ -179,23 +175,27 @@ def is_perfect_l5_l10_season(
 
 
 def refresh_prop_line_strength(prop: dict[str, Any]) -> dict[str, Any]:
-    """Re-derive very strong from stored L5/L10/season (fixes stale cached labels)."""
-    if not prop.get("actionable"):
-        return prop
-    side = prop.get("recommended_side")
-    if not side:
-        return prop
-    l5, l10, season = side_form_hit_rates(prop, side)
-    if not is_perfect_l5_l10_season(l5, l10, season):
-        return prop
-    odds = prop.get("recommended_odds")
-    odds_note = f" · Book {_format_american_odds(odds)}" if odds is not None else ""
-    return {
-        **prop,
-        "line_strength": "very_strong",
-        "line_strength_label": "Very strong",
-        "line_insight": f"100% L5 · L10 · Season{odds_note}",
-    }
+    """Re-derive line strength from confidence tier (fixes stale cached labels)."""
+    tier = prop.get("confidence_tier") or prop.get("confidence")
+    if tier == "elite":
+        return {
+            **prop,
+            "line_strength": "elite",
+            "line_strength_label": "Elite",
+        }
+    if tier == "very_strong":
+        return {
+            **prop,
+            "line_strength": "very_strong",
+            "line_strength_label": "Very strong",
+        }
+    if tier == "strong" and prop.get("actionable"):
+        return {
+            **prop,
+            "line_strength": "strong",
+            "line_strength_label": "Strong line",
+        }
+    return prop
 
 
 @lru_cache(maxsize=256)
@@ -547,158 +547,31 @@ def score_prop(
     season: int,
     opposing_pitcher: str | None = None,
     opposing_pitcher_era: float | None = None,
+    sport: str = "mlb",
+    game_id: str | None = None,
+    team: str | None = None,
+    opponent: str | None = None,
 ) -> dict[str, Any]:
-    """Score a prop line using L5/L10/season logs and matchup context."""
-    empty = {
-        "score": None,
-        "recommended_side": None,
-        "recommended_odds": None,
-        "recommended_hit_rate": None,
-        "actionable": False,
-        "actionable_reason": None,
-        "hit_rate_over_l5": None,
-        "hit_rate_under_l5": None,
-        "hit_rate_over_l10": None,
-        "hit_rate_under_l10": None,
-        "hit_rate_over_season": None,
-        "hit_rate_under_season": None,
-        "hit_rate_over_alltime": None,
-        "hit_rate_under_alltime": None,
-        "recent_avg_l10": None,
-        "sample_games_season": 0,
-        "sample_games_alltime": 0,
-        "factors": [],
-        "market_label": market_label(market_type),
-        "line_strength": None,
-        "line_strength_label": None,
-        "line_insight": None,
-        "rank_score": None,
-        "matchup_adjustment": None,
-    }
+    """Score a prop using the quantitative prop engine (both sides evaluated)."""
+    from app.services.prop_engine.evaluate import evaluate_prop
 
-    mapping = MARKET_STAT.get(market_type)
-    if mapping is None:
-        return empty
-
-    group, stat_key = mapping
-    player_id = _search_player_id(player)
-    if player_id is None:
-        return {**empty, "factors": ["Could not match player to MLB stats"]}
-
-    values = list(_season_game_log_values(player_id, group, stat_key, season))
-    if len(values) < MIN_GAMES_FOR_SCORE:
-        return {
-            **empty,
-            "sample_games_season": len(values),
-            "factors": [f"Only {len(values)} games logged this season"],
-        }
-
-    l5 = recent_game_window(values, 5)
-    l10 = recent_game_window(values, 10)
-    l5_over, l5_under = _hit_rates(l5, line)
-    l10_over, l10_under = _hit_rates(l10, line)
-    season_over, season_under = _hit_rates(values, line)
-    recent_avg = sum(l10) / len(l10)
-
-    alltime_values = list(_alltime_game_log_values(player_id, group, stat_key, season))
-    alltime_over, alltime_under = _hit_rates(alltime_values, line)
-
-    choice = _choose_actionable_side(
+    result = evaluate_prop(
+        player=player,
+        market_type=market_type,
         line=line,
         over_odds=over_odds,
         under_odds=under_odds,
-        l5_over=l5_over,
-        l5_under=l5_under,
-        l10_over=l10_over,
-        l10_under=l10_under,
-        season_over=season_over,
-        season_under=season_under,
+        season=season,
+        opposing_pitcher=opposing_pitcher,
+        opposing_pitcher_era=opposing_pitcher_era,
+        sport=sport,
+        game_id=game_id,
+        team=team,
+        opponent=opponent,
     )
-
-    side = choice["recommended_side"]
-    hit_rate = choice["recommended_hit_rate"]
-    factors: list[str] = []
-    if side and hit_rate is not None:
-        factors.append(
-            f"L5 {side} { _side_rate_label(side, l5_over, l5_under)} · "
-            f"L10 {hit_rate:.0%} · Season {_side_rate_label(side, season_over, season_under)}"
-        )
-    if choice.get("actionable_reason"):
-        factors.append(choice["actionable_reason"])
-
-    era = opposing_pitcher_era
-    if era is None and opposing_pitcher:
-        era, _fip = lookup_pitcher_rates(opposing_pitcher, season, {})
-
-    k_rate = recent_avg if market_type == "pitcher_strikeouts" else None
-    adj, matchup_notes = _matchup_adjustment(
-        market_type,
-        opposing_pitcher_era=era,
-        pitcher_k_rate=k_rate,
-    )
-    factors.extend(matchup_notes)
-
-    side_l5 = l5_over if side == "over" else l5_under if side == "under" else None
-    side_l10 = l10_over if side == "over" else l10_under if side == "under" else None
-    side_season = season_over if side == "over" else season_under if side == "under" else None
-    form_average = prop_form_average(side_l5, side_l10, side_season)
-
-    score: float | None = None
-    rank_score: float | None = None
-    if choice["actionable"] and hit_rate is not None and side:
-        rank_score = _compute_rank_score(
-            hit_rate=hit_rate,
-            l5=side_l5,
-            season=side_season,
-        )
-        score = rank_score
-
-    line_strength = _prop_line_strength(
-        market_type=market_type,
-        side=side,
-        hit_rate=hit_rate,
-        recent_avg=recent_avg,
-        line=line,
-        actionable=choice["actionable"],
-        actionable_reason=choice.get("actionable_reason"),
-        matchup_notes=matchup_notes,
-        l5_rate=side_l5,
-        l10_rate=side_l10,
-        season_rate=side_season,
-        recommended_odds=choice["recommended_odds"],
-    )
-
-    return {
-        "score": score,
-        "player_id": player_id,
-        "photo_url": _mlb_player_photo(player_id) if player_id else None,
-        "recommended_side": side,
-        "recommended_odds": choice["recommended_odds"],
-        "recommended_hit_rate": hit_rate,
-        "actionable": choice["actionable"],
-        "actionable_reason": choice["actionable_reason"],
-        "hit_rate_over_l5": l5_over,
-        "hit_rate_under_l5": l5_under,
-        "hit_rate_over_l10": l10_over,
-        "hit_rate_under_l10": l10_under,
-        "hit_rate_over_season": season_over,
-        "hit_rate_under_season": season_under,
-        "hit_rate_over_alltime": alltime_over,
-        "hit_rate_under_alltime": alltime_under,
-        "hit_rate_over": l10_over,
-        "hit_rate_under": l10_under,
-        "recent_avg": round(recent_avg, 2),
-        "recent_avg_l10": round(recent_avg, 2),
-        "sample_games": len(l10),
-        "sample_games_season": len(values),
-        "sample_games_alltime": len(alltime_values),
-        "factors": factors,
-        "market_label": market_label(market_type),
-        "rank_score": rank_score,
-        "form_average": form_average,
-        "matchup_adjustment": round(adj, 1) if adj else None,
-        **line_strength,
-    }
+    result["player"] = player
+    result["market_type"] = market_type
+    return result
 
 
 def _side_rate_label(side: str, over_rate: float | None, under_rate: float | None) -> str:
