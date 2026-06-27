@@ -213,6 +213,135 @@ def refresh_prop_line_strength(prop: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _side_actionable(
+    *,
+    prop_score: float,
+    edge: float | None,
+    projection_agrees: bool,
+) -> tuple[bool, str | None]:
+    from app.services.prop_engine.constants import MIN_EDGE, MIN_PROP_SCORE
+
+    if prop_score < MIN_PROP_SCORE:
+        return False, f"Prop score {prop_score:.0f} below {MIN_PROP_SCORE:.0f} threshold"
+    if edge is None or edge < MIN_EDGE:
+        return False, "Edge below threshold"
+    if not projection_agrees:
+        return False, "Projection disagrees with side"
+    return True, None
+
+
+def _side_best_reason(
+    side: str,
+    *,
+    prop_score: float,
+    edge: float | None,
+    projection: float | None,
+    line: float,
+    side_debug: dict[str, Any],
+) -> str | None:
+    edge_pct = round(edge * 100, 2) if edge is not None else None
+    comps = side_debug.get("component_scores") or {}
+    parts: list[str] = []
+    if edge_pct is not None and edge_pct >= 5:
+        parts.append(f"Edge {edge_pct:.1f}%")
+    if projection is not None and comps.get("line_value", 0) >= 75:
+        parts.append(f"Proj {projection:.1f} vs line {line:g}")
+    if comps.get("matchup", 0) >= 75:
+        parts.append("Favorable matchup")
+    if comps.get("recent_form", 0) >= 70:
+        parts.append("Recent form supports side")
+    return " · ".join(parts[:3]) if parts else "Quant model alignment"
+
+
+def expand_prop_to_side_rows(prop: dict[str, Any]) -> list[dict[str, Any]]:
+    """One ranked row per offered side (Over and Under each get their own score)."""
+    if prop.get("_side_row"):
+        return [prop]
+
+    from app.odds.team_aliases import is_valid_american_odds
+
+    debug = prop.get("debug") or {}
+    line = float(prop.get("line") or 0)
+    projection = prop.get("model_projection")
+    rows: list[dict[str, Any]] = []
+
+    for side in ("over", "under"):
+        odds = prop.get(f"{side}_odds")
+        if odds is None or not is_valid_american_odds(odds):
+            continue
+
+        side_debug = debug.get(side) or {}
+        prop_score = prop.get(f"prop_score_{side}")
+        if prop_score is None:
+            prop_score = side_debug.get("prop_score")
+        if prop_score is None:
+            continue
+
+        edge = prop.get(f"{side}_edge")
+        if edge is None:
+            edge = side_debug.get("edge")
+
+        projection_agrees = side_debug.get("projection_agrees", False)
+        actionable, actionable_reason = _side_actionable(
+            prop_score=float(prop_score),
+            edge=edge,
+            projection_agrees=bool(projection_agrees),
+        )
+
+        hit_l10 = (
+            prop.get("hit_rate_over_l10") if side == "over" else prop.get("hit_rate_under_l10")
+        )
+        best_reason = _side_best_reason(
+            side,
+            prop_score=float(prop_score),
+            edge=edge,
+            projection=projection,
+            line=line,
+            side_debug=side_debug,
+        )
+        line_insight = best_reason or actionable_reason or "Not recommended"
+        if hit_l10 is not None and best_reason:
+            line_insight = f"{best_reason} · L10 {hit_l10:.0%}"
+
+        row = {
+            **prop,
+            "_side_row": True,
+            "recommended_side": side,
+            "prop_score": float(prop_score),
+            "score": float(prop_score),
+            "rank_score": float(prop_score) if actionable else None,
+            "recommended_odds": int(odds),
+            "recommended_probability": prop.get(f"model_probability_{side}"),
+            "recommended_hit_rate": hit_l10,
+            "edge_pct": round(float(edge) * 100, 2) if edge is not None else None,
+            "component_scores": side_debug.get("component_scores") or prop.get("component_scores"),
+            "recent_form_grade": (side_debug.get("component_scores") or {}).get("recent_form"),
+            "matchup_grade": (side_debug.get("component_scores") or {}).get("matchup"),
+            "line_value_grade": (side_debug.get("component_scores") or {}).get("line_value"),
+            "actionable": actionable,
+            "actionable_reason": actionable_reason,
+            "best_reason": best_reason,
+            "line_insight": line_insight,
+            "factors": [best_reason] if best_reason else ([actionable_reason] if actionable_reason else []),
+            "confidence_tier": "strong" if actionable else "rejected",
+            "confidence": "strong" if actionable else "rejected",
+        }
+        rows.append(refresh_prop_line_strength(row))
+
+    if rows:
+        return rows
+
+    # Legacy combined row without per-side scores — keep as-is.
+    return [refresh_prop_line_strength(dict(prop))]
+
+
+def expand_scored_props_list(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for prop in props:
+        out.extend(expand_prop_to_side_rows(dict(prop)))
+    return out
+
+
 @lru_cache(maxsize=256)
 def _search_player_id(player_name: str) -> int | None:
     name = (player_name or "").strip()

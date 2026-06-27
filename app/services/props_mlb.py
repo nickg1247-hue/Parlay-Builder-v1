@@ -28,6 +28,8 @@ from app.services.prop_scoring import (
     MIN_TOP_PROP_SCORE,
     _player_team_id,
     _search_player_id,
+    expand_prop_to_side_rows,
+    expand_scored_props_list,
     is_perfect_l5_l10_season,
     market_label,
     prop_form_average_from_prop,
@@ -225,8 +227,8 @@ def is_very_strong_prop(prop: dict[str, Any]) -> bool:
 
 
 def _normalize_scored_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Refresh very-strong labels from hit-rate fields (cached props may say 'Strong line')."""
-    return [refresh_prop_line_strength(dict(prop)) for prop in props]
+    """Grade and split each line into separate Over / Under rows when both are posted."""
+    return expand_scored_props_list(props)
 
 
 def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1310,8 +1312,8 @@ def _enrich_props(
             team=team,
             opponent=opponent,
         )
-        merged = refresh_prop_line_strength({**row, **analysis})
-        enriched.append(merged)
+        merged = {**row, **analysis}
+        enriched.extend(expand_prop_to_side_rows(merged))
     enriched.sort(
         key=lambda r: (
             not r.get("actionable"),
@@ -2066,7 +2068,7 @@ def _aggregate_repo_game_props(
         if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
             payload = {**payload, "stale_cache": True}
         seen.add(game_id)
-        picks.extend(_collect_actionable_props(payload, game_id))
+        picks.extend(_collect_scored_props_from_payload(payload, game_id))
     picks.sort(key=prop_rank_key)
     return picks
 
@@ -2308,25 +2310,24 @@ def _collect_scored_props_from_payload(
     for prop in payload.get("props") or []:
         if not prop.get("over_odds") and not prop.get("under_odds"):
             continue
-        row = refresh_prop_line_strength(
-            {
-                **prop,
-                "game_id": game_id,
-                "matchup": matchup,
-                "bookmaker": bookmaker,
-                "bookmaker_label": book_label,
-                "line_kind": prop.get("line_kind") or "main",
-            }
-        )
-        if prop.get("actionable") and prop.get("recommended_odds") is not None:
-            row["slip_leg"] = prop_slip_leg(
-                prop,
-                game_id=game_id,
-                matchup=matchup,
-                bookmaker=bookmaker,
-                game_date=game_date,
-            )
-        rows.append(row)
+        base = {
+            **prop,
+            "game_id": game_id,
+            "matchup": matchup,
+            "bookmaker": bookmaker,
+            "bookmaker_label": book_label,
+            "line_kind": prop.get("line_kind") or "main",
+        }
+        for row in expand_prop_to_side_rows(base):
+            if row.get("actionable") and row.get("recommended_odds") is not None:
+                row["slip_leg"] = prop_slip_leg(
+                    row,
+                    game_id=game_id,
+                    matchup=matchup,
+                    bookmaker=bookmaker,
+                    game_date=game_date,
+                )
+            rows.append(row)
     return rows
 
 

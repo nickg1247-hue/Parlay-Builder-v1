@@ -1744,7 +1744,14 @@ function renderPropExplorerList(el, props, options = {}) {
   el.innerHTML = rows
     .map((p, i) => {
       const side = p.recommended_side || "over";
+      const sideLabel = side === "under" ? "Under" : "Over";
       const odds = fmtAmericanOdds(p.recommended_odds ?? (side === "over" ? p.over_odds : p.under_odds));
+      const altOdds =
+        side === "over" && p.under_odds != null
+          ? ` · U ${fmtAmericanOdds(p.under_odds)}`
+          : side === "under" && p.over_odds != null
+            ? ` · O ${fmtAmericanOdds(p.over_odds)}`
+            : "";
       const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
       const form = propHitRatesHtml(p, side);
       const strength = lineStrengthHtml(p);
@@ -1776,7 +1783,7 @@ function renderPropExplorerList(el, props, options = {}) {
           </div>
           <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
         </div>
-        <p class="prop-explorer-line">${p.market_label || p.market_type}: ${side} ${p.line} (${odds}) ${offerTag}</p>
+        <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag}</p>
         <p class="prop-explorer-tags">
           <span class="prop-line-tag">${lineKind}</span>
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}

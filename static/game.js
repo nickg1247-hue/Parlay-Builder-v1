@@ -635,7 +635,8 @@
     const tableRows = all
       .map((p, i) => {
         const side = p.recommended_side || "over";
-        const odds = side === "over" ? p.over_odds : p.under_odds;
+        const sideLabel = side === "under" ? "Under" : "Over";
+        const odds = p.recommended_odds ?? (side === "over" ? p.over_odds : p.under_odds);
         const score = p.prop_score != null ? `${Math.round(p.prop_score)}` : p.score != null ? `${Math.round(p.score)}` : "—";
         const hitRates = propHitRatesHtml(p, side);
         const lineStrength = propLineStrengthHtml(p);
@@ -652,7 +653,7 @@
           <td>${p.player}</td>
           <td>${p.market_label || marketLabel(p.market_type)}</td>
           <td>${p.line}</td>
-          <td>${side} ${fmtOdds(odds)} ${actionable}</td>
+          <td>${sideLabel} ${fmtOdds(odds)} ${actionable}</td>
           <td>${score}</td>
           <td class="prop-hit-rates">${hitRates}</td>
           <td class="prop-line-strength">${lineStrength}${modelMeta}${p.line_insight && !modelMeta ? `<span class="prop-line-insight">${p.line_insight}</span>` : ""}</td>

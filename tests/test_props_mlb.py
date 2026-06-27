@@ -1132,6 +1132,78 @@ def test_refresh_prop_line_strength_uses_score_grade():
     assert fixed["grade_label"] == "Moderate"
 
 
+def test_expand_prop_to_side_rows():
+    combined = {
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "over_odds": -150,
+        "under_odds": 120,
+        "model_projection": 1.2,
+        "prop_score_over": 78.0,
+        "prop_score_under": 65.0,
+        "over_edge": 0.08,
+        "under_edge": -0.05,
+        "hit_rate_over_l10": 0.8,
+        "hit_rate_under_l10": 0.2,
+        "model_probability_over": 0.72,
+        "model_probability_under": 0.28,
+        "debug": {
+            "over": {
+                "prop_score": 78.0,
+                "edge": 0.08,
+                "projection_agrees": True,
+                "component_scores": {"recent_form": 70, "matchup": 75, "line_value": 80},
+            },
+            "under": {
+                "prop_score": 65.0,
+                "edge": -0.05,
+                "projection_agrees": False,
+                "component_scores": {"recent_form": 30, "matchup": 75, "line_value": 20},
+            },
+        },
+    }
+    rows = prop_scoring.expand_prop_to_side_rows(combined)
+    assert len(rows) == 2
+    sides = {r["recommended_side"] for r in rows}
+    assert sides == {"over", "under"}
+    over = next(r for r in rows if r["recommended_side"] == "over")
+    under = next(r for r in rows if r["recommended_side"] == "under")
+    assert over["prop_score"] == 78.0
+    assert over["recommended_odds"] == -150
+    assert under["prop_score"] == 65.0
+    assert under["recommended_odds"] == 120
+    assert over.get("_side_row") is True
+
+
+def test_collect_scored_props_from_payload_expands_sides():
+    payload = {
+        "matchup": "NYY @ BOS",
+        "bookmaker": "draftkings",
+        "date": "2026-06-27",
+        "props": [
+            {
+                "player": "Aaron Judge",
+                "market_type": "batter_hits",
+                "line": 0.5,
+                "over_odds": -150,
+                "under_odds": 120,
+                "prop_score_over": 78.0,
+                "prop_score_under": 65.0,
+                "over_edge": 0.08,
+                "under_edge": -0.05,
+                "debug": {
+                    "over": {"prop_score": 78.0, "edge": 0.08, "projection_agrees": True},
+                    "under": {"prop_score": 65.0, "edge": -0.05, "projection_agrees": False},
+                },
+            }
+        ],
+    }
+    rows = props_mlb._collect_scored_props_from_payload(payload, "12345")
+    assert len(rows) == 2
+    assert {r["recommended_side"] for r in rows} == {"over", "under"}
+
+
 def test_form_score_is_average_hit_rate_percent():
     assert prop_scoring._compute_rank_score(hit_rate=0.8, l5=0.8, season=0.75) == round(
         (0.8 + 0.8 + 0.75) / 3 * 100.0, 1
