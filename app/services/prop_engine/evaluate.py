@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.odds.odds_math import american_to_implied_prob, market_probs_from_american_totals
+from app.odds.team_aliases import is_valid_american_odds
 from app.services.prop_engine.components import (
     compute_side_edge,
     market_edge_score_from_edge,
@@ -41,6 +42,7 @@ from app.services.prop_scoring import (
     _search_player_id,
     _season_game_log_values,
     market_label,
+    prop_grade_from_score,
 )
 from app.services.teams_hub import _mlb_player_photo
 
@@ -315,11 +317,13 @@ def evaluate_prop(
     )
 
     over_mkt = under_mkt = None
-    if over_odds is not None and under_odds is not None:
+    over_valid = over_odds is not None and is_valid_american_odds(over_odds)
+    under_valid = under_odds is not None and is_valid_american_odds(under_odds)
+    if over_valid and under_valid:
         over_mkt, under_mkt = market_probs_from_american_totals(int(over_odds), int(under_odds))
-    elif over_odds is not None:
+    elif over_valid:
         over_mkt = american_to_implied_prob(int(over_odds))
-    elif under_odds is not None:
+    elif under_valid:
         under_mkt = american_to_implied_prob(int(under_odds))
 
     over_eval = _score_side(
@@ -429,7 +433,11 @@ def evaluate_prop(
             actionable_reason = None
             rejection_reasons = []
 
-    line_strength, line_strength_label = _line_strength_from_tier(tier)
+    prop_score = recommended["prop_score"] if recommended else max(
+        over_eval["prop_score"], under_eval["prop_score"]
+    )
+    grade_tier, grade_label = prop_grade_from_score(prop_score)
+    line_strength, line_strength_label = grade_tier, grade_label
     best_reason = _best_reason(recommended or over_eval, projection, line) if recommended else None
 
     side_eval = recommended or (over_eval if over_odds else under_eval)
@@ -438,10 +446,6 @@ def evaluate_prop(
         role_meta=side_eval.get("role_meta") or {},
         projection_confidence=proj.get("projection_confidence", "low"),
         edge=side_eval.get("edge"),
-    )
-
-    prop_score = recommended["prop_score"] if recommended else max(
-        over_eval["prop_score"], under_eval["prop_score"]
     )
 
     line_insight = best_reason or (rejection_reasons[0] if rejection_reasons else "Not recommended")
@@ -519,6 +523,8 @@ def evaluate_prop(
         "market_label": market_label(market_type),
         "line_strength": line_strength,
         "line_strength_label": line_strength_label,
+        "grade_tier": grade_tier,
+        "grade_label": grade_label,
         "line_insight": line_insight,
         "matchup_adjustment": round(adj, 1) if adj else None,
     }

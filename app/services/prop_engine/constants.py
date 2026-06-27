@@ -23,6 +23,11 @@ ELITE_EDGE = MIN_EDGE_ELITE
 VERY_STRONG_SCORE = 85.0
 ELITE_SCORE = 90.0
 
+# Display grades for all scored props (sorted high → low on boards).
+GRADE_STRONG = MIN_PROP_SCORE
+GRADE_MODERATE = 70.0
+GRADE_LOW = 60.0
+
 VERY_STRONG_ROLE = 70.0
 VERY_STRONG_MATCHUP = 70.0
 

@@ -1273,7 +1273,7 @@ function renderHomeNews(list, data) {
 
 async function fetchDailyPropsForHome(options = {}) {
   const cacheOnly = options.cacheOnly !== false;
-  const url = `/api/daily/props?limit=12&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
+  const url = `/api/daily/props?limit=50&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
   try {
     const res = await fetch(url);
     if (res.status === 401) return null;
@@ -1320,10 +1320,10 @@ function applyHomeProps(propsData, propsEl, veryStrongWrap, veryStrongEl) {
     });
     return;
   }
-  renderBestProps(propsEl, (propsData.top_props || []).slice(0, 10), {
+  renderBestProps(propsEl, (propsData.top_props || []).slice(0, 25), {
     emptyMessage: (propsData.top_props || []).length
       ? undefined
-      : `No actionable props found after scanning today's slate.${hint}`,
+      : `No scored props found after scanning today's slate.${hint}`,
   });
 }
 
@@ -1417,24 +1417,18 @@ function propFormComposite(prop) {
 window.propFormComposite = propFormComposite;
 
 function propEffectiveStrength(prop) {
-  if (!prop?.actionable) return prop;
-  const tier = prop.confidence_tier || prop.confidence;
-  if (tier === "elite") {
-    return { ...prop, line_strength: "elite", line_strength_label: "Elite" };
-  }
-  if (tier === "very_strong" || prop.line_strength === "very_strong" || propHasPerfectForm(prop)) {
-    return {
-      ...prop,
-      line_strength: "very_strong",
-      line_strength_label: "Very strong",
-    };
+  if (!prop) return prop;
+  const tier = prop.grade_tier || prop.line_strength;
+  const label = prop.grade_label || prop.line_strength_label;
+  if (tier) {
+    return { ...prop, line_strength: tier, line_strength_label: label || tier };
   }
   return prop;
 }
 
 function propModelMetaHtml(prop) {
   const score = prop?.prop_score ?? prop?.score;
-  const tier = prop?.confidence_tier || prop?.confidence || "—";
+  const tier = prop?.grade_tier || prop?.line_strength || prop?.confidence_tier || prop?.confidence || "—";
   const proj = prop?.model_projection;
   const edge = prop?.edge_pct;
   const side = prop?.recommended_side;
@@ -1518,10 +1512,18 @@ function lineStrengthHtml(item) {
   return `<span class="line-strength line-strength-${cssLevel}" title="${safeInsight}">${label}</span>`;
 }
 
+function propGradeClass(prop) {
+  const tier = propEffectiveStrength(prop)?.line_strength;
+  if (!tier) return "";
+  return ` prop-card--grade-${String(tier).replace(/_/g, "-")}`;
+}
+
 function propVeryStrongClass(prop) {
-  return propEffectiveStrength(prop)?.line_strength === "very_strong"
-    ? " prop-card--very-strong"
-    : "";
+  const tier = propEffectiveStrength(prop)?.line_strength;
+  if (tier === "very_strong" || tier === "elite") {
+    return ` prop-card--very-strong${propGradeClass(prop)}`;
+  }
+  return propGradeClass(prop);
 }
 
 window.hitRateChip = hitRateChip;
@@ -1530,6 +1532,7 @@ window.propHitRatesHtml = propHitRatesHtml;
 window.propFormRowCompact = propFormRowCompact;
 window.teamWinRatesHtml = teamWinRatesHtml;
 window.lineStrengthHtml = lineStrengthHtml;
+window.propGradeClass = propGradeClass;
 window.propVeryStrongClass = propVeryStrongClass;
 window.propEffectiveStrength = propEffectiveStrength;
 window.propModelMetaHtml = propModelMetaHtml;
@@ -1642,8 +1645,8 @@ function renderBestProps(el, topProps, options = {}) {
         ? `<span class="best-bet-insight pick-why-chip">${p.line_insight}</span>`
         : "";
       const edgeChip =
-        p.rank_score != null
-          ? `<span class="pick-edge-chip">Model ${p.rank_score}</span>`
+        p.prop_score != null || p.score != null
+          ? `<span class="pick-edge-chip">Score ${Math.round(p.prop_score ?? p.score)}</span>`
           : p.recommended_hit_rate != null
             ? `<span class="pick-edge-chip">L10 ${Math.round(p.recommended_hit_rate * 100)}%</span>`
             : "";
@@ -1759,24 +1762,26 @@ function renderPropExplorerList(el, props, options = {}) {
       const why = p.line_insight
         ? `<p class="prop-explorer-why"><strong>Why:</strong> ${p.line_insight}</p>`
         : "";
-      const score = p.score != null ? Math.round(p.score) : "—";
-      const actionable = p.actionable
-        ? ""
-        : `<span class="prop-skip-tag">${p.actionable_reason || "Not recommended"}</span>`;
+      const score = p.prop_score != null ? Math.round(p.prop_score) : p.score != null ? Math.round(p.score) : "—";
+      const modelMeta = typeof propModelMetaHtml === "function" ? propModelMetaHtml(p) : "";
+      const offerTag = p.actionable
+        ? `<span class="prop-offer-tag">Top offer</span>`
+        : "";
       return `
-      <article class="prop-explorer-card prop-card-clickable${propVeryStrongClass(p)} ${p.actionable ? "" : "prop-explorer-card--skip"}" data-prop-idx="${i}" role="button" tabindex="0">
+      <article class="prop-explorer-card prop-card-clickable${propVeryStrongClass(p)}" data-prop-idx="${i}" role="button" tabindex="0">
         <div class="prop-explorer-head">
           <div>
             <h3 class="prop-explorer-player">${p.player}</h3>
             <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
           </div>
-          <span class="prop-explorer-score" title="Form score">${score}</span>
+          <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
         </div>
-        <p class="prop-explorer-line">${p.market_label || p.market_type}: ${side} ${p.line} (${odds}) ${actionable}</p>
+        <p class="prop-explorer-line">${p.market_label || p.market_type}: ${side} ${p.line} (${odds}) ${offerTag}</p>
         <p class="prop-explorer-tags">
           <span class="prop-line-tag">${lineKind}</span>
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}
         </p>
+        ${modelMeta}
         <p class="prop-explorer-form">${form}</p>
         ${why}
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}

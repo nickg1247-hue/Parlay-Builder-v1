@@ -623,8 +623,8 @@
       .join("");
 
     all = all.slice().sort((a, b) => {
-      const avgDiff = propFormAverage(b) - propFormAverage(a);
-      if (avgDiff !== 0) return avgDiff;
+      const scoreDiff = (Number(b.prop_score ?? b.score ?? 0) - Number(a.prop_score ?? a.score ?? 0));
+      if (scoreDiff !== 0) return scoreDiff;
       const ma = marketLabel(a.market_type);
       const mb = marketLabel(b.market_type);
       if (ma !== mb) return ma.localeCompare(mb);
@@ -641,14 +641,14 @@
         const lineStrength = propLineStrengthHtml(p);
         const modelMeta = typeof window.propModelMetaHtml === "function" ? window.propModelMetaHtml(p) : "";
         const actionable = p.actionable
-          ? ""
-          : `<span class="prop-skip-tag" title="${p.actionable_reason || "Not recommended"}">Skip</span>`;
+          ? `<span class="prop-offer-tag">Top offer</span>`
+          : "";
         let marketHeader = "";
         if (p.market_type !== lastMarket) {
           lastMarket = p.market_type;
           marketHeader = `<tr class="props-market-header"><td colspan="8"><strong>${marketLabel(p.market_type)}</strong></td></tr>`;
         }
-        return `${marketHeader}<tr class="prop-row-clickable ${p.actionable ? "" : "prop-row-skip"}" data-open-game-prop="${i}" data-open-game-prop-list="all" role="button" tabindex="0">
+        return `${marketHeader}<tr class="prop-row-clickable${propGradeClass(p)}" data-open-game-prop="${i}" data-open-game-prop-list="all" role="button" tabindex="0">
           <td>${p.player}</td>
           <td>${p.market_label || marketLabel(p.market_type)}</td>
           <td>${p.line}</td>

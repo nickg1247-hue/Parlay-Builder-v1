@@ -105,6 +105,60 @@ def test_parse_event_props_median_odds():
     assert judge["under_odds"] == -102
 
 
+def test_consensus_skips_invalid_median_odds():
+    """Opposite-sign medians (e.g. -100 and +100) must not produce zero odds."""
+    event = {
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Aaron Judge",
+                                "price": -100,
+                                "point": 0.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Aaron Judge",
+                                "price": -110,
+                                "point": 0.5,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                "key": "fanduel",
+                "markets": [
+                    {
+                        "key": "batter_hits",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Aaron Judge",
+                                "price": 100,
+                                "point": 0.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Aaron Judge",
+                                "price": 110,
+                                "point": 0.5,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    assert props_mlb._parse_event_props(event) == []
+    assert props_mlb._median_int([-100, 100]) is None
+
+
 def test_parse_event_props_single_book():
     rows = props_mlb._parse_event_props(FAKE_EVENT, bookmaker_key="draftkings")
     assert len(rows) == 2
@@ -394,8 +448,9 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
     ]
     lists = props_mlb._game_pick_lists(props)
     assert len(lists["very_strong_picks"]) == 1
-    assert len(lists["top_picks"]) == 1
+    assert len(lists["top_picks"]) == 2
     assert lists["total_very_strong"] == 1
+    assert lists["total_graded"] == 2
 
 
 def test_split_slate_props_and_daily_payload():
@@ -1060,24 +1115,21 @@ def test_score_prop_not_very_strong_when_l10_imperfect(mock_alltime, mock_logs, 
     assert result["confidence_tier"] != "elite"
 
 
-@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
-@patch("app.services.prop_engine.evaluate._season_game_log_values")
-@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
-def test_refresh_prop_line_strength_upgrades_stale_strong_label(mock_alltime, mock_logs, _pid):
-    mock_logs.return_value = tuple([2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
-    mock_alltime.return_value = mock_logs.return_value
-    scored = prop_scoring.score_prop(
-        player="Aaron Judge",
-        market_type="batter_hits",
-        line=1.5,
-        over_odds=-115,
-        under_odds=+130,
-        season=2026,
+def test_prop_grade_from_score():
+    assert prop_scoring.prop_grade_from_score(92) == ("elite", "Elite")
+    assert prop_scoring.prop_grade_from_score(87) == ("very_strong", "Very strong")
+    assert prop_scoring.prop_grade_from_score(82) == ("strong", "Strong")
+    assert prop_scoring.prop_grade_from_score(75) == ("moderate", "Moderate")
+    assert prop_scoring.prop_grade_from_score(62) == ("low", "Low")
+    assert prop_scoring.prop_grade_from_score(40) == ("weak", "Weak")
+
+
+def test_refresh_prop_line_strength_uses_score_grade():
+    fixed = prop_scoring.refresh_prop_line_strength(
+        {"prop_score": 76, "confidence_tier": "very_strong", "line_strength": "strong"}
     )
-    stale = {**scored, "line_strength": "strong", "line_strength_label": "Strong line", "confidence_tier": "very_strong"}
-    fixed = prop_scoring.refresh_prop_line_strength(stale)
-    assert fixed["line_strength"] == "very_strong"
-    assert fixed["line_strength_label"] == "Very strong"
+    assert fixed["line_strength"] == "moderate"
+    assert fixed["grade_label"] == "Moderate"
 
 
 def test_form_score_is_average_hit_rate_percent():

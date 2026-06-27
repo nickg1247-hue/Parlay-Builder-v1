@@ -23,7 +23,7 @@ from app.odds.the_odds_api import (
     EXTENDED_MLB_PROP_MARKETS,
 )
 from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
-from app.services.prop_engine.constants import ELITE_SCORE, MIN_PROP_SCORE, NO_ELITE_MESSAGE
+from app.services.prop_engine.constants import ELITE_SCORE, MIN_PROP_SCORE, NO_ELITE_MESSAGE, VERY_STRONG_SCORE
 from app.services.prop_scoring import (
     MIN_TOP_PROP_SCORE,
     _player_team_id,
@@ -211,22 +211,17 @@ def _include_runs_props(markets_requested: str) -> bool:
 
 
 def is_elite_prop(prop: dict[str, Any]) -> bool:
-    tier = prop.get("confidence_tier") or prop.get("confidence")
-    if tier == "elite":
-        return True
     score = prop.get("prop_score") or prop.get("score")
-    return bool(prop.get("actionable") and score is not None and float(score) >= ELITE_SCORE)
+    if score is None:
+        return False
+    return float(score) >= ELITE_SCORE
 
 
 def is_very_strong_prop(prop: dict[str, Any]) -> bool:
-    if is_elite_prop(prop):
-        return True
-    tier = prop.get("confidence_tier") or prop.get("confidence")
-    if tier == "very_strong":
-        return True
-    if prop.get("line_strength") == VERY_STRONG_LINE_STRENGTH:
-        return True
-    return False
+    score = prop.get("prop_score") or prop.get("score")
+    if score is None:
+        return False
+    return float(score) >= VERY_STRONG_SCORE
 
 
 def _normalize_scored_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -235,36 +230,28 @@ def _normalize_scored_props(props: list[dict[str, Any]]) -> list[dict[str, Any]]
 
 
 def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
-    """Split scored props into elite, very-strong, and strong tiers."""
-    elite: list[dict[str, Any]] = []
-    very_strong: list[dict[str, Any]] = []
-    top_picks: list[dict[str, Any]] = []
+    """Grade all scored props and sort highest model score first."""
+    graded: list[dict[str, Any]] = []
     total_actionable = 0
     for prop in props:
-        if not prop.get("actionable"):
+        if prop.get("prop_score") is None and prop.get("score") is None:
             continue
-        if not prop_is_bettable(prop):
-            continue
-        if prop.get("recommended_odds") is None:
-            continue
-        total_actionable += 1
-        score = float(prop.get("prop_score") or prop.get("score") or 0)
-        if is_elite_prop(prop):
-            elite.append(prop)
-        elif is_very_strong_prop(prop):
-            very_strong.append(prop)
-        elif score >= MIN_PROP_SCORE:
-            top_picks.append(prop)
-    elite.sort(key=prop_rank_key)
-    very_strong.sort(key=prop_rank_key)
-    top_picks.sort(key=prop_rank_key)
+        row = refresh_prop_line_strength(dict(prop))
+        graded.append(row)
+        if row.get("actionable") and prop_is_bettable(row) and row.get("recommended_odds") is not None:
+            total_actionable += 1
+
+    graded.sort(key=prop_rank_key)
+    elite = [p for p in graded if is_elite_prop(p)]
+    very_strong = [p for p in graded if is_very_strong_prop(p) and not is_elite_prop(p)]
     return {
         "elite_picks": elite[:12],
         "very_strong_picks": very_strong[:12],
-        "top_picks": top_picks[:12],
+        "top_picks": graded,
         "total_elite": len(elite),
         "total_very_strong": len(very_strong),
         "total_actionable": total_actionable,
+        "total_graded": len(graded),
         "elite_message": None if elite else NO_ELITE_MESSAGE,
     }
 
@@ -272,17 +259,11 @@ def _game_pick_lists(props: list[dict[str, Any]]) -> dict[str, Any]:
 def _split_slate_props(
     picks: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    elite = [p for p in picks if is_elite_prop(p)]
-    very_strong = [p for p in picks if is_very_strong_prop(p) and not is_elite_prop(p)]
-    regular = [
-        p
-        for p in picks
-        if not is_elite_prop(p) and not is_very_strong_prop(p)
-        and float(p.get("prop_score") or p.get("score") or 0) >= MIN_PROP_SCORE
-    ]
-    elite.sort(key=prop_rank_key)
-    very_strong.sort(key=prop_rank_key)
-    regular.sort(key=prop_rank_key)
+    graded = [refresh_prop_line_strength(dict(p)) for p in picks if (p.get("prop_score") or p.get("score")) is not None]
+    graded.sort(key=prop_rank_key)
+    elite = [p for p in graded if is_elite_prop(p)]
+    very_strong = [p for p in graded if is_very_strong_prop(p) and not is_elite_prop(p)]
+    regular = [p for p in graded if not is_very_strong_prop(p)]
     return elite, very_strong, regular
 
 
@@ -395,11 +376,11 @@ def prop_side_hit_rates(prop: dict[str, Any]) -> tuple[float, float, float]:
 
 
 def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
-    """Sort actionable props: highest prop score, then edge, then form."""
+    """Sort props: highest model score first, then model probability, then edge."""
     score = float(prop.get("prop_score") or prop.get("score") or 0)
+    prob = float(prop.get("recommended_probability") or 0)
     edge = float(prop.get("edge_pct") or 0)
-    l5, l10, season = prop_side_hit_rates(prop)
-    return (-score, -edge, -l10)
+    return (-score, -prob, -edge)
 
 
 def prop_slip_leg(
@@ -766,7 +747,10 @@ def _median_int(values: list[int]) -> int | None:
     clean = [v for v in values if is_valid_american_odds(v)]
     if not clean:
         return None
-    return int(round(statistics.median(clean)))
+    median = int(round(statistics.median(clean)))
+    if not is_valid_american_odds(median):
+        return None
+    return median
 
 
 def _median_float(values: list[float]) -> float | None:
@@ -1143,12 +1127,16 @@ def _parse_event_props(
                 continue
             overs = [int(row["over_odds"]) for _, row in complete_books]
             unders = [int(row["under_odds"]) for _, row in complete_books]
+            over_median = _median_int(overs)
+            under_median = _median_int(unders)
+            if over_median is None or under_median is None:
+                continue
             base = dict(complete_books[0][1])
             rows.append(
                 {
                     **base,
-                    "over_odds": _median_int(overs),
-                    "under_odds": _median_int(unders),
+                    "over_odds": over_median,
+                    "under_odds": under_median,
                     "complete_market": True,
                     "primary_line": True,
                     "offered_books": [bk for bk, _ in complete_books],
@@ -2106,7 +2094,14 @@ def _daily_props_payload(
 
     book = _normalize_bookmaker(bookmaker)
     if elite_props is None or very_strong_props is None or top_props is None:
-        elite_props, very_strong_props, top_props = _split_slate_props(picks)
+        elite_props, very_strong_props, _regular = _split_slate_props(picks)
+        top_props = [
+            refresh_prop_line_strength(dict(p))
+            for p in picks
+            if (p.get("prop_score") or p.get("score")) is not None
+        ]
+        top_props.sort(key=prop_rank_key)
+    actionable_count = sum(1 for p in picks if p.get("actionable"))
     out: dict[str, Any] = {
         "date": game_date.isoformat(),
         "bookmaker": book,
@@ -2115,7 +2110,8 @@ def _daily_props_payload(
         "games_scanned": games_scanned,
         "games_fetched": games_fetched,
         "fetch_cap_hit": fetch_cap_hit,
-        "total_actionable": len(picks),
+        "total_actionable": actionable_count,
+        "total_graded": len(top_props),
         "total_elite": len(elite_props),
         "total_very_strong": len(very_strong_props),
         "elite_props": elite_props[:limit],
@@ -2137,12 +2133,13 @@ def _daily_props_payload(
         from app.services.prop_engine.learning import log_model_prediction
         from app.services.prop_pick_tracker import log_offered_props
 
+        actionable_picks = [p for p in picks if p.get("actionable")]
         logged = log_offered_props(
-            picks,
+            actionable_picks,
             game_date.isoformat(),
             source=f"daily_{source}",
         )
-        for row in picks:
+        for row in actionable_picks:
             log_model_prediction(row, board_date=game_date, source=f"daily_{source}")
         out["props_logged_count"] = len(logged)
     return out
@@ -2174,17 +2171,20 @@ def build_daily_top_props(
             picks = _normalize_scored_props(
                 _filter_prop_markets(picks, markets_requested=DEFAULT_MLB_PROP_MARKETS)
             )
-            picks = [p for p in picks if prop_is_bettable(p)]
             picks = _revalidate_pick_list(picks, book, game_date)
             picks.sort(key=prop_rank_key)
-            elite, very_strong, regular = _split_slate_props(picks)
+            elite, very_strong, _regular = _split_slate_props(picks)
             return _daily_props_payload(
                 game_date=game_date,
                 limit=limit,
                 picks=picks,
                 elite_props=elite,
                 very_strong_props=very_strong,
-                top_props=regular,
+                top_props=[
+                    refresh_prop_line_strength(dict(p))
+                    for p in picks
+                    if (p.get("prop_score") or p.get("score")) is not None
+                ],
                 source=source,
                 games_on_slate=meta.get("games_on_slate", 0) if meta else 0,
                 games_scanned=meta.get("games_scanned", 0) if meta else 0,
@@ -2238,7 +2238,7 @@ def build_daily_top_props(
             continue
 
         games_scanned += 1
-        picks.extend(_collect_actionable_props(payload, gid))
+        picks.extend(_collect_scored_props_from_payload(payload, gid))
 
     source = "scan" if scan else "game_cache"
     hint: str | None = None
@@ -2271,8 +2271,9 @@ def build_daily_top_props(
                 "all_props": picks,
                 "elite_props": elite,
                 "very_strong_props": very_strong,
-                "top_props": regular,
-                "total_actionable": len(picks),
+                "top_props": picks,
+                "total_actionable": sum(1 for p in picks if p.get("actionable")),
+                "total_graded": len([p for p in picks if (p.get("prop_score") or p.get("score")) is not None]),
                 "total_elite": len(elite),
                 "total_very_strong": len(very_strong),
             },
@@ -2307,14 +2308,16 @@ def _collect_scored_props_from_payload(
     for prop in payload.get("props") or []:
         if not prop.get("over_odds") and not prop.get("under_odds"):
             continue
-        row = {
-            **prop,
-            "game_id": game_id,
-            "matchup": matchup,
-            "bookmaker": bookmaker,
-            "bookmaker_label": book_label,
-            "line_kind": prop.get("line_kind") or "main",
-        }
+        row = refresh_prop_line_strength(
+            {
+                **prop,
+                "game_id": game_id,
+                "matchup": matchup,
+                "bookmaker": bookmaker,
+                "bookmaker_label": book_label,
+                "line_kind": prop.get("line_kind") or "main",
+            }
+        )
         if prop.get("actionable") and prop.get("recommended_odds") is not None:
             row["slip_leg"] = prop_slip_leg(
                 prop,
@@ -2509,6 +2512,9 @@ def search_daily_props(
     ]
     filtered.sort(key=prop_rank_key)
 
+    def _grade_count(tier: str) -> int:
+        return sum(1 for prop in filtered if prop.get("grade_tier") == tier or prop.get("line_strength") == tier)
+
     if pool and not games_with_props:
         games_with_props = len(
             {str(p.get("game_id")) for p in pool if p.get("game_id")}
@@ -2534,6 +2540,16 @@ def search_daily_props(
         "total_matched": len(filtered),
         "total_very_strong": very_strong_matched,
         "total_elite": sum(1 for prop in filtered if is_elite_prop(prop)),
+        "total_actionable": sum(1 for prop in filtered if prop.get("actionable")),
+        "total_graded": len(filtered),
+        "grade_counts": {
+            "elite": _grade_count("elite"),
+            "very_strong": _grade_count("very_strong"),
+            "strong": _grade_count("strong"),
+            "moderate": _grade_count("moderate"),
+            "low": _grade_count("low"),
+            "weak": _grade_count("weak"),
+        },
         "total_in_pool": len(pool),
         "games_on_slate": games_on_slate,
         "games_scanned": games_scanned,

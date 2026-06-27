@@ -174,28 +174,43 @@ def is_perfect_l5_l10_season(
     )
 
 
+def prop_grade_from_score(score: float | None) -> tuple[str, str]:
+    """Map model prop score (0–100) to a display grade for slate sorting."""
+    from app.services.prop_engine.constants import (
+        ELITE_SCORE,
+        GRADE_LOW,
+        GRADE_MODERATE,
+        GRADE_STRONG,
+        VERY_STRONG_SCORE,
+    )
+
+    value = float(score or 0)
+    if value >= ELITE_SCORE:
+        return "elite", "Elite"
+    if value >= VERY_STRONG_SCORE:
+        return "very_strong", "Very strong"
+    if value >= GRADE_STRONG:
+        return "strong", "Strong"
+    if value >= GRADE_MODERATE:
+        return "moderate", "Moderate"
+    if value >= GRADE_LOW:
+        return "low", "Low"
+    return "weak", "Weak"
+
+
 def refresh_prop_line_strength(prop: dict[str, Any]) -> dict[str, Any]:
-    """Re-derive line strength from confidence tier (fixes stale cached labels)."""
-    tier = prop.get("confidence_tier") or prop.get("confidence")
-    if tier == "elite":
-        return {
-            **prop,
-            "line_strength": "elite",
-            "line_strength_label": "Elite",
-        }
-    if tier == "very_strong":
-        return {
-            **prop,
-            "line_strength": "very_strong",
-            "line_strength_label": "Very strong",
-        }
-    if tier == "strong" and prop.get("actionable"):
-        return {
-            **prop,
-            "line_strength": "strong",
-            "line_strength_label": "Strong line",
-        }
-    return prop
+    """Re-derive display grade from prop score (all props, not just actionable)."""
+    score = prop.get("prop_score")
+    if score is None:
+        score = prop.get("score")
+    tier, label = prop_grade_from_score(score)
+    return {
+        **prop,
+        "line_strength": tier,
+        "line_strength_label": label,
+        "grade_tier": tier,
+        "grade_label": label,
+    }
 
 
 @lru_cache(maxsize=256)

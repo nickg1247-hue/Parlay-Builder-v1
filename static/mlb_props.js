@@ -60,7 +60,11 @@
           data.games_on_slate && data.games_with_props != null
             ? ` · ${data.games_with_props}/${data.games_on_slate} games`
             : "";
-        metaEl.textContent = `${data.total_matched || 0} props · ${data.total_very_strong || 0} very strong · ${data.bookmaker_label || "Consensus"}${coverage}${hint}`;
+        const grades = data.grade_counts || {};
+        const gradeNote = grades.strong
+          ? ` · ${data.total_matched || 0} ranked (${grades.strong || 0} strong, ${grades.moderate || 0} moderate)`
+          : "";
+        metaEl.textContent = `${data.total_matched || 0} props · sorted by model score · ${data.bookmaker_label || "Consensus"}${gradeNote}${coverage}${hint}`;
       }
       renderPropExplorerList(resultsEl, data.props || [], {
         emptyMessage: data.hint || "No props match these filters. Try a different book or refresh lines.",

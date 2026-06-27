@@ -2087,6 +2087,17 @@ body.slate-mlb .app-main > * {
   opacity: 0.82;
 }
 
+.prop-offer-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0b1220;
+  background: #7dffb2;
+}
+
 .prop-explorer-head {
   display: flex;
   justify-content: space-between;
@@ -3533,6 +3544,17 @@ body.slate-mlb .app-main > * {
   color: #ffd54a;
   box-shadow: 0 0 12px rgba(255, 215, 90, 0.4);
   animation: pb-gold-shine 2.4s ease-in-out infinite;
+}
+
+.line-strength-elite {
+  background: linear-gradient(135deg, rgba(255, 215, 90, 0.42), rgba(255, 180, 40, 0.28));
+  color: #ffe082;
+  box-shadow: 0 0 14px rgba(255, 215, 90, 0.45);
+}
+
+.line-strength-low {
+  background: rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
 }
 
 .home-very-strong-wrap {
