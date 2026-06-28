@@ -2573,6 +2573,7 @@ def _passes_prop_search_filters(
     min_odds: int | None,
     line_kind: str | None,
     line_value: float | None,
+    side: str | None = None,
     actionable_only: bool,
     very_strong_only: bool = False,
 ) -> bool:
@@ -2582,6 +2583,11 @@ def _passes_prop_search_filters(
         return False
     if market_type and prop.get("market_type") != market_type:
         return False
+    side_filter = (side or "both").strip().lower()
+    if side_filter in ("over", "under"):
+        prop_side = str(prop.get("recommended_side") or "").lower()
+        if prop_side != side_filter:
+            return False
     kind = prop.get("line_kind") or "main"
     if line_kind and line_kind not in (None, "", "both"):
         if line_kind == "main" and kind != "main":
@@ -2612,6 +2618,7 @@ def search_daily_props(
     min_odds: int | None = None,
     line_kind: str | None = None,
     line_value: float | None = None,
+    side: str | None = None,
     actionable_only: bool = False,
     very_strong_only: bool = False,
     limit: int = 100,
@@ -2702,6 +2709,7 @@ def search_daily_props(
             min_odds=min_odds,
             line_kind=line_kind,
             line_value=line_value,
+            side=side,
             actionable_only=actionable_only,
             very_strong_only=very_strong_only,
         )
@@ -2763,6 +2771,7 @@ def search_daily_props(
             "min_odds": min_odds,
             "line_kind": line_kind or "both",
             "line_value": line_value,
+            "side": (side or "both").lower() if side else "both",
             "actionable_only": actionable_only,
             "very_strong_only": very_strong_only,
             "include_alternates": include_alternates,

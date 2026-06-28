@@ -594,6 +594,43 @@ def test_passes_prop_search_filters_min_odds_and_line_kind():
     )
 
 
+def test_passes_prop_search_filters_side():
+    over_row = {
+        "market_type": "batter_hits",
+        "line_kind": "main",
+        "recommended_side": "over",
+        "recommended_odds": -110,
+    }
+    under_row = {**over_row, "recommended_side": "under"}
+    assert props_mlb._passes_prop_search_filters(
+        over_row,
+        market_type=None,
+        min_odds=None,
+        line_kind="both",
+        line_value=None,
+        side="over",
+        actionable_only=False,
+    )
+    assert not props_mlb._passes_prop_search_filters(
+        under_row,
+        market_type=None,
+        min_odds=None,
+        line_kind="both",
+        line_value=None,
+        side="over",
+        actionable_only=False,
+    )
+    assert props_mlb._passes_prop_search_filters(
+        under_row,
+        market_type=None,
+        min_odds=None,
+        line_kind="both",
+        line_value=None,
+        side="under",
+        actionable_only=False,
+    )
+
+
 def test_prop_rank_key_prop_score_first():
     lower = {"prop_score": 80, "edge_pct": 5, "recommended_side": "over", "hit_rate_over_l10": 0.9}
     higher = {"prop_score": 90, "edge_pct": 3, "recommended_side": "over", "hit_rate_over_l10": 0.6}

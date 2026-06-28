@@ -6,6 +6,7 @@
   const marketEl = document.getElementById("filter-market");
   const minOddsEl = document.getElementById("filter-min-odds");
   const lineKindEl = document.getElementById("filter-line-kind");
+  const sideEl = document.getElementById("filter-side");
   const lineValueEl = document.getElementById("filter-line-value");
   const actionableEl = document.getElementById("filter-actionable");
   const veryStrongEl = document.getElementById("filter-very-strong");
@@ -18,6 +19,7 @@
       market_type: marketEl?.value || "",
       min_odds: minOddsEl?.value ?? "",
       line_kind: lineKindEl?.value || "both",
+      side: sideEl?.value || "both",
       line_value: lineValueEl?.value ?? "",
       actionable_only: !!actionableEl?.checked,
       very_strong_only: !!veryStrongEl?.checked,
@@ -64,7 +66,13 @@
         const gradeNote = grades.strong
           ? ` · ${data.total_matched || 0} ranked (${grades.strong || 0} strong, ${grades.moderate || 0} moderate)`
           : "";
-        metaEl.textContent = `${data.total_matched || 0} props · sorted by model score · ${data.bookmaker_label || "Consensus"}${gradeNote}${coverage}${hint}`;
+        const sideLabel =
+          filters.side === "over"
+            ? " · Overs only"
+            : filters.side === "under"
+              ? " · Unders only"
+              : "";
+        metaEl.textContent = `${data.total_matched || 0} props · sorted by model score · ${data.bookmaker_label || "Consensus"}${sideLabel}${gradeNote}${coverage}${hint}`;
       }
       renderPropExplorerList(resultsEl, data.props || [], {
         emptyMessage: data.hint || "No props match these filters. Try a different book or refresh lines.",

@@ -70,6 +70,14 @@
           <input id="filter-min-odds" type="number" step="1" placeholder="-200" class="home-props-select props-filter-input" />
         </label>
         <label class="props-filter-field">
+          <span>Side</span>
+          <select id="filter-side" class="home-props-select">
+            <option value="both" selected>Over + Under</option>
+            <option value="over">Over only</option>
+            <option value="under">Under only</option>
+          </select>
+        </label>
+        <label class="props-filter-field">
           <span>Line type</span>
           <select id="filter-line-kind" class="home-props-select">
             <option value="both">Main + alternate</option>
@@ -109,6 +117,6 @@
   </div>
   <script src="/static/player_prop_modal.js?v=20260717"></script>
   <script src="/static/app.js?v=20260718"></script>
-  <script src="/static/mlb_props.js?v=20260718"></script>
+  <script src="/static/mlb_props.js?v=20260719"></script>
 </body>
 </html>

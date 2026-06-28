@@ -1862,6 +1862,9 @@ function buildPropSearchQuery(filters = {}) {
   if (filters.line_kind && filters.line_kind !== "both") {
     params.set("line_kind", filters.line_kind);
   }
+  if (filters.side && filters.side !== "both") {
+    params.set("side", filters.side);
+  }
   if (filters.line_value != null && filters.line_value !== "") {
     params.set("line_value", String(filters.line_value));
   }
