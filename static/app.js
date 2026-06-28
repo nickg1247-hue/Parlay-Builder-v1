@@ -1426,12 +1426,28 @@ function propEffectiveStrength(prop) {
   return prop;
 }
 
+function propStatChip(label, value, extraClass = "") {
+  if (value == null || value === "" || value === "—") return "";
+  const cls = extraClass ? ` ${extraClass}` : "";
+  return `<div class="prop-stat-chip${cls}"><span class="prop-stat-label">${label}</span><span class="prop-stat-value">${value}</span></div>`;
+}
+
+function propFormatPct(value) {
+  if (value == null || Number.isNaN(Number(value))) return null;
+  return `${Math.round(Number(value) * 100)}%`;
+}
+
+function propFormatEdge(value) {
+  if (value == null || Number.isNaN(Number(value))) return null;
+  return `${Number(value).toFixed(1)}%`;
+}
+
 function propModelMetaHtml(prop) {
-  const score = prop?.prop_score ?? prop?.score;
-  const tier = prop?.grade_tier || prop?.line_strength || prop?.confidence_tier || prop?.confidence || "—";
+  const side = prop?.recommended_side;
   const proj = prop?.model_projection;
   const edge = prop?.edge_pct;
-  const side = prop?.recommended_side;
+  const risk = prop?.risk_flag;
+  const riskKey = risk ? String(risk).toLowerCase().replace(/\s+/g, "-") : "";
   const modelPct =
     side === "over"
       ? prop?.model_probability_over
@@ -1440,18 +1456,27 @@ function propModelMetaHtml(prop) {
         : prop?.recommended_probability;
   const mktPct =
     side === "over" ? prop?.market_probability_over : prop?.market_probability_under;
-  const fmtPct = (v) => (v != null ? `${Math.round(Number(v) * 100)}%` : "—");
-  const parts = [
-    score != null ? `<span class="prop-score-chip">Score ${Math.round(score)}</span>` : "",
-    `<span class="prop-tier-chip prop-tier-${tier}">${tier}</span>`,
-    proj != null ? `<span class="prop-proj-chip">Proj ${proj}</span>` : "",
-    modelPct != null ? `<span class="prop-model-chip">Mdl ${fmtPct(modelPct)}</span>` : "",
-    mktPct != null ? `<span class="prop-mkt-chip">Mkt ${fmtPct(mktPct)}</span>` : "",
-    edge != null ? `<span class="prop-edge-chip">Edge ${edge}%</span>` : "",
-    prop?.risk_flag ? `<span class="prop-risk-chip">${prop.risk_flag}</span>` : "",
+  const projStr =
+    proj != null
+      ? Number(proj) % 1 === 0
+        ? String(Number(proj))
+        : Number(proj).toFixed(2)
+      : null;
+
+  const stats = [
+    propStatChip("Projection", projStr, "prop-stat-chip--proj"),
+    propStatChip("Model", propFormatPct(modelPct), "prop-stat-chip--model"),
+    propStatChip("Market", propFormatPct(mktPct), "prop-stat-chip--market"),
+    propStatChip("Edge", propFormatEdge(edge), "prop-stat-chip--edge"),
+    risk ? propStatChip("Risk", risk, `prop-stat-chip--risk prop-stat-chip--${riskKey}`) : "",
   ].filter(Boolean);
+
+  if (!stats.length) return "";
+
   const reason = prop?.best_reason || prop?.line_insight || "";
-  return `<div class="prop-model-meta">${parts.join("")}${reason ? `<div class="prop-best-reason">${reason}</div>` : ""}</div>`;
+  return `<div class="prop-model-meta"><div class="prop-model-stats">${stats.join("")}${
+    reason ? `<p class="prop-model-reason">${reason}</p>` : ""
+  }</div></div>`;
 }
 
 function hitRateTier(rate) {
@@ -1766,9 +1791,6 @@ function renderPropExplorerList(el, props, options = {}) {
         .slice(0, 4)
         .map((f) => `<li>${f}</li>`)
         .join("");
-      const why = p.line_insight
-        ? `<p class="prop-explorer-why"><strong>Why:</strong> ${p.line_insight}</p>`
-        : "";
       const score = p.prop_score != null ? Math.round(p.prop_score) : p.score != null ? Math.round(p.score) : "—";
       const modelMeta = typeof propModelMetaHtml === "function" ? propModelMetaHtml(p) : "";
       const offerTag = p.actionable
@@ -1781,7 +1803,10 @@ function renderPropExplorerList(el, props, options = {}) {
             <h3 class="prop-explorer-player">${p.player}</h3>
             <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
           </div>
-          <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
+          <div class="prop-explorer-score-block">
+            <span class="prop-explorer-score-label">Score</span>
+            <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
+          </div>
         </div>
         <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag}</p>
         <p class="prop-explorer-tags">
@@ -1789,8 +1814,10 @@ function renderPropExplorerList(el, props, options = {}) {
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}
         </p>
         ${modelMeta}
-        <p class="prop-explorer-form">${form}</p>
-        ${why}
+        <div class="prop-explorer-form-block">
+          <span class="prop-explorer-form-label">Recent form</span>
+          <p class="prop-explorer-form">${form}</p>
+        </div>
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}
         <div class="prop-explorer-actions">
           <button type="button" class="btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View stats</button>

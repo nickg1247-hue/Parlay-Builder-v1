@@ -2137,10 +2137,125 @@ body.slate-mlb .app-main > * {
   color: var(--muted);
 }
 
+.prop-explorer-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
+
+.prop-explorer-score-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .prop-explorer-score {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.35rem;
+  line-height: 1;
   color: var(--positive);
+}
+
+.prop-model-meta {
+  margin: 0.55rem 0 0.4rem;
+}
+
+.prop-model-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.prop-stat-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.12rem;
+  min-width: 4.25rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.prop-stat-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.prop-stat-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.prop-stat-chip--edge .prop-stat-value {
+  color: #7dffb2;
+}
+
+.prop-stat-chip--model .prop-stat-value {
+  color: #9fd4ff;
+}
+
+.prop-stat-chip--market .prop-stat-value {
+  color: #c8b6ff;
+}
+
+.prop-stat-chip--proj .prop-stat-value {
+  color: #ffe08a;
+}
+
+.prop-stat-chip--risk .prop-stat-value {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.prop-stat-chip--risk-low-risk .prop-stat-value {
+  color: #7dffb2;
+}
+
+.prop-stat-chip--medium-risk .prop-stat-value {
+  color: #ffd166;
+}
+
+.prop-stat-chip--high-risk .prop-stat-value {
+  color: #ff8a8a;
+}
+
+.prop-model-reason {
+  flex: 1 1 100%;
+  margin: 0.15rem 0 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid rgba(125, 255, 178, 0.45);
+}
+
+.prop-explorer-form-block {
+  margin-top: 0.45rem;
+}
+
+.prop-explorer-form-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .prop-explorer-line {
