@@ -660,7 +660,7 @@ def test_apply_published_filter_clears_when_no_fresh_raw(isolated_props, monkeyp
             }
         ],
     }
-    monkeypatch.setattr(props_mlb, "_load_published_index", lambda *_: None)
+    monkeypatch.setattr(props_mlb, "_load_published_quotes", lambda *_, **__: None)
     out = props_mlb._apply_published_line_filter(payload)
     assert out.get("props") == []
     assert out.get("stale_cache") is True
@@ -678,8 +678,48 @@ def test_revalidate_drops_when_no_fresh_raw(isolated_props, monkeypatch):
             "recommended_odds": -110,
         }
     ]
-    monkeypatch.setattr(props_mlb, "_load_published_index", lambda *_: None)
+    monkeypatch.setattr(props_mlb, "_load_published_quotes", lambda *_, **__: None)
     assert props_mlb._revalidate_pick_list(picks, "draftkings", game_date) == []
+
+
+def test_prop_on_published_snapshot_rejects_stale_odds():
+    quotes = {("Aaron Judge", "batter_hits", 1.5, "over"): -115}
+    prop = {
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "line": 1.5,
+        "recommended_side": "over",
+        "recommended_odds": -110,
+        "over_odds": -110,
+    }
+    assert not props_mlb._prop_on_published_snapshot(prop, quotes)
+
+
+def test_prop_on_published_snapshot_rejects_alternate_line():
+    quotes = {("Aaron Judge", "batter_hits", 2.5, "over"): 150}
+    prop = {
+        "player": "Aaron Judge",
+        "market_type": "batter_hits",
+        "line": 2.5,
+        "line_kind": "alternate",
+        "primary_line": False,
+        "recommended_side": "over",
+        "recommended_odds": 150,
+        "over_odds": 150,
+    }
+    assert not props_mlb._prop_on_published_snapshot(prop, quotes)
+
+
+def test_passes_prop_search_filters_excludes_alternates_by_default():
+    alt = {
+        "market_type": "batter_hits",
+        "line_kind": "alternate",
+        "recommended_side": "over",
+        "actionable": True,
+    }
+    assert not props_mlb._passes_prop_search_filters(
+        alt, market_type=None, min_odds=None, line_kind=None, line_value=None, actionable_only=False
+    )
 
 
 def test_prop_rank_key_prop_score_first():
