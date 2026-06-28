@@ -49,7 +49,7 @@ EVENTS_DIR = PROPS_DIR / "events"
 PROPS_CACHE_META_PATH = PROPS_DIR / ".cache_meta.json"
 PROPS_SCAN_STATE_PATH = PROPS_DIR / ".scan_state.json"
 # Bump when prop line parsing or cache rules change — triggers wipe on server start.
-PROPS_CACHE_GENERATION = "20260624b"
+PROPS_CACHE_GENERATION = "20260624c"
 
 
 def _raw_events_dir() -> Path:
@@ -283,9 +283,14 @@ def _filter_prop_markets(
 
 
 def _trim_props_payload(payload: dict[str, Any], markets_requested: str) -> dict[str, Any]:
-    props = _normalize_scored_props(
-        _filter_prop_markets(payload.get("props") or [], markets_requested=markets_requested)
-    )
+    filtered = _filter_prop_markets(payload.get("props") or [], markets_requested=markets_requested)
+    if any(
+        p.get("_side_row") or p.get("prop_score") is not None or p.get("score") is not None
+        for p in filtered
+    ):
+        props = _normalize_scored_props(filtered)
+    else:
+        props = filtered
     pick_lists = _game_pick_lists(props)
     out = {
         **payload,
@@ -986,11 +991,9 @@ def _published_lines_index(
     for row in _published_lines_for_book(
         event, book, markets_requested=markets_requested
     ):
-        if row.get("complete_market") is not True:
+        if row.get("line_kind") == "alternate":
             continue
         if row.get("primary_line") is False:
-            continue
-        if row.get("line_kind") == "alternate":
             continue
         player = str(row.get("player") or "")
         market = str(row.get("market_type") or "")
@@ -1022,8 +1025,11 @@ def _load_published_index(
     game_date: date,
     book: str,
 ) -> set[tuple[str, str, float, str]] | None:
+    """Posted lines from a fresh raw Odds API snapshot only."""
     raw = _load_raw_event(str(game_id), game_date)
     if not raw or not raw.get("event"):
+        return None
+    if not _raw_event_fresh(raw):
         return None
     return _published_lines_index(raw["event"], book)
 
@@ -1052,20 +1058,109 @@ def _revalidate_pick_list(
     book: str,
     game_date: date,
 ) -> list[dict[str, Any]]:
-    """Drop cached picks that are not in the raw sportsbook feed for this book."""
+    """Drop cached picks not in a fresh raw sportsbook feed for this book."""
     index_cache: dict[str, set[tuple[str, str, float, str]] | None] = {}
     kept: list[dict[str, Any]] = []
     for prop in picks:
+        if not _prop_has_posted_odds(prop):
+            continue
         gid = str(prop.get("game_id") or "")
         if not gid:
             continue
         if gid not in index_cache:
             index_cache[gid] = _load_published_index(gid, game_date, book)
         published = index_cache[gid]
-        if published is not None and not _prop_matches_published(prop, published):
+        if published is None:
+            continue
+        if not _prop_on_published_snapshot(prop, published):
             continue
         kept.append(prop)
     return kept
+
+
+def _prop_has_posted_odds(prop: dict[str, Any]) -> bool:
+    """True when the recommended side has a real sportsbook price."""
+    from app.odds.team_aliases import is_valid_american_odds
+
+    side = str(prop.get("recommended_side") or "").lower()
+    if side not in ("over", "under"):
+        return False
+    odds = prop.get("recommended_odds")
+    if odds is None:
+        odds = prop.get("over_odds") if side == "over" else prop.get("under_odds")
+    if odds is None:
+        return False
+    try:
+        return is_valid_american_odds(int(odds))
+    except (TypeError, ValueError):
+        return False
+
+
+def _prop_on_published_snapshot(
+    prop: dict[str, Any],
+    published: set[tuple[str, str, float, str]],
+) -> bool:
+    """True when the prop's line exists on the sportsbook feed with a real price."""
+    if not _prop_matches_published(prop, published):
+        return False
+    side = str(prop.get("recommended_side") or "").lower()
+    if side in ("over", "under"):
+        return _prop_has_posted_odds(prop)
+    from app.odds.team_aliases import is_valid_american_odds
+
+    player = str(prop.get("player") or "")
+    market = str(prop.get("market_type") or "")
+    line = prop.get("line")
+    if not player or not market or line is None:
+        return False
+    line_f = float(line)
+    for offered in ("over", "under"):
+        if (player, market, line_f, offered) not in published:
+            continue
+        odds = prop.get(f"{offered}_odds")
+        if odds is None:
+            continue
+        try:
+            if is_valid_american_odds(int(odds)):
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
+def _filter_payload_to_published(
+    payload: dict[str, Any],
+    published: set[tuple[str, str, float, str]] | None,
+    *,
+    markets_requested: str,
+) -> dict[str, Any]:
+    """Keep only props that exist on a verified sportsbook snapshot."""
+    if published is None:
+        out: dict[str, Any] = {
+            **payload,
+            "props": [],
+            "status": "stale",
+            "stale_cache": True,
+            "message": (
+                "Sportsbook lines expired or missing — refresh props for current prices."
+            ),
+        }
+        if "top_picks" in payload or "elite_picks" in payload:
+            out["top_picks"] = []
+            out["elite_picks"] = []
+            out["very_strong_picks"] = []
+            out["total_actionable"] = 0
+        return out
+    props: list[dict[str, Any]] = []
+    for prop in payload.get("props") or []:
+        if not _prop_on_published_snapshot(prop, published):
+            continue
+        props.append(prop)
+    props = _filter_prop_markets(props, markets_requested=markets_requested)
+    out = {**payload, "props": props}
+    if "top_picks" in payload or "elite_picks" in payload:
+        out.update(_game_pick_lists(props))
+    return out
 
 
 def _apply_published_line_filter(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1080,12 +1175,9 @@ def _apply_published_line_filter(payload: dict[str, Any]) -> dict[str, Any]:
     except ValueError:
         return payload
     published = _load_published_index(game_id, game_date, book)
-    props: list[dict[str, Any]] = []
-    for prop in payload.get("props") or []:
-        if published is not None and not _prop_matches_published(prop, published):
-            continue
-        props.append(prop)
-    return _trim_props_payload({**payload, "props": props}, markets_requested)
+    return _filter_payload_to_published(
+        payload, published, markets_requested=markets_requested
+    )
 
 
 def _parse_event_props(
@@ -1482,7 +1574,12 @@ def build_game_props(
                     source="raw_event_cache",
                     empty_payload=empty_payload,
                 )
-                payload = _apply_published_line_filter(payload)
+                published = _published_lines_index(
+                    raw["event"], book, markets_requested=fetch_markets
+                )
+                payload = _filter_payload_to_published(
+                    payload, published, markets_requested=fetch_markets
+                )
                 _write_json(cache_path, payload)
                 return payload
         refresh = True
@@ -1533,7 +1630,10 @@ def build_game_props(
         source=result.source or "the_odds_api_live",
         empty_payload=empty_payload,
     )
-    payload = _apply_published_line_filter(payload)
+    published = _published_lines_index(event, book, markets_requested=fetch_markets)
+    payload = _filter_payload_to_published(
+        payload, published, markets_requested=fetch_markets
+    )
     _write_json(cache_path, payload)
     return payload
 
@@ -2141,9 +2241,9 @@ def _aggregate_repo_game_props(
             continue
         if payload.get("date") and payload.get("date") != game_date.isoformat():
             continue
-        age = _cache_age_seconds(path)
-        if age is not None and age >= DEFAULT_CACHE_TTL_SECONDS:
-            payload = {**payload, "stale_cache": True}
+        payload = _apply_published_line_filter({**payload, "game_id": game_id, "bookmaker": book})
+        if not payload.get("props"):
+            continue
         seen.add(game_id)
         picks.extend(_collect_scored_props_from_payload(payload, game_id))
     picks.sort(key=prop_rank_key)
@@ -2473,6 +2573,9 @@ def build_daily_top_props(
         payload = _load_cached_game_props(gid, book, game_date=game_date)
         if not payload or not payload.get("props"):
             continue
+        payload = _apply_published_line_filter({**payload, "game_id": gid, "bookmaker": book})
+        if not payload.get("props"):
+            continue
         payload = _trim_props_payload(payload, slate_markets)
         games_scanned += 1
         picks.extend(_collect_scored_props_from_payload(payload, gid))
@@ -2552,8 +2655,11 @@ def _collect_scored_props_from_payload(
             "bookmaker": bookmaker,
             "bookmaker_label": book_label,
             "line_kind": prop.get("line_kind") or "main",
+            "lines_fetched_at": payload.get("fetched_at"),
         }
         for row in expand_prop_to_side_rows(base):
+            if not _prop_has_posted_odds(row):
+                continue
             if row.get("actionable") and row.get("recommended_odds") is not None:
                 row["slip_leg"] = prop_slip_leg(
                     row,
@@ -2654,14 +2760,17 @@ def search_daily_props(
 
     def _merge_payload(payload: dict[str, Any] | None, gid: str) -> None:
         nonlocal games_with_props
-        if not payload:
+        if not payload or not payload.get("props"):
             return
+        payload = _apply_published_line_filter(payload)
         payload = _trim_props_payload(payload, markets)
         props = payload.get("props") or []
         if not props:
             return
         games_with_props += 1
         for row in _collect_scored_props_from_payload(payload, gid):
+            if not _prop_has_posted_odds(row):
+                continue
             key = (
                 gid,
                 row.get("player"),
@@ -2680,8 +2789,9 @@ def search_daily_props(
             _merge_payload(payload, gid)
 
     pool = list(pool_by_key.values())
+    pool = _revalidate_pick_list(pool, book, game_date)
     if not pool:
-        pool = _aggregate_repo_game_props(game_date, book)
+        pool = _revalidate_pick_list(_aggregate_repo_game_props(game_date, book), book, game_date)
         for prop in pool:
             gid = str(prop.get("game_id") or "")
             if gid:
@@ -2696,8 +2806,11 @@ def search_daily_props(
         pool = list(pool_by_key.values())
     if not pool:
         picks, _, _ = _load_best_slate_props(game_date, book)
-        pool = picks or (
-            (base.get("very_strong_props") or []) + (base.get("top_props") or [])
+        pool = _revalidate_pick_list(
+            picks
+            or ((base.get("very_strong_props") or []) + (base.get("top_props") or [])),
+            book,
+            game_date,
         )
 
     filtered = [
@@ -2725,7 +2838,11 @@ def search_daily_props(
         )
 
     hint = base.get("hint")
-    if line_kind == "alternate" and not include_alternates:
+    if not pool and games_on_slate:
+        hint = (
+            "No verified sportsbook lines — click Refresh lines to pull current props."
+        )
+    elif line_kind == "alternate" and not include_alternates:
         hint = "Alternate lines require a refresh with alternates enabled."
     elif games_on_slate and games_with_props < games_on_slate:
         coverage = f"{games_with_props}/{games_on_slate} games"

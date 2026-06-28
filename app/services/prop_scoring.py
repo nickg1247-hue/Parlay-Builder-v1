@@ -331,8 +331,15 @@ def expand_prop_to_side_rows(prop: dict[str, Any]) -> list[dict[str, Any]]:
     if rows:
         return rows
 
-    # Legacy combined row without per-side scores — keep as-is.
-    return [refresh_prop_line_strength(dict(prop))]
+    # Legacy combined row — only if recommended side has a posted price.
+    legacy = refresh_prop_line_strength(dict(prop))
+    side = str(legacy.get("recommended_side") or "").lower()
+    odds = legacy.get("recommended_odds")
+    if odds is None and side in ("over", "under"):
+        odds = legacy.get("over_odds") if side == "over" else legacy.get("under_odds")
+    if odds is not None and is_valid_american_odds(int(odds)):
+        return [legacy]
+    return []
 
 
 def expand_scored_props_list(props: list[dict[str, Any]]) -> list[dict[str, Any]]:

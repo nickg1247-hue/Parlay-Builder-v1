@@ -1796,6 +1796,9 @@ function renderPropExplorerList(el, props, options = {}) {
       const offerTag = p.actionable
         ? `<span class="prop-offer-tag">Top offer</span>`
         : "";
+      const lineAge = p.lines_fetched_at
+        ? `<span class="prop-line-age" title="Sportsbook snapshot time">Line as of ${new Date(p.lines_fetched_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>`
+        : "";
       return `
       <article class="prop-explorer-card prop-card-clickable${propVeryStrongClass(p)}" data-prop-idx="${i}" role="button" tabindex="0">
         <div class="prop-explorer-head">
@@ -1808,7 +1811,7 @@ function renderPropExplorerList(el, props, options = {}) {
             <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
           </div>
         </div>
-        <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag}</p>
+        <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag} ${lineAge}</p>
         <p class="prop-explorer-tags">
           <span class="prop-line-tag">${lineKind}</span>
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}

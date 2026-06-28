@@ -500,7 +500,17 @@ def test_enrich_props_no_cap_keeps_all_markets():
         {"market_type": "batter_rbis", "player": f"R{i}", "line": 0.5, "over_odds": -110, "under_odds": -110}
         for i in range(15)
     ]
-    with patch("app.services.props_mlb.score_prop", side_effect=lambda **kw: {"actionable": False}):
+    with patch("app.services.props_mlb.score_prop", side_effect=lambda **kw: {
+        "actionable": False,
+        "prop_score_over": 72.0,
+        "prop_score_under": 48.0,
+        "model_probability_over": 0.55,
+        "model_probability_under": 0.45,
+        "debug": {
+            "over": {"prop_score": 72.0, "edge": 0.05, "projection_agrees": True},
+            "under": {"prop_score": 48.0, "edge": -0.05, "projection_agrees": False},
+        },
+    }):
         with patch("app.services.props_mlb.warm_scoring_cache"):
             enriched = props_mlb._enrich_props(
                 props,
@@ -511,7 +521,7 @@ def test_enrich_props_no_cap_keeps_all_markets():
                 home_team_id=None,
                 max_lines=None,
             )
-    assert len(enriched) == 115
+    assert len(enriched) == 230  # 115 lines × Over + Under side rows
     assert any(p["market_type"] == "batter_rbis" for p in enriched)
 
 
@@ -631,6 +641,47 @@ def test_passes_prop_search_filters_side():
     )
 
 
+def test_apply_published_filter_clears_when_no_fresh_raw(isolated_props, monkeypatch):
+    game_date = date(2026, 6, 27)
+    payload = {
+        "game_id": "999001",
+        "date": game_date.isoformat(),
+        "bookmaker": "draftkings",
+        "markets_requested": props_mlb.DEFAULT_MLB_PROP_MARKETS,
+        "props": [
+            {
+                "player": "Test Player",
+                "market_type": "batter_hits",
+                "line": 0.5,
+                "recommended_side": "over",
+                "recommended_odds": -110,
+                "over_odds": -110,
+                "under_odds": -110,
+            }
+        ],
+    }
+    monkeypatch.setattr(props_mlb, "_load_published_index", lambda *_: None)
+    out = props_mlb._apply_published_line_filter(payload)
+    assert out.get("props") == []
+    assert out.get("stale_cache") is True
+
+
+def test_revalidate_drops_when_no_fresh_raw(isolated_props, monkeypatch):
+    game_date = date(2026, 6, 27)
+    picks = [
+        {
+            "game_id": "999001",
+            "player": "Test Player",
+            "market_type": "batter_hits",
+            "line": 0.5,
+            "recommended_side": "over",
+            "recommended_odds": -110,
+        }
+    ]
+    monkeypatch.setattr(props_mlb, "_load_published_index", lambda *_: None)
+    assert props_mlb._revalidate_pick_list(picks, "draftkings", game_date) == []
+
+
 def test_prop_rank_key_prop_score_first():
     lower = {"prop_score": 80, "edge_pct": 5, "recommended_side": "over", "hit_rate_over_l10": 0.9}
     higher = {"prop_score": 90, "edge_pct": 3, "recommended_side": "over", "hit_rate_over_l10": 0.6}
@@ -746,6 +797,44 @@ def test_build_daily_top_props_uses_today_slate_without_scan(isolated_props):
     import json
     from datetime import date, datetime, timezone
 
+    now = datetime.now(timezone.utc).isoformat()
+    (isolated_props / "raw_events").mkdir(exist_ok=True)
+    (isolated_props / "raw_events" / "9.2026-06-17.json").write_text(
+        json.dumps(
+            {
+                "game_id": "9",
+                "date": "2026-06-17",
+                "fetched_at": now,
+                "event": {
+                    "bookmakers": [
+                        {
+                            "key": "draftkings",
+                            "markets": [
+                                {
+                                    "key": "batter_hits",
+                                    "outcomes": [
+                                        {
+                                            "name": "Over",
+                                            "description": "B",
+                                            "price": 100,
+                                            "point": 0.5,
+                                        },
+                                        {
+                                            "name": "Under",
+                                            "description": "B",
+                                            "price": -120,
+                                            "point": 0.5,
+                                        },
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
     (isolated_props / "slate_2026-06-17.draftkings.json").write_text(
         json.dumps(
             {
