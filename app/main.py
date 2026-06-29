@@ -832,7 +832,8 @@ async def mlb_game_insights(
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
     try:
-        insights = build_game_insights(
+        insights = await asyncio.to_thread(
+            build_game_insights,
             game_id,
             game_date=game_date,
             use_cache=use_cache,
@@ -852,7 +853,7 @@ async def mlb_game_props(
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
     include_all_markets: bool = Query(
-        True,
+        False,
         description="Fetch extended prop markets (RBIs, pitcher ER, etc.) for this game.",
     ),
     bookmaker: str | None = Query(
@@ -864,7 +865,8 @@ async def mlb_game_props(
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
     try:
-        payload = build_game_props(
+        payload = await asyncio.to_thread(
+            build_game_props,
             game_id,
             game_date=game_date,
             refresh=refresh,

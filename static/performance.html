@@ -30,6 +30,16 @@
       </header>
       <p><a href="/methodology">How we score picks →</a></p>
 
+      <h2 class="app-section-title">ML moneyline — forward CLV</h2>
+      <div id="perf-ml-clv" class="glance-card ntg-card perf-summary-card dash-panel">
+        <p>Loading ML CLV…</p>
+      </div>
+      <p class="text-muted" style="font-size:0.82rem;margin-bottom:1.25rem;">
+        Actionable +EV singles from the daily board. Afternoon:
+        <code>python scripts/backfill_forward_clv.py</code>
+      </p>
+
+      <h2 class="app-section-title">Player props tracker</h2>
       <div class="perf-toolbar ntg-card dash-panel">
         <label>
           <span class="perf-filter-label">Period</span>
@@ -60,7 +70,7 @@
           <div id="perf-buckets"></div>
         </section>
         <section class="ntg-card perf-panel dash-panel">
-          <h2 class="home-col-title">Closing line value</h2>
+          <h2 class="home-col-title">Prop CLV (closing line)</h2>
           <div id="perf-clv"></div>
         </section>
       </div>

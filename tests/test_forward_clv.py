@@ -158,7 +158,31 @@ def test_api_clv_summary():
     assert "edge_buckets" in body
 
 
-def test_build_daily_board_cache_hit_does_not_log(isolated_clv_log, monkeypatch, tmp_path):
+def test_summarize_clv_hit_rate(isolated_clv_log):
+    fc._append_row(
+        {
+            "pick_id": "2026-06-10:777001:home",
+            "board_date": "2026-06-10",
+            "side": "home",
+            "american_odds_at_pick": 105,
+            "pick_won": True,
+        }
+    )
+    fc._append_row(
+        {
+            "pick_id": "2026-06-10:777002:away",
+            "board_date": "2026-06-10",
+            "side": "away",
+            "american_odds_at_pick": 120,
+            "pick_won": False,
+        }
+    )
+    summary = fc.summarize_clv(days=30)
+    assert summary["picks_settled"] == 2
+    assert summary["hit_rate"] == 0.5
+
+
+def test_build_daily_board_cache_hit_logs_live_picks(isolated_clv_log, monkeypatch, tmp_path):
     cache_file = tmp_path / "daily_board.json"
     monkeypatch.setattr("app.services.daily_board.DAILY_BOARD_CACHE", cache_file)
     cached = {
@@ -170,11 +194,12 @@ def test_build_daily_board_cache_hit_does_not_log(isolated_clv_log, monkeypatch,
         "slate": [SAMPLE_SLATE_GAME],
     }
     cache_file.write_text(__import__("json").dumps(cached), encoding="utf-8")
-    with patch("app.services.daily_board.log_live_picks") as mock_log:
-        build_daily_board(
-            game_date=date(2026, 6, 10),
-            use_cache=False,
-            refresh=False,
-            skip_totals=True,
-        )
-        mock_log.assert_not_called()
+    with patch("app.services.daily_board.live_odds_enabled", return_value=True):
+        with patch("app.services.daily_board.log_live_picks") as mock_log:
+            build_daily_board(
+                game_date=date(2026, 6, 10),
+                use_cache=False,
+                refresh=False,
+                skip_totals=True,
+            )
+            mock_log.assert_called_once()

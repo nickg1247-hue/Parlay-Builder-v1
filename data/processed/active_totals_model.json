@@ -1,9 +1,8 @@
 {
   "track": "totals",
-  "run_id": "legacy",
-  "path": "data/processed/mlb_totals_model.joblib",
+  "run_id": "train_totals",
+  "path": "data/processed/models/train_totals_totals.joblib",
   "feature_set": "train_mlb_totals",
   "model_version": "v1_gbr_poisson",
-  "promoted_at": "2026-06-06T01:04:04.895589+00:00",
-  "source": "legacy_migration"
+  "promoted_at": "2026-06-29T04:51:27.176363+00:00"
 }

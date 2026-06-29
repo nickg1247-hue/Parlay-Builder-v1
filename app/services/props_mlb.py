@@ -57,8 +57,8 @@ def _raw_events_dir() -> Path:
 
 
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
-_max_prop_lines = os.getenv("MAX_PROP_LINES_TO_SCORE", "0").strip()
-MAX_PROP_LINES_TO_SCORE = int(_max_prop_lines) if _max_prop_lines else 0
+_max_prop_lines = os.getenv("MAX_PROP_LINES_TO_SCORE", "80").strip()
+MAX_PROP_LINES_TO_SCORE = int(_max_prop_lines) if _max_prop_lines else 80
 RUNS_PROP_MARKET = "batter_runs_scored"
 DEFAULT_PROP_BOOKMAKER = "consensus"
 DEFAULT_DISPLAY_BOOKMAKER = "draftkings"
@@ -1564,7 +1564,7 @@ def build_game_props(
     refresh: bool = False,
     markets: str | None = None,
     include_alternates: bool = False,
-    include_all_markets: bool = True,
+    include_all_markets: bool = False,
     bookmaker: str | None = None,
 ) -> dict[str, Any] | None:
     """Fetch + score player props for one MLB game."""

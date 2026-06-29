@@ -182,7 +182,9 @@ Odds merge (`attach_market_odds`) keys on **board date**, not odds `commence_tim
 | **Model pick** | `model_pick_team` / `model_pick_prob` | Who the model thinks wins (higher raw win %) |
 | **+EV singles** | `best_pick` / `top_singles` | Value vs market (≥ edge threshold); can disagree with model winner (`ml_picks_disagree`) |
 
-Forward CLV logging still records **+EV picks only** — not model winners without edge.
+Forward CLV logging still records **actionable +EV singles only** — not model leans without edge.
+
+**Actionable ML gate** (`app/models/ml_pick_gates.py`): edge ≥ `DEFAULT_MIN_EDGE` (8%) **and** model win prob ≥ **55%**, or prob ≥ **52%** with edge ≥ **10%**.
 
 ---
 
@@ -552,7 +554,7 @@ Use this as the default daily workflow during the season. Phase 6 stays blocked 
 | 9. Backtest panel | Optional, bottom of `/mlb` | **Load saved** or **Run backtest** (30-day rolling report) |
 | 10. Forward CLV backfill | Afternoon / near first pitch | `python scripts/backfill_forward_clv.py` — fills closing lines for morning +EV singles logged on **Run live** (`data/processed/forward_clv_log.jsonl`). Report: `GET /api/clv/summary?days=30` |
 
-**Forward CLV log rules:** Live board only (`the_odds_api`). Cached board returns (5 min TTL) do not log. Same `pick_id` is skipped unless American odds move ≥5 points (then a new row is appended; latest row wins).
+**Forward CLV log rules:** Live board only (`the_odds_api`). Each live cache serve (5 min TTL) re-logs actionable singles idempotently. Game page insights never rebuild the board. Same `pick_id` is skipped unless American odds move ≥5 points (then a new row is appended; latest row wins). Performance page: `/performance` ML CLV section + `GET /api/clv/summary?days=30`.
 
 **Live vs demo**
 

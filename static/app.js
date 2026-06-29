@@ -14,9 +14,10 @@ window.NTG_LOGO_SRC = NTG_LOGO_SRC;
   }
 })();
 
-async function fetchJSON(url) {
+async function fetchJSON(url, options = {}) {
   const cacheable =
     typeof url === "string" &&
+    !options.timeoutMs &&
     (url.startsWith("/api/news") ||
       url.startsWith("/api/status/refresh") ||
       url.startsWith("/api/props/markets") ||
@@ -26,7 +27,22 @@ async function fetchJSON(url) {
     const hit = window.__ntgFetchCache.get(url);
     if (Date.now() - hit.at < hit.ttl) return hit.data;
   }
-  const res = await fetch(url);
+  const timeoutMs = options.timeoutMs || 0;
+  const controller = timeoutMs > 0 ? new AbortController() : null;
+  const timer =
+    controller &&
+    window.setTimeout(() => controller.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(url, controller ? { signal: controller.signal } : undefined);
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw new Error("Request timed out — the server may be busy. Try again.");
+    }
+    throw err;
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
   if (!res.ok) {
     const text = await res.text();
     let msg = text || `HTTP ${res.status}`;

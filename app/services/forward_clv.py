@@ -326,10 +326,16 @@ def summarize_clv(days: int = 30) -> dict[str, Any]:
         st = r.get("close_status") or "pending"
         status_counts[st] = status_counts.get(st, 0) + 1
 
+    settled = [r for r in rows if r.get("pick_won") is not None]
+    hits = sum(1 for r in settled if r.get("pick_won"))
+    hit_rate = round(hits / len(settled), 4) if settled else None
+
     return {
         "days": days,
         "picks_logged": len(rows),
         "picks_with_close": len(with_close),
+        "picks_settled": len(settled),
+        "hit_rate": hit_rate,
         "pct_positive_clv": round(positive / len(clv_vals), 4) if clv_vals else None,
         "mean_clv_implied_prob": round(sum(clv_vals) / len(clv_vals), 6) if clv_vals else None,
         "edge_buckets": buckets,

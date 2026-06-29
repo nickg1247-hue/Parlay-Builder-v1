@@ -460,7 +460,7 @@
 
             <span class="dash-metric-num dash-metric-num-ev">${evCount}</span>
 
-            <span class="dash-metric-lbl">+EV Picks</span>
+            <span class="dash-metric-lbl">Actionable picks</span>
 
             <span class="dash-metric-sub">${edgeLabel}</span>
 

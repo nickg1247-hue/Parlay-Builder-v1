@@ -260,6 +260,14 @@ def run_training() -> dict:
     return results
 
 
+def is_mlb_totals_production_ready() -> bool:
+    """True when active totals manifest passed holdout log-loss gate."""
+    from app.models.production_pipeline import get_active_model_info
+
+    info = get_active_model_info("totals")
+    return bool(info and info.get("production_ready"))
+
+
 def load_totals_artifact() -> dict:
     from app.models.production_pipeline import load_active_artifact
 

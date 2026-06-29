@@ -21,15 +21,15 @@ model log_loss <= market implied log_loss
 
 No accuracy-percent gate.
 
-**Latest train (reference):**
+**Latest train (2026-06-29, + park_offense_interaction / starter_rest_diff):**
 
 | Model | MAE (runs) | O/U log loss |
 |-------|------------|--------------|
 | league_avg (~8.8) | 3.61 | 0.741 |
-| gbr_totals + Poisson | 3.61 | 0.746 |
+| gbr_totals + Poisson | 3.58 | 0.736 |
 | market_implied | — | **0.693** |
 
-Gate **not passed** on this run — artifact saved for dashboard/live scoring; moneyline production unchanged.
+Gate **not passed** on this run — artifact saved for dashboard/live scoring; moneyline production unchanged. Dashboard marks O/U as **experimental** (`totals_experimental`) and suppresses +EV totals badges until `production_ready: true` in the active model manifest.
 
 ## Features (`app/features/mlb_totals_pregame.py`)
 
@@ -38,6 +38,8 @@ Per team, using only games with `date < game_date`:
 - Season / L10 / L30 runs scored & allowed per game
 - Home/away split runs scored & allowed
 - `park_factor_runs`, starter ERA/WHIP/IP, rest days
+- `park_offense_interaction` (park × combined offense rate)
+- `starter_rest_diff` (home starter rest − away starter rest)
 - `h2h_avg_total_runs` (last 5 meetings, capped)
 
 ## Historical O/U lines

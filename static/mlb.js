@@ -131,7 +131,7 @@ function renderModelPicks(slate) {
   }
   for (const game of slate) {
     const tr = document.createElement("tr");
-    const hasEv = Boolean(game.ev_pick_team);
+    const hasEv = Boolean(game.plus_ev_single);
     if (game.ml_picks_disagree) tr.classList.add("pick-disagree-row");
     if (hasEv && !game.ml_picks_disagree) tr.classList.add("pick-agree-row");
     if (game.model_pick_action === "lean_only") tr.classList.add("lean-only-row");

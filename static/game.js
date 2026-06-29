@@ -244,10 +244,16 @@
 
       : "";
 
+    const pickBadge = model.plus_ev_single
+      ? `<span class="pick-edge-chip">Actionable</span>`
+      : `<span class="hero-chip hero-chip-muted">Model lean</span>`;
+
     const evLine =
-      model.ev_pick && model.ev_pick !== model.pick
-        ? `<p class="model-ev-line"><strong>+EV value:</strong> ${model.ev_pick}${model.ev_edge != null ? ` · +${(model.ev_edge * 100).toFixed(1)}%` : ""}</p>`
-        : "";
+      model.plus_ev_single && model.ev_pick
+        ? `<p class="model-ev-line"><strong>+EV pick:</strong> ${model.ev_pick || model.pick}${model.ev_edge != null ? ` · +${(model.ev_edge * 100).toFixed(1)}%` : model.edge != null ? ` · +${(model.edge * 100).toFixed(1)}%` : ""}</p>`
+        : model.ev_pick && model.ev_pick !== model.pick
+          ? `<p class="model-ev-line"><strong>+EV value:</strong> ${model.ev_pick}${model.ev_edge != null ? ` · +${(model.ev_edge * 100).toFixed(1)}%` : ""}</p>`
+          : "";
 
     const confHtml =
       typeof confidenceMeterHtml === "function"
@@ -258,7 +264,7 @@
 
       <div class="model-center-col ntg-card">
 
-        <p class="model-center-label">Model</p>
+        <p class="model-center-label">Model ${pickBadge}</p>
 
         <p class="model-pick">${model.pick}</p>
 
@@ -491,13 +497,13 @@
 
 
 
-  async function propsUrl(refresh) {
+  async function propsUrl(refresh, { extendedMarkets = false } = {}) {
     const build =
       typeof window.buildPropBookQueryWithRefresh === "function"
         ? window.buildPropBookQueryWithRefresh
         : async (extra) => window.buildPropBookQuery(extra);
     const params = await build({ refresh: !!refresh });
-    params.set("include_all_markets", "true");
+    if (extendedMarkets) params.set("include_all_markets", "true");
     if (dateParam) params.set("date", dateParam);
     const q = params.toString();
     return `/api/games/mlb/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`;
@@ -940,7 +946,7 @@
 
       errEl?.classList.add("hidden");
 
-      const res = await fetch(await propsUrl(refresh));
+      const res = await fetch(await propsUrl(refresh, { extendedMarkets: !!refresh }));
       if (res.status === 401) {
         loadingEl?.classList.add("hidden");
         bodyEl?.classList.remove("hidden");
@@ -1336,7 +1342,7 @@
 
   async function loadInsights(refresh) {
 
-    const data = await fetchJSON(insightsUrl(refresh));
+    const data = await fetchJSON(insightsUrl(refresh), { timeoutMs: 45000 });
 
     loading.classList.add("hidden");
 
@@ -1383,6 +1389,28 @@
 
 
 
+  function schedulePropsLoad(refresh = false) {
+    const run = () => {
+      const propBookSelect = document.getElementById("prop-book-select");
+      (async () => {
+        try {
+          if (typeof initPropBookSelect === "function") {
+            await initPropBookSelect(propBookSelect, () => loadProps(false));
+          }
+          await loadGameMarketTypes();
+          await loadProps(refresh);
+        } catch (_) {
+          /* loadProps handles its own error UI */
+        }
+      })();
+    };
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(run);
+    } else {
+      window.setTimeout(run, 0);
+    }
+  }
+
   loadTeamColors()
     .then(async () => {
       if (typeof window.ensureAppReady === "function") {
@@ -1390,25 +1418,42 @@
       }
       if (typeof initDesignSystem === "function") initDesignSystem();
       if (typeof initGameStickyNav === "function") initGameStickyNav();
-      const propBookSelect = document.getElementById("prop-book-select");
-      const insightsPromise = loadInsights(false).catch((e) => {
+      try {
+        await loadInsights(false);
+      } catch (e) {
         loading.classList.add("hidden");
-        content.classList.remove("hidden");
         if (errEl) {
           errEl.classList.remove("hidden");
-          errEl.textContent = e.message || "Could not load game insights";
+          const msg = e.message || "Could not load game insights";
+          if (typeof brandedErrorState === "function") {
+            brandedErrorState(errEl, {
+              title: "Game insights unavailable",
+              message: msg,
+              onRetry: () => {
+                errEl.classList.add("hidden");
+                loading.classList.remove("hidden");
+                loadInsights(false)
+                  .then(() => {
+                    content.classList.remove("hidden");
+                    schedulePropsLoad(false);
+                  })
+                  .catch((err) => {
+                    loading.classList.add("hidden");
+                    brandedErrorState(errEl, {
+                      title: "Game insights unavailable",
+                      message: err.message || msg,
+                      onRetry: () => window.location.reload(),
+                    });
+                  });
+              },
+            });
+          } else {
+            errEl.textContent = msg;
+          }
         }
-      });
-      const propsPromise = (async () => {
-        if (typeof initPropBookSelect === "function") {
-          await initPropBookSelect(propBookSelect, () => loadProps(false));
-        }
-        await loadGameMarketTypes();
-        await loadProps(false);
-      })().catch(() => {
-        /* loadProps handles its own error UI */
-      });
-      await Promise.all([insightsPromise, propsPromise]);
+        return;
+      }
+      schedulePropsLoad(false);
     })
     .catch((e) => {
 

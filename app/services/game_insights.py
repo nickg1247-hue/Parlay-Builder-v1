@@ -21,7 +21,7 @@ from app.odds.odds_repository import (
     last_fetch_meta,
 )
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
-from app.services.daily_board import DAILY_BOARD_CACHE, DISCLAIMER, build_daily_board
+from app.services.daily_board import DAILY_BOARD_CACHE, DISCLAIMER
 from app.services.mlb_game_explanations import build_mlb_game_explanation
 from app.services.mlb_team_recent import recent_games_for_matchup
 from app.services.schedule_mlb import get_mlb_game
@@ -42,36 +42,43 @@ def _load_board(
     use_cache: bool,
     refresh: bool,
 ) -> dict[str, Any]:
-    """Prefer on-disk morning cache; rebuild when refresh=true or missing."""
+    """Read daily board from disk only — never rebuild full slate from game page."""
     cached_board: dict[str, Any] | None = None
     if DAILY_BOARD_CACHE.exists():
         try:
             cached_board = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
-            if not refresh and cached_board.get("date") == game_date.isoformat():
-                return cached_board
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Could not read daily board cache: %s", exc)
             cached_board = None
 
-    try:
-        return build_daily_board(
-            game_date=game_date,
-            use_cache=use_cache,
-            refresh=refresh,
-            skip_totals=False,
-            min_edge=DEFAULT_MIN_EDGE,
-            max_parlays=DEFAULT_MAX_PARLAYS,
-        )
-    except Exception as exc:
-        logger.exception("Daily board rebuild failed for %s", game_date.isoformat())
-        if cached_board and cached_board.get("slate"):
-            warnings = list(cached_board.get("warnings") or [])
+    if cached_board and cached_board.get("slate") is not None:
+        warnings = list(cached_board.get("warnings") or [])
+        if cached_board.get("date") != game_date.isoformat():
             warnings.append(
-                "Live board rebuild failed — showing last saved slate. "
-                f"({type(exc).__name__})"
+                "Board cache is from "
+                f"{cached_board.get('date')} — run morning refresh for today's picks."
             )
-            return {**cached_board, "warnings": warnings}
-        raise
+            cached_board = {**cached_board, "warnings": warnings, "stale_board": True}
+        elif refresh:
+            warnings.append(
+                "Showing cached board — full rebuild runs on morning refresh only."
+            )
+            cached_board = {**cached_board, "warnings": warnings}
+        return cached_board
+
+    logger.warning("No daily board cache for game insights on %s", game_date.isoformat())
+    return {
+        "date": game_date.isoformat(),
+        "mode": "demo" if use_cache else "live",
+        "odds_source": "none",
+        "warnings": [
+            "No saved daily board — run morning refresh before opening game pages."
+        ],
+        "slate": [],
+        "top_singles": [],
+        "top_parlays": [],
+        "edge_threshold": DEFAULT_MIN_EDGE,
+    }
 
 
 def _slate_row(board: dict[str, Any], game_id: str) -> dict[str, Any] | None:

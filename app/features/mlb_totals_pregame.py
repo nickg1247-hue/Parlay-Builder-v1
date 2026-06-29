@@ -52,6 +52,8 @@ TOTALS_FEATURE_COLUMNS = [
     "home_rest_days",
     "away_rest_days",
     "h2h_avg_total_runs",
+    "park_offense_interaction",
+    "starter_rest_diff",
 ]
 
 
@@ -256,6 +258,12 @@ def _row_features(
     }
     feats.update(_team_runs_block(row.home_team, before, season, tracker, True))
     feats.update(_team_runs_block(row.away_team, before, season, tracker, False))
+    home_off = feats.get("home_season_runs_scored_pg", NEUTRAL_RUNS_PG)
+    park = feats.get("park_factor_runs", DEFAULT_PARK_FACTOR)
+    home_rest = feats.get("home_rest_days", rest_fill)
+    away_rest = feats.get("away_rest_days", rest_fill)
+    feats["park_offense_interaction"] = float(home_off) * float(park)
+    feats["starter_rest_diff"] = abs(float(home_rest) - float(away_rest))
     return feats
 
 

@@ -430,23 +430,47 @@ def test_build_game_insights_not_found(_mock_game):
 
 
 
-@patch("app.services.game_insights.build_daily_board")
+def test_load_board_cache_only_never_rebuilds(isolated_board):
+
+    isolated_board.write_text(json.dumps(SAMPLE_BOARD), encoding="utf-8")
+
+    board = gi._load_board(date(2025, 8, 15), use_cache=True, refresh=False)
+
+    assert board["slate"][0]["game_id"] == "777001"
+
+    assert not board.get("stale_board")
+
+
+
+def test_load_board_stale_date_adds_warning(isolated_board):
+
+    isolated_board.write_text(json.dumps(SAMPLE_BOARD), encoding="utf-8")
+
+    board = gi._load_board(date(2026, 6, 24), use_cache=True, refresh=False)
+
+    assert board.get("stale_board") is True
+
+    assert any("Board cache is from" in w for w in board.get("warnings", []))
+
+
+
+@patch("app.services.daily_board.build_daily_board")
 
 @patch("app.services.game_insights.get_mlb_game")
 
 @patch("app.services.game_insights._sportsbook_lines")
 
-def test_build_game_insights_refresh_passthrough(
+def test_build_game_insights_refresh_uses_cache_only(
 
     mock_lines, mock_game, mock_board, isolated_board
 
 ):
 
-    mock_game.return_value = {"game": SAMPLE_GAME}
+    isolated_board.write_text(json.dumps(SAMPLE_BOARD), encoding="utf-8")
 
-    mock_board.return_value = SAMPLE_BOARD
+    mock_game.return_value = {"game": SAMPLE_GAME, "date": "2025-08-15"}
 
-    mock_lines.return_value = {**SAMPLE_LINES, "source": "none", "away_ml": None, "home_ml": None}
+    mock_lines.return_value = SAMPLE_LINES
 
 
 
@@ -464,13 +488,7 @@ def test_build_game_insights_refresh_passthrough(
 
 
 
-    mock_board.assert_called_once()
-
-    call_kw = mock_board.call_args.kwargs
-
-    assert call_kw["refresh"] is True
-
-    assert call_kw["skip_totals"] is False
+    mock_board.assert_not_called()
 
 
 

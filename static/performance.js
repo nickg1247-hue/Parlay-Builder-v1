@@ -1,4 +1,5 @@
 async function bootPerformancePage() {
+  const mlClvEl = document.getElementById("perf-ml-clv");
   const summaryEl = document.getElementById("perf-summary");
   const bucketsEl = document.getElementById("perf-buckets");
   const clvEl = document.getElementById("perf-clv");
@@ -13,10 +14,12 @@ async function bootPerformancePage() {
     if (strength) qs.set("line_strength", strength);
 
     try {
-      const [summary, picksData] = await Promise.all([
+      const [mlClv, summary, picksData] = await Promise.all([
+        fetchJSON(`/api/clv/summary?days=${days}&sport=mlb`),
         fetchJSON(`/api/performance/summary?days=${days}`),
         fetchJSON(`/api/performance/picks?${qs}`),
       ]);
+      renderMlClv(mlClvEl, mlClv, days);
       renderSummary(summaryEl, summary, days);
       renderBuckets(bucketsEl, summary.prop_tracker);
       renderClv(clvEl, summary.clv);
@@ -24,9 +27,10 @@ async function bootPerformancePage() {
     } catch {
       brandedErrorState(summaryEl, {
         title: "Performance data unavailable",
-        message: "Could not load the prop tracker summary.",
+        message: "Could not load performance summaries.",
         onRetry: load,
       });
+      if (mlClvEl) mlClvEl.innerHTML = "<p class=\"text-muted\">ML CLV unavailable.</p>";
       if (bucketsEl) bucketsEl.innerHTML = "";
       if (clvEl) clvEl.innerHTML = "";
       if (picksEl) picksEl.innerHTML = "";
@@ -41,6 +45,40 @@ async function bootPerformancePage() {
 function fmtPct(v) {
   if (v == null || Number.isNaN(v)) return "—";
   return `${Math.round(v * 100)}%`;
+}
+
+function renderMlClv(el, clv, days) {
+  if (!el) return;
+  if (!clv || !clv.picks_logged) {
+    el.innerHTML = `<p class="text-muted">No actionable ML singles logged in the last ${days} days. Run the daily board live refresh.</p>`;
+    return;
+  }
+  const mean = clv.mean_clv_implied_prob != null ? `${(clv.mean_clv_implied_prob * 100).toFixed(2)} pts` : "—";
+  const pos = clv.pct_positive_clv != null ? fmtPct(clv.pct_positive_clv) : "—";
+  const hr = fmtPct(clv.hit_rate);
+  el.innerHTML = `
+    <div class="perf-stat-grid">
+      <div class="perf-stat">
+        <span class="perf-stat-value">${clv.picks_logged}</span>
+        <span class="perf-stat-label">ML picks logged (${days}d)</span>
+      </div>
+      <div class="perf-stat">
+        <span class="perf-stat-value">${clv.picks_with_close ?? 0}</span>
+        <span class="perf-stat-label">With closing line</span>
+      </div>
+      <div class="perf-stat">
+        <span class="perf-stat-value">${mean}</span>
+        <span class="perf-stat-label">Mean CLV (implied)</span>
+      </div>
+      <div class="perf-stat">
+        <span class="perf-stat-value">${pos}</span>
+        <span class="perf-stat-label">Positive CLV rate</span>
+      </div>
+      <div class="perf-stat">
+        <span class="perf-stat-value">${hr}</span>
+        <span class="perf-stat-label">Win rate (settled)</span>
+      </div>
+    </div>`;
 }
 
 function renderSummary(el, summary, days) {
@@ -95,7 +133,7 @@ function renderBuckets(el, pt) {
 function renderClv(el, clv) {
   if (!el) return;
   if (!clv || !clv.picks_with_close) {
-    el.innerHTML = `<p class="text-muted">Closing-line value data builds as picks settle and closing odds are captured.</p>`;
+    el.innerHTML = `<p class="text-muted">Prop CLV builds as picks settle and closing odds are captured.</p>`;
     return;
   }
   const mean = clv.mean_clv_implied_prob != null ? `${(clv.mean_clv_implied_prob * 100).toFixed(2)} pts` : "—";
@@ -148,16 +186,13 @@ function renderPicks(el, picks) {
         <header class="perf-pick-head">
           <div>
             <h3 class="perf-pick-player">${p.player}</h3>
-            <p class="perf-pick-meta">${p.board_date} · ${p.market_label || p.market_type}</p>
+            <p class="perf-pick-meta">${p.market_label || p.market_type} · ${side} ${p.line} · ${edge}</p>
           </div>
           <span class="perf-pick-result ${resultCls}">${result}</span>
         </header>
-        <p class="perf-pick-line">${side} ${p.line} · ${edge} ${strength}</p>
         ${why}
-        <div class="perf-pick-actions">${gameLink}</div>
+        <footer class="perf-pick-foot">${strength} ${gameLink}</footer>
       </article>`;
     })
     .join("");
 }
-
-window.bootPerformancePage = bootPerformancePage;

@@ -28,8 +28,10 @@ from app.models.calibration import (
 )
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.mlb_baseline import load_games
-from app.models.production_pipeline import get_active_model_info
 from app.models.mlb_ensemble import model_pick_from_prob
+from app.models.ml_pick_gates import is_actionable_ml_pick
+from app.models.production_pipeline import get_active_model_info
+from app.models.mlb_totals import is_mlb_totals_production_ready
 from app.services.mlb_data_freshness import check_mlb_prediction_freshness
 from app.services.forward_clv import log_live_picks
 from app.parlay.ev_ranker import (
@@ -261,7 +263,8 @@ def _slate_rows(
                     ("away", row.away_team, edge_away, int(row.away_ml)),
                 ]
                 side, team, edge, am = max(options, key=lambda x: x[2])
-                if edge >= min_edge:
+                side_prob = model_home if side == "home" else model_away
+                if is_actionable_ml_pick(side_prob, edge, min_edge=min_edge):
                     plus_ev = True
                     best_pick = {
                         "side": side,
@@ -348,7 +351,12 @@ def _slate_rows(
                 "market_prob_over": totals.get("market_prob_over"),
                 "total_edge": total_edge,
                 "totals_confidence": totals_confidence,
-                "plus_ev_total": totals.get("plus_ev_total", False),
+                "plus_ev_total": (
+                    totals.get("plus_ev_total", False)
+                    if is_mlb_totals_production_ready()
+                    else False
+                ),
+                "totals_experimental": not is_mlb_totals_production_ready(),
                 "model_cover_side": model_cover_side,
                 "model_cover_team": model_cover_team,
                 **_pitcher_fields(row),
@@ -612,6 +620,16 @@ def build_daily_board(
         game_date, cache_key, refresh, use_cache, min_edge, max_parlays
     )
     if cached_board is not None:
+        if (
+            not use_cache
+            and cached_board.get("mode") == "live"
+            and cached_board.get("odds_source") == "the_odds_api"
+            and live_odds_enabled()
+        ):
+            try:
+                log_live_picks(cached_board)
+            except Exception as exc:
+                logger.warning("Forward CLV log skipped on cache serve: %s", exc)
         return cached_board
 
     force_odds = refresh if odds_force_refresh is None else odds_force_refresh
@@ -760,7 +778,11 @@ def build_daily_board(
         "top_parlays": top_parlays,
         "top_totals": top_totals,
         "slate_filter_meta": slate_filter_counts,
-        "totals_disclaimer": "Totals O/U model is experimental and separate from moneyline v3.",
+        "totals_disclaimer": (
+            "Totals O/U model is experimental and separate from moneyline v3."
+            if not is_mlb_totals_production_ready()
+            else "Totals O/U model passed holdout log-loss gate vs market."
+        ),
         "spread_disclaimer": SPREAD_DISCLAIMER,
         "display_note": (
             "Win % uses 50% model + 50% market when odds available; "
