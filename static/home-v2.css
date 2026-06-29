@@ -1,34 +1,10 @@
-/* NTG Sports — Dashboard home (production mockup) */
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+/* NTG Sports — Dashboard home + unified site shell */
 
 :root {
-  --bg: #030712;
-  --panel: #07111f;
-  --panel-2: #0b1628;
-  --border: rgba(56, 189, 248, 0.28);
-  --cyan: #22d3ee;
-  --blue: #2563eb;
-  --gold: #facc15;
-  --green: #4ade80;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-
-  --dash-bg: var(--bg);
-  --dash-panel: var(--panel);
-  --dash-panel-2: var(--panel-2);
-  --dash-border: rgba(56, 189, 248, 0.14);
-  --dash-blue: var(--blue);
-  --dash-blue-bright: #3b82f6;
-  --dash-cyan: var(--cyan);
-  --dash-green: var(--green);
-  --dash-gold: var(--gold);
-  --dash-gold-dim: rgba(250, 204, 21, 0.15);
-  --dash-text: var(--text);
-  --dash-muted: var(--muted);
-  --dash-hero-stadium: url("/static/assets/hero-stadium-field-level-50.png?v=20260712");
+  /* Shell tokens live in brand.css */
 }
 
+body.ntg-shell,
 body.home-dashboard {
   background:
     radial-gradient(ellipse 90% 60% at 50% -10%, rgba(37, 99, 235, 0.18), transparent 55%),
@@ -40,20 +16,26 @@ body.home-dashboard {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.ntg-shell .app-shell,
 body.home-dashboard .app-shell {
   width: 100%;
   max-width: none;
   margin: 0;
 }
 
+body.ntg-shell .dash-nav-row .app-brand--lockup,
 body.home-dashboard .dash-nav-row .app-brand--lockup {
   margin-right: 0.25rem;
 }
 
+body.ntg-shell .app-brand-logo--dash,
 body.home-dashboard .app-brand-logo--dash {
   display: block;
 }
 
+body.ntg-shell h1,
+body.ntg-shell h2,
+body.ntg-shell .dash-btn,
 body.home-dashboard h1,
 body.home-dashboard h2,
 body.home-dashboard .dash-btn {
@@ -61,7 +43,9 @@ body.home-dashboard .dash-btn {
 }
 
 body.home-dashboard #live-ticker,
-body.home-dashboard #headline-ticker {
+body.home-dashboard #headline-ticker,
+body.ntg-shell:not(.ntg-ticker-visible) #live-ticker,
+body.ntg-shell:not(.ntg-ticker-visible) #headline-ticker {
   display: none !important;
 }
 
@@ -1414,21 +1398,26 @@ body.home-dashboard #headline-ticker {
   text-align: center;
 }
 
+body.ntg-shell,
+body.ntg-shell *,
 body.home-dashboard,
 body.home-dashboard * {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.22) transparent;
 }
 
+body.ntg-shell *::-webkit-scrollbar,
 body.home-dashboard *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
+body.ntg-shell *::-webkit-scrollbar-track,
 body.home-dashboard *::-webkit-scrollbar-track {
   background: transparent;
 }
 
+body.ntg-shell *::-webkit-scrollbar-thumb,
 body.home-dashboard *::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.2);
   border-radius: 999px;
@@ -1436,12 +1425,97 @@ body.home-dashboard *::-webkit-scrollbar-thumb {
   background-clip: padding-box;
 }
 
+body.ntg-shell *::-webkit-scrollbar-thumb:hover,
 body.home-dashboard *::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.32);
 }
 
 .hidden {
   display: none !important;
+}
+
+/* --- Inner pages (compact header, dashboard panels) --- */
+
+body.ntg-shell:not(.home-dashboard) .app-main.dash-main {
+  padding: 0 clamp(1rem, 3vw, 2.75rem) 2rem;
+  max-width: none;
+}
+
+.dash-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 1.15rem 0 0.85rem;
+  border-bottom: 1px solid var(--dash-border);
+  margin-bottom: 1rem;
+}
+
+.dash-page-header h1 {
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.dash-page-kicker,
+.dash-page-header .section-sub {
+  font-size: 0.82rem;
+  color: var(--dash-muted);
+  margin: 0;
+}
+
+body.ntg-shell .game-list .game-card.ntg-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body.ntg-shell .props-search-filters,
+body.ntg-shell .parlay-builder-panel,
+body.ntg-shell .props-tracker-panel,
+body.ntg-shell .perf-toolbar.ntg-card,
+body.ntg-shell .perf-summary-card,
+body.ntg-shell .perf-panel.ntg-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body.ntg-shell .props-search-filters,
+body.ntg-shell .parlay-builder-form {
+  padding: 1rem;
+}
+
+body.ntg-shell .parlay-builder-panel .parlay-builder-form,
+body.ntg-shell .parlay-builder-panel .parlay-builder-meta,
+body.ntg-shell .parlay-builder-panel .parlay-builder-results,
+body.ntg-shell .props-tracker-panel .props-tracker-stats {
+  padding: 0 1rem 1rem;
+}
+
+body.ntg-shell .home-props-fill-btn,
+body.ntg-shell .props-search-filters button[type="submit"] {
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+body.ntg-shell .home-props-fill-btn.dash-btn-primary,
+body.ntg-shell .props-search-filters button[type="submit"] {
+  background: linear-gradient(135deg, var(--dash-blue), var(--dash-cyan));
+  color: #fff;
+  border: none;
+}
+
+body.ntg-shell .props-explorer-list .props-explorer-row {
+  border-color: var(--dash-border);
 }
 
 /* --- Responsive --- */

@@ -3,40 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260712" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>MLB Player Props — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260712">
-  <link rel="stylesheet" href="/static/app.css?v=20260720">
-  <link rel="stylesheet" href="/static/brand.css?v=20260712">
-  <link rel="stylesheet" href="/static/design.css?v=20260712">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260712c">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body class="slate-mlb home-v2">
+<body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
       <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
-
-    <main class="app-main">
-      <div class="props-explorer-head">
+    <main class="app-main dash-main">
+      <header class="dash-page-header props-explorer-head">
         <div>
           <h1>MLB player props</h1>
-          <p class="section-sub">Filter by sportsbook, market, odds, and line type. All props ranked by model score — highest to lowest.</p>
+          <p class="section-sub dash-page-kicker">Filter by sportsbook, market, odds, and line type. Ranked by L5 / L10 / season average — best first.</p>
         </div>
-        <button type="button" id="props-search-refresh" class="home-props-fill-btn">Refresh lines</button>
-      </div>
+        <button type="button" id="props-search-refresh" class="home-props-fill-btn dash-btn dash-btn-primary">Refresh lines</button>
+      </header>
 
-      <section id="parlay-builder-panel" class="parlay-builder-panel" aria-label="Auto parlay builder">
-        <div class="parlay-builder-head">
+      <section id="parlay-builder-panel" class="parlay-builder-panel dash-panel" aria-label="Auto parlay builder">
+        <div class="dash-panel-head parlay-builder-head">
           <div>
-            <p class="app-section-title">Parlay builder</p>
-            <p class="parlay-builder-note">Auto-build a multi-leg parlay from today&apos;s best bettable props. One leg per player.</p>
+            <h2>Parlay builder</h2>
+            <p class="dash-panel-tag parlay-builder-note">Auto-build a multi-leg parlay from today&apos;s best bettable props. One leg per player.</p>
           </div>
         </div>
         <form id="parlay-builder-form" class="parlay-builder-form">
@@ -54,7 +52,7 @@
         <div id="parlay-builder-results" class="parlay-builder-results"></div>
       </section>
 
-      <form id="props-search-form" class="props-search-filters" aria-label="Prop search filters">
+      <form id="props-search-form" class="props-search-filters dash-panel" aria-label="Prop search filters">
         <label class="props-filter-field">
           <span>Sportsbook</span>
           <select id="filter-book" class="home-props-select"></select>
@@ -101,22 +99,24 @@
           <input id="filter-alternates" type="checkbox" />
           Include alternate lines (uses extra API credits on refresh)
         </label>
-        <button type="submit" class="home-props-fill-btn">Apply filters</button>
+        <button type="submit" class="home-props-fill-btn dash-btn dash-btn-primary">Apply filters</button>
       </form>
 
       <p id="props-search-meta" class="props-search-meta">Loading props…</p>
 
-      <section id="props-tracker-panel" class="props-tracker-panel" aria-label="Prop line accuracy">
-        <p class="app-section-title">Line accuracy tracker</p>
-        <p class="props-tracker-note">Tracks strong and moderate props we offer, then grades them after games finish.</p>
+      <section id="props-tracker-panel" class="props-tracker-panel dash-panel" aria-label="Prop line accuracy">
+        <div class="dash-panel-head">
+          <h2>Line accuracy tracker</h2>
+        </div>
+        <p class="props-tracker-note dash-panel-tag">Tracks strong and moderate props we offer, then grades them after games finish.</p>
         <div id="props-tracker-stats" class="props-tracker-stats">Loading tracker…</div>
       </section>
 
       <div id="props-search-results" class="props-explorer-list"></div>
     </main>
   </div>
-  <script src="/static/player_prop_modal.js?v=20260717"></script>
-  <script src="/static/app.js?v=20260720"></script>
-  <script src="/static/mlb_props.js?v=20260719"></script>
+  <script src="/static/player_prop_modal.js?v=20260725"></script>
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/mlb_props.js?v=20260725"></script>
 </body>
 </html>

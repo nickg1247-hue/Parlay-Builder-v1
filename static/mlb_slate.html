@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>MLB — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body class="slate-mlb">
+<body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
       <div class="sport-pills" aria-label="Sports"></div>
     </header>
@@ -20,23 +24,21 @@
     <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
     <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
 
-    <main class="app-main">
-      <div class="slate-header">
-        <h1>MLB</h1>
-        <span class="slate-date" id="slate-date"></span>
-      </div>
-      <p class="refresh-line" id="refresh-line"></p>
+    <main class="app-main dash-main">
+      <header class="dash-page-header">
+        <h1>MLB slate</h1>
+        <span class="dash-page-kicker" id="slate-date"></span>
+      </header>
+      <p class="refresh-line dash-sync-text" id="refresh-line"></p>
 
       <div id="watched-section" class="hidden"></div>
-
-      <hr class="app-section-divider" aria-hidden="true">
 
       <div id="slate-loading" class="hidden"></div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260711"></script>
+  <script src="/static/app.js?v=20260725"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -47,6 +49,7 @@
       const watchedEl = document.getElementById("watched-section");
       const dateParam = qs("date");
 
+      initSiteChrome();
       initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
       initHeadlineTicker("headline-ticker");
       await loadTeamColors();

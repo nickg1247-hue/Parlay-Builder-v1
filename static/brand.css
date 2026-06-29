@@ -1,10 +1,38 @@
-/* NTG Sports — brand mark, nav lockup, opening intro */
+/* NTG Sports — brand mark, nav lockup, shell tokens, opening intro */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
   --ntg-brand-blue: #2563eb;
   --ntg-brand-cyan: #38bdf8;
   --ntg-brand-navy: #020510;
   --ntg-brand-glow: rgba(37, 99, 235, 0.45);
+
+  /* Shared shell palette (dashboard + inner pages) */
+  --bg: #030712;
+  --panel: #07111f;
+  --panel-2: #0b1628;
+  --border: rgba(56, 189, 248, 0.28);
+  --cyan: #22d3ee;
+  --blue: #2563eb;
+  --gold: #facc15;
+  --green: #4ade80;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+
+  --dash-bg: var(--bg);
+  --dash-panel: var(--panel);
+  --dash-panel-2: var(--panel-2);
+  --dash-border: rgba(56, 189, 248, 0.14);
+  --dash-blue: var(--blue);
+  --dash-blue-bright: #3b82f6;
+  --dash-cyan: var(--cyan);
+  --dash-green: var(--green);
+  --dash-gold: var(--gold);
+  --dash-gold-dim: rgba(250, 204, 21, 0.15);
+  --dash-text: var(--text);
+  --dash-muted: var(--muted);
+  --dash-hero-stadium: url("/static/assets/hero-stadium-field-level-50.png?v=20260712");
 }
 
 /* --- Nav / header display logo --- */

@@ -3,25 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260703" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Terms of Service — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260703">
-  <link rel="stylesheet" href="/static/app.css?v=20260703">
-  <link rel="stylesheet" href="/static/design.css?v=20260703">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills"></div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <main class="app-main page legal-page">
-      <h1>Terms of Service</h1>
-      <p class="text-muted">Last updated: June 20, 2026</p>
+    <main class="app-main dash-main page legal-page">
+      <header class="dash-page-header">
+        <h1>Terms of Service</h1>
+        <p class="text-muted dash-page-kicker">Last updated: June 20, 2026</p>
+      </header>
 
       <section class="ntg-card legal-section">
         <h2>Agreement</h2>
@@ -88,7 +92,7 @@
       <p><a href="/privacy">Privacy Policy →</a></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260703"></script>
+  <script src="/static/app.js?v=20260725"></script>
   <script>loadPublicFeatures().then(() => initSiteChrome());</script>
 </body>
 </html>

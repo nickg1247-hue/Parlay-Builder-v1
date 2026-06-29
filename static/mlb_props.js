@@ -253,7 +253,6 @@
       initPropSlipUi();
     }
     initSiteChrome();
-    initLiveTicker("live-ticker", { sport: "mlb" });
     await initPropBookSelect(bookEl);
 
     try {

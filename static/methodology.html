@@ -3,25 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260701" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Methodology — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260701">
-  <link rel="stylesheet" href="/static/app.css?v=20260701">
-  <link rel="stylesheet" href="/static/design.css?v=20260701">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills"></div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <main class="app-main page">
-      <h1>Methodology</h1>
-      <p class="text-muted">Plain-English overview of how NTG Sports models work — and what they do not do.</p>
+    <main class="app-main dash-main page">
+      <header class="dash-page-header">
+        <h1>Methodology</h1>
+        <p class="text-muted dash-page-kicker">Plain-English overview of how NTG Sports models work — and what they do not do.</p>
+      </header>
 
       <section class="ntg-card" style="padding:1rem;margin:1.25rem 0;">
         <h2>What the models use</h2>
@@ -61,7 +65,7 @@
       </section>
     </main>
   </div>
-  <script src="/static/app.js?v=20260701"></script>
+  <script src="/static/app.js?v=20260725"></script>
   <script>loadPublicFeatures().then(() => initSiteChrome());</script>
 </body>
 </html>

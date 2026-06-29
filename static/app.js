@@ -1,11 +1,11 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260719";
+const NTG_ASSET_V = "20260725";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
 (function ensureChromeStylesEarly() {
-  for (const file of ["brand.css", "design.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css"]) {
     if (document.querySelector(`link[href*="${file}"]`)) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -175,7 +175,7 @@ function formatRefreshStrip(status) {
 
 function ensureSiteStyles() {
   const v = NTG_ASSET_V;
-  for (const file of ["brand.css", "design.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css"]) {
     if (document.querySelector(`link[href*="${file}"]`)) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -191,8 +191,27 @@ function ensureSiteStyles() {
   }
 }
 
+function isNtgShellPage() {
+  return (
+    document.body.classList.contains("ntg-shell") ||
+    document.body.classList.contains("home-dashboard")
+  );
+}
+
+function ntgShowLiveTicker() {
+  const path = window.location.pathname || "/";
+  return path === "/mlb" || path.startsWith("/mlb/game/");
+}
+
+function applyShellBodyClasses() {
+  if (document.body.classList.contains("home-dashboard")) {
+    document.body.classList.add("ntg-shell", "home-v2");
+  }
+  document.body.classList.toggle("ntg-ticker-visible", ntgShowLiveTicker());
+}
+
 function ntgBrandLockupHtml() {
-  const dash = document.body.classList.contains("home-dashboard");
+  const dash = isNtgShellPage();
   const src = window.NTG_LOGO_SRC || `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
   if (dash) {
     return `<img class="app-brand-logo app-brand-logo--dash" src="${src}" alt="NTG Sports" width="56" height="56" />`;
@@ -961,6 +980,7 @@ function initHeadlineTicker(elementId) {
 }
 
 function initLiveTicker(elementId, options = {}) {
+  if (!ntgShowLiveTicker()) return null;
   const el = document.getElementById(elementId);
   if (!el) return null;
   el.classList.remove("ticker-placeholder");
@@ -2658,12 +2678,16 @@ function mainNavIsActive(href, path) {
   return path === href || path.startsWith(`${href}/`);
 }
 
-function renderHomeDashboardNav(container, path) {
+function renderDashboardPrimaryNav(container, path) {
   const specs = [
     { href: "/", label: "Dashboard" },
-    { href: "/mlb/props", label: "Top Props" },
-    { href: "/performance", label: "Model Hub" },
-    { href: "/sandbox", label: "Tools" },
+    {
+      href: "/mlb",
+      label: "MLB",
+      isActive: (p) => p === "/mlb" || p.startsWith("/mlb/game/"),
+    },
+    { href: "/mlb/props", label: "Props" },
+    { href: "/performance", label: "Performance" },
   ];
   container.replaceChildren();
   container.setAttribute("aria-label", "Primary");
@@ -2672,12 +2696,21 @@ function renderHomeDashboardNav(container, path) {
     link.className = "main-nav-link";
     link.href = spec.href;
     link.textContent = spec.label;
-    if (mainNavIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
+    const active = spec.isActive ? spec.isActive(path) : mainNavIsActive(spec.href, path);
+    if (active) link.classList.add("main-nav-link-active");
     container.appendChild(link);
   });
 }
 
+function renderHomeDashboardNav(container, path) {
+  renderDashboardPrimaryNav(container, path);
+}
+
 function renderMainNav(container, path) {
+  if (isNtgShellPage()) {
+    renderDashboardPrimaryNav(container, path);
+    return;
+  }
   const specs = [
     { href: "/", label: "Slate" },
     { href: "/mlb/props", label: "Props" },
@@ -2830,7 +2863,7 @@ function renderSiteFooter() {
 
 async function initSiteRefreshBar(bar) {
   if (!bar) return;
-  const useDashboardStrip = document.body.classList.contains("home-dashboard");
+  const useDashboardStrip = isNtgShellPage();
   const progressFill = document.getElementById("dash-progress-fill");
   async function apply(status) {
     bar.textContent = useDashboardStrip
@@ -2859,11 +2892,99 @@ async function initSiteRefreshBar(bar) {
   window.setInterval(tick, 60000);
 }
 
+function renderDashboardTopbar(topbar, path) {
+  topbar.classList.add("dash-topbar");
+
+  const navRow = topbar.querySelector(".app-nav-row");
+  if (!navRow) return;
+  navRow.classList.add("dash-nav-row");
+
+  let utilityNav = navRow.querySelector(".app-nav-links");
+  if (!utilityNav) {
+    utilityNav = document.createElement("nav");
+    utilityNav.className = "app-nav-links";
+    navRow.appendChild(utilityNav);
+  }
+  utilityNav.classList.add("dash-utility-nav");
+  initUtilityNav(utilityNav, path);
+
+  let primary = topbar.querySelector(".app-nav-primary");
+  if (!primary) {
+    primary = document.createElement("nav");
+    primary.className = "app-nav-primary dash-primary-nav";
+    primary.setAttribute("aria-label", "Primary");
+    const brand = navRow.querySelector(".app-brand");
+    if (brand) brand.insertAdjacentElement("afterend", primary);
+    else navRow.insertBefore(primary, utilityNav);
+  } else {
+    primary.classList.add("dash-primary-nav");
+  }
+  renderDashboardPrimaryNav(primary, path);
+
+  let subnav = topbar.querySelector(".dash-subnav");
+  if (!subnav) {
+    subnav = document.createElement("div");
+    subnav.className = "dash-subnav";
+    topbar.appendChild(subnav);
+  }
+  let pills = subnav.querySelector(".sport-pills") || topbar.querySelector(".sport-pills");
+  if (!pills) {
+    pills = document.createElement("div");
+    pills.className = "sport-pills dash-sport-pills";
+    pills.setAttribute("aria-label", "Sports");
+    subnav.appendChild(pills);
+  } else {
+    pills.classList.add("dash-sport-pills");
+    if (pills.parentElement !== subnav) subnav.appendChild(pills);
+  }
+  renderSportPills(pills, path);
+
+  let syncWrap = topbar.querySelector(".dash-sync-wrap");
+  if (!syncWrap) {
+    syncWrap = document.createElement("div");
+    syncWrap.className = "dash-sync-wrap";
+    topbar.appendChild(syncWrap);
+  }
+  let refreshBar =
+    syncWrap.querySelector("#site-refresh-bar") ||
+    syncWrap.querySelector(".site-refresh-bar") ||
+    topbar.querySelector("#site-refresh-bar") ||
+    topbar.querySelector(".site-refresh-bar");
+  if (!refreshBar) {
+    refreshBar = document.createElement("div");
+    refreshBar.id = "site-refresh-bar";
+    refreshBar.className = "site-refresh-bar dash-sync-text";
+    refreshBar.setAttribute("aria-live", "polite");
+    refreshBar.textContent = "Checking sync…";
+  } else {
+    refreshBar.classList.add("dash-sync-text");
+    if (refreshBar.parentElement !== syncWrap) syncWrap.prepend(refreshBar);
+  }
+  if (!syncWrap.querySelector(".dash-progress")) {
+    const progress = document.createElement("div");
+    progress.className = "dash-progress";
+    progress.setAttribute("aria-hidden", "true");
+    progress.innerHTML = '<div id="dash-progress-fill" class="dash-progress-fill"></div>';
+    syncWrap.appendChild(progress);
+  }
+  initSiteRefreshBar(refreshBar);
+
+  topbar.querySelectorAll(".app-topbar-row--sub").forEach((row) => row.remove());
+}
+
 function initSiteChrome() {
+  applyShellBodyClasses();
   ensureSiteStyles();
   upgradeBrandLinks();
   const path = window.location.pathname || "/";
+  const shell = isNtgShellPage();
+
   document.querySelectorAll(".app-topbar").forEach((topbar) => {
+    if (shell) {
+      renderDashboardTopbar(topbar, path);
+      return;
+    }
+
     const navRow = topbar.querySelector(".app-nav-row");
     if (!navRow) return;
 
@@ -2889,15 +3010,6 @@ function initSiteChrome() {
     } else {
       navRow.insertBefore(primary, nav);
     }
-    if (document.body.classList.contains("home-dashboard")) {
-      renderHomeDashboardNav(primary, path);
-      const pills = topbar.querySelector(".sport-pills");
-      if (pills) renderSportPills(pills, path);
-      const refreshBar = topbar.querySelector("#site-refresh-bar") || topbar.querySelector(".site-refresh-bar");
-      if (refreshBar) initSiteRefreshBar(refreshBar);
-      return;
-    }
-
     renderMainNav(primary, path);
 
     let subRow = topbar.querySelector(".app-topbar-row--sub");
@@ -2929,9 +3041,9 @@ function initSiteChrome() {
     initSiteRefreshBar(refreshBar);
   });
 
-  document.querySelectorAll(".app-shell").forEach((shell) => {
-    if (shell.querySelector(".site-footer")) return;
-    shell.insertAdjacentHTML("beforeend", renderSiteFooter());
+  document.querySelectorAll(".app-shell").forEach((shellEl) => {
+    if (shellEl.querySelector(".site-footer")) return;
+    shellEl.insertAdjacentHTML("beforeend", renderSiteFooter());
   });
 }
 

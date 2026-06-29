@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260622" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Game — NTG Sports</title>
-  <meta name="pb-build" content="2026-06-22-brand-v1">
-  <link rel="stylesheet" href="/static/style.css?v=20260622">
-  <link rel="stylesheet" href="/static/app.css?v=20260622">
-  <link rel="stylesheet" href="/static/brand.css?v=20260622">
-  <link rel="stylesheet" href="/static/design.css?v=20260701">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body class="game-page-bg" data-sport="mlb">
+<body class="ntg-shell home-v2 game-page-bg" data-sport="mlb">
   <div class="game-page-wash" aria-hidden="true"></div>
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
       <div class="sport-pills" aria-label="Sports"></div>
     </header>
@@ -25,7 +25,7 @@
     <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
     <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
 
-    <main class="app-main">
+    <main class="app-main dash-main">
       <div id="game-loading" class="empty-state">Loading game…</div>
       <div id="game-error" class="error-state hidden"></div>
 
@@ -40,8 +40,8 @@
           <a href="#props-section">Props</a>
         </nav>
 
-        <section class="detail-section" id="section-lines">
-          <p class="app-section-title">
+        <section class="detail-section dash-panel" id="section-lines">
+          <p class="app-section-title dash-panel-head">
             Matchup
             <span id="lines-updated" class="lines-updated hidden"></span>
             <a href="#" id="insights-refresh" class="insights-refresh-link hidden">Refresh odds</a>
@@ -50,45 +50,45 @@
           <div id="game-matchup-board" class="matchup-board"></div>
         </section>
 
-        <section class="detail-section" id="lineup-section">
+        <section class="detail-section dash-panel" id="lineup-section">
           <h2>Starters &amp; lineups</h2>
           <p class="section-sub" id="lineup-note">Probable pitchers and batting orders when posted.</p>
           <div id="lineup-board" class="lineup-board"></div>
         </section>
 
-        <section class="detail-section" id="model-explanation-section">
+        <section class="detail-section dash-panel" id="model-explanation-section">
           <h2>Why the model thinks this</h2>
           <p class="section-sub">Pregame factors behind the win lean and run total — not a guarantee.</p>
           <div id="model-explanation-body" class="model-explanation-body"></div>
         </section>
 
-        <section class="detail-section" id="parlays-section">
+        <section class="detail-section dash-panel" id="parlays-section">
           <h2>Parlays</h2>
           <div id="parlays-body" class="parlays-body">Loading…</div>
         </section>
 
-        <section class="detail-section" id="props-section">
+        <section class="detail-section dash-panel" id="props-section">
           <div class="props-section-head">
             <h2>Player props</h2>
             <div class="props-head-controls">
               <select id="prop-book-select" class="home-props-select" aria-label="Sportsbook for player props"></select>
-              <button type="button" id="props-refresh" class="btn-ghost">Refresh</button>
+              <button type="button" id="props-refresh" class="home-props-fill-btn dash-btn">Refresh</button>
             </div>
           </div>
-          <p class="section-sub">Lines from your selected sportsbook (or median across books), ranked by recent form and matchup context — not a guarantee.</p>
+          <p class="section-sub">Lines from your selected sportsbook, ranked by L5 / L10 / season average — not a guarantee.</p>
           <div id="props-loading" class="empty-state">Loading props…</div>
           <div id="props-error" class="error-state hidden"></div>
           <div id="props-body" class="props-body hidden"></div>
-          <p class="disclaimer-small props-disclaimer">Prop hit rates use last 10 MLB games. Experimental analytics — not betting advice.</p>
+          <p class="disclaimer-small props-disclaimer">Prop hit rates use recent MLB form. Experimental analytics — not betting advice.</p>
         </section>
 
         <p class="disclaimer-small">Experimental analytics — not betting advice. EV signals are not validated.</p>
       </div>
     </main>
   </div>
-  <script src="/static/player_prop_modal.js?v=20260717"></script>
-  <script src="/static/design.js?v=20260704"></script>
-  <script src="/static/app.js?v=20260716"></script>
-  <script src="/static/game.js?v=20260716"></script>
+  <script src="/static/player_prop_modal.js?v=20260725"></script>
+  <script src="/static/design.js?v=20260725"></script>
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/game.js?v=20260725"></script>
 </body>
 </html>

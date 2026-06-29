@@ -3,28 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260703" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Performance — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260703">
-  <link rel="stylesheet" href="/static/app.css?v=20260703">
-  <link rel="stylesheet" href="/static/design.css?v=20260703">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills"></div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <main class="app-main page">
-      <h1>Model performance</h1>
-      <p class="text-muted">Public forward log of offered props — not a guarantee of future results.</p>
+    <main class="app-main dash-main">
+      <header class="dash-page-header">
+        <div>
+          <h1>Model performance</h1>
+          <p class="section-sub dash-page-kicker">Public forward log of offered props — not a guarantee of future results.</p>
+        </div>
+      </header>
       <p><a href="/methodology">How we score picks →</a></p>
 
-      <div class="perf-toolbar ntg-card">
+      <div class="perf-toolbar ntg-card dash-panel">
         <label>
           <span class="perf-filter-label">Period</span>
           <select id="perf-days">
@@ -44,16 +50,16 @@
         </label>
       </div>
 
-      <div id="perf-summary" class="glance-card ntg-card perf-summary-card">
+      <div id="perf-summary" class="glance-card ntg-card perf-summary-card dash-panel">
         <p>Loading summary…</p>
       </div>
 
       <div class="perf-two-col">
-        <section class="ntg-card perf-panel">
+        <section class="ntg-card perf-panel dash-panel">
           <h2 class="home-col-title">By line strength</h2>
           <div id="perf-buckets"></div>
         </section>
-        <section class="ntg-card perf-panel">
+        <section class="ntg-card perf-panel dash-panel">
           <h2 class="home-col-title">Closing line value</h2>
           <div id="perf-clv"></div>
         </section>
@@ -65,8 +71,8 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260703"></script>
-  <script src="/static/performance.js?v=20260703"></script>
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/performance.js?v=20260725"></script>
   <script>loadPublicFeatures().then(() => { initSiteChrome(); bootPerformancePage(); });</script>
 </body>
 </html>

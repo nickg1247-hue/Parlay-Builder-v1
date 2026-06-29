@@ -3,35 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/ntg-mark.svg?v=20260704" type="image/svg+xml">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Prop parlay — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260704">
-  <link rel="stylesheet" href="/static/app.css?v=20260704">
-  <link rel="stylesheet" href="/static/design.css?v=20260704">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG Sports</a>
-        <nav class="app-nav-links"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills"></div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <main class="app-main prop-slip-page-main">
-      <header class="prop-slip-page-head">
-        <h1>Prop parlay builder</h1>
-        <p style="color:var(--muted)">Cross-game player prop parlays with swap suggestions, share links, and sportsbook export.</p>
+    <main class="app-main dash-main prop-slip-page-main">
+      <header class="dash-page-header prop-slip-page-head">
+        <div>
+          <h1>Prop parlay builder</h1>
+          <p class="section-sub dash-page-kicker">Cross-game player prop parlays with swap suggestions, share links, and sportsbook export.</p>
+        </div>
       </header>
 
-      <div id="prop-slip-locked" class="empty-state-card hidden" style="padding:1rem;margin-top:1rem;">
+      <div id="prop-slip-locked" class="empty-state-card dash-panel hidden" style="padding:1rem;margin-top:1rem;">
         <p>Prop slip is disabled on this server. Set <code>PROP_SLIP_PUBLIC=false</code> was used — remove it or set to true, then restart.</p>
         <p><a href="/mlb/props">Browse props →</a></p>
       </div>
 
       <div id="prop-slip-root" class="prop-slip-page-root hidden">
-        <div id="prop-slip-panel" class="prop-slip-panel prop-slip-panel--open prop-slip-panel--page">
+        <div id="prop-slip-panel" class="prop-slip-panel prop-slip-panel--open prop-slip-panel--page dash-panel">
           <div id="prop-slip-legs" class="prop-slip-legs"></div>
           <div id="prop-slip-export-row" class="prop-slip-export-row hidden">
             <label class="prop-slip-export-label" for="prop-slip-export-book">Export for</label>
@@ -42,12 +46,12 @@
       </div>
 
       <p style="margin-top:1rem;font-size:0.82rem;color:var(--muted)">
-        Add legs from the <a href="/">home page</a>, <a href="/mlb/props">props explorer</a>, or any game page.
+        Add legs from the <a href="/">dashboard</a>, <a href="/mlb/props">props explorer</a>, or any game page.
       </p>
     </main>
   </div>
-  <script src="/static/player_prop_modal.js?v=20260704"></script>
-  <script src="/static/app.js?v=20260704"></script>
+  <script src="/static/player_prop_modal.js?v=20260725"></script>
+  <script src="/static/app.js?v=20260725"></script>
   <script>
     loadPublicFeatures().then(() => {
       initSiteChrome();
@@ -67,4 +71,3 @@
   </script>
 </body>
 </html>
-

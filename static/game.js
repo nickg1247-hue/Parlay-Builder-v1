@@ -50,6 +50,7 @@
 
 
 
+  initSiteChrome();
   initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
   initHeadlineTicker("headline-ticker");
 

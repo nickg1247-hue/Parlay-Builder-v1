@@ -3,39 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Updates — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
+        <nav class="app-nav-links" aria-label="Account & tools"></nav>
       </div>
+      <div class="sport-pills" aria-label="Sports"></div>
     </header>
 
-    <main class="app-main updates-main">
-      <h1>Site updates</h1>
-      <p class="updates-lead">Recent changes to NTG Sports — experimental analytics, not betting advice.</p>
+    <main class="app-main dash-main updates-main">
+      <header class="dash-page-header">
+        <h1>Site updates</h1>
+        <p class="updates-lead dash-page-kicker">Recent changes to NTG Sports — experimental analytics, not betting advice.</p>
+      </header>
       <div id="updates-list" class="updates-list">
         <p class="updates-loading">Loading…</p>
       </div>
-      <p class="updates-foot"><a href="/">← Back to home</a></p>
+      <p class="updates-foot"><a href="/">← Back to dashboard</a></p>
     </main>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260725"></script>
   <script>
-    (async function () {
-      const list = document.getElementById("updates-list");
+    loadPublicFeatures().then(async () => {
+      initSiteChrome();
       try {
         const data = await fetchSiteUpdates();
-        renderUpdatesHistory(list, data);
-      } catch (_) {
-        list.innerHTML = "<p class=\"updates-loading\">Could not load updates.</p>";
+        renderUpdatesHistory(document.getElementById("updates-list"), data);
+      } catch {
+        const list = document.getElementById("updates-list");
+        if (list) list.innerHTML = "<p>Could not load updates.</p>";
       }
-    })();
+    });
   </script>
 </body>
 </html>
