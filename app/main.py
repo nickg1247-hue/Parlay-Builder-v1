@@ -940,6 +940,17 @@ async def props_search(
     actionable_only: bool = Query(False),
     very_strong_only: bool = Query(False),
     include_alternates: bool = Query(False),
+    sort: str = Query(
+        "score",
+        description="score, hit_l5, hit_l10, risk_asc, risk_desc",
+    ),
+    risk: str | None = Query(
+        None,
+        description="low, medium, high, or low_medium",
+    ),
+    min_score: int | None = Query(None, ge=0, le=100),
+    min_hit_l5: float | None = Query(None, ge=0, le=1),
+    min_hit_l10: float | None = Query(None, ge=0, le=1),
     limit: int = Query(200, ge=1, le=500),
     scan: bool = Query(False),
     refresh: bool = Query(False),
@@ -951,8 +962,7 @@ async def props_search(
     if cache_meta.get("requires_refresh"):
         scan = True
         refresh = False
-    result = search_daily_props(
-        game_date,
+    search_kwargs = dict(
         bookmaker=bookmaker,
         market_type=market_type,
         min_odds=min_odds,
@@ -965,21 +975,17 @@ async def props_search(
         refresh=refresh,
         include_alternates=include_alternates,
         very_strong_only=very_strong_only,
+        sort=sort,
+        risk=risk,
+        min_score=min_score,
+        min_hit_l5=min_hit_l5,
+        min_hit_l10=min_hit_l10,
     )
+    result = search_daily_props(game_date, **search_kwargs)
     if not result.get("props") and not scan and not refresh:
         result = search_daily_props(
             game_date,
-            bookmaker=bookmaker,
-            market_type=market_type,
-            min_odds=min_odds,
-            line_kind=line_kind,
-            line_value=line_value,
-            side=side,
-            actionable_only=actionable_only,
-            limit=limit,
-            scan=True,
-            include_alternates=include_alternates,
-            very_strong_only=very_strong_only,
+            **{**search_kwargs, "scan": True, "refresh": False},
         )
         result["auto_scanned"] = True
     return result

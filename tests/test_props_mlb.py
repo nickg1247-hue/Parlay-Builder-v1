@@ -748,6 +748,162 @@ def test_prop_rank_key_tie_break_edge_then_form():
     assert ranked[1] is same_score_a
 
 
+def _search_prop(**overrides):
+    base = {
+        "prop_score": 82,
+        "score": 82,
+        "risk_flag": "Medium Risk",
+        "recommended_side": "over",
+        "hit_rate_over_l5": 0.55,
+        "hit_rate_over_l10": 0.60,
+        "edge_pct": 5,
+        "line_kind": "main",
+        "recommended_odds": -110,
+        "actionable": True,
+        "market_type": "batter_hits",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_recommended_hit_rate_uses_recommended_side():
+    over = {"recommended_side": "over", "hit_rate_over_l5": 0.7, "hit_rate_over_l10": 0.65}
+    under = {"recommended_side": "under", "hit_rate_under_l5": 0.8, "hit_rate_under_l10": 0.75}
+    assert props_mlb._recommended_hit_rate(over, "l5") == 0.7
+    assert props_mlb._recommended_hit_rate(under, "l10") == 0.75
+    assert props_mlb._recommended_hit_rate(
+        {"recommended_side": "over", "recommended_hit_rate": 0.9}, "l10"
+    ) == 0.9
+
+
+def test_prop_search_sort_score_default():
+    low = _search_prop(prop_score=80)
+    high = _search_prop(prop_score=90, hit_rate_over_l10=0.5)
+    ranked = sorted([low, high], key=lambda p: props_mlb.prop_search_sort_key(p, "score"))
+    assert ranked[0]["prop_score"] == 90
+
+
+def test_prop_search_sort_hit_l5_desc_nulls_last():
+    with_rate = _search_prop(hit_rate_over_l5=0.8, prop_score=70)
+    no_rate = _search_prop(hit_rate_over_l5=None, prop_score=99)
+    ranked = sorted(
+        [no_rate, with_rate],
+        key=lambda p: props_mlb.prop_search_sort_key(p, "hit_l5"),
+    )
+    assert ranked[0] is with_rate
+    assert ranked[1] is no_rate
+
+
+def test_prop_search_sort_hit_l10_desc():
+    a = _search_prop(hit_rate_over_l10=0.55, prop_score=90)
+    b = _search_prop(hit_rate_over_l10=0.85, prop_score=70)
+    ranked = sorted([a, b], key=lambda p: props_mlb.prop_search_sort_key(p, "hit_l10"))
+    assert ranked[0] is b
+
+
+def test_prop_search_sort_risk_asc():
+    low = _search_prop(risk_flag="Low Risk", prop_score=50)
+    high = _search_prop(risk_flag="High Risk", prop_score=99)
+    med = _search_prop(risk_flag="Medium Risk", prop_score=80)
+    ranked = sorted(
+        [high, med, low],
+        key=lambda p: props_mlb.prop_search_sort_key(p, "risk_asc"),
+    )
+    assert [p["risk_flag"] for p in ranked] == ["Low Risk", "Medium Risk", "High Risk"]
+
+
+def test_prop_search_sort_risk_desc():
+    low = _search_prop(risk_flag="Low Risk", prop_score=99)
+    high = _search_prop(risk_flag="High Risk", prop_score=50)
+    med = _search_prop(risk_flag="Medium Risk", prop_score=80)
+    ranked = sorted(
+        [low, med, high],
+        key=lambda p: props_mlb.prop_search_sort_key(p, "risk_desc"),
+    )
+    assert [p["risk_flag"] for p in ranked] == ["High Risk", "Medium Risk", "Low Risk"]
+
+
+def test_passes_prop_search_filters_risk_low_medium():
+    low = _search_prop(risk_flag="Low Risk")
+    high = _search_prop(risk_flag="High Risk")
+    kwargs = dict(
+        market_type=None,
+        min_odds=None,
+        line_kind="main",
+        line_value=None,
+        actionable_only=False,
+        risk="low_medium",
+    )
+    assert props_mlb._passes_prop_search_filters(low, **kwargs)
+    assert not props_mlb._passes_prop_search_filters(high, **kwargs)
+
+
+def test_passes_prop_search_filters_min_score():
+    prop = _search_prop(prop_score=84, score=84)
+    base = dict(
+        market_type=None,
+        min_odds=None,
+        line_kind="main",
+        line_value=None,
+        actionable_only=False,
+    )
+    assert props_mlb._passes_prop_search_filters(prop, min_score=80, **base)
+    assert not props_mlb._passes_prop_search_filters(prop, min_score=85, **base)
+
+
+def test_passes_prop_search_filters_min_hit_l10():
+    prop = _search_prop(hit_rate_over_l10=0.72)
+    base = dict(
+        market_type=None,
+        min_odds=None,
+        line_kind="main",
+        line_value=None,
+        actionable_only=False,
+    )
+    assert props_mlb._passes_prop_search_filters(prop, min_hit_l10=0.70, **base)
+    assert not props_mlb._passes_prop_search_filters(prop, min_hit_l10=0.75, **base)
+
+
+def test_search_daily_props_filters_echo_sort_and_risk(monkeypatch):
+    pool = [
+        _search_prop(
+            player="A",
+            risk_flag="Low Risk",
+            prop_score=88,
+            hit_rate_over_l10=0.80,
+            game_id="1",
+        ),
+        _search_prop(
+            player="B",
+            risk_flag="High Risk",
+            prop_score=92,
+            hit_rate_over_l10=0.90,
+            game_id="2",
+        ),
+    ]
+
+    def fake_revalidate(picks, *args, **kwargs):
+        return picks
+
+    monkeypatch.setattr(props_mlb, "build_daily_top_props", lambda *a, **k: {"games_fetched": 0})
+    monkeypatch.setattr(props_mlb, "get_mlb_schedule", lambda d: {"games": []})
+    monkeypatch.setattr(props_mlb, "_revalidate_pick_list", fake_revalidate)
+    monkeypatch.setattr(props_mlb, "_load_best_slate_props", lambda *a, **k: (pool, None, None))
+
+    result = props_mlb.search_daily_props(
+        date(2026, 6, 29),
+        sort="hit_l10",
+        risk="low",
+        min_score=85,
+        limit=10,
+    )
+    assert result["filters"]["sort"] == "hit_l10"
+    assert result["filters"]["risk"] == "low"
+    assert result["filters"]["min_score"] == 85
+    assert len(result["props"]) == 1
+    assert result["props"][0]["player"] == "A"
+
+
 def test_prop_is_bettable_requires_listed_side_odds():
     assert props_mlb.prop_is_bettable(
         {

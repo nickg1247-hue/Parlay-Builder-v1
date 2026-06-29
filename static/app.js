@@ -1934,6 +1934,19 @@ function buildPropSearchQuery(filters = {}) {
   if (filters.line_value != null && filters.line_value !== "") {
     params.set("line_value", String(filters.line_value));
   }
+  if (filters.sort && filters.sort !== "score") {
+    params.set("sort", filters.sort);
+  }
+  if (filters.risk) params.set("risk", filters.risk);
+  if (filters.min_score != null && filters.min_score !== "") {
+    params.set("min_score", String(filters.min_score));
+  }
+  if (filters.min_hit_l5 != null && filters.min_hit_l5 !== "") {
+    params.set("min_hit_l5", String(filters.min_hit_l5));
+  }
+  if (filters.min_hit_l10 != null && filters.min_hit_l10 !== "") {
+    params.set("min_hit_l10", String(filters.min_hit_l10));
+  }
   if (filters.actionable_only) params.set("actionable_only", "true");
   if (filters.very_strong_only) params.set("very_strong_only", "true");
   if (filters.include_alternates) params.set("include_alternates", "true");
@@ -1943,7 +1956,54 @@ function buildPropSearchQuery(filters = {}) {
   return params;
 }
 
+const PROP_SORT_LABELS = {
+  score: "model score",
+  hit_l5: "L5 hit rate",
+  hit_l10: "L10 hit rate",
+  risk_asc: "lowest risk",
+  risk_desc: "highest risk",
+};
+
+const PROP_RISK_LABELS = {
+  low: "Low risk",
+  medium: "Medium risk",
+  high: "High risk",
+  low_medium: "Low + medium risk",
+};
+
+function formatPropsSearchMeta(data, filters = {}) {
+  const apiFilters = data?.filters || {};
+  const sortKey = apiFilters.sort || filters.sort || "score";
+  const sortLabel = PROP_SORT_LABELS[sortKey] || "model score";
+  const parts = [`${data?.total_matched || 0} props`, `sorted by ${sortLabel}`, data?.bookmaker_label || "Consensus"];
+
+  const riskKey = apiFilters.risk || filters.risk;
+  if (riskKey) parts.push(PROP_RISK_LABELS[riskKey] || riskKey);
+
+  const minScore = apiFilters.min_score ?? filters.min_score;
+  if (minScore != null && minScore !== "") parts.push(`${minScore}+`);
+
+  const minL5 = apiFilters.min_hit_l5 ?? filters.min_hit_l5;
+  const minL10 = apiFilters.min_hit_l10 ?? filters.min_hit_l10;
+  if (minL5 != null && minL5 !== "") {
+    parts.push(`L5 ${Math.round(Number(minL5) * 100)}%+`);
+  }
+  if (minL10 != null && minL10 !== "") {
+    parts.push(`L10 ${Math.round(Number(minL10) * 100)}%+`);
+  }
+
+  if (filters.side === "over") parts.push("overs only");
+  else if (filters.side === "under") parts.push("unders only");
+
+  if (data?.games_on_slate && data?.games_with_props != null) {
+    parts.push(`${data.games_with_props}/${data.games_on_slate} games`);
+  }
+  if (data?.hint) parts.push(data.hint.trim());
+  return parts.join(" · ");
+}
+
 window.buildPropSearchQuery = buildPropSearchQuery;
+window.formatPropsSearchMeta = formatPropsSearchMeta;
 
 const PROP_BOOK_STORAGE_KEY = "pb-prop-bookmaker";
 const PROP_BOOK_DEFAULT_VERSION = "20260620c";

@@ -11,7 +11,20 @@
   const actionableEl = document.getElementById("filter-actionable");
   const veryStrongEl = document.getElementById("filter-very-strong");
   const alternatesEl = document.getElementById("filter-alternates");
+  const sortEl = document.getElementById("filter-sort");
+  const riskEl = document.getElementById("filter-risk");
+  const minScoreEl = document.getElementById("filter-min-score");
+  const minHitL10El = document.getElementById("filter-min-hit-l10");
+  const minHitL5El = document.getElementById("filter-min-hit-l5");
   const refreshBtn = document.getElementById("props-search-refresh");
+
+  const EMPTY_FILTER_MESSAGE =
+    "No props match — try lowering min score or hit rate.";
+
+  function hitPctFromSelect(el) {
+    if (!el?.value) return null;
+    return Number(el.value) / 100;
+  }
 
   function readFilters(refresh) {
     return {
@@ -24,10 +37,35 @@
       actionable_only: !!actionableEl?.checked,
       very_strong_only: !!veryStrongEl?.checked,
       include_alternates: !!alternatesEl?.checked || lineKindEl?.value === "alternate",
+      sort: sortEl?.value || "score",
+      risk: riskEl?.value || "",
+      min_score: minScoreEl?.value || "",
+      min_hit_l5: hitPctFromSelect(minHitL5El),
+      min_hit_l10: hitPctFromSelect(minHitL10El),
       limit: 200,
       scan: !!refresh,
       refresh: !!refresh,
     };
+  }
+
+  function hasTightFilters(filters) {
+    return Boolean(
+      filters.risk ||
+        filters.min_score ||
+        filters.min_hit_l5 != null ||
+        filters.min_hit_l10 != null ||
+        filters.actionable_only ||
+        filters.very_strong_only ||
+        filters.market_type ||
+        (filters.min_odds !== "" && filters.min_odds != null) ||
+        filters.line_value
+    );
+  }
+
+  function emptyMessageFor(data, filters) {
+    if ((data?.total_matched || 0) > 0) return data.hint || "";
+    if (hasTightFilters(filters)) return EMPTY_FILTER_MESSAGE;
+    return data?.hint || "No props match these filters. Try a different book or refresh lines.";
   }
 
   async function runSearch(refresh = false) {
@@ -54,28 +92,16 @@
         }
         return;
       }
-      if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const data = await res.json();
-      const hint = data.hint ? ` ${data.hint}` : "";
       if (metaEl) {
-        const coverage =
-          data.games_on_slate && data.games_with_props != null
-            ? ` · ${data.games_with_props}/${data.games_on_slate} games`
-            : "";
-        const grades = data.grade_counts || {};
-        const gradeNote = grades.strong
-          ? ` · ${data.total_matched || 0} ranked (${grades.strong || 0} strong, ${grades.moderate || 0} moderate)`
-          : "";
-        const sideLabel =
-          filters.side === "over"
-            ? " · Overs only"
-            : filters.side === "under"
-              ? " · Unders only"
-              : "";
-        metaEl.textContent = `${data.total_matched || 0} props · sorted by model score · ${data.bookmaker_label || "Consensus"}${sideLabel}${gradeNote}${coverage}${hint}`;
+        metaEl.textContent =
+          typeof formatPropsSearchMeta === "function"
+            ? formatPropsSearchMeta(data, filters)
+            : `${data.total_matched || 0} props · ${data.bookmaker_label || "Consensus"}`;
       }
       renderPropExplorerList(resultsEl, data.props || [], {
-        emptyMessage: data.hint || "No props match these filters. Try a different book or refresh lines.",
+        emptyMessage: emptyMessageFor(data, filters),
       });
     } catch (e) {
       if (metaEl) metaEl.textContent = "Could not load props.";
@@ -245,6 +271,26 @@
     }
   }
 
+  function wireAutoSearch() {
+    const instantIds = [
+      "filter-sort",
+      "filter-risk",
+      "filter-min-score",
+      "filter-min-hit-l10",
+      "filter-min-hit-l5",
+      "filter-book",
+      "filter-market",
+      "filter-side",
+      "filter-line-kind",
+    ];
+    instantIds.forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", () => runSearch(false));
+    });
+    [actionableEl, veryStrongEl, alternatesEl].forEach((el) => {
+      el?.addEventListener("change", () => runSearch(false));
+    });
+  }
+
   async function init() {
     if (typeof window.ensureAppReady === "function") {
       await window.ensureAppReady();
@@ -271,6 +317,8 @@
       e.preventDefault();
       runSearch(false);
     });
+
+    wireAutoSearch();
 
     refreshBtn?.addEventListener("click", () => runSearch(true));
 

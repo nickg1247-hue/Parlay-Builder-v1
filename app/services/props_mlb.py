@@ -463,6 +463,75 @@ def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
     return (-score, -prob, -edge)
 
 
+RISK_FLAG_LOW = "Low Risk"
+RISK_FLAG_MEDIUM = "Medium Risk"
+RISK_FLAG_HIGH = "High Risk"
+RISK_SORT_ORDER = {
+    RISK_FLAG_LOW: 0,
+    RISK_FLAG_MEDIUM: 1,
+    RISK_FLAG_HIGH: 2,
+}
+VALID_PROP_SORTS = frozenset({"score", "hit_l5", "hit_l10", "risk_asc", "risk_desc"})
+VALID_RISK_FILTERS = frozenset({"low", "medium", "high", "low_medium"})
+
+
+def _recommended_hit_rate(prop: dict[str, Any], window: str = "l10") -> float | None:
+    """Side-specific hit rate for L5 or L10 (recommended_side → hit_rate_over_l5, etc.)."""
+    side = str(prop.get("recommended_side") or "over").lower()
+    key = f"hit_rate_{side}_{window}"
+    val = prop.get(key)
+    if val is None and window == "l10":
+        val = prop.get("recommended_hit_rate")
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+recommended_hit_rate = _recommended_hit_rate
+
+
+def prop_search_sort_key(prop: dict[str, Any], sort: str = "score") -> tuple[Any, ...]:
+    """Sort key for props explorer; default matches prop_rank_key."""
+    mode = (sort or "score").strip().lower()
+    if mode not in VALID_PROP_SORTS:
+        mode = "score"
+    tie = prop_rank_key(prop)
+    if mode == "hit_l5":
+        hr = _recommended_hit_rate(prop, "l5")
+        return (0 if hr is not None else 1, -(hr or 0.0), *tie)
+    if mode == "hit_l10":
+        hr = _recommended_hit_rate(prop, "l10")
+        return (0 if hr is not None else 1, -(hr or 0.0), *tie)
+    if mode == "risk_asc":
+        order = RISK_SORT_ORDER.get(str(prop.get("risk_flag") or ""), 99)
+        return (order, *tie)
+    if mode == "risk_desc":
+        order = RISK_SORT_ORDER.get(str(prop.get("risk_flag") or ""), -1)
+        return (-order, *tie)
+    return tie
+
+
+def _passes_risk_filter(prop: dict[str, Any], risk: str | None) -> bool:
+    if not risk:
+        return True
+    key = risk.strip().lower()
+    if key not in VALID_RISK_FILTERS:
+        return True
+    flag = str(prop.get("risk_flag") or "")
+    if key == "low":
+        return flag == RISK_FLAG_LOW
+    if key == "medium":
+        return flag == RISK_FLAG_MEDIUM
+    if key == "high":
+        return flag == RISK_FLAG_HIGH
+    if key == "low_medium":
+        return flag in (RISK_FLAG_LOW, RISK_FLAG_MEDIUM)
+    return True
+
+
 def prop_slip_leg(
     prop: dict[str, Any],
     *,
@@ -2761,11 +2830,32 @@ def _passes_prop_search_filters(
     side: str | None = None,
     actionable_only: bool,
     very_strong_only: bool = False,
+    risk: str | None = None,
+    min_score: int | None = None,
+    min_hit_l5: float | None = None,
+    min_hit_l10: float | None = None,
 ) -> bool:
     if very_strong_only and not is_very_strong_prop(prop):
         return False
     if actionable_only and not prop.get("actionable"):
         return False
+    if not _passes_risk_filter(prop, risk):
+        return False
+    if min_score is not None:
+        raw = prop.get("prop_score") if prop.get("prop_score") is not None else prop.get("score")
+        try:
+            if raw is None or float(raw) < float(min_score):
+                return False
+        except (TypeError, ValueError):
+            return False
+    if min_hit_l5 is not None:
+        hr = _recommended_hit_rate(prop, "l5")
+        if hr is None or hr < float(min_hit_l5):
+            return False
+    if min_hit_l10 is not None:
+        hr = _recommended_hit_rate(prop, "l10")
+        if hr is None or hr < float(min_hit_l10):
+            return False
     if market_type and prop.get("market_type") != market_type:
         return False
     side_filter = (side or "both").strip().lower()
@@ -2808,6 +2898,11 @@ def search_daily_props(
     side: str | None = None,
     actionable_only: bool = False,
     very_strong_only: bool = False,
+    sort: str = "score",
+    risk: str | None = None,
+    min_score: int | None = None,
+    min_hit_l5: float | None = None,
+    min_hit_l10: float | None = None,
     limit: int = 100,
     scan: bool = False,
     refresh: bool = False,
@@ -2912,9 +3007,16 @@ def search_daily_props(
             side=side,
             actionable_only=actionable_only,
             very_strong_only=very_strong_only,
+            risk=risk,
+            min_score=min_score,
+            min_hit_l5=min_hit_l5,
+            min_hit_l10=min_hit_l10,
         )
     ]
-    filtered.sort(key=prop_rank_key)
+    sort_mode = (sort or "score").strip().lower()
+    if sort_mode not in VALID_PROP_SORTS:
+        sort_mode = "score"
+    filtered.sort(key=lambda p: prop_search_sort_key(p, sort_mode))
 
     def _grade_count(tier: str) -> int:
         return sum(1 for prop in filtered if prop.get("grade_tier") == tier or prop.get("line_strength") == tier)
@@ -2979,6 +3081,11 @@ def search_daily_props(
             "actionable_only": actionable_only,
             "very_strong_only": very_strong_only,
             "include_alternates": include_alternates,
+            "sort": sort_mode,
+            "risk": risk,
+            "min_score": min_score,
+            "min_hit_l5": min_hit_l5,
+            "min_hit_l10": min_hit_l10,
         },
     }
 

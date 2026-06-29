@@ -13,12 +13,23 @@
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
-    <header class="app-topbar">
-      <div class="app-nav-row">
-        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
-        <nav class="app-nav-links" aria-label="Account & tools"></nav>
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
+      </div>
     </header>
 
     <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
