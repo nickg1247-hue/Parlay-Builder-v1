@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import date
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 MLB_SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 ET = ZoneInfo("America/New_York")
+
+_schedule_day_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_SCHEDULE_DAY_TTL_SECONDS = 120
 
 # gameType: R=regular; P/F/D/L/W=postseason; S/E/A=spring/exhibition/all-star (exclude).
 _BOARD_GAME_TYPES = frozenset({"R", "P", "F", "D", "L", "W"})
@@ -99,18 +103,24 @@ def filter_board_games(
 
 
 def fetch_mlb_schedule_day(game_date: date) -> list[dict[str, Any]]:
+    iso = game_date.isoformat()
+    cached = _schedule_day_cache.get(iso)
+    if cached and (time.time() - cached[0]) < _SCHEDULE_DAY_TTL_SECONDS:
+        return cached[1]
+
     params = {
         "sportId": 1,
-        "date": game_date.isoformat(),
+        "date": iso,
         "hydrate": "probablePitcher",
     }
-    with httpx.Client(timeout=30.0) as client:
+    with httpx.Client(timeout=15.0) as client:
         response = client.get(MLB_SCHEDULE_URL, params=params)
         response.raise_for_status()
         data = response.json()
     games: list[dict[str, Any]] = []
     for day in data.get("dates", []):
         games.extend(day.get("games", []))
+    _schedule_day_cache[iso] = (time.time(), games)
     return games
 
 

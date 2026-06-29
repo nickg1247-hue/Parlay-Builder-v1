@@ -105,6 +105,39 @@ def test_get_mlb_schedule_cache_miss_fetches_api(isolated_schedule_paths):
     assert teams["New York Yankees"] == 147
 
 
+def test_get_mlb_game_from_board_when_missing_schedule(isolated_schedule_paths):
+    """Game linked from stale board still resolves when not on today's schedule file."""
+    game_date = date(2026, 6, 24)
+    isolated_schedule_paths.joinpath("daily_board.json").write_text(
+        json.dumps(
+            {
+                "date": "2026-06-27",
+                "slate": [
+                    {
+                        "game_id": "822794",
+                        "matchup": "Texas Rangers @ Toronto Blue Jays",
+                        "home_team": "Toronto Blue Jays",
+                        "away_team": "Texas Rangers",
+                        "start_time_utc": "2026-06-27T23:07:00Z",
+                        "status": "Scheduled",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    isolated_schedule_paths.joinpath("mlb_teams.json").write_text(
+        json.dumps({"Toronto Blue Jays": 141, "Texas Rangers": 140}),
+        encoding="utf-8",
+    )
+
+    result = sm.get_mlb_game("822794", game_date)
+    assert result is not None
+    assert result["date"] == "2026-06-27"
+    assert result["game"]["home_team"] == "Toronto Blue Jays"
+    assert result["board_row"]["game_id"] == "822794"
+
+
 def test_get_mlb_game_with_board_row(isolated_schedule_paths):
     game_date = date(2026, 6, 6)
     isolated_schedule_paths.joinpath("daily_board.json").write_text(

@@ -28,7 +28,7 @@ from app.services.schedule_mlb import get_mlb_game
 
 logger = logging.getLogger(__name__)
 
-_INSIGHTS_CACHE_TTL_SECONDS = 120
+_INSIGHTS_CACHE_TTL_SECONDS = 300
 _insights_cache: dict[str, tuple[float, dict[str, Any]]] = {}
 
 def _pct(prob: float | None) -> float | None:
@@ -527,35 +527,43 @@ def build_game_insights(
 ) -> dict[str, Any] | None:
     """Merge schedule game, daily board row, markets, model, and parlays."""
     game_date = game_date or date.today()
-    cache_key = f"{game_id}:{game_date.isoformat()}:{use_cache}"
-    if not refresh:
-        hit = _insights_cache.get(cache_key)
-        if hit and (time.time() - hit[0]) < _INSIGHTS_CACHE_TTL_SECONDS:
-            return hit[1]
 
     detail = get_mlb_game(game_id, game_date)
     if detail is None:
         return None
 
-    board = _load_board(game_date, use_cache=use_cache, refresh=refresh)
-    board_row = _slate_row(board, game_id)
+    try:
+        resolved_date = date.fromisoformat(str(detail.get("date") or game_date.isoformat()))
+    except ValueError:
+        resolved_date = game_date
+    cache_key = f"{game_id}:{resolved_date.isoformat()}:{use_cache}"
+    if not refresh:
+        hit = _insights_cache.get(cache_key)
+        if hit and (time.time() - hit[0]) < _INSIGHTS_CACHE_TTL_SECONDS:
+            return hit[1]
+
+    board = _load_board(resolved_date, use_cache=use_cache, refresh=refresh)
+    board_row = _slate_row(board, game_id) or detail.get("board_row")
     model = _build_model(board_row)
-    # Board rebuild (when refresh=true) already refreshes the repository once.
     lines = _sportsbook_lines(
-        detail["game"], game_date, use_cache, force_refresh=False
+        detail["game"], resolved_date, use_cache, force_refresh=False
     )
     market_cards = _build_market_cards(lines)
     highlights = _build_highlights(model, board_row)
-    explanation = build_mlb_game_explanation(
-        game_id,
-        game_date,
-        board_row,
-        use_cache=use_cache,
-    )
+    try:
+        explanation = build_mlb_game_explanation(
+            game_id,
+            resolved_date,
+            board_row,
+            use_cache=use_cache,
+        )
+    except Exception as exc:
+        logger.warning("Game explanation skipped for %s: %s", game_id, exc)
+        explanation = None
     recent_games = recent_games_for_matchup(
         detail["game"]["home_team"],
         detail["game"]["away_team"],
-        game_date,
+        resolved_date,
     )
 
     warnings = list(board.get("warnings", []))
@@ -570,7 +578,8 @@ def build_game_insights(
 
     payload = {
         "game_id": str(game_id),
-        "date": game_date.isoformat(),
+        "date": resolved_date.isoformat(),
+        "requested_date": game_date.isoformat(),
         "mode": board.get("mode", "demo" if use_cache else "live"),
         "odds_source": board.get("odds_source", "none"),
         "disclaimer": DISCLAIMER,

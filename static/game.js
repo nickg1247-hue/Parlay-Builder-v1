@@ -68,11 +68,13 @@
 
 
 
-  function insightsUrl(refresh) {
+  function insightsUrl(refresh, dateOverride) {
 
     const params = new URLSearchParams();
 
-    if (dateParam) params.set("date", dateParam);
+    const resolvedDate =
+      dateOverride === null ? null : dateOverride || dateParam;
+    if (resolvedDate) params.set("date", resolvedDate);
 
     if (useCache) params.set("use_cache", "true");
 
@@ -82,6 +84,48 @@
 
     return `/api/games/mlb/${encodeURIComponent(gameId)}/insights${q ? `?${q}` : ""}`;
 
+  }
+
+
+
+  async function fetchInsights(refresh, dateOverride) {
+    return fetchJSON(insightsUrl(refresh, dateOverride), { timeoutMs: 90000 });
+  }
+
+
+
+  async function loadInsightsWithFallback(refresh) {
+    const notFound = (err) =>
+      /not found/i.test(String(err?.message || ""));
+
+    try {
+      return await fetchInsights(refresh);
+    } catch (err) {
+      if (!notFound(err)) throw err;
+    }
+
+    if (dateParam) {
+      try {
+        return await fetchInsights(refresh, null);
+      } catch (err) {
+        if (!notFound(err)) throw err;
+      }
+    }
+
+    try {
+      const data = await fetchJSON(scoresUrl, { timeoutMs: 12000 });
+      const live = (data.games || []).find(
+        (g) => String(g.game_id) === String(gameId)
+      );
+      const scoreDate = live?.date || data?.date;
+      if (scoreDate && scoreDate !== dateParam) {
+        return await fetchInsights(refresh, scoreDate);
+      }
+    } catch (_) {
+      /* fall through */
+    }
+
+    throw new Error("Game not found — it may have finished or moved off today's slate.");
   }
 
 
@@ -1340,9 +1384,26 @@
 
 
 
+  async function prefetchMatchupHeader() {
+    try {
+      const data = await fetchJSON(scoresUrl, { timeoutMs: 12000 });
+      const live = (data.games || []).find((g) => String(g.game_id) === String(gameId));
+      if (live && header) {
+        renderMatchupHeader(header, live, null);
+        if (loading && !loading.classList.contains("hidden")) {
+          loading.textContent = "Loading lines and model…";
+        }
+      }
+    } catch (_) {
+      /* insights will populate header */
+    }
+  }
+
+
+
   async function loadInsights(refresh) {
 
-    const data = await fetchJSON(insightsUrl(refresh), { timeoutMs: 45000 });
+    const data = await loadInsightsWithFallback(refresh);
 
     loading.classList.add("hidden");
 
@@ -1418,6 +1479,7 @@
       }
       if (typeof initDesignSystem === "function") initDesignSystem();
       if (typeof initGameStickyNav === "function") initGameStickyNav();
+      prefetchMatchupHeader();
       try {
         await loadInsights(false);
       } catch (e) {

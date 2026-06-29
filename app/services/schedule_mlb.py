@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -141,19 +141,98 @@ def _daily_board_row(game_id: str) -> dict[str, Any] | None:
     return None
 
 
+def _daily_board_date() -> date | None:
+    if not DAILY_BOARD_CACHE.exists():
+        return None
+    try:
+        board = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
+        raw = board.get("date")
+        return date.fromisoformat(str(raw)) if raw else None
+    except (json.JSONDecodeError, OSError, ValueError):
+        return None
+
+
+def _team_ids_for_names(home_team: str, away_team: str) -> tuple[int | None, int | None]:
+    if not MLB_TEAMS_PATH.exists():
+        return None, None
+    try:
+        teams = json.loads(MLB_TEAMS_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None, None
+    home_id = teams.get(home_team)
+    away_id = teams.get(away_team)
+    return (
+        int(home_id) if home_id is not None else None,
+        int(away_id) if away_id is not None else None,
+    )
+
+
+def _game_from_board_row(row: dict[str, Any]) -> dict[str, Any]:
+    home_team = str(row.get("home_team") or "")
+    away_team = str(row.get("away_team") or "")
+    home_id, away_id = _team_ids_for_names(home_team, away_team)
+    return {
+        "game_id": str(row.get("game_id") or ""),
+        "home_team": home_team,
+        "away_team": away_team,
+        "home_team_id": home_id,
+        "away_team_id": away_id,
+        "home_logo_url": team_logo_url(home_id) if home_id else None,
+        "away_logo_url": team_logo_url(away_id) if away_id else None,
+        "start_time_utc": row.get("start_time_utc"),
+        "status": row.get("status") or "Scheduled",
+        "home_score": row.get("home_score"),
+        "away_score": row.get("away_score"),
+    }
+
+
+def _games_for_date(game_date: date, *, allow_fetch: bool) -> list[dict[str, Any]]:
+    path = schedule_cache_path(game_date)
+    if path.exists():
+        return _load_cache_payload(path).get("games") or []
+    if allow_fetch and game_date == date.today():
+        return get_mlb_schedule(game_date).get("games") or []
+    return []
+
+
+def _find_game_record(
+    game_id: str,
+    game_date: date,
+) -> tuple[dict[str, Any] | None, date | None]:
+    """Locate a game on the requested date, nearby days, or the daily board."""
+    gid = str(game_id)
+    search_dates = [game_date, game_date - timedelta(days=1), game_date + timedelta(days=1)]
+    seen: set[str] = set()
+    for idx, search_date in enumerate(search_dates):
+        iso = search_date.isoformat()
+        if iso in seen:
+            continue
+        seen.add(iso)
+        for game in _games_for_date(search_date, allow_fetch=idx == 0):
+            if str(game.get("game_id")) == gid:
+                return game, search_date
+
+    row = _daily_board_row(gid)
+    if row and row.get("home_team") and row.get("away_team"):
+        resolved = _daily_board_date() or game_date
+        return _game_from_board_row(row), resolved
+
+    return None, None
+
+
 def get_mlb_game(game_id: str, game_date: date | None = None) -> dict[str, Any] | None:
     """Single game metadata plus daily-board slate row when available."""
     game_date = game_date or date.today()
-    schedule = get_mlb_schedule(game_date)
-    game = next(
-        (g for g in schedule.get("games", []) if str(g.get("game_id")) == str(game_id)),
-        None,
-    )
-    if game is None:
+    game, resolved_date = _find_game_record(game_id, game_date)
+    if game is None or resolved_date is None:
         return None
+    schedule_source = "cache"
+    if resolved_date == date.today():
+        schedule = get_mlb_schedule(resolved_date)
+        schedule_source = schedule.get("source", "cache")
     return {
-        "date": schedule.get("date", game_date.isoformat()),
-        "source": schedule.get("source"),
+        "date": resolved_date.isoformat(),
+        "source": schedule_source,
         "game": game,
         "board_row": _daily_board_row(game_id),
     }

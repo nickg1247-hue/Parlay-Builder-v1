@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 from datetime import date
 from typing import Any
 
@@ -14,6 +16,11 @@ from app.parlay.slate import (
     fetch_mlb_schedule_day,
     filter_board_games,
 )
+
+logger = logging.getLogger(__name__)
+
+_feature_row_cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
+_FEATURE_ROW_TTL_SECONDS = 300
 
 
 def _num(value: Any) -> float | None:
@@ -37,6 +44,31 @@ def _fmt(value: float | None, digits: int = 2) -> str:
     return f"{value:.{digits}f}"
 
 
+def _match_slate_row(
+    slate,
+    game_id: str,
+    board_row: dict[str, Any] | None,
+):
+    gid = str(game_id)
+    match = slate[slate["game_id"].astype(str) == gid]
+    if match.empty and board_row:
+        home_team = board_row.get("home_team")
+        away_team = board_row.get("away_team")
+        if home_team and away_team:
+            match = slate[
+                (slate["home_team"] == home_team) & (slate["away_team"] == away_team)
+            ]
+    return match
+
+
+def _row_from_slate_match(match, board_row: dict[str, Any] | None) -> dict[str, Any]:
+    row_df = attach_elo_for_slate(match.iloc[[0]].copy())
+    row = row_df.iloc[0].to_dict()
+    row["home_team"] = board_row.get("home_team") if board_row else match.iloc[0]["home_team"]
+    row["away_team"] = board_row.get("away_team") if board_row else match.iloc[0]["away_team"]
+    return row
+
+
 def feature_row_for_game(
     game_id: str,
     game_date: date,
@@ -46,35 +78,51 @@ def feature_row_for_game(
 ) -> dict[str, Any] | None:
     """Pregame feature dict for one game (same pipeline as slate scoring)."""
     gid = str(game_id)
+    cache_key = f"{gid}:{game_date.isoformat()}:{use_cache}"
+    hit = _feature_row_cache.get(cache_key)
+    if hit and (time.time() - hit[0]) < _FEATURE_ROW_TTL_SECONDS:
+        return hit[1]
+
+    result = _feature_row_for_game_uncached(
+        game_id, game_date, use_cache=use_cache, board_row=board_row
+    )
+    _feature_row_cache[cache_key] = (time.time(), result)
+    return result
+
+
+def _feature_row_for_game_uncached(
+    game_id: str,
+    game_date: date,
+    *,
+    use_cache: bool = False,
+    board_row: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    gid = str(game_id)
+
+    history_slate = build_slate_from_history(game_date)
+    if not history_slate.empty:
+        match = _match_slate_row(history_slate, gid, board_row)
+        if not match.empty:
+            return _row_from_slate_match(match, board_row)
+
     if use_cache:
-        slate = build_slate_from_history(game_date)
+        return None
+
+    api_games = filter_board_games(fetch_mlb_schedule_day(game_date), game_date)
+    api_games = [g for g in api_games if str(g.get("gamePk")) == gid]
+    if api_games:
+        slate = build_slate_dataframe(game_date, api_games=api_games)
     else:
-        api_games = filter_board_games(fetch_mlb_schedule_day(game_date), game_date)
-        api_games = [g for g in api_games if str(g.get("gamePk")) == gid]
-        if api_games:
-            slate = build_slate_dataframe(game_date, api_games=api_games)
-        else:
-            slate = build_slate_from_history(game_date)
+        return None
 
     if slate.empty:
         return None
 
-    match = slate[slate["game_id"].astype(str) == gid]
-    if match.empty and board_row:
-        home_team = board_row.get("home_team")
-        away_team = board_row.get("away_team")
-        if home_team and away_team:
-            match = slate[
-                (slate["home_team"] == home_team) & (slate["away_team"] == away_team)
-            ]
+    match = _match_slate_row(slate, gid, board_row)
     if match.empty:
         return None
 
-    row_df = attach_elo_for_slate(match.iloc[[0]].copy())
-    row = row_df.iloc[0].to_dict()
-    row["home_team"] = board_row.get("home_team") if board_row else match.iloc[0]["home_team"]
-    row["away_team"] = board_row.get("away_team") if board_row else match.iloc[0]["away_team"]
-    return row
+    return _row_from_slate_match(match, board_row)
 
 
 def _factor(
