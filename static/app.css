@@ -1881,6 +1881,20 @@ body.slate-mlb .app-main > * {
   align-self: end;
 }
 
+.props-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.props-filter-hint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .props-search-meta {
   margin: 0 0 0.75rem;
   font-size: 0.82rem;

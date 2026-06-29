@@ -271,7 +271,7 @@
     }
   }
 
-  function wireAutoSearch() {
+  function wireFilterControls() {
     const instantIds = [
       "filter-sort",
       "filter-risk",
@@ -288,6 +288,19 @@
     });
     [actionableEl, veryStrongEl, alternatesEl].forEach((el) => {
       el?.addEventListener("change", () => runSearch(false));
+    });
+    [minOddsEl, lineValueEl].forEach((el) => {
+      el?.addEventListener("change", () => runSearch(false));
+      el?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          runSearch(false);
+        }
+      });
+    });
+    document.getElementById("props-apply-filters")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      runSearch(false);
     });
   }
 
@@ -318,7 +331,7 @@
       runSearch(false);
     });
 
-    wireAutoSearch();
+    wireFilterControls();
 
     refreshBtn?.addEventListener("click", () => runSearch(true));
 
