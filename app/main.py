@@ -958,10 +958,8 @@ async def props_search(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    cache_meta = get_props_cache_meta()
-    if cache_meta.get("requires_refresh"):
+    if refresh:
         scan = True
-        refresh = False
     search_kwargs = dict(
         bookmaker=bookmaker,
         market_type=market_type,
@@ -981,6 +979,7 @@ async def props_search(
         min_hit_l5=min_hit_l5,
         min_hit_l10=min_hit_l10,
     )
+    # Filter/sort-only requests use cached pool; scan runs on refresh or empty pool.
     result = search_daily_props(game_date, **search_kwargs)
     if not result.get("props") and not scan and not refresh:
         result = search_daily_props(

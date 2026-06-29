@@ -17,9 +17,13 @@
   const minHitL10El = document.getElementById("filter-min-hit-l10");
   const minHitL5El = document.getElementById("filter-min-hit-l5");
   const refreshBtn = document.getElementById("props-search-refresh");
+  const applyBtn = document.getElementById("props-apply-filters");
 
   const EMPTY_FILTER_MESSAGE =
     "No props match — try lowering min score or hit rate.";
+
+  let searchSeq = 0;
+  let searchInFlight = false;
 
   function hitPctFromSelect(el) {
     if (!el?.value) return null;
@@ -31,7 +35,7 @@
       bookmaker: bookEl?.value || "draftkings",
       market_type: marketEl?.value || "",
       min_odds: minOddsEl?.value ?? "",
-      line_kind: lineKindEl?.value || "both",
+      line_kind: lineKindEl?.value || "main",
       side: sideEl?.value || "both",
       line_value: lineValueEl?.value ?? "",
       actionable_only: !!actionableEl?.checked,
@@ -68,21 +72,38 @@
     return data?.hint || "No props match these filters. Try a different book or refresh lines.";
   }
 
-  async function runSearch(refresh = false) {
-    if (metaEl) metaEl.textContent = refresh ? "Refreshing props from sportsbooks…" : "Searching props…";
-    const filters = readFilters(refresh);
-    if (!refresh) {
-      try {
-        const cacheMeta = await fetchJSON("/api/props/cache-meta");
-        if (cacheMeta.requires_refresh) {
-          filters.scan = true;
-          filters.refresh = true;
-        }
-      } catch (_) {}
+  function setSearchBusy(busy) {
+    searchInFlight = busy;
+    if (applyBtn) {
+      applyBtn.disabled = busy;
+      applyBtn.textContent = busy ? "Applying…" : "Apply filters";
     }
+    if (refreshBtn) refreshBtn.disabled = busy;
+  }
+
+  async function runSearch(refresh = false) {
+    if (typeof buildPropSearchQuery !== "function") {
+      if (metaEl) metaEl.textContent = "Props search unavailable — reload the page.";
+      return;
+    }
+
+    const seq = ++searchSeq;
+    setSearchBusy(true);
+    if (metaEl) {
+      metaEl.textContent = refresh
+        ? "Refreshing props from sportsbooks…"
+        : "Applying filters…";
+    }
+
+    const filters = readFilters(refresh);
     const params = buildPropSearchQuery(filters);
+
     try {
-      const res = await fetch(`/api/props/search?${params.toString()}`);
+      const res = await fetch(`/api/props/search?${params.toString()}`, {
+        cache: "no-store",
+      });
+      if (seq !== searchSeq) return;
+
       if (res.status === 401) {
         if (metaEl) metaEl.textContent = "Sign in required";
         if (window.renderPropsAuthGate) {
@@ -93,7 +114,10 @@
         return;
       }
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+
       const data = await res.json();
+      if (seq !== searchSeq) return;
+
       if (metaEl) {
         metaEl.textContent =
           typeof formatPropsSearchMeta === "function"
@@ -104,8 +128,11 @@
         emptyMessage: emptyMessageFor(data, filters),
       });
     } catch (e) {
+      if (seq !== searchSeq) return;
       if (metaEl) metaEl.textContent = "Could not load props.";
       renderPropExplorerList(resultsEl, [], { emptyMessage: e.message || "Search failed." });
+    } finally {
+      if (seq === searchSeq) setSearchBusy(false);
     }
   }
 
@@ -271,37 +298,15 @@
     }
   }
 
+  function applyFilters(e) {
+    e?.preventDefault();
+    if (!searchInFlight) runSearch(false);
+  }
+
   function wireFilterControls() {
-    const instantIds = [
-      "filter-sort",
-      "filter-risk",
-      "filter-min-score",
-      "filter-min-hit-l10",
-      "filter-min-hit-l5",
-      "filter-book",
-      "filter-market",
-      "filter-side",
-      "filter-line-kind",
-    ];
-    instantIds.forEach((id) => {
-      document.getElementById(id)?.addEventListener("change", () => runSearch(false));
-    });
-    [actionableEl, veryStrongEl, alternatesEl].forEach((el) => {
-      el?.addEventListener("change", () => runSearch(false));
-    });
-    [minOddsEl, lineValueEl].forEach((el) => {
-      el?.addEventListener("change", () => runSearch(false));
-      el?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          runSearch(false);
-        }
-      });
-    });
-    document.getElementById("props-apply-filters")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      runSearch(false);
-    });
+    form?.addEventListener("submit", applyFilters);
+    applyBtn?.addEventListener("click", applyFilters);
+    refreshBtn?.addEventListener("click", () => runSearch(true));
   }
 
   async function init() {
@@ -312,7 +317,9 @@
       initPropSlipUi();
     }
     initSiteChrome();
-    await initPropBookSelect(bookEl);
+    await initPropBookSelect(bookEl, () => {
+      if (!searchInFlight) runSearch(false);
+    });
 
     try {
       const markets = await fetchJSON("/api/props/markets");
@@ -326,18 +333,10 @@
       /* keep All types */
     }
 
-    form?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      runSearch(false);
-    });
-
     wireFilterControls();
-
-    refreshBtn?.addEventListener("click", () => runSearch(true));
-
     document.getElementById("parlay-builder-form")?.addEventListener("submit", buildParlay);
 
-    await loadTracker();
+    loadTracker();
     await runSearch(false);
   }
 

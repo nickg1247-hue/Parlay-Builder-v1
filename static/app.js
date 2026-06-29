@@ -1816,6 +1816,9 @@ function renderPropExplorerList(el, props, options = {}) {
       const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
       const form = propHitRatesHtml(p, side);
       const strength = lineStrengthHtml(p);
+      const riskTag = p.risk_flag
+        ? `<span class="hero-chip hero-chip-muted prop-risk-tag">${p.risk_flag}</span>`
+        : "";
       const lineKind = p.line_kind === "alternate" ? "Alternate line" : "Main line";
       const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
       const offeredNote =
@@ -1850,6 +1853,7 @@ function renderPropExplorerList(el, props, options = {}) {
         <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag} ${lineAge}</p>
         <p class="prop-explorer-tags">
           <span class="prop-line-tag">${lineKind}</span>
+          ${riskTag}
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}
         </p>
         ${modelMeta}
@@ -1934,9 +1938,7 @@ function buildPropSearchQuery(filters = {}) {
   if (filters.line_value != null && filters.line_value !== "") {
     params.set("line_value", String(filters.line_value));
   }
-  if (filters.sort && filters.sort !== "score") {
-    params.set("sort", filters.sort);
-  }
+  if (filters.sort) params.set("sort", filters.sort);
   if (filters.risk) params.set("risk", filters.risk);
   if (filters.min_score != null && filters.min_score !== "") {
     params.set("min_score", String(filters.min_score));
