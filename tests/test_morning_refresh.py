@@ -56,6 +56,14 @@ def test_run_morning_refresh_success(isolated_refresh_paths, monkeypatch, tmp_pa
 
     with (
         patch(
+            "app.services.mlb_data_freshness.ensure_mlb_ingest_fresh",
+            return_value={"ran": False},
+        ),
+        patch(
+            "app.services.mlb_data_freshness.ensure_odds_snapshot",
+            return_value={"ran": False},
+        ),
+        patch(
             "app.services.morning_refresh.build_daily_board",
             return_value=SAMPLE_BOARD,
         ) as mock_build,
@@ -93,9 +101,19 @@ def test_run_morning_refresh_failure_preserves_board(isolated_refresh_paths):
         json.dumps(good_board), encoding="utf-8"
     )
 
-    with patch(
-        "app.services.morning_refresh.build_daily_board",
-        side_effect=httpx.TimeoutException("timeout"),
+    with (
+        patch(
+            "app.services.mlb_data_freshness.ensure_mlb_ingest_fresh",
+            return_value={"ran": False},
+        ),
+        patch(
+            "app.services.mlb_data_freshness.ensure_odds_snapshot",
+            return_value={"ran": False},
+        ),
+        patch(
+            "app.services.morning_refresh.build_daily_board",
+            side_effect=httpx.TimeoutException("timeout"),
+        ),
     ):
         code = mr.run_morning_refresh(date(2026, 6, 6))
 

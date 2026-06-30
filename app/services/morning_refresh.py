@@ -189,7 +189,7 @@ def run_morning_refresh(
     if not os.getenv("ODDS_API_KEY", "").strip():
         logger.warning(
             "ODDS_API_KEY not set — building model-only board without live odds. "
-            "Add your free key to .env; see DEV.md."
+            "Add your free key to .env and set USE_LIVE_ODDS=true; see DEV.md."
         )
 
     odds_quota_warning: str | None = None
@@ -197,8 +197,22 @@ def run_morning_refresh(
     odds_source: str | None = None
     try:
         if "mlb" in sport_list:
+            from app.services.mlb_data_freshness import (
+                ensure_mlb_ingest_fresh,
+                ensure_odds_snapshot,
+            )
+
+            ingest_out = ensure_mlb_ingest_fresh(game_date, use_cache=False)
+            if ingest_out.get("ran"):
+                logger.info("Morning refresh: MLB ingest completed")
+
             if live_odds_enabled():
-                get_mlb_odds_for_date(game_date, force_refresh=True)
+                odds_out = ensure_odds_snapshot(game_date, force_refresh=True)
+                if odds_out.get("ran"):
+                    logger.info(
+                        "Morning refresh: odds snapshot updated (%s games)",
+                        odds_out.get("games"),
+                    )
                 meta = last_fetch_meta()
                 if meta.get("quota_warning"):
                     odds_quota_warning = meta["quota_warning"]

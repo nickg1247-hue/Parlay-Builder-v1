@@ -265,6 +265,19 @@ def test_build_model_from_board_row():
     assert model["totals_pick"] == "Over"
 
 
+def test_build_model_suppresses_win_pct_when_data_stale():
+    row = {
+        **SAMPLE_BOARD["slate"][0],
+        "prediction_data_stale": True,
+        "model_pick_prob": 0.72,
+        "model_confidence": "Blocked (stale data)",
+    }
+    model = gi._build_model(row)
+    assert model["pick"] == "New York Yankees"
+    assert model["win_pct"] is None
+    assert model["win_pct_suppressed"] is True
+
+
 def test_build_model_uses_model_pick_not_ev_when_disagree():
     row = {
         **SAMPLE_BOARD["slate"][0],

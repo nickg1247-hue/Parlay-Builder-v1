@@ -22,6 +22,7 @@ from app.odds.odds_repository import (
 )
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import DAILY_BOARD_CACHE, DISCLAIMER
+from app.services.bet_context import build_matchup_form_comparison
 from app.services.mlb_game_explanations import build_mlb_game_explanation
 from app.services.mlb_team_recent import recent_games_for_matchup
 from app.services.schedule_mlb import get_mlb_game
@@ -477,15 +478,21 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
         pick_side = None
         pick_team = None
 
-    if pick_side == "home" and prob_home is not None:
-        win_pct = _pct(prob_home)
-    elif pick_side == "away" and prob_home is not None:
-        win_pct = _pct(1.0 - float(prob_home))
-    elif pick_side == "home":
-        win_pct = _pct(board_row.get("display_prob_home"))
-    elif pick_side == "away":
+    data_stale = bool(board_row.get("prediction_data_stale"))
+    display_pct = board_row.get("model_win_pct_display")
+    if pick_side == "home" and prob_home is not None and not data_stale:
+        win_pct = _pct(prob_home) if display_pct is None else display_pct
+    elif pick_side == "away" and prob_home is not None and not data_stale:
+        win_pct = _pct(1.0 - float(prob_home)) if display_pct is None else display_pct
+    elif pick_side == "home" and not data_stale:
+        win_pct = display_pct if display_pct is not None else _pct(board_row.get("display_prob_home"))
+    elif pick_side == "away" and not data_stale:
         dh = board_row.get("display_prob_home")
-        win_pct = _pct(1.0 - float(dh)) if dh is not None else None
+        win_pct = (
+            display_pct
+            if display_pct is not None
+            else (_pct(1.0 - float(dh)) if dh is not None else None)
+        )
     else:
         win_pct = None
 
@@ -504,6 +511,7 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
         "pick": pick_team,
         "pick_side": pick_side,
         "win_pct": win_pct,
+        "win_pct_suppressed": data_stale,
         "expected_runs": board_row.get("expected_total_runs"),
         "edge": edge,
         "confidence": confidence,
@@ -565,6 +573,12 @@ def build_game_insights(
         detail["game"]["away_team"],
         resolved_date,
     )
+    form_comparison = build_matchup_form_comparison(
+        detail["game"]["home_team"],
+        detail["game"]["away_team"],
+        game_date,
+        model_pick_side=board_row.get("model_pick_side") if board_row else None,
+    )
 
     warnings = list(board.get("warnings", []))
     meta = last_fetch_meta()
@@ -589,10 +603,12 @@ def build_game_insights(
         "market_cards": market_cards,
         "highlights": highlights,
         "model": model,
+        "form_comparison": form_comparison,
         "explanation": explanation,
         "recent_games": recent_games,
         "parlays": _parlays_for_game(board, game_id),
         "edge_threshold": board.get("edge_threshold", DEFAULT_MIN_EDGE),
+        "prediction_freshness": board.get("prediction_freshness"),
     }
     if not refresh:
         _insights_cache[cache_key] = (time.time(), payload)

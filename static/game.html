@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Game — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/style.css?v=20260732">
   <link rel="stylesheet" href="/static/app.css?v=20260725">
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
@@ -41,6 +41,7 @@
       <div id="game-error" class="error-state hidden"></div>
 
       <div id="game-content" class="hidden">
+        <div id="stale-data-banner" class="stale-data-banner hidden" role="alert"></div>
         <header class="matchup-header broadcast-header" id="matchup-header"></header>
 
         <nav class="game-sticky-nav" id="game-sticky-nav" aria-label="Game sections">
@@ -70,6 +71,7 @@
         <section class="detail-section dash-panel" id="model-explanation-section">
           <h2>Why the model thinks this</h2>
           <p class="section-sub">Pregame factors behind the win lean and run total — not a guarantee.</p>
+          <div id="form-vs-model-panel" class="form-vs-model-panel hidden"></div>
           <div id="model-explanation-body" class="model-explanation-body"></div>
         </section>
 
@@ -98,8 +100,8 @@
     </main>
   </div>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/design.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260725"></script>
-  <script src="/static/game.js?v=20260624a"></script>
+  <script src="/static/design.js?v=20260732"></script>
+  <script src="/static/app.js?v=20260732"></script>
+  <script src="/static/game.js?v=20260732"></script>
 </body>
 </html>

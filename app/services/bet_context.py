@@ -194,3 +194,61 @@ def form_composite_score(pick: dict[str, Any]) -> float:
     if not vals:
         return -1.0
     return sum(vals) / len(vals)
+
+
+def _form_composite_from_windows(rates: dict[str, float | None]) -> float | None:
+    vals = [
+        rates.get("win_rate_l5"),
+        rates.get("win_rate_l10"),
+        rates.get("win_rate_season"),
+    ]
+    nums = [float(v) for v in vals if v is not None]
+    if not nums:
+        return None
+    return sum(nums) / len(nums)
+
+
+def build_matchup_form_comparison(
+    home_team: str,
+    away_team: str,
+    before_date: date,
+    *,
+    model_pick_side: str | None = None,
+    games: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    """Side-by-side recent form for home/away with composite lean vs model pick."""
+    home_rates = team_win_rate_windows(home_team, before_date, games=games)
+    away_rates = team_win_rate_windows(away_team, before_date, games=games)
+    home_comp = _form_composite_from_windows(home_rates)
+    away_comp = _form_composite_from_windows(away_rates)
+
+    form_favors: str | None = None
+    if home_comp is not None and away_comp is not None:
+        if abs(home_comp - away_comp) < 0.02:
+            form_favors = "even"
+        elif home_comp > away_comp:
+            form_favors = "home"
+        else:
+            form_favors = "away"
+
+    form_pick_team = None
+    if form_favors == "home":
+        form_pick_team = home_team
+    elif form_favors == "away":
+        form_pick_team = away_team
+
+    model_agrees: bool | None = None
+    if form_favors and form_favors != "even" and model_pick_side:
+        model_agrees = model_pick_side == form_favors
+
+    return {
+        "home_team": home_team,
+        "away_team": away_team,
+        "home": home_rates,
+        "away": away_rates,
+        "home_composite": round(home_comp, 4) if home_comp is not None else None,
+        "away_composite": round(away_comp, 4) if away_comp is not None else None,
+        "form_favors_side": form_favors,
+        "form_pick_team": form_pick_team,
+        "model_agrees_with_form": model_agrees,
+    }

@@ -32,7 +32,11 @@ from app.models.mlb_ensemble import model_pick_from_prob
 from app.models.ml_pick_gates import is_actionable_ml_pick
 from app.models.production_pipeline import get_active_model_info
 from app.models.mlb_totals import is_mlb_totals_production_ready
-from app.services.mlb_data_freshness import check_mlb_prediction_freshness
+from app.services.mlb_data_freshness import (
+    check_mlb_prediction_freshness,
+    ensure_mlb_ingest_fresh,
+    ensure_odds_snapshot,
+)
 from app.services.forward_clv import log_live_picks
 from app.parlay.ev_ranker import (
     DEFAULT_MAX_PARLAYS,
@@ -332,6 +336,16 @@ def _slate_rows(
                 "model_pick_action": pick.model_pick_action,
                 "model_confidence": pick.model_confidence,
                 "model_confidence_prob": pick.model_confidence_prob,
+                "prediction_data_stale": block_strong_picks,
+                "model_win_pct_display": (
+                    None
+                    if block_strong_picks
+                    else (
+                        round(float(model_pick_prob) * 100, 1)
+                        if model_pick_prob is not None
+                        else None
+                    )
+                ),
                 "ev_pick_side": best_pick["side"] if best_pick else None,
                 "ev_pick_team": best_pick["team"] if best_pick else None,
                 "ev_pick_edge": best_pick["edge"] if best_pick else None,
@@ -635,6 +649,16 @@ def build_daily_board(
     force_odds = refresh if odds_force_refresh is None else odds_force_refresh
 
     warnings: list[str] = []
+    ingest_meta: dict[str, Any] | None = None
+    odds_meta: dict[str, Any] | None = None
+    if not use_cache:
+        ingest_meta = ensure_mlb_ingest_fresh(game_date, use_cache=use_cache)
+        if ingest_meta.get("message"):
+            warnings.append(str(ingest_meta["message"]))
+        odds_meta = ensure_odds_snapshot(game_date, force_refresh=force_odds)
+        if odds_meta.get("message"):
+            warnings.append(str(odds_meta["message"]))
+
     stale = _history_stale_warning(game_date, use_cache)
     if stale:
         warnings.append(stale)
@@ -793,6 +817,8 @@ def build_daily_board(
         "max_parlays": max_parlays,
         "skip_totals": skip_totals,
         "prediction_freshness": freshness,
+        "ingest_refresh": ingest_meta,
+        "odds_refresh": odds_meta,
         "active_moneyline_model": get_active_model_info("moneyline"),
         "active_totals_model": get_active_model_info("totals"),
         "status": _status_footer(),

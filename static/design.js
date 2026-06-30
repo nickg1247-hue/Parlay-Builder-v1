@@ -197,8 +197,11 @@
 
   function winProbPcts(boardRow) {
     if (!boardRow || boardRow.model_prob_home == null) return null;
+    if (boardRow.prediction_data_stale) {
+      return { homePct: 50, awayPct: 50, stale: true };
+    }
     const homePct = Math.round(Number(boardRow.model_prob_home) * 100);
-    return { homePct, awayPct: 100 - homePct };
+    return { homePct, awayPct: 100 - homePct, stale: false };
   }
 
   /** Top color band sized by each team's model win % (replaces separate prob slider). */
@@ -208,6 +211,7 @@
     const bandClass = [
       "game-card-color-band",
       pcts ? "win-prob-band" : "",
+      pcts && pcts.stale ? "win-prob-band-stale" : "",
       extraClass || "",
     ]
       .filter(Boolean)
@@ -220,12 +224,15 @@
 
     const awayShort = (game.away_team || "Away").split(" ").pop();
     const homeShort = (game.home_team || "Home").split(" ").pop();
+    const staleNote = pcts.stale ? " (data stale)" : "";
+    const awayLabel = pcts.stale ? "~50%" : `${pcts.awayPct}%`;
+    const homeLabel = pcts.stale ? "~50%" : `${pcts.homePct}%`;
     return `
       <div class="${bandClass}"
            style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;"
-           aria-label="Model win probability ${pcts.awayPct} percent ${awayShort}, ${pcts.homePct} percent ${homeShort}">
-        <span class="win-prob-band-label win-prob-band-away">${awayShort} ${pcts.awayPct}%</span>
-        <span class="win-prob-band-label win-prob-band-home">${homeShort} ${pcts.homePct}%</span>
+           aria-label="Model win probability${staleNote} ${pcts.stale ? "even" : pcts.awayPct + " percent " + awayShort + ", " + pcts.homePct + " percent " + homeShort}">
+        <span class="win-prob-band-label win-prob-band-away">${awayShort} ${awayLabel}</span>
+        <span class="win-prob-band-label win-prob-band-home">${homeShort} ${homeLabel}</span>
       </div>`;
   }
 

@@ -83,6 +83,17 @@ def test_slate_row_confidence_missing_odds():
     assert row["totals_confidence"] == "—"
 
 
+def test_slate_row_suppresses_display_when_data_stale():
+    merged = MOCK_SLATE.copy()
+    rows = _slate_rows(
+        merged, has_odds=False, totals_by_game={}, min_edge=0.08, block_strong_picks=True
+    )
+    row = rows[0]
+    assert row["prediction_data_stale"] is True
+    assert row["model_win_pct_display"] is None
+    assert row["model_pick_prob"] == 0.55
+
+
 def test_build_daily_board_structure():
     merged = MOCK_SLATE.copy()
     merged["date_key"] = "2025-08-15"

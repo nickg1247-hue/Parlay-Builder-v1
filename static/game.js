@@ -20,6 +20,10 @@
 
   const linesUpdatedEl = document.getElementById("lines-updated");
 
+  const staleBannerEl = document.getElementById("stale-data-banner");
+
+  const formVsModelEl = document.getElementById("form-vs-model-panel");
+
 
 
   const gameId = gameIdFromPath();
@@ -280,6 +284,10 @@
 
     const winPct = model.win_pct != null ? `${model.win_pct}%` : "—";
 
+    const winLine = model.win_pct_suppressed
+      ? `<p class="model-win model-win-muted">Lean only — stats refreshing; win % hidden until data is current</p>`
+      : `<p class="model-win">${winPct} win</p>`;
+
     const ouLine = cards.total?.line != null ? cards.total.line : "—";
 
     const totalsLine = model.totals_pick
@@ -312,7 +320,7 @@
 
         <p class="model-pick">${model.pick}</p>
 
-        <p class="model-win">${winPct} win</p>
+        ${winLine}
 
         ${confHtml}
 
@@ -1085,6 +1093,79 @@
 
 
 
+  function pctFmt(rate) {
+    if (rate == null || Number.isNaN(Number(rate))) return "—";
+    return `${Math.round(Number(rate) * 100)}%`;
+  }
+
+  function renderStaleBanner(data) {
+    if (!staleBannerEl) return;
+    const stale =
+      data.prediction_freshness?.block_strong_picks ||
+      data.board_row?.prediction_data_stale ||
+      data.model?.win_pct_suppressed;
+    if (!stale) {
+      staleBannerEl.classList.add("hidden");
+      staleBannerEl.innerHTML = "";
+      return;
+    }
+    const issues = (data.prediction_freshness?.issues || []).slice(0, 2);
+    const issueText = issues.length
+      ? ` ${issues.join(" ")}`
+      : " Game history or pitcher data is behind — picks are lean-only until ingest catches up.";
+    staleBannerEl.classList.remove("hidden");
+    staleBannerEl.innerHTML = `<strong>Stale prediction data.</strong>${issueText} Run morning refresh or wait for auto-ingest on the next board build.`;
+  }
+
+  function renderFormVsModel(form, model, game) {
+    if (!formVsModelEl || !form) {
+      if (formVsModelEl) formVsModelEl.classList.add("hidden");
+      return;
+    }
+    const home = form.home || {};
+    const away = form.away || {};
+    const homeName = form.home_team || game?.home_team || "Home";
+    const awayName = form.away_team || game?.away_team || "Away";
+    const modelPick = model?.pick || "—";
+    const formPick = form.form_pick_team || "Even";
+    const agrees = form.model_agrees_with_form;
+    let note = "";
+    if (form.form_favors_side === "even") {
+      note = "Recent form (L5 / L10 / season) is roughly even — model may lean on starting pitching and Elo.";
+    } else if (agrees === true) {
+      note = `Model pick aligns with hotter recent form (${formPick}).`;
+    } else if (agrees === false) {
+      note = `Model favors ${modelPick} but recent form leans ${formPick} — check pitching and factor table below.`;
+    }
+    const noteClass =
+      agrees === false ? "form-vs-model-note form-mismatch" : "form-vs-model-note";
+    formVsModelEl.classList.remove("hidden");
+    formVsModelEl.innerHTML = `
+      <h3>Model pick vs team form</h3>
+      <div class="form-vs-model-grid">
+        <div class="form-vs-model-card">
+          <p class="form-team-name">Model pick</p>
+          <p><strong>${modelPick}</strong></p>
+        </div>
+        <div class="form-vs-model-card">
+          <p class="form-team-name">Form lean (L5 / L10 / season)</p>
+          <p><strong>${formPick}</strong></p>
+        </div>
+        <div class="form-vs-model-card">
+          <p class="form-team-name">${awayName}</p>
+          <p>L5 ${pctFmt(away.win_rate_l5)} · L10 ${pctFmt(away.win_rate_l10)} · Season ${pctFmt(away.win_rate_season)}</p>
+        </div>
+        <div class="form-vs-model-card">
+          <p class="form-team-name">${homeName}</p>
+          <p>L5 ${pctFmt(home.win_rate_l5)} · L10 ${pctFmt(home.win_rate_l10)} · Season ${pctFmt(home.win_rate_season)}</p>
+        </div>
+      </div>
+      ${note ? `<p class="${noteClass}">${note}</p>` : ""}
+    `;
+  }
+
+
+
   function renderExplanation(explanation) {
 
     const el = document.getElementById("model-explanation-body");
@@ -1218,11 +1299,22 @@
 
 
 
-  function renderWarnings(warnings) {
+  function renderWarnings(warnings, data) {
 
     if (!warningsEl) return;
 
     warningsEl.innerHTML = "";
+
+    const stale =
+      data?.prediction_freshness?.block_strong_picks ||
+      data?.board_row?.prediction_data_stale;
+    if (stale) {
+      const div = document.createElement("div");
+      div.className = "warning-item stale-picks";
+      div.textContent =
+        "Strong win percentages suppressed until MLB ingest and odds are current.";
+      warningsEl.appendChild(div);
+    }
 
     (warnings || []).forEach((w) => {
 
@@ -1246,13 +1338,17 @@
 
     renderMatchupHeader(header, data.game, data.board_row);
 
+    renderStaleBanner(data);
+
     renderMatchupBoard(data);
+
+    renderFormVsModel(data.form_comparison, data.model, data.game);
 
     renderExplanation(data.explanation);
 
     renderParlays(data.parlays);
 
-    renderWarnings(data.warnings);
+    renderWarnings(data.warnings, data);
 
     const hasLiveLines = data.market_cards?.source === "the_odds_api";
 
