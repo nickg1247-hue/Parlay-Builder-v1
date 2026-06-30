@@ -23,6 +23,12 @@ MAX_PITCHER_LOG_AGE_DAYS = 7
 MAX_ODDS_AGE_HOURS = 48
 
 
+def block_stale_picks_enabled() -> bool:
+    """When false (default), model picks and win % are never suppressed for stale inputs."""
+    raw = os.getenv("MLB_BLOCK_STALE_PICKS", "false").strip().lower()
+    return raw in ("1", "true", "yes", "on")
+
+
 def _file_age_days(path: Path) -> float | None:
     if not path.exists():
         return None
@@ -101,7 +107,7 @@ def check_mlb_prediction_freshness(
     return {
         "stale": bool(issues),
         "issues": issues,
-        "block_strong_picks": block_strong_picks,
+        "block_strong_picks": block_strong_picks and block_stale_picks_enabled(),
         "history_max_date": history_max.isoformat() if history_max else None,
         "history_gap_days": history_gap,
     }

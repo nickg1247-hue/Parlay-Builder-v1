@@ -478,15 +478,27 @@ def _build_model(board_row: dict[str, Any] | None) -> dict[str, Any]:
         pick_side = None
         pick_team = None
 
-    data_stale = bool(board_row.get("prediction_data_stale"))
+    data_stale = bool(board_row.get("prediction_data_stale")) and (
+        board_row.get("model_win_pct_display") is None
+    )
     display_pct = board_row.get("model_win_pct_display")
-    if pick_side == "home" and prob_home is not None and not data_stale:
-        win_pct = _pct(prob_home) if display_pct is None else display_pct
-    elif pick_side == "away" and prob_home is not None and not data_stale:
-        win_pct = _pct(1.0 - float(prob_home)) if display_pct is None else display_pct
-    elif pick_side == "home" and not data_stale:
+    if data_stale:
+        win_pct = None
+    elif pick_side == "home" and prob_home is not None:
+        win_pct = (
+            display_pct
+            if display_pct is not None
+            else _pct(prob_home)
+        )
+    elif pick_side == "away" and prob_home is not None:
+        win_pct = (
+            display_pct
+            if display_pct is not None
+            else _pct(1.0 - float(prob_home))
+        )
+    elif pick_side == "home":
         win_pct = display_pct if display_pct is not None else _pct(board_row.get("display_prob_home"))
-    elif pick_side == "away" and not data_stale:
+    elif pick_side == "away":
         dh = board_row.get("display_prob_home")
         win_pct = (
             display_pct

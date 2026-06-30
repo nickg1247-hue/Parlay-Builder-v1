@@ -69,3 +69,17 @@ def test_ensure_odds_skips_when_fresh(mock_fetch, _has, _age, _live):
     out = ensure_odds_snapshot(date(2026, 6, 30))
     assert out["ran"] is False
     mock_fetch.assert_not_called()
+
+
+@patch("app.services.mlb_data_freshness.load_games")
+@patch("app.services.mlb_data_freshness.get_pitcher_game_log")
+def test_block_stale_picks_disabled_by_default(mock_log, mock_games):
+    from app.services.mlb_data_freshness import check_mlb_prediction_freshness
+
+    mock_games.return_value = pd.DataFrame(
+        {"date": pd.to_datetime(["2020-01-01"])}
+    )
+    mock_log.return_value = pd.DataFrame()
+    with patch.dict("os.environ", {"MLB_BLOCK_STALE_PICKS": "false"}, clear=False):
+        out = check_mlb_prediction_freshness(date(2099, 1, 1), use_cache=False)
+    assert out["block_strong_picks"] is False

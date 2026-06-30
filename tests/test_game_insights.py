@@ -271,6 +271,7 @@ def test_build_model_suppresses_win_pct_when_data_stale():
         "prediction_data_stale": True,
         "model_pick_prob": 0.72,
         "model_confidence": "Blocked (stale data)",
+        "model_win_pct_display": None,
     }
     model = gi._build_model(row)
     assert model["pick"] == "New York Yankees"

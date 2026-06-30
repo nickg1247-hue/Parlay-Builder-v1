@@ -56,6 +56,11 @@ from app.odds.odds_repository import get_today_snapshot
 from app.odds.live_odds import live_odds_enabled
 from app.services.morning_refresh import get_refresh_status
 from app.services.odds_hourly_refresh import hourly_refresh_enabled, run_hourly_odds_refresh
+from app.services.mlb_periodic_refresh import (
+    periodic_refresh_enabled,
+    periodic_refresh_interval_seconds,
+    run_mlb_periodic_refresh,
+)
 from app.services.prop_tracker_refresh import (
     prop_tracker_auto_enabled,
     run_prop_tracker_refresh,
@@ -181,17 +186,26 @@ logger = logging.getLogger(__name__)
 
 
 async def _maintenance_loop() -> None:
-    """Hourly odds refresh + prop tracker grading while the server is up."""
+    """Background odds refresh, MLB ingest/board rebuild, and prop tracker grading."""
+    import time
+
     await asyncio.sleep(30)
+    last_odds = 0.0
+    last_mlb = 0.0
     while True:
         try:
-            if hourly_refresh_enabled() and live_odds_enabled():
+            now = time.time()
+            if hourly_refresh_enabled() and live_odds_enabled() and now - last_odds >= 3600:
                 run_hourly_odds_refresh()
+                last_odds = now
+            if periodic_refresh_enabled() and now - last_mlb >= periodic_refresh_interval_seconds():
+                run_mlb_periodic_refresh()
+                last_mlb = now
             if prop_tracker_auto_enabled():
                 run_prop_tracker_refresh()
         except Exception as exc:
             logger.warning("Background maintenance error: %s", exc)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(60)
 
 
 @asynccontextmanager
@@ -216,11 +230,16 @@ async def lifespan(app: FastAPI):
         get_runs_tracker_before(today)
     except Exception:
         pass
-    if (hourly_refresh_enabled() and live_odds_enabled()) or prop_tracker_auto_enabled():
+    if (
+        (hourly_refresh_enabled() and live_odds_enabled())
+        or periodic_refresh_enabled()
+        or prop_tracker_auto_enabled()
+    ):
         maintenance_task = asyncio.create_task(_maintenance_loop())
         logger.info(
-            "Background maintenance started (3600s): odds=%s props=%s",
+            "Background maintenance started (60s tick): odds=%s mlb_periodic=%s props=%s",
             hourly_refresh_enabled() and live_odds_enabled(),
+            periodic_refresh_enabled(),
             prop_tracker_auto_enabled(),
         )
     if auth_enabled():

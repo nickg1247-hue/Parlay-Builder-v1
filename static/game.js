@@ -20,8 +20,6 @@
 
   const linesUpdatedEl = document.getElementById("lines-updated");
 
-  const staleBannerEl = document.getElementById("stale-data-banner");
-
   const formVsModelEl = document.getElementById("form-vs-model-panel");
 
 
@@ -284,9 +282,7 @@
 
     const winPct = model.win_pct != null ? `${model.win_pct}%` : "—";
 
-    const winLine = model.win_pct_suppressed
-      ? `<p class="model-win model-win-muted">Lean only — stats refreshing; win % hidden until data is current</p>`
-      : `<p class="model-win">${winPct} win</p>`;
+    const winLine = `<p class="model-win">${winPct} win</p>`;
 
     const ouLine = cards.total?.line != null ? cards.total.line : "—";
 
@@ -1098,25 +1094,6 @@
     return `${Math.round(Number(rate) * 100)}%`;
   }
 
-  function renderStaleBanner(data) {
-    if (!staleBannerEl) return;
-    const stale =
-      data.prediction_freshness?.block_strong_picks ||
-      data.board_row?.prediction_data_stale ||
-      data.model?.win_pct_suppressed;
-    if (!stale) {
-      staleBannerEl.classList.add("hidden");
-      staleBannerEl.innerHTML = "";
-      return;
-    }
-    const issues = (data.prediction_freshness?.issues || []).slice(0, 2);
-    const issueText = issues.length
-      ? ` ${issues.join(" ")}`
-      : " Game history or pitcher data is behind — picks are lean-only until ingest catches up.";
-    staleBannerEl.classList.remove("hidden");
-    staleBannerEl.innerHTML = `<strong>Stale prediction data.</strong>${issueText} Run morning refresh or wait for auto-ingest on the next board build.`;
-  }
-
   function renderFormVsModel(form, model, game) {
     if (!formVsModelEl || !form) {
       if (formVsModelEl) formVsModelEl.classList.add("hidden");
@@ -1299,22 +1276,11 @@
 
 
 
-  function renderWarnings(warnings, data) {
+  function renderWarnings(warnings) {
 
     if (!warningsEl) return;
 
     warningsEl.innerHTML = "";
-
-    const stale =
-      data?.prediction_freshness?.block_strong_picks ||
-      data?.board_row?.prediction_data_stale;
-    if (stale) {
-      const div = document.createElement("div");
-      div.className = "warning-item stale-picks";
-      div.textContent =
-        "Strong win percentages suppressed until MLB ingest and odds are current.";
-      warningsEl.appendChild(div);
-    }
 
     (warnings || []).forEach((w) => {
 
@@ -1338,8 +1304,6 @@
 
     renderMatchupHeader(header, data.game, data.board_row);
 
-    renderStaleBanner(data);
-
     renderMatchupBoard(data);
 
     renderFormVsModel(data.form_comparison, data.model, data.game);
@@ -1348,7 +1312,7 @@
 
     renderParlays(data.parlays);
 
-    renderWarnings(data.warnings, data);
+    renderWarnings(data.warnings);
 
     const hasLiveLines = data.market_cards?.source === "the_odds_api";
 
