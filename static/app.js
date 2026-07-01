@@ -1859,7 +1859,7 @@ function renderPropExplorerList(el, props, options = {}) {
         </p>
         ${modelMeta}
         <div class="prop-explorer-form-block">
-          <span class="prop-explorer-form-label">Recent form</span>
+          <span class="prop-explorer-form-label">Hit rate on this ${sideLabel.toLowerCase()} pick</span>
           <p class="prop-explorer-form">${form}</p>
         </div>
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}

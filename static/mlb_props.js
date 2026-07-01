@@ -20,7 +20,7 @@
   const applyBtn = document.getElementById("props-apply-filters");
 
   const EMPTY_FILTER_MESSAGE =
-    "No props match — try lowering min score or hit rate.";
+    "No props match — try lowering min score or hit rate, or choose Any to include weaker lines.";
 
   let searchSeq = 0;
   let searchInFlight = false;

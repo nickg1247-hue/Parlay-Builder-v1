@@ -288,7 +288,7 @@ def _trim_props_payload(payload: dict[str, Any], markets_requested: str) -> dict
         p.get("_side_row") or p.get("prop_score") is not None or p.get("score") is not None
         for p in filtered
     ):
-        props = _normalize_scored_props(filtered)
+        props = collapse_best_side_per_prop_line(_normalize_scored_props(filtered))
     else:
         props = filtered
     pick_lists = _game_pick_lists(props)
@@ -453,6 +453,54 @@ def prop_side_hit_rates(prop: dict[str, Any]) -> tuple[float, float, float]:
         l10 = prop.get("hit_rate_under_l10") or prop.get("recommended_hit_rate")
         season = prop.get("hit_rate_under_season")
     return (float(l5 or 0), float(l10 or 0), float(season or 0))
+
+
+MIN_PROPS_DISPLAY_SCORE = 65.0
+MIN_PROPS_DISPLAY_L10 = 0.55
+
+
+def passes_props_display_bar(prop: dict[str, Any]) -> bool:
+    """Minimum quality for showing a prop on explorer/game lists."""
+    raw = prop.get("prop_score") if prop.get("prop_score") is not None else prop.get("score")
+    try:
+        score = float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        score = None
+    if score is None or score < MIN_PROPS_DISPLAY_SCORE:
+        return False
+    hr = _recommended_hit_rate(prop, "l10")
+    if hr is None or hr < MIN_PROPS_DISPLAY_L10:
+        return False
+    tier = str(prop.get("line_strength") or prop.get("grade_tier") or "").lower()
+    if tier == "weak":
+        return False
+    return True
+
+
+def collapse_best_side_per_prop_line(props: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One card per player/market/line — keep the best side that clears the display bar."""
+    groups: dict[tuple[str, str, str, float], list[dict[str, Any]]] = defaultdict(list)
+    for prop in props:
+        try:
+            line = round(float(prop.get("line") or 0), 4)
+        except (TypeError, ValueError):
+            line = 0.0
+        key = (
+            str(prop.get("game_id") or ""),
+            str(prop.get("player") or ""),
+            str(prop.get("market_type") or ""),
+            line,
+        )
+        groups[key].append(prop)
+
+    collapsed: list[dict[str, Any]] = []
+    for rows in groups.values():
+        qualified = [row for row in rows if passes_props_display_bar(row)]
+        if not qualified:
+            continue
+        collapsed.append(min(qualified, key=prop_rank_key))
+    collapsed.sort(key=prop_rank_key)
+    return collapsed
 
 
 def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float, float]:
@@ -2988,14 +3036,17 @@ def search_daily_props(
                 )
                 pool_by_key[key] = prop
         pool = list(pool_by_key.values())
+    pool = collapse_best_side_per_prop_line(pool)
     if not pool:
         picks, _, _ = _load_best_slate_props(game_date, book)
-        pool = _revalidate_pick_list(
-            picks
-            or ((base.get("very_strong_props") or []) + (base.get("top_props") or [])),
-            book,
-            game_date,
-            include_alternates=include_alternates,
+        pool = collapse_best_side_per_prop_line(
+            _revalidate_pick_list(
+                picks
+                or ((base.get("very_strong_props") or []) + (base.get("top_props") or [])),
+                book,
+                game_date,
+                include_alternates=include_alternates,
+            )
         )
 
     filtered = [

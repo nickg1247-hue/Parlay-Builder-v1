@@ -133,17 +133,19 @@
         <label class="props-filter-field">
           <span>Min score</span>
           <select id="filter-min-score" class="home-props-select">
-            <option value="" selected>Any</option>
+            <option value="">Any (includes weak)</option>
             <option value="90">90+</option>
             <option value="85">85+</option>
             <option value="80">80+</option>
             <option value="70">70+</option>
+            <option value="65" selected>65+ (recommended)</option>
           </select>
         </label>
         <label class="props-filter-field">
           <span>Min L10 hit rate</span>
           <select id="filter-min-hit-l10" class="home-props-select">
-            <option value="" selected>Any</option>
+            <option value="">Any (includes weak)</option>
+            <option value="55" selected>55%+ (recommended)</option>
             <option value="60">60%+</option>
             <option value="70">70%+</option>
             <option value="80">80%+</option>
@@ -180,7 +182,7 @@
     </main>
   </div>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260624b"></script>
-  <script src="/static/mlb_props.js?v=20260731"></script>
+  <script src="/static/app.js?v=20260624c"></script>
+  <script src="/static/mlb_props.js?v=20260624c"></script>
 </body>
 </html>

@@ -824,6 +824,71 @@ def test_side_meets_hit_rate_gates_tough_matchup_requires_stronger_history():
 
 
 
+def test_passes_props_display_bar_rejects_weak_low_hit():
+    weak = {
+        "prop_score": 56,
+        "recommended_side": "under",
+        "hit_rate_under_l10": 0.3,
+        "line_strength": "weak",
+    }
+    assert props_mlb.passes_props_display_bar(weak) is False
+
+
+def test_collapse_best_side_picks_over_when_under_is_weak():
+    under_row = {
+        "game_id": "1",
+        "player": "Nick Gonzales",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "recommended_side": "under",
+        "prop_score": 56,
+        "hit_rate_under_l10": 0.3,
+        "hit_rate_under_l5": 0.4,
+        "hit_rate_under_season": 0.36,
+        "line_strength": "weak",
+    }
+    over_row = {
+        "game_id": "1",
+        "player": "Nick Gonzales",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "recommended_side": "over",
+        "prop_score": 72,
+        "hit_rate_over_l10": 0.7,
+        "hit_rate_over_l5": 0.6,
+        "hit_rate_over_season": 0.64,
+        "line_strength": "moderate",
+    }
+    out = props_mlb.collapse_best_side_per_prop_line([under_row, over_row])
+    assert len(out) == 1
+    assert out[0]["recommended_side"] == "over"
+
+
+def test_collapse_hides_line_when_no_side_qualifies():
+    under_row = {
+        "game_id": "1",
+        "player": "J.T. Realmuto",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "recommended_side": "under",
+        "prop_score": 55,
+        "hit_rate_under_l10": 0.4,
+        "line_strength": "weak",
+    }
+    over_row = {
+        "game_id": "1",
+        "player": "J.T. Realmuto",
+        "market_type": "batter_hits",
+        "line": 0.5,
+        "recommended_side": "over",
+        "prop_score": 58,
+        "hit_rate_over_l10": 0.45,
+        "line_strength": "weak",
+    }
+    out = props_mlb.collapse_best_side_per_prop_line([under_row, over_row])
+    assert out == []
+
+
 def test_is_elite_prop_uses_model_score_only():
     weak_form = {
         "prop_score": 92,
