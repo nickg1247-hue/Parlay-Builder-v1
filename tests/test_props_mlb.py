@@ -427,6 +427,9 @@ def test_game_pick_lists_splits_very_strong_from_top_picks():
             "line_strength": "very_strong",
             "prop_score": 87,
             "score": 87,
+            "hit_rate_over_l10": 1.0,
+            "hit_rate_over_l5": 1.0,
+            "hit_rate_over_season": 1.0,
         },
         {
             "actionable": True,
@@ -722,30 +725,54 @@ def test_passes_prop_search_filters_excludes_alternates_by_default():
     )
 
 
-def test_prop_rank_key_prop_score_first():
-    lower = {"prop_score": 80, "edge_pct": 5, "recommended_side": "over", "hit_rate_over_l10": 0.9}
-    higher = {"prop_score": 90, "edge_pct": 3, "recommended_side": "over", "hit_rate_over_l10": 0.6}
-    ranked = sorted([lower, higher], key=props_mlb.prop_rank_key)
-    assert ranked[0] is higher
-    assert ranked[1] is lower
+def test_prop_rank_key_prefers_model_score():
+    lower_score = {
+        "prop_score": 80,
+        "actionable": True,
+        "recommended_side": "over",
+        "hit_rate_over_l5": 0.9,
+        "hit_rate_over_l10": 0.9,
+        "hit_rate_over_season": 0.85,
+        "edge_pct": 5,
+    }
+    higher_score = {
+        "prop_score": 92,
+        "actionable": True,
+        "recommended_side": "over",
+        "hit_rate_over_l5": 0.4,
+        "hit_rate_over_l10": 0.35,
+        "hit_rate_over_season": 0.3,
+        "edge_pct": 3,
+    }
+    ranked = sorted([lower_score, higher_score], key=props_mlb.prop_rank_key)
+    assert ranked[0] is higher_score
+    assert ranked[1] is lower_score
 
 
-def test_prop_rank_key_tie_break_edge_then_form():
-    same_score_a = {
+def test_prop_rank_key_ungraded_props_last():
+    graded = {"prop_score": 70, "recommended_side": "over", "hit_rate_over_l10": 0.6}
+    ungraded = {"recommended_side": "over"}
+    ranked = sorted([ungraded, graded], key=props_mlb.prop_rank_key)
+    assert ranked[0] is graded
+    assert ranked[1] is ungraded
+
+
+def test_prop_rank_key_tie_breaks_on_edge():
+    higher_edge = {
+        "prop_score": 85,
+        "edge_pct": 9,
+        "recommended_side": "over",
+        "hit_rate_over_l10": 0.8,
+    }
+    lower_edge = {
         "prop_score": 85,
         "edge_pct": 6,
         "recommended_side": "over",
         "hit_rate_over_l10": 0.8,
     }
-    same_score_b = {
-        "prop_score": 85,
-        "edge_pct": 9,
-        "recommended_side": "over",
-        "hit_rate_over_l10": 0.7,
-    }
-    ranked = sorted([same_score_a, same_score_b], key=props_mlb.prop_rank_key)
-    assert ranked[0] is same_score_b
-    assert ranked[1] is same_score_a
+    ranked = sorted([lower_edge, higher_edge], key=props_mlb.prop_rank_key)
+    assert ranked[0] is higher_edge
+    assert ranked[1] is lower_edge
 
 
 def _search_prop(**overrides):
@@ -766,6 +793,48 @@ def _search_prop(**overrides):
     return base
 
 
+def test_side_meets_hit_rate_gates_rejects_low_form():
+    ok, reason = prop_scoring.side_meets_hit_rate_gates(
+        side="over",
+        l5=0.2,
+        l10=0.25,
+        season=0.28,
+    )
+    assert ok is False
+    assert "floor" in (reason or "").lower()
+
+
+def test_side_meets_hit_rate_gates_tough_matchup_requires_stronger_history():
+    ok, _ = prop_scoring.side_meets_hit_rate_gates(
+        side="over",
+        l5=0.55,
+        l10=0.62,
+        season=0.58,
+        matchup_score=30.0,
+    )
+    assert ok is False
+    ok_strong, _ = prop_scoring.side_meets_hit_rate_gates(
+        side="over",
+        l5=0.75,
+        l10=0.8,
+        season=0.72,
+        matchup_score=30.0,
+    )
+    assert ok_strong is True
+
+
+
+def test_is_elite_prop_uses_model_score_only():
+    weak_form = {
+        "prop_score": 92,
+        "recommended_side": "over",
+        "hit_rate_over_l5": 0.2,
+        "hit_rate_over_l10": 0.25,
+        "hit_rate_over_season": 0.3,
+    }
+    assert props_mlb.is_elite_prop(weak_form)
+
+
 def test_recommended_hit_rate_uses_recommended_side():
     over = {"recommended_side": "over", "hit_rate_over_l5": 0.7, "hit_rate_over_l10": 0.65}
     under = {"recommended_side": "under", "hit_rate_under_l5": 0.8, "hit_rate_under_l10": 0.75}
@@ -777,8 +846,13 @@ def test_recommended_hit_rate_uses_recommended_side():
 
 
 def test_prop_search_sort_score_default():
-    low = _search_prop(prop_score=80)
-    high = _search_prop(prop_score=90, hit_rate_over_l10=0.5)
+    low = _search_prop(prop_score=80, hit_rate_over_l5=0.55, hit_rate_over_l10=0.6, hit_rate_over_season=0.58)
+    high = _search_prop(
+        prop_score=90,
+        hit_rate_over_l5=0.55,
+        hit_rate_over_l10=0.6,
+        hit_rate_over_season=0.58,
+    )
     ranked = sorted([low, high], key=lambda p: props_mlb.prop_search_sort_key(p, "score"))
     assert ranked[0]["prop_score"] == 90
 

@@ -43,6 +43,7 @@ from app.services.prop_scoring import (
     _season_game_log_values,
     market_label,
     prop_grade_from_score,
+    side_meets_hit_rate_gates,
 )
 from app.services.teams_hub import _mlb_player_photo
 
@@ -216,6 +217,12 @@ def _rejection_reasons(
     under_odds: int | None,
     projection: float | None,
     line: float,
+    l5_over: float | None = None,
+    l5_under: float | None = None,
+    l10_over: float | None = None,
+    l10_under: float | None = None,
+    season_over: float | None = None,
+    season_under: float | None = None,
 ) -> list[str]:
     reasons: list[str] = []
     candidates = []
@@ -235,6 +242,21 @@ def _rejection_reasons(
         reasons.append("Edge below threshold")
     if not best.get("projection_agrees"):
         reasons.append("Projection disagrees with side")
+    side = best.get("side")
+    if side:
+        l5 = l5_over if side == "over" else l5_under
+        l10 = l10_over if side == "over" else l10_under
+        season = season_over if side == "over" else season_under
+        matchup_score = (best.get("component_scores") or {}).get("matchup")
+        ok, hit_reason = side_meets_hit_rate_gates(
+            side=side,
+            l5=l5,
+            l10=l10,
+            season=season,
+            matchup_score=matchup_score,
+        )
+        if not ok and hit_reason:
+            reasons.append(hit_reason)
     if best["role_meta"].get("role_flags"):
         reasons.extend(best["role_meta"]["role_flags"])
     if best["consistency_meta"].get("volatility") == "high":
@@ -393,10 +415,28 @@ def evaluate_prop(
         and s.get("edge") is not None
         and s["edge"] >= MIN_EDGE
         and s.get("projection_agrees")
+        and side_meets_hit_rate_gates(
+            side=s["side"],
+            l5=l5_over if s["side"] == "over" else l5_under,
+            l10=l10_over if s["side"] == "over" else l10_under,
+            season=season_over if s["side"] == "over" else season_under,
+            matchup_score=(s.get("component_scores") or {}).get("matchup"),
+        )[0]
     ]
 
     rejection_reasons = _rejection_reasons(
-        over_eval, under_eval, over_odds=over_odds, under_odds=under_odds, projection=projection, line=line
+        over_eval,
+        under_eval,
+        over_odds=over_odds,
+        under_odds=under_odds,
+        projection=projection,
+        line=line,
+        l5_over=l5_over,
+        l5_under=l5_under,
+        l10_over=l10_over,
+        l10_under=l10_under,
+        season_over=season_over,
+        season_under=season_under,
     )
 
     if trap_reason:
@@ -405,7 +445,10 @@ def evaluate_prop(
 
     recommended: dict[str, Any] | None = None
     if eligible:
-        recommended = max(eligible, key=lambda s: (s["prop_score"], s.get("edge") or 0))
+        recommended = max(
+            eligible,
+            key=lambda s: (s["prop_score"], s.get("edge") or 0, s.get("model_probability") or 0),
+        )
     elif trap_reason and offered:
         recommended = max(offered, key=lambda s: s.get("prop_score", 0))
 

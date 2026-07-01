@@ -1842,6 +1842,7 @@ function renderPropExplorerList(el, props, options = {}) {
       <article class="prop-explorer-card prop-card-clickable${propVeryStrongClass(p)}" data-prop-idx="${i}" role="button" tabindex="0">
         <div class="prop-explorer-head">
           <div>
+            <span class="prop-explorer-rank" aria-label="Rank ${i + 1}">#${i + 1}</span>
             <h3 class="prop-explorer-player">${p.player}</h3>
             <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
           </div>

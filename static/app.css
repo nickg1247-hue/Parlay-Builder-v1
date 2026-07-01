@@ -2140,6 +2140,15 @@ body.slate-mlb .app-main > * {
   align-items: flex-start;
 }
 
+.prop-explorer-rank {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
 .prop-explorer-player {
   margin: 0;
   font-size: 1rem;

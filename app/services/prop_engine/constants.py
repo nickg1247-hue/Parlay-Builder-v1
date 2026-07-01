@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 SCORE_WEIGHTS: dict[str, float] = {
-    "recent_form": 0.15,
-    "matchup": 0.20,
-    "role_usage": 0.15,
-    "line_value": 0.15,
-    "market_edge": 0.15,
-    "consistency": 0.10,
+    "recent_form": 0.25,
+    "matchup": 0.18,
+    "role_usage": 0.12,
+    "line_value": 0.12,
+    "market_edge": 0.10,
+    "consistency": 0.13,
     "context": 0.10,
 }
 

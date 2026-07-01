@@ -455,12 +455,15 @@ def prop_side_hit_rates(prop: dict[str, Any]) -> tuple[float, float, float]:
     return (float(l5 or 0), float(l10 or 0), float(season or 0))
 
 
-def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float]:
-    """Sort props: highest model score first, then model probability, then edge."""
-    score = float(prop.get("prop_score") or prop.get("score") or 0)
-    prob = float(prop.get("recommended_probability") or 0)
+def prop_rank_key(prop: dict[str, Any]) -> tuple[float, float, float, float]:
+    """Best props first: highest model score, then edge, then model probability."""
+    raw = prop.get("prop_score") if prop.get("prop_score") is not None else prop.get("score")
+    ungraded = 1.0 if raw is None else 0.0
+    score = float(raw or 0)
     edge = float(prop.get("edge_pct") or 0)
-    return (-score, -prob, -edge)
+    prob = float(prop.get("recommended_probability") or 0)
+    actionable_boost = 0.01 if prop.get("actionable") else 0.0
+    return (ungraded, -(score + actionable_boost), -edge, -prob)
 
 
 RISK_FLAG_LOW = "Low Risk"

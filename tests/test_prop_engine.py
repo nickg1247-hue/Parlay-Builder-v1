@@ -79,3 +79,22 @@ def test_evaluate_prop_trap_one_sided(mock_alltime, mock_logs, _pid):
     assert result["recommended_side"] == "over"
     assert result["actionable"] is False
     assert "only Over is listed" in (result["actionable_reason"] or "")
+
+
+@patch("app.services.prop_engine.evaluate._search_player_id", return_value=592450)
+@patch("app.services.prop_engine.evaluate._season_game_log_values")
+@patch("app.services.prop_engine.evaluate._alltime_game_log_values")
+def test_evaluate_prop_rejects_low_hit_rate_despite_edge(mock_alltime, mock_logs, _pid):
+    mock_logs.return_value = tuple([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    mock_alltime.return_value = mock_logs.return_value
+    result = evaluate_prop(
+        player="Aaron Judge",
+        market_type="batter_home_runs",
+        line=0.5,
+        over_odds=+250,
+        under_odds=None,
+        season=2026,
+        opposing_pitcher_era=5.5,
+    )
+    assert result["actionable"] is False
+    assert any("l10" in (r or "").lower() for r in result.get("rejection_reasons") or [])

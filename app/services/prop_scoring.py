@@ -21,6 +21,10 @@ ALLTIME_SEASONS_BACK = 3
 MIN_ACTIONABLE_HIT_RATE = 0.60
 MIN_L5_HIT_RATE = 0.50
 MIN_SEASON_HIT_RATE = 0.50
+HARD_HIT_RATE_FLOOR = 0.35
+TOUGH_MATCHUP_SCORE = 45.0
+TOUGH_MATCHUP_MIN_L10 = 0.70
+TOUGH_MATCHUP_MIN_SEASON = 0.60
 MIN_TOP_PROP_SCORE = 65.0
 TRAP_UNOFFERED_GAP = 0.20
 TRAP_UNOFFERED_MIN = 0.70
@@ -162,6 +166,66 @@ def side_form_hit_rates(
     )
 
 
+def side_meets_hit_rate_gates(
+    *,
+    side: str,
+    l5: float | None,
+    l10: float | None,
+    season: float | None,
+    matchup_score: float | None = None,
+) -> tuple[bool, str | None]:
+    """Minimum L5/L10/season bars; tougher matchup requires stronger history."""
+    _ = side  # reserved for future side-specific rules
+    if l10 is None:
+        return False, "Not enough game history for L10 hit rate"
+
+    for label, rate in (("L5", l5), ("L10", l10), ("Season", season)):
+        if rate is not None and rate < HARD_HIT_RATE_FLOOR:
+            return False, f"{label} hit rate {rate:.0%} below {HARD_HIT_RATE_FLOOR:.0%} floor"
+
+    if l10 < MIN_ACTIONABLE_HIT_RATE:
+        return False, f"L10 {l10:.0%} below {MIN_ACTIONABLE_HIT_RATE:.0%} bar"
+    if l5 is not None and l5 < MIN_L5_HIT_RATE:
+        return False, f"L5 {l5:.0%} below recent-form minimum"
+    if season is not None and season < MIN_SEASON_HIT_RATE:
+        return False, f"Season {season:.0%} below season minimum"
+
+    if matchup_score is not None and matchup_score < TOUGH_MATCHUP_SCORE:
+        if l10 < TOUGH_MATCHUP_MIN_L10:
+            return (
+                False,
+                f"Tough matchup — L10 {l10:.0%} below {TOUGH_MATCHUP_MIN_L10:.0%} required",
+            )
+        if season is not None and season < TOUGH_MATCHUP_MIN_SEASON:
+            return (
+                False,
+                f"Tough matchup — season {season:.0%} below {TOUGH_MATCHUP_MIN_SEASON:.0%} required",
+            )
+
+    return True, None
+
+
+def hit_rate_gates_for_prop(
+    prop: dict[str, Any],
+    side: str | None = None,
+) -> tuple[bool, str | None]:
+    pick = str(side or prop.get("recommended_side") or "over").lower()
+    l5, l10, season = side_form_hit_rates(prop, pick)
+    comps = prop.get("component_scores") or {}
+    matchup = comps.get("matchup")
+    try:
+        matchup_score = float(matchup) if matchup is not None else None
+    except (TypeError, ValueError):
+        matchup_score = None
+    return side_meets_hit_rate_gates(
+        side=pick,
+        l5=l5,
+        l10=l10,
+        season=season,
+        matchup_score=matchup_score,
+    )
+
+
 def is_perfect_l5_l10_season(
     l5: float | None,
     l10: float | None,
@@ -218,6 +282,11 @@ def _side_actionable(
     prop_score: float,
     edge: float | None,
     projection_agrees: bool,
+    side: str,
+    l5: float | None,
+    l10: float | None,
+    season: float | None,
+    matchup_score: float | None = None,
 ) -> tuple[bool, str | None]:
     from app.services.prop_engine.constants import MIN_EDGE, MIN_PROP_SCORE
 
@@ -227,6 +296,15 @@ def _side_actionable(
         return False, "Edge below threshold"
     if not projection_agrees:
         return False, "Projection disagrees with side"
+    ok, reason = side_meets_hit_rate_gates(
+        side=side,
+        l5=l5,
+        l10=l10,
+        season=season,
+        matchup_score=matchup_score,
+    )
+    if not ok:
+        return False, reason
     return True, None
 
 
@@ -282,10 +360,19 @@ def expand_prop_to_side_rows(prop: dict[str, Any]) -> list[dict[str, Any]]:
             edge = side_debug.get("edge")
 
         projection_agrees = side_debug.get("projection_agrees", False)
+        comps = side_debug.get("component_scores") or {}
+        l5 = prop.get(f"hit_rate_{side}_l5")
+        l10 = prop.get(f"hit_rate_{side}_l10")
+        season = prop.get(f"hit_rate_{side}_season")
         actionable, actionable_reason = _side_actionable(
             prop_score=float(prop_score),
             edge=edge,
             projection_agrees=bool(projection_agrees),
+            side=side,
+            l5=l5,
+            l10=l10,
+            season=season,
+            matchup_score=comps.get("matchup"),
         )
 
         hit_l10 = (
@@ -560,6 +647,9 @@ def prop_form_composite_from_prop(prop: dict[str, Any]) -> float:
 def qualifies_for_top_props_list(prop: dict[str, Any]) -> bool:
     """Non-very-strong picks must clear a higher composite score bar."""
     if not prop.get("actionable"):
+        return False
+    ok, _ = hit_rate_gates_for_prop(prop)
+    if not ok:
         return False
     l5, l10, season = side_form_hit_rates(prop)
     score = prop.get("score")
