@@ -237,6 +237,12 @@ async def lifespan(app: FastAPI):
         get_runs_tracker_before(today)
     except Exception:
         pass
+    try:
+        from app.services.daily_board import ensure_today_daily_board
+
+        await asyncio.to_thread(ensure_today_daily_board)
+    except Exception as exc:
+        logger.warning("Startup daily board ensure failed: %s", exc)
     if (
         (hourly_refresh_enabled() and live_odds_enabled())
         or periodic_refresh_enabled()

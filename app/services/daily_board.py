@@ -571,6 +571,8 @@ def _try_load_cached_board(
         return None
 
     if cached.get("cache_key") == cache_key:
+        if cached.get("date") != game_date.isoformat():
+            return None
         if _board_age_seconds(cached) < BOARD_CACHE_TTL_SECONDS:
             return cached
 
@@ -605,6 +607,41 @@ def _status_footer() -> dict[str, Any]:
     }
 
 
+def board_disk_date_matches(game_date: date | None = None) -> bool:
+    """True when on-disk daily_board.json exists for the given calendar date."""
+    game_date = game_date or date.today()
+    if not DAILY_BOARD_CACHE.exists():
+        return False
+    try:
+        cached = json.loads(DAILY_BOARD_CACHE.read_text(encoding="utf-8"))
+        return cached.get("date") == game_date.isoformat()
+    except (json.JSONDecodeError, OSError):
+        return False
+
+
+def ensure_today_daily_board(*, skip_ingest: bool = True) -> dict[str, Any] | None:
+    """
+    Rebuild on-disk board when missing or for a different date (deploy/startup safety).
+
+    Skips auto-ingest by default so startup stays fast; periodic refresh still backfills history.
+    """
+    game_date = date.today()
+    if board_disk_date_matches(game_date):
+        return None
+    logger.warning(
+        "Daily board missing or stale (need %s) — rebuilding",
+        game_date.isoformat(),
+    )
+    return build_daily_board(
+        game_date=game_date,
+        use_cache=False,
+        refresh=True,
+        skip_totals=True,
+        skip_ingest=skip_ingest,
+        odds_force_refresh=False,
+    )
+
+
 def build_daily_board(
     game_date: date | None = None,
     use_cache: bool = False,
@@ -614,6 +651,7 @@ def build_daily_board(
     max_parlays: int = DEFAULT_MAX_PARLAYS,
     odds_force_refresh: bool | None = None,
     live_test: bool = False,
+    skip_ingest: bool = False,
 ) -> dict[str, Any]:
     game_date = game_date or date.today()
     # Board "Run live" bypass: force API + full totals board for main-site game pages.
@@ -652,9 +690,10 @@ def build_daily_board(
     ingest_meta: dict[str, Any] | None = None
     odds_meta: dict[str, Any] | None = None
     if not use_cache:
-        ingest_meta = ensure_mlb_ingest_fresh(game_date, use_cache=use_cache)
-        if ingest_meta.get("message"):
-            warnings.append(str(ingest_meta["message"]))
+        if not skip_ingest:
+            ingest_meta = ensure_mlb_ingest_fresh(game_date, use_cache=use_cache)
+            if ingest_meta.get("message"):
+                warnings.append(str(ingest_meta["message"]))
         odds_meta = ensure_odds_snapshot(game_date, force_refresh=force_odds)
         if odds_meta.get("message"):
             warnings.append(str(odds_meta["message"]))

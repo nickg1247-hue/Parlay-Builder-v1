@@ -20,6 +20,12 @@ fi
 PORT="${PORT:-8000}"
 BASE="${DEPLOY_URL:-http://127.0.0.1:${PORT}}"
 
+echo "==> rebuild daily board if stale (fast path, no ingest)"
+$PY - <<'PY' || echo "WARN: daily board rebuild failed — check logs"
+from app.services.daily_board import ensure_today_daily_board
+ensure_today_daily_board(skip_ingest=True)
+PY
+
 echo "==> restart service (if systemd unit exists)"
 if systemctl is-enabled parlay-builder >/dev/null 2>&1; then
   sudo systemctl restart parlay-builder

@@ -40,6 +40,37 @@ def _write_morning_board(path, *, age_seconds: float = 60) -> None:
 
 
 @patch("app.services.daily_board._build_slate")
+def test_wrong_date_on_disk_never_served(mock_slate, isolated_board):
+    """Stale board file for another date must not satisfy today's cache_key TTL hit."""
+    wrong_date = date(2025, 8, 15)
+    generated = datetime.now(timezone.utc)
+    payload = {
+        "generated_at": generated.isoformat(),
+        "cache_key": f"{wrong_date.isoformat()}_live_no_totals_edge0.1_parlays3",
+        "date": wrong_date.isoformat(),
+        "mode": "demo",
+        "skip_totals": True,
+        "odds_source": "historical_cache",
+        "slate": [{"game_id": "stale"}],
+        "top_parlays": [],
+        "warnings": [],
+    }
+    isolated_board.write_text(json.dumps(payload), encoding="utf-8")
+    mock_slate.return_value = __import__("pandas").DataFrame()
+
+    board = db.build_daily_board(
+        game_date=GAME_DATE,
+        use_cache=False,
+        refresh=False,
+        skip_totals=True,
+        skip_ingest=True,
+    )
+
+    assert board.get("date") == GAME_DATE.isoformat()
+    mock_slate.assert_called()
+
+
+@patch("app.services.daily_board._build_slate")
 def test_morning_board_fallback_skip_totals_true(mock_slate, isolated_board):
     _write_morning_board(isolated_board)
     mock_slate.side_effect = AssertionError("should not rebuild")

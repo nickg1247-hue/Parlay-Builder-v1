@@ -13,7 +13,7 @@ from app.config import PROJECT_ROOT
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.odds.live_odds import live_odds_enabled
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
-from app.services.daily_board import build_daily_board
+from app.services.daily_board import board_disk_date_matches, build_daily_board
 from app.services.mlb_data_freshness import ensure_mlb_ingest_fresh, ensure_odds_snapshot
 from app.services.schedule_mlb import get_mlb_schedule
 
@@ -112,15 +112,21 @@ def run_mlb_periodic_refresh(game_date: date | None = None) -> int:
         _write_status(ok=True, game_date=game_date, skipped="disabled")
         return 0
 
+    board_stale = not board_disk_date_matches(game_date)
     since = _seconds_since_last_run()
     interval = periodic_refresh_interval_seconds()
-    if since is not None and since < interval:
+    if not board_stale and since is not None and since < interval:
         _write_status(
             ok=True,
             game_date=game_date,
             skipped=f"recent_run_{int(since)}s",
         )
         return 0
+    if board_stale:
+        logger.warning(
+            "MLB periodic refresh: on-disk board date mismatch — forcing rebuild for %s",
+            game_date.isoformat(),
+        )
 
     schedule = get_mlb_schedule(game_date)
     if not (schedule.get("games") or []):
