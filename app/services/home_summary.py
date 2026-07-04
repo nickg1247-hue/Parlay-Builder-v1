@@ -12,6 +12,7 @@ from app.odds.odds_repository import get_today_snapshot
 from app.services.bet_context import enrich_ml_singles, form_composite_score
 from app.services.prop_scoring import prop_form_average_from_prop
 from app.services.daily_board import DAILY_BOARD_CACHE, _top_form_singles
+from app.services.ufc_home_summary import get_ufc_home_chip
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +166,7 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
         "odds_fetched_at": odds_snap.get("fetched_at"),
         "odds_source": board.get("odds_source") if board else None,
         "message": "Run morning refresh or board Run live to populate picks.",
+        "ufc_card": get_ufc_home_chip(),
     }
 
     if board is None or board.get("date") != game_date.isoformat():
@@ -201,4 +203,5 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
         "odds_fetched_at": odds_snap.get("fetched_at"),
         "odds_source": board.get("odds_source"),
         "message": None,
+        "ufc_card": get_ufc_home_chip(),
     }

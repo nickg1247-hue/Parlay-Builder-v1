@@ -405,12 +405,13 @@
     const nba = scoreCounts?.nba ?? 0;
 
     const cfb = scoreCounts?.cfb ?? 0;
+    const ufc = scoreCounts?.ufc ?? 0;
 
     const gamesToday = summary?.board_available
 
-      ? summary.games_on_slate ?? mlb + nba + cfb
+      ? summary.games_on_slate ?? mlb + nba + cfb + ufc
 
-      : mlb + nba + cfb;
+      : mlb + nba + cfb + ufc;
 
     const evCount = summary?.board_available ? summary.plus_ev_singles ?? 0 : "—";
 

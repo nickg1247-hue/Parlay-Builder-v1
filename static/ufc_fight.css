@@ -1,0 +1,261 @@
+/* UFC fight page — bettor layout */
+
+.ufc-fight-page .nav-back {
+  margin-bottom: 0.75rem;
+}
+
+.ufc-fight-page .app-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 1.75rem 0 0.75rem;
+}
+
+/* ── Fight header (matches MLB game broadcast header) ─── */
+.ufc-fight-hero {
+  margin-bottom: 1rem;
+}
+
+.ufc-fight-hero .matchup-header {
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.ufc-fight-event-meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ufc-fight-hero .ufc-fighter-portrait {
+  width: 6.5rem;
+  height: 6.5rem;
+}
+
+/* ── Preview stats row ─────────────────────────────────── */
+.ufc-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ufc-preview-col {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem 0.85rem;
+}
+
+.ufc-preview-col.away {
+  text-align: left;
+}
+
+.ufc-preview-col.home {
+  text-align: right;
+}
+
+.ufc-preview-pick {
+  text-align: center;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(160deg, rgba(124, 58, 237, 0.18), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 0.75rem;
+  min-width: 9.5rem;
+}
+
+.ufc-preview-pick-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 0.35rem;
+}
+
+.ufc-preview-pick-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.ufc-preview-pick-pct {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  margin-top: 0.25rem;
+}
+
+.ufc-preview-rounds {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ufc-preview-rounds .ufc-stat-k {
+  margin-bottom: 0.2rem;
+}
+
+.ufc-preview-rounds .ufc-stat-v {
+  font-size: 1.1rem;
+}
+
+.ufc-stat-line {
+  margin-bottom: 0.65rem;
+}
+
+.ufc-stat-line:last-child {
+  margin-bottom: 0;
+}
+
+.ufc-stat-k {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  margin-bottom: 0.15rem;
+}
+
+.ufc-stat-v {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+/* ── Fighter detail cards ──────────────────────────────── */
+.ufc-fighter-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .ufc-fighter-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .ufc-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ufc-preview-pick {
+    order: -1;
+  }
+}
+
+.ufc-fighter-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+}
+
+.ufc-fighter-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ufc-fighter-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ufc-fighter-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.ufc-fighter-card dt {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ufc-fighter-card dd {
+  margin: 0;
+  font-weight: 600;
+  color: #f9fafb;
+  text-align: right;
+}
+
+.ufc-card-meta {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.75rem;
+}
+
+/* ── Bets / leans ──────────────────────────────────────── */
+.ufc-lean-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+}
+
+.ufc-lean-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ufc-lean-row:last-child {
+  border-bottom: none;
+}
+
+.ufc-lean-row strong {
+  color: #fff;
+}
+
+.ufc-lean-tag {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.25);
+  color: #ddd6fe;
+  margin-left: 0.35rem;
+}
+
+.ufc-card-fights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ufc-card-fights-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ufc-card-fights-list a {
+  color: #c4b5fd;
+  text-decoration: none;
+}
+
+.ufc-card-fights-list a:hover {
+  text-decoration: underline;
+}
+
+.ufc-fight-disclaimer {
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+}

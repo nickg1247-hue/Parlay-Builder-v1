@@ -6,20 +6,22 @@ async function bootPerformancePage() {
   const picksEl = document.getElementById("perf-picks");
   const daysSelect = document.getElementById("perf-days");
   const strengthSelect = document.getElementById("perf-strength");
+  const mlSportSelect = document.getElementById("perf-ml-sport");
 
   async function load() {
     const days = Number(daysSelect?.value || 30);
     const strength = strengthSelect?.value || "";
+    const mlSport = mlSportSelect?.value || "mlb";
     const qs = new URLSearchParams({ limit: "50", days: String(days) });
     if (strength) qs.set("line_strength", strength);
 
     try {
       const [mlClv, summary, picksData] = await Promise.all([
-        fetchJSON(`/api/clv/summary?days=${days}&sport=mlb`),
+        fetchJSON(`/api/clv/summary?days=${days}&sport=${encodeURIComponent(mlSport)}`),
         fetchJSON(`/api/performance/summary?days=${days}`),
         fetchJSON(`/api/performance/picks?${qs}`),
       ]);
-      renderMlClv(mlClvEl, mlClv, days);
+      renderMlClv(mlClvEl, mlClv, days, mlSport);
       renderSummary(summaryEl, summary, days);
       renderBuckets(bucketsEl, summary.prop_tracker);
       renderClv(clvEl, summary.clv);
@@ -39,6 +41,7 @@ async function bootPerformancePage() {
 
   daysSelect?.addEventListener("change", load);
   strengthSelect?.addEventListener("change", load);
+  mlSportSelect?.addEventListener("change", load);
   await load();
 }
 
@@ -47,10 +50,11 @@ function fmtPct(v) {
   return `${Math.round(v * 100)}%`;
 }
 
-function renderMlClv(el, clv, days) {
+function renderMlClv(el, clv, days, sport = "mlb") {
   if (!el) return;
+  const sportLabel = sport === "ufc" ? "UFC" : "MLB";
   if (!clv || !clv.picks_logged) {
-    el.innerHTML = `<p class="text-muted">No actionable ML singles logged in the last ${days} days. Run the daily board live refresh.</p>`;
+    el.innerHTML = `<p class="text-muted">No actionable ${sportLabel} ML singles logged in the last ${days} days. Run the ${sportLabel === "UFC" ? "UFC board live refresh" : "daily board live refresh"}.</p>`;
     return;
   }
   const mean = clv.mean_clv_implied_prob != null ? `${(clv.mean_clv_implied_prob * 100).toFixed(2)} pts` : "—";

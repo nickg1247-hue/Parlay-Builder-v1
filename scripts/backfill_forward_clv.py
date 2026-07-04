@@ -15,6 +15,8 @@ from app.services.forward_clv import backfill_closing_odds as backfill_mlb_clv
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
 from app.services.nba_forward_clv import backfill_closing_odds as backfill_nba_clv
 from app.services.nba_forward_clv import summarize_clv as summarize_nba_clv
+from app.services.ufc_forward_clv import backfill_closing_odds as backfill_ufc_clv
+from app.services.ufc_forward_clv import summarize_clv as summarize_ufc_clv
 from app.services.prop_pick_tracker import (
     backfill_prop_results,
     summarize_prop_tracker,
@@ -25,7 +27,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Backfill closing lines for forward CLV log")
     parser.add_argument(
         "--sport",
-        choices=("mlb", "nba"),
+        choices=("mlb", "nba", "ufc"),
         default="mlb",
         help="Sport log to backfill (default: mlb)",
     )
@@ -38,7 +40,7 @@ def main() -> None:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Compute updates without writing new log rows (NBA only)",
+        help="Compute updates without writing new log rows (NBA/UFC only)",
     )
     parser.add_argument(
         "--props",
@@ -51,6 +53,9 @@ def main() -> None:
     if args.sport == "nba":
         result = backfill_nba_clv(game_date, dry_run=args.dry_run)
         summary = summarize_nba_clv(days=30)
+    elif args.sport == "ufc":
+        result = backfill_ufc_clv(game_date, dry_run=args.dry_run)
+        summary = summarize_ufc_clv(days=30)
     else:
         if args.dry_run:
             print("Note: --dry-run applies to NBA only; MLB backfill always writes.")

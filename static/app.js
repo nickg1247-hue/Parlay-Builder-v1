@@ -99,7 +99,7 @@ function gameDetailHref(game, options = {}) {
   const base = `/${sport}/game/${game.game_id}`;
   const slateDate = options.gameDate || game.slate_date;
   const params = new URLSearchParams();
-  if ((sport === "nba" || sport === "cfb") && slateDate) {
+  if ((sport === "nba" || sport === "cfb" || sport === "ufc") && slateDate) {
     params.set("date", slateDate);
   }
   if (options.useCache) {
@@ -113,6 +113,11 @@ function logoForGame(game, side) {
   const isAway = side === "away";
   const direct = isAway ? game.away_logo_url : game.home_logo_url;
   if (direct) return direct;
+  if (gameSport(game) === "ufc") {
+    const headshot = isAway ? game.away_headshot_url : game.home_headshot_url;
+    if (headshot) return headshot;
+    return "";
+  }
   const teamId = isAway ? game.away_team_id : game.home_team_id;
   const abbr = isAway ? game.away_team_abbr : game.home_team_abbr;
   return teamLogoUrl(teamId, gameSport(game), abbr);
@@ -636,7 +641,18 @@ function teamPrimaryColor(teamName, colors) {
   return map[teamName] || "#2f3336";
 }
 
+/** UFC corner colors — away=blue, home=red (no per-fighter branding). */
+const UFC_AWAY_CORNER_COLOR = "#2563eb";
+const UFC_HOME_CORNER_COLOR = "#dc2626";
+
+function ufcCornerColorStyle() {
+  return `--away-color: ${UFC_AWAY_CORNER_COLOR}; --home-color: ${UFC_HOME_CORNER_COLOR};`;
+}
+
 function gameCardColorStyle(game, colors) {
+  if (gameSport(game) === "ufc") {
+    return ufcCornerColorStyle();
+  }
   const away =
     game.away_color ||
     game.away_team_color ||
@@ -846,6 +862,8 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-cfb-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-ufc-fights":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8 8l8 8"/><path d="M16 8l-8 8"/></svg>',
   "no-odds":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 10h3v4H7zM14 10h3v4h-3zM7 5V3M17 5V3"/></svg>',
   "no-board":
@@ -880,6 +898,11 @@ function renderEmptyState(el, kind, extraHtml = "") {
       body: "No FBS games in the next week. Try a Saturday during the season.",
       cta: '<a href="/cfb">Refresh slate</a>',
     },
+    "no-ufc-fights": {
+      title: "No fights on the card",
+      body: "No UFC event in the next 30 days. Try a known card date or check back later.",
+      cta: '<a href="/ufc">Refresh slate</a>',
+    },
     "no-odds": {
       title: "Lines not loaded yet",
       body: "Lines may appear after the morning refresh or when live odds are enabled.",
@@ -909,7 +932,12 @@ function renderHomeHeroChips(el, { summary, scoreCounts, status }) {
   if (!el) return;
   const mlb = scoreCounts?.mlb ?? "—";
   const nba = scoreCounts?.nba ?? "—";
-  const gamesChip = `<span class="hero-chip"><span class="hero-chip-dot" aria-hidden="true"></span>${mlb} MLB · ${nba} NBA</span>`;
+  const ufcCard = summary?.ufc_card;
+  let gamesChip = `<span class="hero-chip"><span class="hero-chip-dot" aria-hidden="true"></span>${mlb} MLB · ${nba} NBA</span>`;
+  if (ufcCard?.available) {
+    const days = ufcCard.days_ahead > 0 ? ` (+${ufcCard.days_ahead}d)` : "";
+    gamesChip += `<a class="hero-chip hero-chip-ufc" href="${ufcCard.href || "/ufc"}"><span class="hero-chip-dot hero-chip-dot-ufc" aria-hidden="true"></span>UFC ${ufcCard.fight_count} fights${days}</a>`;
+  }
 
   let modelChip;
   if (summary?.board_available) {
@@ -1031,9 +1059,29 @@ function initLiveTicker(elementId, options = {}) {
   };
 }
 
+function resolveBoardRow(game, boardRow) {
+  if (boardRow && (boardRow.model_prob_home != null || boardRow.market_prob_home != null)) {
+    return boardRow;
+  }
+  if (!game) return boardRow;
+  if (game.model_prob_home != null || game.market_prob_home != null) {
+    return {
+      model_prob_home: game.model_prob_home,
+      model_prob_away: game.model_prob_away,
+      market_prob_home: game.market_prob_home,
+      market_prob_away: game.market_prob_away,
+      model_pick: game.model_pick,
+      model_pick_side: game.model_pick_side,
+      ml_confidence: game.ml_confidence,
+      model_confidence: game.model_confidence,
+    };
+  }
+  return boardRow;
+}
+
 function gameCardHtml(game, options = {}) {
   const showScores = shouldShowScores(game);
-  const boardRow = options.boardRow || null;
+  const boardRow = resolveBoardRow(game, options.boardRow || null);
   const lineMove = options.lineMove || null;
   const colors = options.colors || _teamColors;
   const lean = modelLeanLabel(boardRow, { sport: gameSport(game) });
@@ -1059,6 +1107,14 @@ function gameCardHtml(game, options = {}) {
     typeof winProbBandHtml === "function"
       ? winProbBandHtml(boardRow, game, colors)
       : `<div class="game-card-color-band" aria-hidden="true"></div>`;
+  const matchupSep = gameSport(game) === "ufc" ? "vs" : "@";
+  const isUfc = gameSport(game) === "ufc";
+  const awayLogoHtml = isUfc
+    ? ufcFighterPortraitHtml(game, "away", { size: 48, compact: true })
+    : `<img class="team-logo" src="${logoForGame(game, "away")}" alt="" width="40" height="40" loading="lazy">`;
+  const homeLogoHtml = isUfc
+    ? ufcFighterPortraitHtml(game, "home", { size: 48, compact: true })
+    : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="" width="40" height="40" loading="lazy">`;
   return `
     ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
@@ -1071,16 +1127,16 @@ function gameCardHtml(game, options = {}) {
     ${leanHtml}
     <div class="game-card-matchup">
       <div class="team-side away">
-        <img class="team-logo" src="${logoForGame(game, "away")}" alt="" width="40" height="40" loading="lazy">
+        ${awayLogoHtml}
         <div class="team-name-block">
           <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
           ${teamRecordHtml(game.away_record)}
         </div>
         ${showScores ? `<span class="team-score">${game.away_score ?? 0}</span>` : ""}
       </div>
-      <span class="game-card-at">@</span>
+      <span class="game-card-at">${matchupSep}</span>
       <div class="team-side home">
-        <img class="team-logo" src="${logoForGame(game, "home")}" alt="" width="40" height="40" loading="lazy">
+        ${homeLogoHtml}
         <div class="team-name-block">
           <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
           ${teamRecordHtml(game.home_record)}
@@ -1368,9 +1424,10 @@ function renderTodayGlance(el, summary, scoreCounts, extras = {}) {
   const mlb = scoreCounts?.mlb ?? "—";
   const nba = scoreCounts?.nba ?? "—";
   const cfb = scoreCounts?.cfb ?? 0;
+  const ufc = scoreCounts?.ufc ?? 0;
   const gamesToday =
     typeof mlb === "number" && typeof nba === "number"
-      ? mlb + nba + (typeof cfb === "number" ? cfb : 0)
+      ? mlb + nba + (typeof cfb === "number" ? cfb : 0) + (typeof ufc === "number" ? ufc : 0)
       : "—";
 
   if (document.body.classList.contains("home-v2")) {
@@ -2277,10 +2334,10 @@ function renderWatchedGamesSection(el, games, options = {}) {
   renderGameList(inner, watched, options);
 }
 
-function renderMatchupHeader(el, game, boardRow) {
+function renderMatchupHeader(el, game, boardRow, options = {}) {
   if (!el || !game) return;
   applyGamePageWash(game);
-  el.innerHTML = matchupHeaderHtml(game, boardRow);
+  el.innerHTML = matchupHeaderHtml(game, boardRow, options);
   if (typeof enhanceBroadcastHeader === "function") {
     enhanceBroadcastHeader(el, game, boardRow || null);
   }
@@ -2294,8 +2351,27 @@ function renderMatchupHeader(el, game, boardRow) {
   }
 }
 
-function matchupHeaderHtml(game, boardRow) {
+function ufcFighterPortraitHtml(game, side, options = {}) {
+  const isAway = side === "away";
+  const name = isAway ? game.away_team : game.home_team;
+  const headshot = isAway ? game.away_headshot_url : game.home_headshot_url;
+  const flag = isAway ? game.away_flag_url : game.home_flag_url;
+  const country = isAway ? game.away_country : game.home_country;
+  const size = options.size || 88;
+  const cls = options.compact ? "ufc-fighter-portrait ufc-fighter-portrait-compact" : "ufc-fighter-portrait";
+  const flagBg =
+    !options.noFlag && flag
+      ? `<div class="ufc-flag-decal" style="background-image:url('${flag}')" title="${country || ""}" aria-hidden="true"></div>`
+      : "";
+  const img = headshot
+    ? `<img class="ufc-fighter-headshot" src="${headshot}" alt="${name}" width="${size}" height="${size}" loading="lazy" onerror="this.classList.add('is-fallback')">`
+    : `<div class="ufc-fighter-headshot ufc-fighter-headshot-fallback" aria-hidden="true"></div>`;
+  return `<div class="${cls}">${flagBg}${img}</div>`;
+}
+
+function matchupHeaderHtml(game, boardRow, options = {}) {
   const showScores = shouldShowScores(game);
+  const resolvedRow = resolveBoardRow(game, boardRow);
   const centerText = isGameLive(game.status) && game.period_label
     ? game.period_label
     : formatLocalTime(game.start_time_utc);
@@ -2305,18 +2381,31 @@ function matchupHeaderHtml(game, boardRow) {
     : "";
   const bandHtml =
     typeof winProbBandHtml === "function"
-      ? winProbBandHtml(boardRow, game, _teamColors, "matchup-band")
+      ? winProbBandHtml(resolvedRow, game, _teamColors, "matchup-band")
       : `<div class="game-card-color-band matchup-band" aria-hidden="true"></div>`;
+  const isUfc = gameSport(game) === "ufc";
+  const portraitOpts = {
+    size: options.portraitSize,
+    noFlag: options.noFlag,
+    compact: options.compactPortrait,
+  };
+  const awayVisual = isUfc
+    ? ufcFighterPortraitHtml(game, "away", portraitOpts)
+    : `<img class="team-logo" src="${logoForGame(game, "away")}" alt="${game.away_team}" width="56" height="56">`;
+  const homeVisual = isUfc
+    ? ufcFighterPortraitHtml(game, "home", portraitOpts)
+    : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="${game.home_team}" width="56" height="56">`;
   return `
-    <div class="matchup-header-wrap" style="${gameCardColorStyle(game)}">
+    <div class="matchup-header-wrap ${isUfc ? "matchup-header-ufc" : ""}" style="${gameCardColorStyle(game)}">
     ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
     ${seriesHtml}
     <div class="matchup-grid">
       <div class="matchup-team">
-        <img class="team-logo" src="${logoForGame(game, "away")}" alt="${game.away_team}" width="56" height="56">
+        ${awayVisual}
         <h2>${game.away_team}</h2>
         ${teamRecordHtml(game.away_record)}
+        ${isUfc && game.away_country ? `<p class="ufc-fighter-country">${game.away_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       <div class="matchup-center">
@@ -2324,9 +2413,10 @@ function matchupHeaderHtml(game, boardRow) {
         <p class="matchup-time">${centerText}</p>
       </div>
       <div class="matchup-team">
-        <img class="team-logo" src="${logoForGame(game, "home")}" alt="${game.home_team}" width="56" height="56">
+        ${homeVisual}
         <h2>${game.home_team}</h2>
         ${teamRecordHtml(game.home_record)}
+        ${isUfc && game.home_country ? `<p class="ufc-fighter-country">${game.home_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}
       </div>
     </div>
@@ -2492,6 +2582,7 @@ function scoreCountsFromScores(scores) {
       mlb: (scores?.games || []).filter((g) => g.sport === "mlb").length,
       nba: (scores?.games || []).filter((g) => g.sport === "nba").length,
       cfb: (scores?.games || []).filter((g) => g.sport === "cfb").length,
+      ufc: (scores?.games || []).filter((g) => g.sport === "ufc").length,
     }
   );
 }
@@ -2743,6 +2834,9 @@ function sportPillIsActive(href, path) {
   if (href === "/cfb") {
     return path === "/cfb" || (path.startsWith("/cfb/") && !path.startsWith("/cfb/board"));
   }
+  if (href === "/ufc") {
+    return path === "/ufc" || (path.startsWith("/ufc/") && !path.startsWith("/ufc/board"));
+  }
   if (href === "/mlb/props") {
     return path === "/mlb/props" || path.startsWith("/mlb/props/");
   }
@@ -2822,6 +2916,8 @@ function sportPillIcon(sport) {
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5v17"/><path d="M5.5 6.5c3 2 3 9 0 11"/><path d="M18.5 6.5c-3 2-3 9 0 11"/></svg>',
     cfb:
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
+    ufc:
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 8l8 8"/><path d="M16 8l-8 8"/></svg>',
     nfl:
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
     nhl:
@@ -2841,6 +2937,7 @@ function renderSportPills(container, path) {
     { href: "/mlb", label: "MLB", sport: "mlb" },
     { href: "/nba", label: "NBA", sport: "nba" },
     { href: "/cfb", label: "CFB", sport: "cfb" },
+    { href: "/ufc", label: "UFC", sport: "ufc" },
     { href: "/mlb/props", label: "Props" },
     { disabled: true, label: "NFL", sport: "nfl", title: "Coming soon" },
     { disabled: true, label: "NHL", sport: "nhl", title: "Coming soon" },

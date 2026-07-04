@@ -1,14 +1,10 @@
 {
-  "ran_at": "2026-06-21T01:47:59.445011+00:00",
+  "ran_at": "2026-07-04T11:18:59.838821+00:00",
   "ok": true,
-  "date": "2026-06-20",
-  "skipped": null,
+  "date": "2026-07-04",
+  "skipped": "recent_run_60s",
   "error": null,
-  "backfill": {
-    "updated": 217,
-    "pending": 0,
-    "dnp": 77
-  },
-  "props_settled": 550,
-  "overall_hit_rate": 0.6018
+  "backfill": null,
+  "props_settled": null,
+  "overall_hit_rate": null
 }

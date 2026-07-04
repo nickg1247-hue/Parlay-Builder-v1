@@ -1,59 +1,6 @@
 {
   "date": "2026-06-19",
-  "games": [
-    {
-      "game_id": "824990",
-      "home_team": "Athletics",
-      "away_team": "Los Angeles Angels",
-      "home_team_id": 133,
-      "away_team_id": 108,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/133.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/108.svg",
-      "start_time_utc": "2026-06-20T01:40:00Z",
-      "status": "Live",
-      "home_score": 5,
-      "away_score": 11
-    },
-    {
-      "game_id": "825069",
-      "home_team": "Arizona Diamondbacks",
-      "away_team": "Minnesota Twins",
-      "home_team_id": 109,
-      "away_team_id": 142,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/109.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/142.svg",
-      "start_time_utc": "2026-06-20T01:45:00Z",
-      "status": "Live",
-      "home_score": 6,
-      "away_score": 3
-    },
-    {
-      "game_id": "823936",
-      "home_team": "Los Angeles Dodgers",
-      "away_team": "Baltimore Orioles",
-      "home_team_id": 119,
-      "away_team_id": 110,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/119.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/110.svg",
-      "start_time_utc": "2026-06-20T02:10:00Z",
-      "status": "Live",
-      "home_score": 3,
-      "away_score": 3
-    },
-    {
-      "game_id": "823124",
-      "home_team": "Seattle Mariners",
-      "away_team": "Boston Red Sox",
-      "home_team_id": 136,
-      "away_team_id": 111,
-      "home_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/136.svg",
-      "away_logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/111.svg",
-      "start_time_utc": "2026-06-20T02:10:00Z",
-      "status": "Live",
-      "home_score": 0,
-      "away_score": 5
-    }
-  ],
-  "games_count": 4,
-  "cached_at": "2026-06-20T03:54:32.319553+00:00"
+  "games": [],
+  "games_count": 0,
+  "cached_at": "2026-06-21T05:10:26.740312+00:00"
 }

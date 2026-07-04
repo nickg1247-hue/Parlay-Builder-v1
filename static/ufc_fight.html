@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
+  <title>UFC Fight — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+  <link rel="stylesheet" href="/static/ufc_fight.css?v=20260725">
+</head>
+<body class="ntg-shell home-v2 game-page-bg ufc-fight-page" data-sport="ufc">
+  <div class="game-page-wash" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+    <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
+
+    <main class="app-main dash-main">
+      <p class="nav-back"><a href="/ufc">← UFC slate</a> · <a href="/ufc/board">Board</a></p>
+
+      <div id="game-loading" class="empty-state">Loading fight…</div>
+      <div id="game-error" class="error-state hidden"></div>
+
+      <div id="game-content" class="hidden">
+        <section id="ufc-fight-hero" class="ufc-fight-hero" aria-label="Fight matchup">
+          <header class="matchup-header broadcast-header" id="ufc-matchup-header"></header>
+        </section>
+
+        <p class="app-section-title">Fight outlook</p>
+        <div id="ufc-preview-grid" class="ufc-preview-grid"></div>
+
+        <p class="app-section-title">Fighter snapshot</p>
+        <p id="ufc-card-meta" class="ufc-card-meta hidden"></p>
+        <div id="fighter-stats" class="ufc-fighter-cards"></div>
+
+        <p class="app-section-title">Betting angles</p>
+        <div id="fight-bets" class="ufc-lean-panel"></div>
+
+        <details class="feature-table-wrap" id="card-fights-wrap">
+          <summary class="app-section-title">More on this card</summary>
+          <ul id="card-fights" class="ufc-card-fights-list"></ul>
+        </details>
+
+        <p class="ufc-fight-disclaimer" id="game-disclaimer">
+          For entertainment only. Bet responsibly.
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/design.js?v=20260725"></script>
+  <script src="/static/ufc_fight.js?v=20260725"></script>
+</body>
+</html>

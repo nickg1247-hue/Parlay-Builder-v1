@@ -12,6 +12,7 @@
     mlb: "#2563eb",
     nba: "#ea580c",
     cfb: "#dc2626",
+    ufc: "#7c3aed",
     nfl: "#059669",
     nhl: "#0284c7",
   };
@@ -180,6 +181,9 @@
   }
 
   function resolveTeamColors(game, colors) {
+    if (game && (game.sport === "ufc" || String(game.sport || "").toLowerCase() === "ufc")) {
+      return { away: "#2563eb", home: "#dc2626" };
+    }
     const map = colors || {};
     return {
       away:
@@ -196,19 +200,29 @@
   }
 
   function winProbPcts(boardRow) {
-    if (!boardRow || boardRow.model_prob_home == null) return null;
-    const homePct = Math.round(Number(boardRow.model_prob_home) * 100);
+    if (!boardRow) return null;
+    let homeRaw = boardRow.model_prob_home;
+    if (homeRaw == null && boardRow.market_prob_home != null) {
+      homeRaw = boardRow.market_prob_home;
+    }
+    if (homeRaw == null) return null;
+    const homePct = Math.round(Number(homeRaw) * 100);
     return { homePct, awayPct: 100 - homePct, stale: false };
   }
 
   /** Top color band sized by each team's model win % (replaces separate prob slider). */
   function winProbBandHtml(boardRow, game, colors, extraClass) {
-    const pcts = winProbPcts(boardRow);
+    let pcts = winProbPcts(boardRow);
+    const isUfc = game && (game.sport === "ufc" || String(game.sport || "").toLowerCase() === "ufc");
+    if (!pcts && isUfc) {
+      pcts = { homePct: 50, awayPct: 50, stale: false };
+    }
     const { away: awayColor, home: homeColor } = resolveTeamColors(game, colors);
     const bandClass = [
       "game-card-color-band",
       pcts ? "win-prob-band" : "",
       pcts && pcts.stale ? "win-prob-band-stale" : "",
+      isUfc ? "win-prob-band-ufc" : "",
       extraClass || "",
     ]
       .filter(Boolean)
@@ -216,7 +230,7 @@
     const ariaHidden = pcts ? "" : ' aria-hidden="true"';
 
     if (!pcts) {
-      return `<div class="${bandClass}"${ariaHidden}></div>`;
+      return `<div class="${bandClass}"${ariaHidden} style="--away-color:${awayColor};--home-color:${homeColor};"></div>`;
     }
 
     const awayShort = (game.away_team || "Away").split(" ").pop();

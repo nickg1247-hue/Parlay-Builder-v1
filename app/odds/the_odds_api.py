@@ -16,6 +16,7 @@ ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 SPORT_MLB = "baseball_mlb"
 SPORT_NBA = "basketball_nba"
 SPORT_CFB = "americanfootball_ncaaf"
+SPORT_UFC = "mma_mixed_martial_arts"
 MARKET_H2H = "h2h"
 MARKET_TOTALS = "totals"
 MARKET_SPREADS = "spreads"
@@ -228,6 +229,22 @@ def fetch_live_cfb_odds(
     if include_totals:
         markets.append(MARKET_TOTALS)
     return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_CFB)
+
+
+def fetch_live_ufc_odds(
+    api_key: str | None = None,
+    regions: str = "us",
+    *,
+    include_totals: bool = False,
+) -> list[dict[str, Any]] | None:
+    """Live UFC/MMA odds — h2h (~1 credit); add totals for round O/U when requested."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    markets = MARKET_H2H if not include_totals else f"{MARKET_H2H},{MARKET_TOTALS}"
+    return _fetch_live_odds(key, markets, regions, sport=SPORT_UFC)
 
 
 def fetch_historical_mlb_odds(

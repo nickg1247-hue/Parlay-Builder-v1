@@ -70,13 +70,6 @@
       "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642528/headshot/silo/current"
     },
     {
-      "id": "691783",
-      "name": "Jordan Lawlar",
-      "position": "LF",
-      "jersey": "10",
-      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691783/headshot/silo/current"
-    },
-    {
       "id": "678489",
       "name": "Jorge Barrosa",
       "position": "CF",
@@ -126,13 +119,6 @@
       "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/518876/headshot/silo/current"
     },
     {
-      "id": "647336",
-      "name": "Michael Soroka",
-      "position": "P",
-      "jersey": "34",
-      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/647336/headshot/silo/current"
-    },
-    {
       "id": "571448",
       "name": "Nolan Arenado",
       "position": "3B",
@@ -154,6 +140,13 @@
       "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/656976/headshot/silo/current"
     },
     {
+      "id": "691769",
+      "name": "Philip Abner",
+      "position": "P",
+      "jersey": "50",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691769/headshot/silo/current"
+    },
+    {
       "id": "657044",
       "name": "Ryan Thompson",
       "position": "P",
@@ -166,6 +159,13 @@
       "position": "P",
       "jersey": "45",
       "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/664199/headshot/silo/current"
+    },
+    {
+      "id": "694374",
+      "name": "Tim Tawa",
+      "position": "LF",
+      "jersey": "13",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694374/headshot/silo/current"
     },
     {
       "id": "694371",
@@ -216,13 +216,6 @@
           "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/700270/headshot/silo/current"
         },
         {
-          "id": "647336",
-          "name": "Michael Soroka",
-          "position": "P",
-          "jersey": "34",
-          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/647336/headshot/silo/current"
-        },
-        {
           "id": "656464",
           "name": "Kevin Ginkel",
           "position": "P",
@@ -249,6 +242,13 @@
           "position": "P",
           "jersey": "45",
           "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/664199/headshot/silo/current"
+        },
+        {
+          "id": "691769",
+          "name": "Philip Abner",
+          "position": "P",
+          "jersey": "50",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691769/headshot/silo/current"
         },
         {
           "id": "805299",
@@ -367,18 +367,18 @@
           "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694371/headshot/silo/current"
         },
         {
-          "id": "691783",
-          "name": "Jordan Lawlar",
-          "position": "LF",
-          "jersey": "10",
-          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691783/headshot/silo/current"
-        },
-        {
           "id": "666971",
           "name": "Lourdes Gurriel Jr.",
           "position": "LF",
           "jersey": "12",
           "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666971/headshot/silo/current"
+        },
+        {
+          "id": "694374",
+          "name": "Tim Tawa",
+          "position": "LF",
+          "jersey": "13",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/694374/headshot/silo/current"
         }
       ]
     },
@@ -404,6 +404,16 @@
     }
   ],
   "recent_games": [
+    {
+      "game_id": "825068",
+      "date": "2026-06-21T02:10:00Z",
+      "opponent": "Minnesota Twins",
+      "home_away": "vs",
+      "team_score": 0,
+      "opp_score": 0,
+      "won": false,
+      "status": "Live"
+    },
     {
       "game_id": "825069",
       "date": "2026-06-20T01:45:00Z",
@@ -491,16 +501,6 @@
       "home_away": "@",
       "team_score": 0,
       "opp_score": 8,
-      "won": false,
-      "status": "Final"
-    },
-    {
-      "game_id": "823858",
-      "date": "2026-06-09T22:40:00Z",
-      "opponent": "Miami Marlins",
-      "home_away": "@",
-      "team_score": 6,
-      "opp_score": 10,
       "won": false,
       "status": "Final"
     }

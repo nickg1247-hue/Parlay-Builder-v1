@@ -142,6 +142,86 @@ See `CFB_MODEL.md` for holdout gate and feature list.
 
 ---
 
+## UFC slate (Phase 1)
+
+`/ufc` shows fight cards for a date from the **ESPN MMA scoreboard API**. Historical training data comes from the **ESPN Core MMA API** (UFC league events, 2021–2025).
+
+| Endpoint | Behavior |
+|----------|----------|
+| `GET /api/schedule/ufc` | No `date` → auto look-ahead (+30 days); `?date=` → exact date; `?refresh=true` → bypass cache |
+| `GET /api/scores/today?sport=ufc` | Same auto look-ahead when `date` omitted |
+| `GET /api/ufc/predictions?date=` | Moneyline model leans per `fight_id` |
+| `GET /api/ufc/daily` | Full board with odds edge (moneyline only) |
+
+**Date picker:** Past dates load from `ufc_fights.parquet` ingest. Today/future use ESPN, cached to `data/processed/ufc_schedule_{date}.json`.
+
+**Auto look-ahead:** If the requested day has zero fights, tries **+1..+30** days (cards are episodic).
+
+**Data sources:**
+
+| Purpose | URL |
+|---------|-----|
+| Live card | `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=YYYYMMDD` |
+| Historical ingest | `https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/events?dates=YYYY0101-YYYY1231` |
+
+**Odds sport key:** `mma_mixed_martial_arts` — `fetch_live_ufc_odds()` in `app/odds/the_odds_api.py`. Requires `USE_LIVE_ODDS=true` + `ODDS_API_KEY`.
+
+**Bootstrap:**
+
+```powershell
+python scripts/bootstrap_ufc.py
+```
+
+Writes `data/processed/ufc_fights.parquet`, trains `ufc_baseline_model.joblib`. Holdout season: **2024** (train 2021–2022, Platt 2023).
+
+**Verify:** `/ufc` for next card; `/ufc/board` → Demo for `2024-01-13` holdout card.
+
+```powershell
+pytest tests/test_schedule_ufc.py tests/test_ufc_baseline.py tests/test_ufc_fighter_aliases.py -q
+```
+
+### Phase 2 — CLV, backtest, home chip
+
+| Feature | Detail |
+|---------|--------|
+| Forward CLV | `Run live` on `/ufc/board` logs +EV singles → `forward_clv_ufc_log.jsonl` |
+| Backfill | `python scripts/backfill_forward_clv.py --sport ufc` |
+| CLV report | `GET /api/clv/summary?sport=ufc&days=30` |
+| Backtest | `python scripts/evaluate_ufc.py` → `ufc_backtest_report.json` |
+| Backtest API | `GET /api/ufc/backtest` |
+| Home chip | `GET /api/home/today` includes `ufc_card` (next card date, fight count, headline) |
+
+Fighter odds crosswalk uses `fighter_match_key()` + `fighters_match()` for last-name / accent tolerance.
+
+```powershell
+pytest tests/test_ufc_forward_clv.py tests/test_ufc_backtest_report.py tests/test_ufc_home_summary.py -q
+```
+
+### Phase 3 — Fight pages, market eval, parlays, performance
+
+| Feature | Detail |
+|---------|--------|
+| Fight page | `/ufc/game/{fight_id}` — model ML, fighter stats, bets (+ round O/U when live), rest-of-card links |
+| Matchup engine | `app/models/ufc_matchup_engine.py` — `predict_matchup()` style-aware winner, confidence, method probs, reasons/risks |
+| Fight API | `GET /api/games/ufc/{fight_id}/insights` — includes `matchup_prediction` (style-aware engine) |
+| Slate / board links | `/ufc` game cards and `/ufc/board` matchup rows → fight pages |
+| Market eval | `scripts/evaluate_ufc_market.py` → `ufc_market_metrics.json` — see `MARKET_UFC.md` |
+| Market API | `GET /api/ufc/market` (`?refresh=true`) |
+| Demo odds | `data/fixtures/ufc_odds_2024_demo.csv` imported by `bootstrap_ufc.py` |
+| Historical board odds | Past cards: CSV + `ufc_odds_repository` via `attach_ufc_odds` |
+| Parlays | `app/parlay/ufc_parlay.py` on daily board (`top_parlays`) |
+| Performance | `/performance` ML CLV sport selector: MLB / UFC |
+
+Method-of-victory props deferred. Round totals from live Odds API `totals` when available.
+
+```powershell
+python scripts/load_ufc_odds_free.py data/fixtures/ufc_odds_2024_demo.csv
+python scripts/evaluate_ufc_market.py --eval-only
+pytest tests/test_ufc_fight_insights.py tests/test_ufc_matchup_engine.py tests/test_ufc_market_eval.py tests/test_ufc_parlay.py -q
+```
+
+---
+
 ## Free mode (default) — no Odds API credits
 
 By default the site uses **free data only**:

@@ -29,6 +29,7 @@ def get_connection() -> sqlite3.Connection:
 def init_db() -> None:
     """Ensure SQLite file exists and sport tables are present."""
     from app.db.cfb_schema import ensure_cfb_games_table
+    from app.db.ufc_schema import ensure_ufc_fights_table
     from app.db.nba_schema import ensure_nba_games_table
     from app.db.user_schema import ensure_users_table
     from app.services.user_teams import ensure_user_team_tables
@@ -39,6 +40,7 @@ def init_db() -> None:
         conn.execute("SELECT 1")
         ensure_nba_games_table(conn)
         ensure_cfb_games_table(conn)
+        ensure_ufc_fights_table(conn)
         ensure_users_table(conn)
         ensure_user_team_tables(conn)
         ensure_user_player_tables(conn)

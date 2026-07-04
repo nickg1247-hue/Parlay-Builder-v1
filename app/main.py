@@ -89,6 +89,13 @@ from app.services.cfb_backtest_report import (
     run_cfb_walk_forward_backtest,
 )
 from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
+from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
+from app.services.ufc_daily_board import build_ufc_daily_board
+from app.services.ufc_slate_predictions import predict_slate, _clean_json_value
+from app.services.ufc_backtest_report import (
+    load_saved_ufc_backtest_report,
+    run_ufc_walk_forward_backtest,
+)
 from app.services.mlb_game_lineup import get_mlb_game_lineup
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
 from app.services.teams_hub import get_team_detail, list_teams
@@ -588,12 +595,16 @@ async def backtest_saved():
 @app.get("/api/clv/summary")
 async def clv_summary(
     days: int = Query(30, ge=1, le=365),
-    sport: str = Query("mlb", pattern="^(mlb|nba)$"),
+    sport: str = Query("mlb", pattern="^(mlb|nba|ufc)$"),
 ):
     if sport == "nba":
         from app.services.nba_forward_clv import summarize_clv as summarize_nba_clv
 
         return summarize_nba_clv(days=days)
+    if sport == "ufc":
+        from app.services.ufc_forward_clv import summarize_clv as summarize_ufc_clv
+
+        return summarize_ufc_clv(days=days)
     return summarize_mlb_clv(days=days)
 
 
@@ -727,6 +738,17 @@ async def cfb_schedule(
     return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
 
 
+@app.get("/api/schedule/ufc")
+async def ufc_schedule(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Bypass saved cache; re-fetch ingest or ESPN"),
+):
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_ufc_schedule(game_date, auto_resolve=False, force_live=refresh)
+    return get_ufc_schedule(None, auto_resolve=True, force_live=refresh)
+
+
 @app.get("/api/cfb/daily")
 async def cfb_daily(
     date_param: str | None = Query(None, alias="date"),
@@ -756,6 +778,67 @@ async def cfb_predictions(
     return predict_slate(game_date)
 
 
+@app.get("/api/ufc/daily")
+async def ufc_daily(
+    date_param: str | None = Query(None, alias="date"),
+    min_edge: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
+    refresh: bool = Query(False, description="Force refresh live UFC odds from API"),
+    use_cache: bool = Query(
+        False,
+        description="Demo mode — fixed holdout card with cached lines",
+    ),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_ufc_daily_board(
+        game_date=game_date,
+        min_edge=min_edge,
+        use_cache=use_cache,
+        force_refresh=refresh and not use_cache,
+    )
+
+
+@app.get("/api/ufc/predictions")
+async def ufc_predictions(
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    return _clean_json_value(predict_slate(game_date))
+
+
+@app.get("/api/ufc/backtest")
+async def ufc_backtest(
+    refresh: bool = Query(False, description="Re-run walk-forward backtest"),
+):
+    if refresh:
+        return run_ufc_walk_forward_backtest(write_cache=True)
+    saved = load_saved_ufc_backtest_report()
+    if saved.get("status") not in (None, "missing", "error"):
+        return saved
+    return run_ufc_walk_forward_backtest(write_cache=True)
+
+
+@app.get("/api/ufc/backtest/saved")
+async def ufc_backtest_saved():
+    return load_saved_ufc_backtest_report()
+
+
+@app.get("/api/ufc/market")
+async def ufc_market_eval(
+    refresh: bool = Query(False),
+    edge_threshold: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
+):
+    from app.odds.ufc_market_eval import MARKET_EVAL_JSON, run_market_evaluation
+
+    if refresh or not MARKET_EVAL_JSON.exists():
+        return run_market_evaluation(edge_threshold=edge_threshold)
+    try:
+        return json.loads(MARKET_EVAL_JSON.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return run_market_evaluation(edge_threshold=edge_threshold)
+
+
 @app.get("/api/cfb/backtest")
 async def cfb_backtest(
     refresh: bool = Query(False, description="Re-run walk-forward backtest"),
@@ -775,11 +858,11 @@ async def cfb_backtest_saved():
 
 @app.get("/api/scores/today")
 async def scores_today(
-    sport: str = Query("mlb", pattern="^(mlb|nba|cfb|all)$"),
+    sport: str = Query("mlb", pattern="^(mlb|nba|cfb|ufc|all)$"),
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    auto_resolve = date_param is None and sport in ("nba", "cfb", "all")
+    auto_resolve = date_param is None and sport in ("nba", "cfb", "ufc", "all")
     return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
 
 
@@ -1453,6 +1536,54 @@ async def cfb_board():
 @app.get("/cfb/game/{game_id}")
 async def cfb_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "cfb_game.html")
+
+
+@app.get("/ufc")
+async def ufc_slate():
+    return FileResponse(STATIC_DIR / "ufc_slate.html")
+
+
+@app.get("/ufc/board")
+async def ufc_board():
+    return FileResponse(STATIC_DIR / "ufc_board.html")
+
+
+@app.get("/ufc/game/{fight_id}")
+async def ufc_fight_page(fight_id: str):
+    return FileResponse(STATIC_DIR / "ufc_fight.html")
+
+
+@app.get("/api/games/ufc/{fight_id}/insights")
+async def ufc_fight_insights(
+    fight_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+    refresh: bool = Query(False),
+):
+    from app.services.ufc_fight_insights import build_ufc_fight_insights
+
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    insights = build_ufc_fight_insights(
+        fight_id,
+        game_date=game_date,
+        use_cache=use_cache,
+        refresh=refresh,
+    )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Fight not found")
+    return insights
+
+
+@app.get("/api/games/ufc/{fight_id}")
+async def ufc_fight_detail(
+    fight_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    detail = get_ufc_fight(fight_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Fight not found")
+    return detail
 
 
 @app.get("/api/games/cfb/{game_id}/insights")

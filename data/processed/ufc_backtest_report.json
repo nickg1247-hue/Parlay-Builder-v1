@@ -1,0 +1,211 @@
+{
+  "generated_at": "2026-07-04T05:46:13.103846+00:00",
+  "status": "ok",
+  "method": "walk_forward_expanding_window",
+  "description": "Each holdout season: train on all prior seasons only; fighter features built chronologically with no same-day leakage.",
+  "seasons_available": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "folds": [
+    {
+      "holdout_season": 2022,
+      "train_seasons": [
+        2021
+      ],
+      "moneyline": {
+        "fights": 558,
+        "correct_picks": 304,
+        "wrong_picks": 254,
+        "accuracy_pct": 54.48,
+        "log_loss": 0.7033,
+        "brier": 0.2533,
+        "beats_naive": false,
+        "naive_log_loss": 0.6789,
+        "home_rate_log_loss": 0.6789,
+        "elo_log_loss": 0.6892
+      }
+    },
+    {
+      "holdout_season": 2023,
+      "train_seasons": [
+        2021,
+        2022
+      ],
+      "moneyline": {
+        "fights": 556,
+        "correct_picks": 326,
+        "wrong_picks": 230,
+        "accuracy_pct": 58.63,
+        "log_loss": 0.6677,
+        "brier": 0.2378,
+        "beats_naive": true,
+        "naive_log_loss": 0.6814,
+        "home_rate_log_loss": 0.6828,
+        "elo_log_loss": 0.6814
+      }
+    },
+    {
+      "holdout_season": 2024,
+      "train_seasons": [
+        2021,
+        2022,
+        2023
+      ],
+      "moneyline": {
+        "fights": 562,
+        "correct_picks": 322,
+        "wrong_picks": 240,
+        "accuracy_pct": 57.3,
+        "log_loss": 0.6696,
+        "brier": 0.2387,
+        "beats_naive": true,
+        "naive_log_loss": 0.6783,
+        "home_rate_log_loss": 0.6893,
+        "elo_log_loss": 0.6783
+      }
+    },
+    {
+      "holdout_season": 2025,
+      "train_seasons": [
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "moneyline": {
+        "fights": 563,
+        "correct_picks": 343,
+        "wrong_picks": 220,
+        "accuracy_pct": 60.92,
+        "log_loss": 0.676,
+        "brier": 0.2384,
+        "beats_naive": false,
+        "naive_log_loss": 0.6745,
+        "home_rate_log_loss": 0.6905,
+        "elo_log_loss": 0.6745
+      }
+    }
+  ],
+  "aggregate": {
+    "holdout_fights_scored": 2239,
+    "moneyline_accuracy_pct": 57.84,
+    "moneyline_log_loss": 0.6791,
+    "beats_naive_every_fold": false
+  },
+  "feature_effects": {
+    "logistic_importance_avg": [
+      {
+        "feature": "elo_diff",
+        "avg_abs_logistic_coef": 4.1223,
+        "folds": 4
+      },
+      {
+        "feature": "rest_diff",
+        "avg_abs_logistic_coef": 2.2313,
+        "folds": 4
+      },
+      {
+        "feature": "home_rest_days",
+        "avg_abs_logistic_coef": 1.4605,
+        "folds": 4
+      },
+      {
+        "feature": "away_rest_days",
+        "avg_abs_logistic_coef": 1.1861,
+        "folds": 4
+      },
+      {
+        "feature": "away_career_win_pct",
+        "avg_abs_logistic_coef": 0.0892,
+        "folds": 4
+      },
+      {
+        "feature": "away_last5_win_pct",
+        "avg_abs_logistic_coef": 0.0792,
+        "folds": 4
+      },
+      {
+        "feature": "last5_win_pct_diff",
+        "avg_abs_logistic_coef": 0.0495,
+        "folds": 4
+      },
+      {
+        "feature": "home_last5_win_pct",
+        "avg_abs_logistic_coef": 0.0483,
+        "folds": 4
+      },
+      {
+        "feature": "home_career_win_pct",
+        "avg_abs_logistic_coef": 0.0356,
+        "folds": 4
+      },
+      {
+        "feature": "home_b2b",
+        "avg_abs_logistic_coef": 0.0068,
+        "folds": 4
+      },
+      {
+        "feature": "away_b2b",
+        "avg_abs_logistic_coef": 0.0016,
+        "folds": 4
+      }
+    ],
+    "univariate_correlation": [
+      {
+        "feature": "elo_diff",
+        "correlation_with_home_win": 0.1636
+      },
+      {
+        "feature": "last5_win_pct_diff",
+        "correlation_with_home_win": 0.1472
+      },
+      {
+        "feature": "away_last5_win_pct",
+        "correlation_with_home_win": -0.0965
+      },
+      {
+        "feature": "home_last5_win_pct",
+        "correlation_with_home_win": 0.0948
+      },
+      {
+        "feature": "home_career_win_pct",
+        "correlation_with_home_win": 0.0941
+      },
+      {
+        "feature": "away_career_win_pct",
+        "correlation_with_home_win": -0.0933
+      },
+      {
+        "feature": "rest_diff",
+        "correlation_with_home_win": -0.0366
+      },
+      {
+        "feature": "away_rest_days",
+        "correlation_with_home_win": 0.0284
+      },
+      {
+        "feature": "home_rest_days",
+        "correlation_with_home_win": -0.0207
+      },
+      {
+        "feature": "away_b2b",
+        "correlation_with_home_win": 0.0167
+      },
+      {
+        "feature": "home_b2b",
+        "correlation_with_home_win": -0.0152
+      }
+    ]
+  },
+  "proof_summary": {
+    "verdict": "mixed_vs_naive",
+    "moneyline_beats_naive_all_folds": false,
+    "aggregate_winner_accuracy": "57.8%",
+    "note": "Moneyline only \u2014 no market odds in backtest (Phase 3)."
+  },
+  "report_path": "data/processed/ufc_backtest_report.json"
+}

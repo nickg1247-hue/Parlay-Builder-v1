@@ -1,0 +1,42 @@
+{
+  "base_train_seasons": [
+    2021,
+    2022
+  ],
+  "platt_season": 2023,
+  "holdout_season": 2024,
+  "train_rows": 1663,
+  "holdout_rows": 562,
+  "feature_set": "ufc_v1",
+  "production_model": "v1_logistic_platt",
+  "imputation": {
+    "rest_days": 168.0
+  },
+  "metrics": {
+    "logistic_v1": {
+      "log_loss": 0.6693490873585064,
+      "brier": 0.23860433411020118,
+      "accuracy": 0.5871886120996441
+    },
+    "naive_home_rate": {
+      "log_loss": 0.6894170219288301,
+      "brier": 0.2481280337979628,
+      "accuracy": 0.5498220640569395
+    },
+    "elo_baseline": {
+      "log_loss": 0.695796050641327,
+      "brier": 0.2513168047982553,
+      "accuracy": 0.5373665480427047
+    }
+  },
+  "phase_gate": {
+    "rule": "Promote v1 if holdout log loss beats naive Elo / home rate.",
+    "best_naive_log_loss": 0.6894170219288301,
+    "passes": true
+  },
+  "active_holdout": {
+    "log_loss": 0.6693490873585064,
+    "brier": 0.23860433411020118,
+    "accuracy": 0.5871886120996441
+  }
+}

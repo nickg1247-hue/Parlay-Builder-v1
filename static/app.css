@@ -147,6 +147,210 @@ body.slate-mlb .app-main::before {
   background: var(--positive);
 }
 
+a.hero-chip-ufc {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.hero-chip-ufc:hover {
+  border-color: #7c3aed;
+}
+
+.hero-chip-dot-ufc {
+  background: #7c3aed;
+}
+
+.ufc-fighter-portrait {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 0.5rem;
+}
+
+.ufc-fighter-portrait-compact {
+  width: 3rem;
+  height: 3rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ufc-flag-decal {
+  position: absolute;
+  inset: -12% -18% -18% -12%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.42;
+  filter: saturate(1.15) blur(0.2px);
+  border-radius: 0.35rem;
+  transform: rotate(-8deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ufc-fighter-headshot {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 0.65rem;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: #1a1d24;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.ufc-fighter-headshot-fallback,
+.ufc-fighter-headshot.is-fallback {
+  background: linear-gradient(145deg, #2a2f3a, #151820);
+}
+
+.ufc-fighter-headshot-fallback::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 35%, rgba(124, 58, 237, 0.35), transparent 68%);
+}
+
+.matchup-header-ufc .matchup-team h2 {
+  font-size: 1.05rem;
+}
+
+.ufc-fighter-country {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fighter-stat-portrait {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.fighter-stat-portrait .ufc-fighter-portrait {
+  width: 4.25rem;
+  height: 4.25rem;
+  margin: 0;
+}
+  margin-bottom: 1.25rem;
+}
+
+.fighter-card-meta {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+.fighter-stats-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .fighter-stats-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fighter-stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.fighter-stat-name {
+  font-weight: 600;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.fighter-stat-dl {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.fighter-stat-dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.fighter-stat-dl dt {
+  color: var(--text-muted, #9ca3af);
+  margin: 0;
+}
+
+.fighter-stat-dl dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.fighter-market-col .fighter-market-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.fight-bets-panel {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.fight-bet-row {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fight-bet-edge {
+  margin-left: 0.5rem;
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.88rem;
+}
+
+.fight-props-note {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.fight-bets-subhead {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.card-fights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card-fights-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.market-eval-dl {
+  max-width: 28rem;
+}
+
+.bet-tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #a78bfa;
+}
+
 .sport-pill-icon {
   width: 0.9em;
   height: 0.9em;
@@ -1443,6 +1647,14 @@ body.slate-mlb .app-main > * {
 }
 
 /* Win % integrated into team color band */
+.game-card > .game-card-color-band {
+  margin-top: -0.85rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  margin-bottom: 0.65rem;
+  border-radius: 10px 10px 0 0;
+}
+
 .game-card-color-band.win-prob-band {
   height: 1.25rem;
   display: flex;

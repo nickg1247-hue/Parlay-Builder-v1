@@ -1,0 +1,480 @@
+{
+  "sport": "mlb",
+  "id": "147",
+  "name": "New York Yankees",
+  "logo_url": "https://www.mlbstatic.com/team-logos/team-cap-on-dark/147.svg",
+  "record": null,
+  "standing": null,
+  "roster": [
+    {
+      "id": "645305",
+      "name": "Ali S\u00e1nchez",
+      "position": "C",
+      "jersey": "39",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/645305/headshot/silo/current"
+    },
+    {
+      "id": "642708",
+      "name": "Amed Rosario",
+      "position": "3B",
+      "jersey": "14",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642708/headshot/silo/current"
+    },
+    {
+      "id": "683011",
+      "name": "Anthony Volpe",
+      "position": "SS",
+      "jersey": "11",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/683011/headshot/silo/current"
+    },
+    {
+      "id": "700250",
+      "name": "Ben Rice",
+      "position": "1B",
+      "jersey": "22",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/700250/headshot/silo/current"
+    },
+    {
+      "id": "687396",
+      "name": "Brent Headrick",
+      "position": "P",
+      "jersey": "47",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/687396/headshot/silo/current"
+    },
+    {
+      "id": "693645",
+      "name": "Cam Schlittler",
+      "position": "P",
+      "jersey": "31",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/693645/headshot/silo/current"
+    },
+    {
+      "id": "666808",
+      "name": "Camilo Doval",
+      "position": "P",
+      "jersey": "75",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666808/headshot/silo/current"
+    },
+    {
+      "id": "607074",
+      "name": "Carlos Rod\u00f3n",
+      "position": "P",
+      "jersey": "55",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/607074/headshot/silo/current"
+    },
+    {
+      "id": "641355",
+      "name": "Cody Bellinger",
+      "position": "LF",
+      "jersey": "35",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/641355/headshot/silo/current"
+    },
+    {
+      "id": "670280",
+      "name": "David Bednar",
+      "position": "P",
+      "jersey": "53",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/670280/headshot/silo/current"
+    },
+    {
+      "id": "518585",
+      "name": "Fernando Cruz",
+      "position": "P",
+      "jersey": "63",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/518585/headshot/silo/current"
+    },
+    {
+      "id": "543037",
+      "name": "Gerrit Cole",
+      "position": "P",
+      "jersey": "45",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/543037/headshot/silo/current"
+    },
+    {
+      "id": "691176",
+      "name": "Jasson Dom\u00ednguez",
+      "position": "DH",
+      "jersey": "24",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691176/headshot/silo/current"
+    },
+    {
+      "id": "665862",
+      "name": "Jazz Chisholm Jr.",
+      "position": "2B",
+      "jersey": "13",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/665862/headshot/silo/current"
+    },
+    {
+      "id": "676609",
+      "name": "Jos\u00e9 Caballero",
+      "position": "SS",
+      "jersey": "72",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/676609/headshot/silo/current"
+    },
+    {
+      "id": "680474",
+      "name": "Max Schuemann",
+      "position": "SS",
+      "jersey": "30",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/680474/headshot/silo/current"
+    },
+    {
+      "id": "621112",
+      "name": "Paul Blackburn",
+      "position": "P",
+      "jersey": "58",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/621112/headshot/silo/current"
+    },
+    {
+      "id": "502671",
+      "name": "Paul Goldschmidt",
+      "position": "1B",
+      "jersey": "48",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/502671/headshot/silo/current"
+    },
+    {
+      "id": "641857",
+      "name": "Ryan McMahon",
+      "position": "3B",
+      "jersey": "19",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/641857/headshot/silo/current"
+    },
+    {
+      "id": "677960",
+      "name": "Ryan Weathers",
+      "position": "P",
+      "jersey": "40",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/677960/headshot/silo/current"
+    },
+    {
+      "id": "642232",
+      "name": "Ryan Yarbrough",
+      "position": "P",
+      "jersey": "33",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642232/headshot/silo/current"
+    },
+    {
+      "id": "682987",
+      "name": "Spencer Jones",
+      "position": "RF",
+      "jersey": "78",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/682987/headshot/silo/current"
+    },
+    {
+      "id": "657612",
+      "name": "Tim Hill",
+      "position": "P",
+      "jersey": "41",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/657612/headshot/silo/current"
+    },
+    {
+      "id": "701542",
+      "name": "Will Warren",
+      "position": "P",
+      "jersey": "29",
+      "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/701542/headshot/silo/current"
+    }
+  ],
+  "roster_groups": [
+    {
+      "key": "P",
+      "label": "Pitchers",
+      "players": [
+        {
+          "id": "701542",
+          "name": "Will Warren",
+          "position": "P",
+          "jersey": "29",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/701542/headshot/silo/current"
+        },
+        {
+          "id": "693645",
+          "name": "Cam Schlittler",
+          "position": "P",
+          "jersey": "31",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/693645/headshot/silo/current"
+        },
+        {
+          "id": "642232",
+          "name": "Ryan Yarbrough",
+          "position": "P",
+          "jersey": "33",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642232/headshot/silo/current"
+        },
+        {
+          "id": "677960",
+          "name": "Ryan Weathers",
+          "position": "P",
+          "jersey": "40",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/677960/headshot/silo/current"
+        },
+        {
+          "id": "657612",
+          "name": "Tim Hill",
+          "position": "P",
+          "jersey": "41",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/657612/headshot/silo/current"
+        },
+        {
+          "id": "543037",
+          "name": "Gerrit Cole",
+          "position": "P",
+          "jersey": "45",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/543037/headshot/silo/current"
+        },
+        {
+          "id": "687396",
+          "name": "Brent Headrick",
+          "position": "P",
+          "jersey": "47",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/687396/headshot/silo/current"
+        },
+        {
+          "id": "670280",
+          "name": "David Bednar",
+          "position": "P",
+          "jersey": "53",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/670280/headshot/silo/current"
+        },
+        {
+          "id": "607074",
+          "name": "Carlos Rod\u00f3n",
+          "position": "P",
+          "jersey": "55",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/607074/headshot/silo/current"
+        },
+        {
+          "id": "621112",
+          "name": "Paul Blackburn",
+          "position": "P",
+          "jersey": "58",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/621112/headshot/silo/current"
+        },
+        {
+          "id": "518585",
+          "name": "Fernando Cruz",
+          "position": "P",
+          "jersey": "63",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/518585/headshot/silo/current"
+        },
+        {
+          "id": "666808",
+          "name": "Camilo Doval",
+          "position": "P",
+          "jersey": "75",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/666808/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "C",
+      "label": "Catchers",
+      "players": [
+        {
+          "id": "645305",
+          "name": "Ali S\u00e1nchez",
+          "position": "C",
+          "jersey": "39",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/645305/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "IF",
+      "label": "Infielders",
+      "players": [
+        {
+          "id": "683011",
+          "name": "Anthony Volpe",
+          "position": "SS",
+          "jersey": "11",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/683011/headshot/silo/current"
+        },
+        {
+          "id": "665862",
+          "name": "Jazz Chisholm Jr.",
+          "position": "2B",
+          "jersey": "13",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/665862/headshot/silo/current"
+        },
+        {
+          "id": "642708",
+          "name": "Amed Rosario",
+          "position": "3B",
+          "jersey": "14",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/642708/headshot/silo/current"
+        },
+        {
+          "id": "641857",
+          "name": "Ryan McMahon",
+          "position": "3B",
+          "jersey": "19",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/641857/headshot/silo/current"
+        },
+        {
+          "id": "700250",
+          "name": "Ben Rice",
+          "position": "1B",
+          "jersey": "22",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/700250/headshot/silo/current"
+        },
+        {
+          "id": "680474",
+          "name": "Max Schuemann",
+          "position": "SS",
+          "jersey": "30",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/680474/headshot/silo/current"
+        },
+        {
+          "id": "502671",
+          "name": "Paul Goldschmidt",
+          "position": "1B",
+          "jersey": "48",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/502671/headshot/silo/current"
+        },
+        {
+          "id": "676609",
+          "name": "Jos\u00e9 Caballero",
+          "position": "SS",
+          "jersey": "72",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/676609/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "OF",
+      "label": "Outfielders",
+      "players": [
+        {
+          "id": "641355",
+          "name": "Cody Bellinger",
+          "position": "LF",
+          "jersey": "35",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/641355/headshot/silo/current"
+        },
+        {
+          "id": "682987",
+          "name": "Spencer Jones",
+          "position": "RF",
+          "jersey": "78",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/682987/headshot/silo/current"
+        }
+      ]
+    },
+    {
+      "key": "DH",
+      "label": "Designated Hitters",
+      "players": [
+        {
+          "id": "691176",
+          "name": "Jasson Dom\u00ednguez",
+          "position": "DH",
+          "jersey": "24",
+          "photo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_160,q_auto:best/v1/people/691176/headshot/silo/current"
+        }
+      ]
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": "823532",
+      "date": "2026-06-20T17:35:00Z",
+      "opponent": "Cincinnati Reds",
+      "home_away": "vs",
+      "team_score": 2,
+      "opp_score": 10,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823534",
+      "date": "2026-06-19T23:05:00Z",
+      "opponent": "Cincinnati Reds",
+      "home_away": "vs",
+      "team_score": 5,
+      "opp_score": 0,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "823533",
+      "date": "2026-06-18T23:05:00Z",
+      "opponent": "Chicago White Sox",
+      "home_away": "vs",
+      "team_score": 1,
+      "opp_score": 5,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "823536",
+      "date": "2026-06-17T23:05:00Z",
+      "opponent": "Chicago White Sox",
+      "home_away": "vs",
+      "team_score": 10,
+      "opp_score": 5,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "823535",
+      "date": "2026-06-16T23:05:00Z",
+      "opponent": "Chicago White Sox",
+      "home_away": "vs",
+      "team_score": 12,
+      "opp_score": 2,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "822801",
+      "date": "2026-06-14T17:37:00Z",
+      "opponent": "Toronto Blue Jays",
+      "home_away": "@",
+      "team_score": 8,
+      "opp_score": 3,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "822802",
+      "date": "2026-06-13T19:07:00Z",
+      "opponent": "Toronto Blue Jays",
+      "home_away": "@",
+      "team_score": 3,
+      "opp_score": 1,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "822803",
+      "date": "2026-06-12T23:37:00Z",
+      "opponent": "Toronto Blue Jays",
+      "home_away": "@",
+      "team_score": 5,
+      "opp_score": 8,
+      "won": false,
+      "status": "Final"
+    },
+    {
+      "game_id": "824428",
+      "date": "2026-06-10T17:10:00Z",
+      "opponent": "Cleveland Guardians",
+      "home_away": "@",
+      "team_score": 8,
+      "opp_score": 4,
+      "won": true,
+      "status": "Final"
+    },
+    {
+      "game_id": "824429",
+      "date": "2026-06-09T22:40:00Z",
+      "opponent": "Cleveland Guardians",
+      "home_away": "@",
+      "team_score": 3,
+      "opp_score": 2,
+      "won": true,
+      "status": "Final"
+    }
+  ]
+}

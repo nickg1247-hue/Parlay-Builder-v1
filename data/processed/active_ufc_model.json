@@ -1,0 +1,8 @@
+{
+  "track": "ufc_moneyline",
+  "run_id": "train_ufc_baseline",
+  "path": "data/processed/ufc_baseline_model.joblib",
+  "feature_set": "ufc_v1",
+  "model_version": "v1_logistic_platt",
+  "promoted_at": "2026-07-04T05:34:25.692290+00:00"
+}
