@@ -1,14 +1,17 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260735";
+const NTG_ASSET_V = "20260736";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
 function getPageData() {
+  if (typeof window.readNTGPageData === "function") {
+    return window.readNTGPageData();
+  }
   const el = document.getElementById("ntg-page-data");
   if (!el) return null;
   try {
-    return JSON.parse(el.textContent);
+    return JSON.parse(el.textContent || "");
   } catch {
     return null;
   }

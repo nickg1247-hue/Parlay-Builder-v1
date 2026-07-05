@@ -1,6 +1,6 @@
 /** PWA: manifest tags, service worker registration, install prompt. */
 (function initNTGPwa() {
-  const PWA_V = "20260725b";
+  const PWA_V = "20260736";
   const DISMISS_KEY = "ntg_pwa_install_dismissed";
   const DISMISS_DAYS = 7;
 

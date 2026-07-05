@@ -17,7 +17,6 @@ _BLOCKED_EXACT = frozenset({
     "/api/home/today",
     "/api/scores/today",
     "/api/props/search",
-    "/api/schedule/mlb",
 })
 
 _MLB_INSIGHTS_RE = re.compile(r"^/api/games/mlb/[^/]+/insights$")

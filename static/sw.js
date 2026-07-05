@@ -1,11 +1,10 @@
-/** NTG Sports service worker — cache shell assets; always fetch live API data. */
+/** NTG Sports service worker — cache static assets only; HTML always from network. */
 
-const CACHE_VERSION = "ntg-pwa-20260725b";
-const SHELL_CACHE = `${CACHE_VERSION}-shell`;
+const CACHE_VERSION = "ntg-pwa-20260736";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const PRECACHE_URLS = [
-  "/offline",
+  "/static/page-data.js",
   "/static/style.css",
   "/static/app.css",
   "/static/brand.css",
@@ -13,6 +12,7 @@ const PRECACHE_URLS = [
   "/static/home-v2.css",
   "/static/assets/ntg-logo.png",
   "/static/assets/ntg-logo-mark.png",
+  "/offline",
 ];
 
 function isApiRequest(url) {
@@ -25,17 +25,13 @@ function isStaticAsset(url) {
 
 function isLiveAsset(url) {
   const path = url.pathname;
-  return (
-    path.endsWith(".js") ||
-    path.endsWith(".json") ||
-    path.endsWith(".html")
-  );
+  return path.endsWith(".js") || path.endsWith(".json") || path.endsWith(".html");
 }
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
-      .open(SHELL_CACHE)
+      .open(STATIC_CACHE)
       .then((cache) => cache.addAll(PRECACHE_URLS))
       .then(() => self.skipWaiting())
   );
@@ -45,13 +41,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key.startsWith("ntg-pwa-") && key !== SHELL_CACHE && key !== STATIC_CACHE)
-            .map((key) => caches.delete(key))
-        )
-      )
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("ntg-pwa-")).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -63,62 +53,49 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Live data: never cache — odds, picks, scores, props all use /api/*
   if (isApiRequest(url)) {
     event.respondWith(fetch(request));
     return;
   }
 
-  // HTML pages: network first (fresh shell); cache only for offline fallback
+  // HTML pages: always network (SSR embeds live page data — never serve stale shell).
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match("/offline"))
-        )
+      fetch(request).catch(() => caches.match("/offline"))
     );
     return;
   }
 
-  if (isStaticAsset(url)) {
-    // JS/JSON: network first so deploys + in-app polling logic stay current
-    if (isLiveAsset(url)) {
-      event.respondWith(
-        fetch(request)
-          .then((response) => {
-            if (response.ok) {
-              caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
-            }
-            return response;
-          })
-          .catch(() => caches.match(request))
-      );
-      return;
-    }
+  if (!isStaticAsset(url)) return;
 
-    // CSS/images: cache first, refresh in background when online
+  if (isLiveAsset(url)) {
     event.respondWith(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        const network = fetch(request)
-          .then((response) => {
-            if (response.ok) cache.put(request, response.clone());
-            return response;
-          })
-          .catch(() => null);
-        if (cached) {
-          network.catch(() => {});
-          return cached;
-        }
-        return network;
-      })
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
+    return;
   }
+
+  event.respondWith(
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      const cached = await cache.match(request);
+      const network = fetch(request)
+        .then((response) => {
+          if (response.ok) cache.put(request, response.clone());
+          return response;
+        })
+        .catch(() => null);
+      if (cached) {
+        network.catch(() => {});
+        return cached;
+      }
+      return network;
+    })
+  );
 });

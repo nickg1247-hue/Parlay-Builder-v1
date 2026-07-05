@@ -50,6 +50,7 @@
     ntgGamePageData?.kind === "mlb_game" ? ntgGamePageData.gameProps : null;
 
   const useEmbeddedPage = ntgGamePageData?.kind === "mlb_game";
+  const GAME_RELOAD_KEY = "ntg-game-reload-" + gameId;
 
   function buildGamePageUrl(extra = {}) {
     const params = new URLSearchParams();
@@ -1606,7 +1607,10 @@
   }
 
   function bootGamePage() {
+    const hideLoading = () => loading?.classList.add("hidden");
+
     if (ntgGamePageData?.kind === "mlb_game" && ntgGamePageData.insights) {
+      sessionStorage.removeItem(GAME_RELOAD_KEY);
       loadTeamColors()
         .then(() => {
           applyEmbeddedGamePage(ntgGamePageData);
@@ -1617,48 +1621,35 @@
           }
         })
         .catch((e) => {
-          loading.classList.add("hidden");
-          errEl.classList.remove("hidden");
-          errEl.textContent = e.message || "Game not found";
+          hideLoading();
+          errEl?.classList.remove("hidden");
+          if (errEl) errEl.textContent = e.message || "Game not found";
         });
       return;
     }
 
-    loadTeamColors()
-      .then(async () => {
-        if (typeof window.ensureAppReady === "function") {
-          await window.ensureAppReady();
-        }
-        if (typeof initDesignSystem === "function") initDesignSystem();
-        if (typeof initGameStickyNav === "function") initGameStickyNav();
+    if (!sessionStorage.getItem(GAME_RELOAD_KEY)) {
+      sessionStorage.setItem(GAME_RELOAD_KEY, "1");
+      const base = buildGamePageUrl({});
+      const sep = base.includes("?") ? "&" : "?";
+      window.location.replace(base + sep + "_=" + Date.now());
+      return;
+    }
+    sessionStorage.removeItem(GAME_RELOAD_KEY);
 
-        prefetchMatchupHeader();
-        try {
-          await loadInsights(false);
-        } catch (e) {
-          loading.classList.add("hidden");
-          if (errEl) {
-            errEl.classList.remove("hidden");
-            const msg = e.message || "Could not load game insights";
-            if (typeof brandedErrorState === "function") {
-              brandedErrorState(errEl, {
-                title: "Game insights unavailable",
-                message: msg,
-                onRetry: () => window.location.reload(),
-              });
-            } else {
-              errEl.textContent = msg;
-            }
-          }
-          return;
-        }
-        schedulePropsLoad(false);
-      })
-      .catch((e) => {
-        loading.classList.add("hidden");
-        errEl.classList.remove("hidden");
-        errEl.textContent = e.message || "Game not found";
-      });
+    hideLoading();
+    errEl?.classList.remove("hidden");
+    if (errEl) {
+      if (typeof brandedErrorState === "function") {
+        brandedErrorState(errEl, {
+          title: "Game page unavailable",
+          message: "Could not load game data. Reload to try again.",
+          onRetry: () => window.location.reload(),
+        });
+      } else {
+        errEl.textContent = "Could not load game data — reload the page.";
+      }
+    }
   }
 
   bootGamePage();

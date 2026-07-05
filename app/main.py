@@ -1776,20 +1776,12 @@ async def mlb_game_page(
             bookmaker=bookmaker,
         )
     else:
-        cache_key = (
-            f"game:{game_id}:{game_date.isoformat()}:"
-            f"{bookmaker or DEFAULT_DISPLAY_BOOKMAKER}:{use_cache}"
-        )
-        page_data = await get_or_build(
-            cache_key,
-            45,
-            lambda: build_mlb_game_page_data(
-                game_id,
-                game_date,
-                use_cache=use_cache,
-                refresh=False,
-                bookmaker=bookmaker,
-            ),
+        page_data = await build_mlb_game_page_data(
+            game_id,
+            game_date,
+            use_cache=use_cache,
+            refresh=False,
+            bookmaker=bookmaker,
         )
     if page_data is None:
         raise HTTPException(status_code=404, detail="Game not found")

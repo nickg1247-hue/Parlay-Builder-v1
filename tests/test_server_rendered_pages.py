@@ -45,6 +45,7 @@ def test_is_blocked_public_get_paths():
     assert is_blocked_public_get("/api/props/search")
     assert is_blocked_public_get("/api/games/mlb/123/insights")
     assert not is_blocked_public_get("/api/auth/status")
+    assert not is_blocked_public_get("/api/schedule/mlb")
 
 
 def test_render_static_page_injects_json():
@@ -54,6 +55,7 @@ def test_render_static_page_injects_json():
         {"kind": "test", "value": 1},
     ).body.decode("utf-8")
     assert 'id="ntg-page-data"' in html
+    assert "page-data.js" in html
     assert '"kind": "test"' in html or '"kind":"test"' in html.replace(" ", "")
 
 

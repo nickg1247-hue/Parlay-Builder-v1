@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260736" type="image/png">
   <title>MLB — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260725">
-  <link rel="stylesheet" href="/static/app.css?v=20260725">
-  <link rel="stylesheet" href="/static/brand.css?v=20260725">
-  <link rel="stylesheet" href="/static/design.css?v=20260725">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+  <link rel="stylesheet" href="/static/style.css?v=20260736">
+  <link rel="stylesheet" href="/static/app.css?v=20260736">
+  <link rel="stylesheet" href="/static/brand.css?v=20260736">
+  <link rel="stylesheet" href="/static/design.css?v=20260736">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260736">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
     <header class="app-topbar dash-topbar">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260736" alt="NTG Sports" width="56" height="56" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
@@ -44,12 +44,12 @@
 
       <div id="watched-section" class="hidden"></div>
 
-      <div id="slate-loading" class="hidden"></div>
+      <div id="slate-loading" class="empty-state">Loading slate…</div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/app.js?v=20260736"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -58,18 +58,78 @@
       const dateEl = document.getElementById("slate-date");
       const refreshEl = document.getElementById("refresh-line");
       const watchedEl = document.getElementById("watched-section");
-      const pageData = typeof getPageData === "function" ? getPageData() : null;
+      const RELOAD_KEY = "ntg-mlb-slate-reload";
+
+      function readPageData() {
+        if (typeof window.readNTGPageData === "function") return window.readNTGPageData();
+        if (typeof window.getPageData === "function") return window.getPageData();
+        const el = document.getElementById("ntg-page-data");
+        if (!el) return null;
+        try {
+          return JSON.parse(el.textContent || "");
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function showError(message, onRetry) {
+        loading?.classList.add("hidden");
+        errEl?.classList.remove("hidden");
+        if (errEl) {
+          errEl.innerHTML = "";
+          const p = document.createElement("p");
+          p.textContent = message;
+          errEl.appendChild(p);
+          if (onRetry) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "empty-state-retry dash-btn dash-btn-primary";
+            btn.textContent = "Reload slate";
+            btn.onclick = onRetry;
+            errEl.appendChild(btn);
+          }
+        }
+      }
 
       initSiteChrome();
-      initLiveTicker("live-ticker", { sport: "all" });
+      initLiveTicker("live-ticker", { sport: "mlb" });
       initHeadlineTicker("headline-ticker");
-      await loadTeamColors();
+
+      let pageData = readPageData();
 
       if (!pageData || pageData.kind !== "mlb_slate") {
-        list.innerHTML = "";
-        errEl?.classList.remove("hidden");
-        if (errEl) errEl.textContent = "Page data missing — reload from the server.";
-        return;
+        if (!sessionStorage.getItem(RELOAD_KEY)) {
+          sessionStorage.setItem(RELOAD_KEY, "1");
+          window.location.replace("/mlb?_=" + Date.now());
+          return;
+        }
+        sessionStorage.removeItem(RELOAD_KEY);
+
+        try {
+          await loadTeamColors();
+          const [slate, odds, status] = await Promise.all([
+            fetchJSON("/api/schedule/mlb"),
+            fetchJSON("/api/odds/today").catch(() => null),
+            fetchJSON("/api/status/refresh").catch(() => null),
+          ]);
+          pageData = {
+            kind: "mlb_slate",
+            date: slate.date,
+            slate,
+            summary: { board_available: false, slate_by_game_id: {} },
+            odds,
+            status,
+          };
+        } catch (err) {
+          showError(
+            "Could not load MLB slate — tap reload or refresh the page.",
+            () => window.location.reload()
+          );
+          return;
+        }
+      } else {
+        sessionStorage.removeItem(RELOAD_KEY);
+        await loadTeamColors();
       }
 
       const slate = pageData.slate || {};
@@ -78,6 +138,7 @@
       const status = pageData.status;
 
       loading?.classList.add("hidden");
+      errEl?.classList.add("hidden");
       if (odds && slate.games) recordOddsSnapshot(odds, slate.games);
       if (dateEl) dateEl.textContent = slate.date || pageData.date || "";
       if (status && refreshEl) {
@@ -98,11 +159,9 @@
         return;
       }
 
-      if (!summary.board_available) {
-        if (refreshEl) {
-          refreshEl.textContent =
-            (refreshEl.textContent || "") + " · Model picks: run morning refresh";
-        }
+      if (!summary.board_available && refreshEl) {
+        refreshEl.textContent =
+          (refreshEl.textContent || "") + " · Model picks: run morning refresh";
       }
 
       renderGameList(list, slate.games, renderOpts);

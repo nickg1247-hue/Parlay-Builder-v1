@@ -26,7 +26,8 @@ async def get_or_build(
         if hit and (now - hit[0]) < ttl_seconds:
             return hit[1]
         data = await builder()
-        _cache[key] = (now, data)
+        if data is not None:
+            _cache[key] = (now, data)
         return data
 
 
