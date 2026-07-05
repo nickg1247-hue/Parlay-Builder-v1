@@ -4770,3 +4770,130 @@ body.player-prop-modal-open {
   font-size: 0.78rem;
   cursor: pointer;
 }
+
+/* --- PWA install banner + install help page --- */
+
+.ntg-pwa-install {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1200;
+  padding: 0.75rem clamp(0.75rem, 3vw, 1.25rem) calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, transparent, rgba(3, 7, 18, 0.35) 12%, rgba(3, 7, 18, 0.96) 40%);
+  pointer-events: none;
+}
+
+.ntg-pwa-install__inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(7, 17, 31, 0.96);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ntg-pwa-install__icon {
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.ntg-pwa-install__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.ntg-pwa-install__title {
+  margin: 0 0 0.2rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text, #f8fafc);
+}
+
+.ntg-pwa-install__body {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted, #94a3b8);
+}
+
+.ntg-pwa-install__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.ntg-pwa-install__cta {
+  white-space: nowrap;
+  font-size: 0.78rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.ntg-pwa-install__dismiss {
+  border: none;
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .ntg-pwa-install__inner {
+    flex-wrap: wrap;
+  }
+
+  .ntg-pwa-install__actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+body.ntg-pwa-install-visible {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.install-page {
+  max-width: 40rem;
+}
+
+.install-page h1 {
+  margin-bottom: 0.35rem;
+}
+
+.install-steps {
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+}
+
+.install-steps h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
+.install-steps ol {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted, #94a3b8);
+  line-height: 1.55;
+}
+
+.install-steps li + li {
+  margin-top: 0.45rem;
+}
+
+.install-note {
+  font-size: 0.85rem;
+  color: var(--muted, #94a3b8);
+  line-height: 1.5;
+  margin: 1rem 0 1.25rem;
+}

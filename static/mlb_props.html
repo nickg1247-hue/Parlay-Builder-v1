@@ -63,24 +63,24 @@
         <div id="parlay-builder-results" class="parlay-builder-results"></div>
       </section>
 
-      <form id="props-search-form" class="props-search-filters dash-panel" aria-label="Prop search filters">
+      <form id="props-search-form" class="props-search-filters dash-panel" method="get" action="/mlb/props" aria-label="Prop search filters">
         <label class="props-filter-field">
           <span>Sportsbook</span>
-          <select id="filter-book" class="home-props-select"></select>
+          <select id="filter-book" name="bookmaker" class="home-props-select"></select>
         </label>
         <label class="props-filter-field">
           <span>Prop type</span>
-          <select id="filter-market" class="home-props-select">
+          <select id="filter-market" name="market_type" class="home-props-select">
             <option value="">All types</option>
           </select>
         </label>
         <label class="props-filter-field">
           <span>Min odds (American)</span>
-          <input id="filter-min-odds" type="number" step="1" placeholder="-200" class="home-props-select props-filter-input" />
+          <input id="filter-min-odds" name="min_odds" type="number" step="1" placeholder="-200" class="home-props-select props-filter-input" />
         </label>
         <label class="props-filter-field">
           <span>Side</span>
-          <select id="filter-side" class="home-props-select">
+          <select id="filter-side" name="side" class="home-props-select">
             <option value="both" selected>Over + Under</option>
             <option value="over">Over only</option>
             <option value="under">Under only</option>
@@ -88,7 +88,7 @@
         </label>
         <label class="props-filter-field">
           <span>Line type</span>
-          <select id="filter-line-kind" class="home-props-select">
+          <select id="filter-line-kind" name="line_kind" class="home-props-select">
             <option value="both">Main + alternate</option>
             <option value="main" selected>Main line only</option>
             <option value="alternate">Alternate lines only</option>
@@ -96,23 +96,23 @@
         </label>
         <label class="props-filter-field">
           <span>Exact line (optional)</span>
-          <input id="filter-line-value" type="number" step="0.5" placeholder="e.g. 2.0" class="home-props-select props-filter-input" />
+          <input id="filter-line-value" name="line_value" type="number" step="0.5" placeholder="e.g. 2.0" class="home-props-select props-filter-input" />
         </label>
         <label class="props-filter-check">
-          <input id="filter-actionable" type="checkbox" />
+          <input id="filter-actionable" name="actionable_only" type="checkbox" value="true" />
           Top offers only (score 80+ with edge)
         </label>
         <label class="props-filter-check">
-          <input id="filter-very-strong" type="checkbox" />
+          <input id="filter-very-strong" name="very_strong_only" type="checkbox" value="true" />
           Very strong+ only (score 85+)
         </label>
         <label class="props-filter-check">
-          <input id="filter-alternates" type="checkbox" />
+          <input id="filter-alternates" name="include_alternates" type="checkbox" value="true" />
           Include alternate lines (uses extra API credits on refresh)
         </label>
         <label class="props-filter-field">
           <span>Sort by</span>
-          <select id="filter-sort" class="home-props-select">
+          <select id="filter-sort" name="sort" class="home-props-select">
             <option value="score" selected>Best first (model score)</option>
             <option value="hit_l5">L5 hit rate</option>
             <option value="hit_l10">L10 hit rate</option>
@@ -122,7 +122,7 @@
         </label>
         <label class="props-filter-field">
           <span>Risk</span>
-          <select id="filter-risk" class="home-props-select">
+          <select id="filter-risk" name="risk" class="home-props-select">
             <option value="" selected>Any</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -132,7 +132,7 @@
         </label>
         <label class="props-filter-field">
           <span>Min score</span>
-          <select id="filter-min-score" class="home-props-select">
+          <select id="filter-min-score" name="min_score" class="home-props-select">
             <option value="">Any (includes weak)</option>
             <option value="90">90+</option>
             <option value="85">85+</option>
@@ -143,7 +143,7 @@
         </label>
         <label class="props-filter-field">
           <span>Min L10 hit rate</span>
-          <select id="filter-min-hit-l10" class="home-props-select">
+          <select id="filter-min-hit-l10" name="min_hit_l10" class="home-props-select">
             <option value="">Any (includes weak)</option>
             <option value="55" selected>55%+ (recommended)</option>
             <option value="60">60%+</option>
@@ -153,7 +153,7 @@
         </label>
         <label class="props-filter-field">
           <span>Min L5 hit rate</span>
-          <select id="filter-min-hit-l5" class="home-props-select">
+          <select id="filter-min-hit-l5" name="min_hit_l5" class="home-props-select">
             <option value="" selected>Any</option>
             <option value="60">60%+</option>
             <option value="70">70%+</option>
@@ -164,7 +164,7 @@
           <button type="submit" id="props-apply-filters" class="home-props-fill-btn dash-btn dash-btn-primary">
             Apply filters
           </button>
-          <span class="props-filter-hint text-muted">Re-sorts cached props. Use <strong>Refresh lines</strong> above to pull new odds.</span>
+          <span class="props-filter-hint text-muted">Filters reload this page with server-side results. Use <strong>Refresh lines</strong> above to pull new odds.</span>
         </div>
       </form>
 
@@ -182,7 +182,7 @@
     </main>
   </div>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260624c"></script>
-  <script src="/static/mlb_props.js?v=20260624c"></script>
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/mlb_props.js?v=20260734"></script>
 </body>
 </html>

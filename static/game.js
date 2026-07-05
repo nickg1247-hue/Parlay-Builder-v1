@@ -44,6 +44,28 @@
 
   const useCache = qs("use_cache") === "true";
 
+  const ntgGamePageData = typeof getPageData === "function" ? getPageData() : null;
+
+  let embeddedGameProps =
+    ntgGamePageData?.kind === "mlb_game" ? ntgGamePageData.gameProps : null;
+
+  const useEmbeddedPage = ntgGamePageData?.kind === "mlb_game";
+
+  function buildGamePageUrl(extra = {}) {
+    const params = new URLSearchParams();
+    if (dateParam) params.set("date", dateParam);
+    if (useCache) params.set("use_cache", "true");
+    const book = extra.bookmaker || ntgGamePageData?.bookmaker;
+    if (book) params.set("bookmaker", book);
+    if (extra.refresh) params.set("refresh", "true");
+    const q = params.toString();
+    return `/mlb/game/${encodeURIComponent(gameId)}${q ? `?${q}` : ""}`;
+  }
+
+  function reloadGamePage(extra = {}) {
+    window.location.href = buildGamePageUrl(extra);
+  }
+
   const scoresUrl = dateParam
 
     ? `/api/scores/today?sport=mlb&date=${encodeURIComponent(dateParam)}`
@@ -561,6 +583,10 @@
 
   async function loadGameMarketTypes() {
     if (_gameMarketTypes) return _gameMarketTypes;
+    if (ntgGamePageData?.propMarkets?.length) {
+      _gameMarketTypes = ntgGamePageData.propMarkets;
+      return _gameMarketTypes;
+    }
     try {
       const data = await fetchJSON("/api/props/markets");
       _gameMarketTypes = data.markets || [];
@@ -852,7 +878,17 @@
     });
 
     if (refreshBtn) {
-      refreshBtn.onclick = () => loadProps(true);
+      refreshBtn.onclick = () => {
+        if (useEmbeddedPage) {
+          const sel = document.getElementById("prop-book-select");
+          reloadGamePage({
+            refresh: true,
+            bookmaker: sel?.value || ntgGamePageData?.bookmaker,
+          });
+          return;
+        }
+        loadProps(true);
+      };
     }
   }
 
@@ -993,6 +1029,13 @@
       bodyEl?.classList.add("hidden");
 
       errEl?.classList.add("hidden");
+
+      if (!refresh && embeddedGameProps) {
+        const payload = embeddedGameProps;
+        embeddedGameProps = null;
+        renderProps(payload);
+        return;
+      }
 
       const res = await fetch(await propsUrl(refresh, { extendedMarkets: !!refresh }));
       if (res.status === 401) {
@@ -1358,6 +1401,11 @@
 
           lastManualInsightsRefreshAt = now;
 
+          if (useEmbeddedPage) {
+            reloadGamePage({ refresh: true });
+            return;
+          }
+
           loadInsights(true);
 
         };
@@ -1516,7 +1564,19 @@
       (async () => {
         try {
           if (typeof initPropBookSelect === "function") {
-            await initPropBookSelect(propBookSelect, () => loadProps(false));
+            const onBookChange = useEmbeddedPage
+              ? () => {
+                  reloadGamePage({ bookmaker: propBookSelect?.value });
+                }
+              : () => loadProps(false);
+            await initPropBookSelect(
+              propBookSelect,
+              onBookChange,
+              ntgGamePageData?.bookmakers
+            );
+            if (useEmbeddedPage && ntgGamePageData?.bookmaker && propBookSelect) {
+              propBookSelect.value = ntgGamePageData.bookmaker;
+            }
           }
           await loadGameMarketTypes();
           await loadProps(refresh);
@@ -1532,6 +1592,16 @@
     }
   }
 
+  function applyEmbeddedGamePage(pageData) {
+    loading.classList.add("hidden");
+    content.classList.remove("hidden");
+    renderInsights(pageData.insights);
+    loadLineup(pageData.insights?.game);
+    if (pageData.gameProps) embeddedGameProps = pageData.gameProps;
+    if (pageData.propMarkets?.length) _gameMarketTypes = pageData.propMarkets;
+    schedulePropsLoad(false);
+  }
+
   loadTeamColors()
     .then(async () => {
       if (typeof window.ensureAppReady === "function") {
@@ -1539,6 +1609,12 @@
       }
       if (typeof initDesignSystem === "function") initDesignSystem();
       if (typeof initGameStickyNav === "function") initGameStickyNav();
+
+      if (ntgGamePageData?.kind === "mlb_game" && ntgGamePageData.insights) {
+        applyEmbeddedGamePage(ntgGamePageData);
+        return;
+      }
+
       prefetchMatchupHeader();
       try {
         await loadInsights(false);
@@ -1551,23 +1627,7 @@
             brandedErrorState(errEl, {
               title: "Game insights unavailable",
               message: msg,
-              onRetry: () => {
-                errEl.classList.add("hidden");
-                loading.classList.remove("hidden");
-                loadInsights(false)
-                  .then(() => {
-                    content.classList.remove("hidden");
-                    schedulePropsLoad(false);
-                  })
-                  .catch((err) => {
-                    loading.classList.add("hidden");
-                    brandedErrorState(errEl, {
-                      title: "Game insights unavailable",
-                      message: err.message || msg,
-                      onRetry: () => window.location.reload(),
-                    });
-                  });
-              },
+              onRetry: () => window.location.reload(),
             });
           } else {
             errEl.textContent = msg;

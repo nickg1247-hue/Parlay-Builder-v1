@@ -58,74 +58,55 @@
       const dateEl = document.getElementById("slate-date");
       const refreshEl = document.getElementById("refresh-line");
       const watchedEl = document.getElementById("watched-section");
-      const dateParam = qs("date");
+      const pageData = typeof getPageData === "function" ? getPageData() : null;
 
       initSiteChrome();
-      initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+      initLiveTicker("live-ticker", { sport: "all" });
       initHeadlineTicker("headline-ticker");
       await loadTeamColors();
-      renderSkeletonGameList(list, 8);
 
-      const loadUrl = dateParam
-        ? `/api/schedule/mlb?date=${encodeURIComponent(dateParam)}`
-        : "/api/scores/today?sport=mlb";
-
-      try {
-        const [slate, summary, odds, status] = await Promise.all([
-          fetchJSON(loadUrl),
-          fetchJSON(dateParam ? `/api/home/today?date=${encodeURIComponent(dateParam)}` : "/api/home/today").catch(() => ({})),
-          fetchJSON("/api/odds/today").catch(() => null),
-          fetchJSON("/api/status/refresh").catch(() => null),
-        ]);
-
-        if (odds) recordOddsSnapshot(odds, slate.games);
-
-        loading.classList.add("hidden");
-        dateEl.textContent = slate.date || "";
-        if (status) {
-          refreshEl.textContent = formatRefreshStatus(status);
-          refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
-        }
-        pollRefreshStatusLine(refreshEl, 60000);
-
-        const boardMap = summary.slate_by_game_id || {};
-        const renderOpts = {
-          boardMap,
-          gameDate: slate.date,
-          colors: _teamColors,
-        };
-
-        if (!slate.games.length) {
-          list.innerHTML = "";
-          renderEmptyState(list, "no-games");
-          return;
-        }
-
-        if (!summary.board_available && !dateParam) {
-          refreshEl.textContent = (refreshEl.textContent || "") + " · Model picks: run morning refresh";
-        }
-
-        renderGameList(list, slate.games, renderOpts);
-        renderWatchedGamesSection(watchedEl, slate.games, renderOpts);
-
-        if (!dateParam) {
-          setInterval(async () => {
-            try {
-              const [live, snap] = await Promise.all([
-                fetchJSON("/api/scores/today?sport=mlb"),
-                fetchJSON("/api/odds/today").catch(() => null),
-              ]);
-              if (snap) recordOddsSnapshot(snap, live.games);
-              updateGameCards(list, live.games);
-            } catch (_) { /* keep last good state */ }
-          }, 60000);
-        }
-      } catch (e) {
+      if (!pageData || pageData.kind !== "mlb_slate") {
         list.innerHTML = "";
-        loading.classList.add("hidden");
-        errEl.classList.remove("hidden");
-        errEl.textContent = e.message || "Failed to load schedule";
+        errEl?.classList.remove("hidden");
+        if (errEl) errEl.textContent = "Page data missing — reload from the server.";
+        return;
       }
+
+      const slate = pageData.slate || {};
+      const summary = pageData.summary || {};
+      const odds = pageData.odds;
+      const status = pageData.status;
+
+      loading?.classList.add("hidden");
+      if (odds && slate.games) recordOddsSnapshot(odds, slate.games);
+      if (dateEl) dateEl.textContent = slate.date || pageData.date || "";
+      if (status && refreshEl) {
+        refreshEl.textContent = formatRefreshStatus(status);
+        refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));
+      }
+
+      const boardMap = summary.slate_by_game_id || {};
+      const renderOpts = {
+        boardMap,
+        gameDate: slate.date || pageData.date,
+        colors: _teamColors,
+      };
+
+      if (!slate.games?.length) {
+        list.innerHTML = "";
+        renderEmptyState(list, "no-games");
+        return;
+      }
+
+      if (!summary.board_available) {
+        if (refreshEl) {
+          refreshEl.textContent =
+            (refreshEl.textContent || "") + " · Model picks: run morning refresh";
+        }
+      }
+
+      renderGameList(list, slate.games, renderOpts);
+      renderWatchedGamesSection(watchedEl, slate.games, renderOpts);
     })();
   </script>
 </body>

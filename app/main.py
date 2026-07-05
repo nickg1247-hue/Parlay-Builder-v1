@@ -25,6 +25,7 @@ from app.auth.admin_auth import (
     set_session_cookie,
     verify_credentials,
 )
+from app.auth.public_api_gate import PublicApiGateMiddleware
 from app.auth.user_auth import (
     UserPropsAuthMiddleware,
     can_access_props,
@@ -35,6 +36,13 @@ from app.auth.user_auth import (
     set_user_session_cookie,
     user_registration_enabled,
 )
+from app.services.mlb_page_data import (
+    build_home_page_data,
+    build_mlb_game_page_data,
+    build_mlb_props_page_data,
+    build_mlb_slate_page_data,
+)
+from app.services.page_render import render_static_page
 from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
@@ -273,6 +281,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="NTG Sports", lifespan=lifespan)
+app.add_middleware(PublicApiGateMiddleware)
 app.add_middleware(UserPropsAuthMiddleware)
 app.add_middleware(AdminAuthMiddleware)
 
@@ -296,6 +305,21 @@ _HTML_NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
 
 def _html_page(name: str) -> FileResponse:
     return FileResponse(STATIC_DIR / name, headers=_HTML_NO_CACHE)
+
+
+def _pct_query(value: str | None) -> float | None:
+    if value is None or value == "":
+        return None
+    parsed = float(value)
+    if parsed > 1.0:
+        parsed /= 100.0
+    return parsed
+
+
+def _bool_query(raw: str | None) -> bool:
+    if raw is None:
+        return False
+    return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
 class LoginRequest(BaseModel):
@@ -1514,14 +1538,59 @@ async def team_page(sport: str, team_id: str):
     return _html_page("team.html")
 
 
+@app.get("/manifest.webmanifest")
+async def web_manifest():
+    return FileResponse(
+        STATIC_DIR / "manifest.webmanifest",
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse(
+        STATIC_DIR / "sw.js",
+        media_type="application/javascript",
+        headers={
+            "Cache-Control": "no-cache, must-revalidate",
+            "Service-Worker-Allowed": "/",
+        },
+    )
+
+
+@app.get("/install")
+async def install_page():
+    return _html_page("install.html")
+
+
+@app.get("/offline")
+async def offline_page():
+    return _html_page("offline.html")
+
+
 @app.get("/")
-async def home():
-    return _html_page("index.html")
+async def home(date_param: str | None = Query(None, alias="date")):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return render_static_page(
+        STATIC_DIR,
+        "index.html",
+        build_home_page_data(game_date),
+    )
 
 
 @app.get("/mlb")
-async def mlb_slate():
-    return FileResponse(STATIC_DIR / "mlb_slate.html")
+async def mlb_slate(date_param: str | None = Query(None, alias="date")):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return render_static_page(
+        STATIC_DIR,
+        "mlb_slate.html",
+        build_mlb_slate_page_data(game_date),
+    )
 
 
 @app.get("/nba")
@@ -1666,8 +1735,26 @@ async def nba_game_insights(
 
 
 @app.get("/mlb/game/{game_id}")
-async def mlb_game_page(game_id: str):
-    return _html_page("game.html")
+async def mlb_game_page(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    use_cache: bool = Query(False),
+    refresh: bool = Query(False),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    page_data = await build_mlb_game_page_data(
+        game_id,
+        game_date,
+        use_cache=use_cache,
+        refresh=refresh,
+        bookmaker=bookmaker,
+    )
+    if page_data is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return render_static_page(STATIC_DIR, "game.html", page_data)
 
 
 @app.get("/sandbox")
@@ -1691,8 +1778,50 @@ async def nba_board_factors():
 
 
 @app.get("/mlb/props")
-async def mlb_props_page():
-    return _html_page("mlb_props.html")
+async def mlb_props_page(
+    request: Request,
+    date_param: str | None = Query(None, alias="date"),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
+    market_type: str | None = Query(None),
+    min_odds: int | None = Query(None),
+    line_kind: str | None = Query(None),
+    line_value: float | None = Query(None),
+    side: str | None = Query(None),
+    actionable_only: str | None = Query(None),
+    very_strong_only: str | None = Query(None),
+    include_alternates: str | None = Query(None),
+    sort: str = Query("score"),
+    risk: str | None = Query(None),
+    min_score: int | None = Query(None),
+    min_hit_l5: str | None = Query(None),
+    min_hit_l10: str | None = Query(None),
+    refresh: str | None = Query(None),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    qp = request.query_params
+    page_data = build_mlb_props_page_data(
+        game_date,
+        bookmaker=bookmaker,
+        market_type=market_type or None,
+        min_odds=min_odds,
+        line_kind=line_kind or "main",
+        line_value=line_value,
+        side=side or "both",
+        actionable_only=_bool_query(actionable_only or qp.get("actionable_only")),
+        very_strong_only=_bool_query(very_strong_only or qp.get("very_strong_only")),
+        include_alternates=_bool_query(
+            include_alternates or qp.get("include_alternates")
+        ),
+        sort=sort,
+        risk=risk or None,
+        min_score=min_score,
+        min_hit_l5=_pct_query(min_hit_l5),
+        min_hit_l10=_pct_query(min_hit_l10),
+        refresh=_bool_query(refresh),
+    )
+    return render_static_page(STATIC_DIR, "mlb_props.html", page_data)
 
 
 @app.get("/mlb/board")

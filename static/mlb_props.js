@@ -17,52 +17,73 @@
   const minHitL10El = document.getElementById("filter-min-hit-l10");
   const minHitL5El = document.getElementById("filter-min-hit-l5");
   const refreshBtn = document.getElementById("props-search-refresh");
-  const applyBtn = document.getElementById("props-apply-filters");
 
   const EMPTY_FILTER_MESSAGE =
     "No props match — try lowering min score or hit rate, or choose Any to include weaker lines.";
 
-  let searchSeq = 0;
-  let searchInFlight = false;
-
-  function hitPctFromSelect(el) {
-    if (!el?.value) return null;
-    return Number(el.value) / 100;
+  function pageData() {
+    return typeof getPageData === "function" ? getPageData() : null;
   }
 
-  function readFilters(refresh) {
-    return {
-      bookmaker: bookEl?.value || "draftkings",
-      market_type: marketEl?.value || "",
-      min_odds: minOddsEl?.value ?? "",
-      line_kind: lineKindEl?.value || "main",
-      side: sideEl?.value || "both",
-      line_value: lineValueEl?.value ?? "",
-      actionable_only: !!actionableEl?.checked,
-      very_strong_only: !!veryStrongEl?.checked,
-      include_alternates: !!alternatesEl?.checked || lineKindEl?.value === "alternate",
-      sort: sortEl?.value || "score",
-      risk: riskEl?.value || "",
-      min_score: minScoreEl?.value || "",
-      min_hit_l5: hitPctFromSelect(minHitL5El),
-      min_hit_l10: hitPctFromSelect(minHitL10El),
-      limit: 200,
-      scan: !!refresh,
-      refresh: !!refresh,
-    };
+  function setSelectValue(el, value) {
+    if (!el || value == null || value === "") return;
+    el.value = String(value);
+  }
+
+  function setCheckbox(el, checked) {
+    if (el) el.checked = !!checked;
+  }
+
+  function hitSelectValue(rate) {
+    if (rate == null) return "";
+    const pct = Math.round(Number(rate) * 100);
+    const opt = Array.from(minHitL10El?.options || []).find((o) => Number(o.value) === pct);
+    return opt ? String(pct) : "";
+  }
+
+  function applyFilterDefaults(filters) {
+    if (!filters) return;
+    setSelectValue(bookEl, filters.bookmaker);
+    setSelectValue(marketEl, filters.market_type);
+    if (filters.min_odds != null) minOddsEl.value = filters.min_odds;
+    setSelectValue(lineKindEl, filters.line_kind || "main");
+    setSelectValue(sideEl, filters.side || "both");
+    if (filters.line_value != null) lineValueEl.value = filters.line_value;
+    setCheckbox(actionableEl, filters.actionable_only);
+    setCheckbox(veryStrongEl, filters.very_strong_only);
+    setCheckbox(alternatesEl, filters.include_alternates);
+    setSelectValue(sortEl, filters.sort || "score");
+    setSelectValue(riskEl, filters.risk);
+    if (filters.min_score != null) setSelectValue(minScoreEl, filters.min_score);
+    if (filters.min_hit_l10 != null) {
+      setSelectValue(minHitL10El, hitSelectValue(filters.min_hit_l10) || "");
+    }
+    if (filters.min_hit_l5 != null) {
+      setSelectValue(minHitL5El, hitSelectValue(filters.min_hit_l5) || "");
+    }
+  }
+
+  function populateMarkets(markets) {
+    if (!marketEl || !markets?.length) return;
+    markets.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.key;
+      opt.textContent = m.label;
+      marketEl.appendChild(opt);
+    });
   }
 
   function hasTightFilters(filters) {
     return Boolean(
-      filters.risk ||
-        filters.min_score ||
-        filters.min_hit_l5 != null ||
-        filters.min_hit_l10 != null ||
-        filters.actionable_only ||
-        filters.very_strong_only ||
-        filters.market_type ||
-        (filters.min_odds !== "" && filters.min_odds != null) ||
-        filters.line_value
+      filters?.risk ||
+        filters?.min_score ||
+        filters?.min_hit_l5 != null ||
+        filters?.min_hit_l10 != null ||
+        filters?.actionable_only ||
+        filters?.very_strong_only ||
+        filters?.market_type ||
+        (filters?.min_odds !== "" && filters?.min_odds != null) ||
+        filters?.line_value
     );
   }
 
@@ -72,68 +93,56 @@
     return data?.hint || "No props match these filters. Try a different book or refresh lines.";
   }
 
-  function setSearchBusy(busy) {
-    searchInFlight = busy;
-    if (applyBtn) {
-      applyBtn.disabled = busy;
-      applyBtn.textContent = busy ? "Applying…" : "Apply filters";
-    }
-    if (refreshBtn) refreshBtn.disabled = busy;
+  function renderTracker(tracker) {
+    const el = document.getElementById("props-tracker-stats");
+    if (!el || !tracker) return;
+    const buckets = tracker.line_strength || {};
+    const fmtRate = (rate) => (rate != null ? `${(rate * 100).toFixed(0)}% hit` : "—");
+    const cards = ["strong", "moderate", "weak"].map((key) => {
+      const b = buckets[key] || {};
+      const label = key.charAt(0).toUpperCase() + key.slice(1);
+      return `<div class="props-tracker-stat"><strong>${fmtRate(b.hit_rate)}</strong><span>${label} · ${b.settled || 0} graded / ${b.offered || 0} offered</span></div>`;
+    });
+    const overall =
+      tracker.overall_hit_rate != null
+        ? `${(tracker.overall_hit_rate * 100).toFixed(0)}% overall (${tracker.props_settled || 0} graded)`
+        : `${tracker.props_logged || 0} logged — grading starts after games finish`;
+    el.innerHTML = `<p class="props-tracker-note">${overall}</p>${cards.join("")}`;
   }
 
-  async function runSearch(refresh = false) {
-    if (typeof buildPropSearchQuery !== "function") {
-      if (metaEl) metaEl.textContent = "Props search unavailable — reload the page.";
+  function renderFromPageData(data) {
+    if (!data || data.kind !== "mlb_props") {
+      renderPropExplorerList(resultsEl, [], {
+        emptyMessage: "Page data missing — reload from the server.",
+      });
       return;
     }
 
-    const seq = ++searchSeq;
-    setSearchBusy(true);
+    populateMarkets(data.markets || []);
+    applyFilterDefaults(data.filters || {});
+
+    if (typeof initPropBookSelect === "function") {
+      initPropBookSelect(bookEl, null, data.bookmakers || data.propsSearch?.bookmakers);
+    }
+
+    const search = data.propsSearch || {};
+    const filters = data.filters || {};
     if (metaEl) {
-      metaEl.textContent = refresh
-        ? "Refreshing props from sportsbooks…"
-        : "Applying filters…";
+      metaEl.textContent =
+        typeof formatPropsSearchMeta === "function"
+          ? formatPropsSearchMeta(search, filters)
+          : `${search.total_matched || 0} props · ${search.bookmaker_label || "Consensus"}`;
     }
+    renderPropExplorerList(resultsEl, search.props || [], {
+      emptyMessage: emptyMessageFor(search, filters),
+    });
+    renderTracker(data.tracker);
+  }
 
-    const filters = readFilters(refresh);
-    const params = buildPropSearchQuery(filters);
-
-    try {
-      const res = await fetch(`/api/props/search?${params.toString()}`, {
-        cache: "no-store",
-      });
-      if (seq !== searchSeq) return;
-
-      if (res.status === 401) {
-        if (metaEl) metaEl.textContent = "Sign in required";
-        if (window.renderPropsAuthGate) {
-          window.renderPropsAuthGate(resultsEl, "/mlb/props");
-        } else {
-          renderPropExplorerList(resultsEl, [], { emptyMessage: "Sign in to view player props." });
-        }
-        return;
-      }
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-
-      const data = await res.json();
-      if (seq !== searchSeq) return;
-
-      if (metaEl) {
-        metaEl.textContent =
-          typeof formatPropsSearchMeta === "function"
-            ? formatPropsSearchMeta(data, filters)
-            : `${data.total_matched || 0} props · ${data.bookmaker_label || "Consensus"}`;
-      }
-      renderPropExplorerList(resultsEl, data.props || [], {
-        emptyMessage: emptyMessageFor(data, filters),
-      });
-    } catch (e) {
-      if (seq !== searchSeq) return;
-      if (metaEl) metaEl.textContent = "Could not load props.";
-      renderPropExplorerList(resultsEl, [], { emptyMessage: e.message || "Search failed." });
-    } finally {
-      if (seq === searchSeq) setSearchBusy(false);
-    }
+  function buildRefreshUrl() {
+    const params = new URLSearchParams(new FormData(form));
+    params.set("refresh", "true");
+    return `/mlb/props?${params.toString()}`;
   }
 
   function fmtOdds(value) {
@@ -166,9 +175,7 @@
 
     const american = fmtOdds(evalData?.american_payout);
     const delta =
-      targetDelta != null
-        ? ` (${targetDelta >= 0 ? "+" : ""}${targetDelta} vs target)`
-        : "";
+      targetDelta != null ? ` (${targetDelta >= 0 ? "+" : ""}${targetDelta} vs target)` : "";
 
     const legHtml = modalProps
       .map((prop, i) => {
@@ -219,28 +226,6 @@
         document.getElementById("prop-slip-panel")?.classList.add("prop-slip-panel--open");
       }
     });
-  }
-
-  async function loadTracker() {
-    const el = document.getElementById("props-tracker-stats");
-    try {
-      const data = await fetchJSON("/api/props/tracker/summary?days=30");
-      const buckets = data.line_strength || {};
-      const fmtRate = (rate) =>
-        rate != null ? `${(rate * 100).toFixed(0)}% hit` : "—";
-      const cards = ["strong", "moderate", "weak"].map((key) => {
-        const b = buckets[key] || {};
-        const label = key.charAt(0).toUpperCase() + key.slice(1);
-        return `<div class="props-tracker-stat"><strong>${fmtRate(b.hit_rate)}</strong><span>${label} · ${b.settled || 0} graded / ${b.offered || 0} offered</span></div>`;
-      });
-      const overall =
-        data.overall_hit_rate != null
-          ? `${(data.overall_hit_rate * 100).toFixed(0)}% overall (${data.props_settled || 0} graded)`
-          : `${data.props_logged || 0} logged — grading starts after games finish`;
-      el.innerHTML = `<p class="props-tracker-note">${overall}</p>${cards.join("")}`;
-    } catch (_) {
-      el.textContent = "Tracker unavailable.";
-    }
   }
 
   async function buildParlay(e) {
@@ -298,17 +283,6 @@
     }
   }
 
-  function applyFilters(e) {
-    e?.preventDefault();
-    if (!searchInFlight) runSearch(false);
-  }
-
-  function wireFilterControls() {
-    form?.addEventListener("submit", applyFilters);
-    applyBtn?.addEventListener("click", applyFilters);
-    refreshBtn?.addEventListener("click", () => runSearch(true));
-  }
-
   async function init() {
     if (typeof window.ensureAppReady === "function") {
       await window.ensureAppReady();
@@ -317,30 +291,19 @@
       initPropSlipUi();
     }
     initSiteChrome();
-    await initPropBookSelect(bookEl, () => {
-      if (!searchInFlight) runSearch(false);
+    initLiveTicker("live-ticker", { sport: "all" });
+
+    renderFromPageData(pageData());
+
+    refreshBtn?.addEventListener("click", () => {
+      if (!form) return;
+      window.location.href = buildRefreshUrl();
     });
 
-    try {
-      const markets = await fetchJSON("/api/props/markets");
-      (markets.markets || []).forEach((m) => {
-        const opt = document.createElement("option");
-        opt.value = m.key;
-        opt.textContent = m.label;
-        marketEl.appendChild(opt);
-      });
-    } catch (_) {
-      /* keep All types */
-    }
-
-    wireFilterControls();
     document.getElementById("parlay-builder-form")?.addEventListener("submit", buildParlay);
-
-    loadTracker();
-    await runSearch(false);
   }
 
   init().catch(() => {
-    renderPropExplorerList(resultsEl, [], { emptyMessage: "Could not initialize props search." });
+    renderPropExplorerList(resultsEl, [], { emptyMessage: "Could not initialize props page." });
   });
 })();

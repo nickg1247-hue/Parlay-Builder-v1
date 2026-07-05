@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
+  <title>Install app — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+</head>
+<body class="ntg-shell home-v2">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+    </header>
+
+    <main class="app-main install-page">
+      <h1>Install NTG Sports</h1>
+      <p class="section-sub">Add the site to your home screen — no app store required. You get a full-screen icon and faster loads.</p>
+
+      <section class="dash-panel install-steps">
+        <h2>iPhone / iPad (Safari)</h2>
+        <ol>
+          <li>Open <a href="/">ntgsports.com</a> in <strong>Safari</strong> (not Chrome).</li>
+          <li>Tap the <strong>Share</strong> button (square with arrow).</li>
+          <li>Scroll and tap <strong>Add to Home Screen</strong>.</li>
+          <li>Tap <strong>Add</strong> — the NTG icon appears on your home screen.</li>
+        </ol>
+      </section>
+
+      <section class="dash-panel install-steps">
+        <h2>Android (Chrome)</h2>
+        <ol>
+          <li>Open <a href="/">ntgsports.com</a> in Chrome.</li>
+          <li>Tap the menu (⋮) or use the <strong>Install app</strong> banner when it appears.</li>
+          <li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+          <li>Confirm — NTG Sports opens like a native app.</li>
+        </ol>
+      </section>
+
+      <p class="install-note">Live picks and odds always need an internet connection. Installing does not create a separate account — use the same sign-in as the website.</p>
+      <p><a class="dash-btn dash-btn-primary" href="/">Back to dashboard</a></p>
+    </main>
+  </div>
+  <script src="/static/pwa.js?v=20260725"></script>
+  <script src="/static/app.js?v=20260725"></script>
+  <script>loadPublicFeatures().then(() => initSiteChrome());</script>
+</body>
+</html>

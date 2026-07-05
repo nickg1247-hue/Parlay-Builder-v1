@@ -1,0 +1,49 @@
+{
+  "name": "NTG Sports",
+  "short_name": "NTG Sports",
+  "description": "Daily MLB model picks, props, and live scores.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "categories": ["sports", "news"],
+  "icons": [
+    {
+      "src": "/static/assets/ntg-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/ntg-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/ntg-logo-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "MLB slate",
+      "url": "/mlb",
+      "description": "Today's MLB games"
+    },
+    {
+      "name": "Player props",
+      "url": "/mlb/props",
+      "description": "MLB prop explorer"
+    },
+    {
+      "name": "Performance",
+      "url": "/performance",
+      "description": "Track record"
+    }
+  ]
+}

@@ -4,6 +4,17 @@ const NTG_ASSET_V = "20260725";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
+function getPageData() {
+  const el = document.getElementById("ntg-page-data");
+  if (!el) return null;
+  try {
+    return JSON.parse(el.textContent);
+  } catch {
+    return null;
+  }
+}
+window.getPageData = getPageData;
+
 (function ensureChromeStylesEarly() {
   for (const file of ["brand.css", "design.css", "home-v2.css"]) {
     if (document.querySelector(`link[href*="${file}"]`)) continue;
@@ -12,6 +23,14 @@ window.NTG_LOGO_SRC = NTG_LOGO_SRC;
     link.href = `/static/${file}?v=${NTG_ASSET_V}`;
     document.head.appendChild(link);
   }
+})();
+
+(function loadPwaScript() {
+  if (document.querySelector('script[src*="pwa.js"]')) return;
+  const script = document.createElement("script");
+  script.src = `/static/pwa.js?v=${NTG_ASSET_V}`;
+  script.defer = true;
+  document.head.appendChild(script);
 })();
 
 async function fetchJSON(url, options = {}) {
@@ -1029,6 +1048,13 @@ function initLiveTicker(elementId, options = {}) {
   if (!el) return null;
   el.classList.remove("ticker-placeholder");
   el.classList.add("live-ticker");
+
+  const pageData = getPageData();
+  const embedded = pageData?.tickerScores?.games;
+  if (embedded?.length) {
+    renderLiveTicker(el, embedded);
+    return () => stopTickerMarquee(el);
+  }
 
   const intervalMs = options.intervalMs || 45000;
   const dateParam = options.date || qs("date");
@@ -2126,9 +2152,13 @@ function setSelectedPropBookmaker(key) {
   localStorage.setItem(PROP_BOOK_STORAGE_KEY, key);
 }
 
-async function initPropBookSelect(selectEl, onChange) {
+async function initPropBookSelect(selectEl, onChange, preloadedBookmakers) {
   if (!selectEl) return;
-  await loadPropBookmakers();
+  if (preloadedBookmakers?.length) {
+    propBookmakersCache = preloadedBookmakers;
+  } else {
+    await loadPropBookmakers();
+  }
   const current = getSelectedPropBookmaker();
   const list = propBookmakersCache || DEFAULT_PROP_BOOKMAKERS;
   selectEl.innerHTML = list
@@ -2711,9 +2741,49 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
   );
 }
 
+function hydrateHomeFromPageData(pageData, progress) {
+  const els = homePageElements();
+  if (!els.glance || !pageData) return null;
+  setHomeLoadProgress(progress, 0.35, "Loading embedded slate…");
+  loadTeamColors();
+  if (pageData.odds && pageData.scores?.games) {
+    recordOddsSnapshot(pageData.odds, pageData.scores.games);
+  }
+  setHomeLoadProgress(progress, 0.85, "Ready");
+  const core = renderHomePageCore(
+    pageData.summary,
+    pageData.scores,
+    pageData.odds,
+    pageData.status
+  );
+  renderHomePageSecondary(
+    pageData.summary,
+    pageData.scores,
+    pageData.propsData,
+    pageData.trackerSummary,
+    pageData.perfSummary
+  );
+  if (pageData.build?.build_id) {
+    showBuildBadgeFromData(pageData.build);
+  }
+  setHomeLoadProgress(progress, 1, "Ready");
+  return core;
+}
+
+function showBuildBadgeFromData(data) {
+  const el = document.getElementById("pb-build-badge");
+  if (!el || !data?.build_id) return;
+  el.textContent = `Build ${data.build_id}`;
+}
+
 async function loadHomePageCritical(progress) {
   const els = homePageElements();
   if (!els.glance) return null;
+
+  const embedded = getPageData();
+  if (embedded?.kind === "home") {
+    return hydrateHomeFromPageData(embedded, progress);
+  }
 
   try {
     setHomeLoadProgress(progress, 0.1, "Running win-probability models…");
@@ -2754,6 +2824,9 @@ async function loadHomePageCritical(progress) {
 
 async function loadHomePageDeferred(core) {
   if (!core?.summary || !core?.scores) return;
+  const embedded = getPageData();
+  if (embedded?.kind === "home") return;
+
   const els = homePageElements();
 
   if (els.propsEl) {
@@ -3022,6 +3095,7 @@ function renderSiteFooter() {
         <nav class="site-footer-nav" aria-label="Footer links">
           <a href="/methodology">Methodology</a>
           <a href="/performance">Performance</a>
+          <a href="/install">Install app</a>
           <a href="/updates">Updates</a>
           <a href="mailto:contact@ntgsports.com">Contact</a>
           <a href="/privacy">Privacy</a>
@@ -4047,9 +4121,13 @@ function bootNTGSplash() {
   }
 
   const homeProgress = { value: 0, status: "Starting up…" };
-  const homeCritical = isHomePage()
-    ? loadHomePageCritical(homeProgress)
-    : Promise.resolve(null);
+  const embeddedPage = getPageData();
+  const homeCritical =
+    isHomePage() && embeddedPage?.kind === "home"
+      ? Promise.resolve(hydrateHomeFromPageData(embeddedPage, homeProgress))
+      : isHomePage()
+        ? loadHomePageCritical(homeProgress)
+        : Promise.resolve(null);
   const splashReady = Promise.all([ensureAppReady(), homeCritical]).then(() => {
     initSiteChrome();
   });
@@ -4062,15 +4140,17 @@ function bootNTGSplash() {
     })
       .catch(() => clearNTGSplashState())
       .finally(() => {
-        if (isHomePage()) {
+        if (!(embeddedPage?.kind === "home")) {
           homeCritical.then((core) => loadHomePageDeferred(core)).catch(() => {});
         }
         initUpdatesModal().catch(() => {});
-        showBuildBadge();
+        if (embeddedPage?.kind !== "home") showBuildBadge();
+        else if (!embeddedPage?.build?.build_id) showBuildBadge();
       });
   } else {
     splashReady
       .then(() => {
+        if (embeddedPage?.kind === "home") return null;
         if (isHomePage()) {
           return homeCritical.then((core) => loadHomePageDeferred(core));
         }
@@ -4079,7 +4159,7 @@ function bootNTGSplash() {
       .finally(() => {
         clearNTGSplashState();
         initUpdatesModal().catch(() => {});
-        showBuildBadge();
+        if (embeddedPage?.kind !== "home") showBuildBadge();
       });
   }
 }
