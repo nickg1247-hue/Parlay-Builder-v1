@@ -1608,6 +1608,20 @@
 
   function bootGamePage() {
     const hideLoading = () => loading?.classList.add("hidden");
+    const showBootError = (e) => {
+      hideLoading();
+      errEl?.classList.remove("hidden");
+      const msg = e?.message || "Could not load game data";
+      if (typeof brandedErrorState === "function") {
+        brandedErrorState(errEl, {
+          title: "Game page unavailable",
+          message: msg,
+          onRetry: () => window.location.reload(),
+        });
+      } else if (errEl) {
+        errEl.textContent = msg;
+      }
+    };
 
     if (ntgGamePageData?.kind === "mlb_game" && ntgGamePageData.insights) {
       sessionStorage.removeItem(GAME_RELOAD_KEY);
@@ -1620,36 +1634,23 @@
             window.ensureAppReady().catch(() => {});
           }
         })
-        .catch((e) => {
-          hideLoading();
-          errEl?.classList.remove("hidden");
-          if (errEl) errEl.textContent = e.message || "Game not found";
-        });
+        .catch(showBootError);
       return;
     }
 
-    if (!sessionStorage.getItem(GAME_RELOAD_KEY)) {
-      sessionStorage.setItem(GAME_RELOAD_KEY, "1");
-      const base = buildGamePageUrl({});
-      const sep = base.includes("?") ? "&" : "?";
-      window.location.replace(base + sep + "_=" + Date.now());
-      return;
-    }
     sessionStorage.removeItem(GAME_RELOAD_KEY);
-
-    hideLoading();
-    errEl?.classList.remove("hidden");
-    if (errEl) {
-      if (typeof brandedErrorState === "function") {
-        brandedErrorState(errEl, {
-          title: "Game page unavailable",
-          message: "Could not load game data. Reload to try again.",
-          onRetry: () => window.location.reload(),
-        });
-      } else {
-        errEl.textContent = "Could not load game data — reload the page.";
-      }
-    }
+    if (typeof initDesignSystem === "function") initDesignSystem();
+    if (typeof initGameStickyNav === "function") initGameStickyNav();
+    loadTeamColors()
+      .then(() => prefetchMatchupHeader())
+      .then(() => loadInsights(false))
+      .then(() => schedulePropsLoad(false))
+      .then(() => {
+        if (typeof window.ensureAppReady === "function") {
+          window.ensureAppReady().catch(() => {});
+        }
+      })
+      .catch(showBootError);
   }
 
   bootGamePage();

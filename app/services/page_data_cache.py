@@ -6,9 +6,9 @@ import asyncio
 import time
 from typing import Any, Awaitable, Callable
 
-_lock = asyncio.Lock()
 _cache: dict[str, tuple[float, Any]] = {}
-DEFAULT_TTL_SECONDS = 60
+_inflight: dict[str, asyncio.Task[Any]] = {}
+DEFAULT_TTL_SECONDS = 120
 
 
 async def get_or_build(
@@ -21,14 +21,21 @@ async def get_or_build(
     if hit and (now - hit[0]) < ttl_seconds:
         return hit[1]
 
-    async with _lock:
-        hit = _cache.get(key)
-        if hit and (now - hit[0]) < ttl_seconds:
-            return hit[1]
+    task = _inflight.get(key)
+    if task is None or task.done():
+        task = asyncio.create_task(_run_build(key, builder))
+        _inflight[key] = task
+    return await task
+
+
+async def _run_build(key: str, builder: Callable[[], Awaitable[Any]]) -> Any:
+    try:
         data = await builder()
         if data is not None:
-            _cache[key] = (now, data)
+            _cache[key] = (time.monotonic(), data)
         return data
+    finally:
+        _inflight.pop(key, None)
 
 
 def invalidate_prefix(prefix: str) -> None:

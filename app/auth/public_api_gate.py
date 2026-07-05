@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import re
 from typing import Callable
 
 from fastapi import Request
@@ -19,7 +18,7 @@ _BLOCKED_EXACT = frozenset({
     "/api/props/search",
 })
 
-_MLB_INSIGHTS_RE = re.compile(r"^/api/games/mlb/[^/]+/insights$")
+# MLB game insights stays public — game pages use it when SSR embed is missing.
 
 
 def public_api_gate_enabled() -> bool:
@@ -28,9 +27,7 @@ def public_api_gate_enabled() -> bool:
 
 
 def is_blocked_public_get(path: str) -> bool:
-    if path in _BLOCKED_EXACT:
-        return True
-    return bool(_MLB_INSIGHTS_RE.match(path))
+    return path in _BLOCKED_EXACT
 
 
 def _admin_api_bypass(request: Request) -> bool:

@@ -252,25 +252,6 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(ensure_today_daily_board)
     except Exception as exc:
         logger.warning("Startup daily board ensure failed: %s", exc)
-
-    async def _warm_page_caches() -> None:
-        try:
-            today = date_type.today()
-            await get_or_build(
-                f"home:{today.isoformat()}",
-                120,
-                lambda: build_home_page_data(today),
-            )
-            await get_or_build(
-                f"slate:{today.isoformat()}",
-                120,
-                lambda: build_mlb_slate_page_data(today),
-            )
-            logger.info("SSR page cache warmed for %s", today.isoformat())
-        except Exception as exc:
-            logger.warning("SSR page cache warm failed: %s", exc)
-
-    asyncio.create_task(_warm_page_caches())
     if (
         (hourly_refresh_enabled() and live_odds_enabled())
         or periodic_refresh_enabled()
@@ -957,7 +938,7 @@ async def mlb_game_detail(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    detail = get_mlb_game(game_id, game_date)
+    detail = get_mlb_game(game_id, game_date, allow_fetch=True)
     if detail is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return detail
@@ -1589,14 +1570,34 @@ async def offline_page():
     return _html_page("offline.html")
 
 
+SSR_PAGE_TIMEOUT_SECONDS = 15.0
+SSR_PAGE_CACHE_TTL = 120
+
+
+async def _ssr_page_data(
+    cache_key: str,
+    builder,
+) -> dict[str, Any]:
+    try:
+        return await asyncio.wait_for(
+            get_or_build(cache_key, SSR_PAGE_CACHE_TTL, builder),
+            timeout=SSR_PAGE_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError as exc:
+        logger.error("SSR page build timed out: %s", cache_key)
+        raise HTTPException(
+            status_code=503,
+            detail="Page load timed out — please retry in a moment.",
+        ) from exc
+
+
 @app.get("/")
 async def home(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await get_or_build(
+    page_data = await _ssr_page_data(
         f"home:{game_date.isoformat()}",
-        60,
         lambda: build_home_page_data(game_date),
     )
     return render_static_page(STATIC_DIR, "index.html", page_data)
@@ -1607,9 +1608,8 @@ async def mlb_slate(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await get_or_build(
+    page_data = await _ssr_page_data(
         f"slate:{game_date.isoformat()}",
-        60,
         lambda: build_mlb_slate_page_data(game_date),
     )
     return render_static_page(STATIC_DIR, "mlb_slate.html", page_data)
@@ -1760,29 +1760,31 @@ async def nba_game_insights(
 async def mlb_game_page(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
-    use_cache: bool = Query(False),
+    use_cache: bool = Query(True),
     refresh: bool = Query(False),
     bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    if refresh:
-        page_data = await build_mlb_game_page_data(
+    cache_key = (
+        f"game:{game_id}:{game_date.isoformat()}:"
+        f"{bookmaker or DEFAULT_DISPLAY_BOOKMAKER}:{use_cache}:{refresh}"
+    )
+
+    async def _build():
+        return await build_mlb_game_page_data(
             game_id,
             game_date,
             use_cache=use_cache,
             refresh=refresh,
             bookmaker=bookmaker,
         )
+
+    if refresh:
+        page_data = await _build()
     else:
-        page_data = await build_mlb_game_page_data(
-            game_id,
-            game_date,
-            use_cache=use_cache,
-            refresh=False,
-            bookmaker=bookmaker,
-        )
+        page_data = await _ssr_page_data(cache_key, _build)
     if page_data is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return render_static_page(STATIC_DIR, "game.html", page_data)

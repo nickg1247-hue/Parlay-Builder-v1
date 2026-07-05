@@ -115,14 +115,28 @@ def _load_cache_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
+def load_mlb_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
+    """Read schedule JSON from disk only — safe for SSR (no MLB API calls)."""
+    game_date = game_date or date.today()
+    path = schedule_cache_path(game_date)
+    if not path.exists():
+        return {
+            "date": game_date.isoformat(),
+            "games": [],
+            "games_count": 0,
+            "source": "missing",
+        }
+    payload = _load_cache_payload(path)
+    payload["source"] = "cache"
+    return payload
+
+
 def get_mlb_schedule(game_date: date | None = None) -> dict[str, Any]:
     """Return schedule from cache if fresh (<6h), else fetch and write."""
     game_date = game_date or date.today()
     path = schedule_cache_path(game_date)
     if cache_is_fresh(path):
-        payload = _load_cache_payload(path)
-        payload["source"] = "cache"
-        return payload
+        return load_mlb_schedule_cache(game_date)
     payload = refresh_schedule_cache(game_date)
     payload["source"] = "api"
     return payload
@@ -186,20 +200,35 @@ def _game_from_board_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _games_for_date(game_date: date, *, allow_fetch: bool) -> list[dict[str, Any]]:
-    path = schedule_cache_path(game_date)
-    if path.exists():
-        return _load_cache_payload(path).get("games") or []
-    if allow_fetch and game_date == date.today():
-        return get_mlb_schedule(game_date).get("games") or []
-    return []
+def _games_for_date(game_date: date) -> list[dict[str, Any]]:
+    """Schedule games for one date from disk only."""
+    return load_mlb_schedule_cache(game_date).get("games") or []
+
+
+def _recent_cached_games(max_days: int = 14) -> list[tuple[date, dict[str, Any]]]:
+    """Games from recent on-disk schedule caches, newest dates first."""
+    today = date.today()
+    out: list[tuple[date, dict[str, Any]]] = []
+    for path in sorted(PROCESSED_DIR.glob("mlb_schedule_*.json"), reverse=True):
+        stem = path.stem.replace("mlb_schedule_", "")
+        try:
+            cache_date = date.fromisoformat(stem)
+        except ValueError:
+            continue
+        if abs((today - cache_date).days) > max_days:
+            continue
+        for game in _load_cache_payload(path).get("games") or []:
+            out.append((cache_date, game))
+    return out
 
 
 def _find_game_record(
     game_id: str,
     game_date: date,
+    *,
+    allow_fetch: bool = False,
 ) -> tuple[dict[str, Any] | None, date | None]:
-    """Locate a game on the requested date, nearby days, or the daily board."""
+    """Locate a game on the requested date, nearby days, recent caches, or daily board."""
     gid = str(game_id)
     search_dates = [game_date, game_date - timedelta(days=1), game_date + timedelta(days=1)]
     seen: set[str] = set()
@@ -208,9 +237,16 @@ def _find_game_record(
         if iso in seen:
             continue
         seen.add(iso)
-        for game in _games_for_date(search_date, allow_fetch=idx == 0):
+        games = _games_for_date(search_date)
+        if not games and allow_fetch and idx == 0 and search_date == date.today():
+            games = get_mlb_schedule(search_date).get("games") or []
+        for game in games:
             if str(game.get("game_id")) == gid:
                 return game, search_date
+
+    for cache_date, game in _recent_cached_games():
+        if str(game.get("game_id")) == gid:
+            return game, cache_date
 
     row = _daily_board_row(gid)
     if row and row.get("home_team") and row.get("away_team"):
@@ -220,15 +256,22 @@ def _find_game_record(
     return None, None
 
 
-def get_mlb_game(game_id: str, game_date: date | None = None) -> dict[str, Any] | None:
+def get_mlb_game(
+    game_id: str,
+    game_date: date | None = None,
+    *,
+    allow_fetch: bool = False,
+) -> dict[str, Any] | None:
     """Single game metadata plus daily-board slate row when available."""
     game_date = game_date or date.today()
-    game, resolved_date = _find_game_record(game_id, game_date)
+    game, resolved_date = _find_game_record(
+        game_id, game_date, allow_fetch=allow_fetch
+    )
     if game is None or resolved_date is None:
         return None
     schedule_source = "cache"
     if resolved_date == date.today():
-        schedule = get_mlb_schedule(resolved_date)
+        schedule = load_mlb_schedule_cache(resolved_date)
         schedule_source = schedule.get("source", "cache")
     return {
         "date": resolved_date.isoformat(),

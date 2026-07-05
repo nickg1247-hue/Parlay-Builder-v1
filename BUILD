@@ -1,1 +1,1 @@
-2026-07-04-fix-pages-v1
+2026-07-04-game-pages-v1

@@ -43,7 +43,7 @@ def test_is_blocked_public_get_paths():
     assert is_blocked_public_get("/api/home/today")
     assert is_blocked_public_get("/api/scores/today")
     assert is_blocked_public_get("/api/props/search")
-    assert is_blocked_public_get("/api/games/mlb/123/insights")
+    assert not is_blocked_public_get("/api/games/mlb/123/insights")
     assert not is_blocked_public_get("/api/auth/status")
     assert not is_blocked_public_get("/api/schedule/mlb")
 
@@ -84,9 +84,8 @@ def test_mlb_slate_embeds_page_data(_mock_slate):
     assert "mlb_slate" in res.text
 
 
-@patch("app.services.mlb_page_data.get_ufc_home_chip", return_value={"available": False})
-@patch("app.services.mlb_page_data.get_scores_today", return_value={"games": []})
 @patch("app.services.mlb_page_data.build_daily_top_props", return_value={"top_props": []})
+@patch("app.services.mlb_page_data.local_mlb_scores", return_value={"games": []})
 @patch("app.services.mlb_page_data.get_home_today_summary", return_value={})
 @patch("app.services.mlb_page_data.get_today_snapshot", return_value={})
 @patch("app.services.mlb_page_data.get_refresh_status", return_value={})

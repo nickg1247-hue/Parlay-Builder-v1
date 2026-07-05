@@ -10,7 +10,7 @@ from typing import Any
 from fastapi.responses import HTMLResponse
 
 _HTML_NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
-_PAGE_DATA_JS = "/static/page-data.js?v=20260736"
+_PAGE_DATA_JS = "/static/page-data.js?v=20260737"
 
 
 def _json_default(value: Any) -> Any:

@@ -52,8 +52,8 @@ def test_mlb_slate_page():
     text = response.text
     assert "MLB" in text
     assert 'href="/"' in text
-    assert 'href="/mlb/board"' not in text
-    assert "/api/scores/today" in text
+    assert 'id="ntg-page-data"' in text
+    assert "mlb_slate" in text
     assert "app.js" in text
 
 
@@ -101,12 +101,15 @@ def test_slate_includes_model_and_ev_pick_fields(auth_env):
     assert row["model_pick_side"] in ("home", "away")
 
 
-def test_game_page_loads():
-    response = client.get("/mlb/game/824269")
+def test_game_page_loads(cached_mlb_game):
+    game_date, game_id = cached_mlb_game
+    response = client.get(f"/mlb/game/{game_id}?date={game_date}")
     assert response.status_code == 200
     text = response.text
     assert "matchup-header" in text
     assert "game-matchup-board" in text
+    assert 'id="ntg-page-data"' in text
+    assert "mlb_game" in text
     assert "app.js" in text
     assert "game.js" in text
     assert "game-page-bg" in text
