@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+import asyncio
+from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.auth.public_api_gate import is_blocked_public_get
@@ -64,7 +64,7 @@ def test_public_api_gate_blocks_home_today():
     assert res.json().get("code") == "public_api_disabled"
 
 
-@patch("app.main.build_home_page_data", return_value=_MIN_HOME)
+@patch("app.main.build_home_page_data", new_callable=AsyncMock, return_value=_MIN_HOME)
 def test_home_page_embeds_page_data(_mock_home):
     client = TestClient(app)
     res = client.get("/")
@@ -73,7 +73,7 @@ def test_home_page_embeds_page_data(_mock_home):
     assert '"kind"' in res.text and "home" in res.text
 
 
-@patch("app.main.build_mlb_slate_page_data", return_value=_MIN_SLATE)
+@patch("app.main.build_mlb_slate_page_data", new_callable=AsyncMock, return_value=_MIN_SLATE)
 def test_mlb_slate_embeds_page_data(_mock_slate):
     client = TestClient(app)
     res = client.get("/mlb")
@@ -82,6 +82,7 @@ def test_mlb_slate_embeds_page_data(_mock_slate):
     assert "mlb_slate" in res.text
 
 
+@patch("app.services.mlb_page_data.get_ufc_home_chip", return_value={"available": False})
 @patch("app.services.mlb_page_data.get_scores_today", return_value={"games": []})
 @patch("app.services.mlb_page_data.build_daily_top_props", return_value={"top_props": []})
 @patch("app.services.mlb_page_data.get_home_today_summary", return_value={})
@@ -92,6 +93,6 @@ def test_mlb_slate_embeds_page_data(_mock_slate):
 def test_build_home_page_data_calls_props_builder(*_mocks):
     from app.services.mlb_page_data import build_home_page_data
 
-    data = build_home_page_data()
+    data = asyncio.run(build_home_page_data())
     assert data["kind"] == "home"
     assert "propsData" in data

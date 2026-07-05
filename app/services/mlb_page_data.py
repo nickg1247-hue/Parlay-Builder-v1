@@ -24,6 +24,7 @@ from app.services.props_mlb import (
 )
 from app.services.schedule_mlb import get_mlb_schedule
 from app.services.scores_today import get_scores_today
+from app.services.ufc_home_summary import get_ufc_home_chip
 
 BUILD_PATH = Path(__file__).resolve().parents[2] / "BUILD"
 
@@ -47,26 +48,49 @@ def performance_summary_payload(days: int = 30) -> dict[str, Any]:
     }
 
 
-def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
-    summary = get_home_today_summary(game_date)
-    scores = get_scores_today(sport="all", game_date=game_date, auto_resolve=False)
-    odds = get_today_snapshot()
-    status = get_refresh_status()
-    props_data = build_daily_top_props(
+def _cached_daily_props(game_date: date, *, limit: int = 12) -> dict[str, Any]:
+    """Cache-only props for SSR — never scan Odds API on page navigation."""
+    return build_daily_top_props(
         game_date,
-        limit=12,
+        limit=limit,
         scan=False,
         refresh=False,
     )
-    if not props_data.get("top_props"):
-        props_data = build_daily_top_props(
-            game_date,
-            limit=12,
-            scan=True,
-            refresh=False,
-        )
-        props_data["auto_scanned"] = True
+
+
+async def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
+    game_date = game_date or date.today()
+
+    (
+        props_data,
+        scores,
+        odds,
+        status,
+        tracker_summary,
+        perf_summary,
+        ufc_card,
+    ) = await asyncio.gather(
+        asyncio.to_thread(_cached_daily_props, game_date, limit=40),
+        asyncio.to_thread(
+            lambda: get_scores_today(
+                sport="all", game_date=game_date, auto_resolve=False
+            ),
+        ),
+        asyncio.to_thread(get_today_snapshot),
+        asyncio.to_thread(get_refresh_status),
+        asyncio.to_thread(summarize_prop_tracker, 30),
+        asyncio.to_thread(performance_summary_payload, 30),
+        asyncio.to_thread(get_ufc_home_chip),
+    )
+
+    summary = await asyncio.to_thread(
+        get_home_today_summary,
+        game_date,
+        props_payload=props_data,
+        ufc_card=ufc_card,
+        fetch_ufc=False,
+    )
+
     return {
         "kind": "home",
         "date": game_date.isoformat(),
@@ -75,20 +99,33 @@ def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
         "odds": odds,
         "status": status,
         "propsData": props_data,
-        "trackerSummary": summarize_prop_tracker(days=30),
-        "perfSummary": performance_summary_payload(days=30),
+        "trackerSummary": tracker_summary,
+        "perfSummary": perf_summary,
         "tickerScores": scores,
         "build": {"build_id": _read_build_id()},
     }
 
 
-def build_mlb_slate_page_data(game_date: date | None = None) -> dict[str, Any]:
+async def build_mlb_slate_page_data(game_date: date | None = None) -> dict[str, Any]:
     game_date = game_date or date.today()
-    slate = get_mlb_schedule(game_date)
-    summary = get_home_today_summary(game_date)
-    odds = get_today_snapshot()
-    status = get_refresh_status()
-    ticker = get_scores_today(sport="all", game_date=game_date, auto_resolve=False)
+
+    slate, summary, odds, status, ticker = await asyncio.gather(
+        asyncio.to_thread(get_mlb_schedule, game_date),
+        asyncio.to_thread(
+            get_home_today_summary,
+            game_date,
+            lightweight=True,
+            fetch_ufc=False,
+        ),
+        asyncio.to_thread(get_today_snapshot),
+        asyncio.to_thread(get_refresh_status),
+        asyncio.to_thread(
+            lambda: get_scores_today(
+                sport="mlb", game_date=game_date, auto_resolve=False
+            ),
+        ),
+    )
+
     return {
         "kind": "mlb_slate",
         "date": game_date.isoformat(),
@@ -110,23 +147,37 @@ async def build_mlb_game_page_data(
 ) -> dict[str, Any] | None:
     game_date = game_date or date.today()
     book = bookmaker or DEFAULT_DISPLAY_BOOKMAKER
-    insights = await asyncio.to_thread(
-        build_game_insights,
-        game_id,
-        game_date=game_date,
-        use_cache=use_cache,
-        refresh=refresh,
+
+    insights, props_payload, ticker, odds = await asyncio.gather(
+        asyncio.to_thread(
+            build_game_insights,
+            game_id,
+            game_date=game_date,
+            use_cache=use_cache,
+            refresh=refresh,
+        ),
+        asyncio.to_thread(
+            build_game_props,
+            game_id,
+            game_date=game_date,
+            refresh=refresh,
+            bookmaker=book,
+        ),
+        asyncio.to_thread(
+            lambda: get_scores_today(
+                sport="mlb", game_date=game_date, auto_resolve=False
+            ),
+        ),
+        asyncio.to_thread(get_today_snapshot),
     )
     if insights is None:
         return None
-    props_payload = await asyncio.to_thread(
-        build_game_props,
-        game_id,
-        game_date=game_date,
-        refresh=refresh,
-        bookmaker=book,
+
+    prop_markets, bookmakers = await asyncio.gather(
+        asyncio.to_thread(list_prop_market_types),
+        asyncio.to_thread(list_prop_bookmakers),
     )
-    ticker = get_scores_today(sport="mlb", game_date=game_date, auto_resolve=False)
+
     return {
         "kind": "mlb_game",
         "gameId": game_id,
@@ -134,14 +185,14 @@ async def build_mlb_game_page_data(
         "bookmaker": book,
         "insights": insights,
         "gameProps": props_payload,
-        "propMarkets": list_prop_market_types(),
-        "bookmakers": list_prop_bookmakers(),
+        "propMarkets": prop_markets,
+        "bookmakers": bookmakers,
         "tickerScores": ticker,
-        "odds": get_today_snapshot(),
+        "odds": odds,
     }
 
 
-def build_mlb_props_page_data(
+async def build_mlb_props_page_data(
     game_date: date | None = None,
     *,
     bookmaker: str | None = None,
@@ -184,13 +235,20 @@ def build_mlb_props_page_data(
         min_hit_l5=min_hit_l5,
         min_hit_l10=min_hit_l10,
     )
-    props_search = search_daily_props(game_date, **search_kwargs)
-    if not props_search.get("props") and not scan and not refresh:
-        props_search = search_daily_props(
-            game_date,
-            **{**search_kwargs, "scan": True, "refresh": False},
-        )
-        props_search["auto_scanned"] = True
+
+    props_search, markets, bookmakers, tracker, status, ticker = await asyncio.gather(
+        asyncio.to_thread(search_daily_props, game_date, **search_kwargs),
+        asyncio.to_thread(list_prop_market_types),
+        asyncio.to_thread(list_prop_bookmakers),
+        asyncio.to_thread(summarize_prop_tracker, 30),
+        asyncio.to_thread(get_refresh_status),
+        asyncio.to_thread(
+            lambda: get_scores_today(
+                sport="mlb", game_date=game_date, auto_resolve=False
+            ),
+        ),
+    )
+
     filters = {
         "bookmaker": bookmaker or DEFAULT_DISPLAY_BOOKMAKER,
         "market_type": market_type or "",
@@ -211,10 +269,10 @@ def build_mlb_props_page_data(
         "kind": "mlb_props",
         "date": game_date.isoformat(),
         "propsSearch": props_search,
-        "markets": list_prop_market_types(),
-        "bookmakers": list_prop_bookmakers(),
-        "tracker": summarize_prop_tracker(days=30),
+        "markets": markets,
+        "bookmakers": bookmakers,
+        "tracker": tracker,
         "filters": filters,
-        "status": get_refresh_status(),
-        "tickerScores": get_scores_today(sport="all", game_date=game_date, auto_resolve=False),
+        "status": status,
+        "tickerScores": ticker,
     }

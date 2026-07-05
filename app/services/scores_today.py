@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from typing import Any
 
@@ -59,21 +60,39 @@ def get_scores_today(
         )
 
     mlb_date = game_date or date.today()
-    mlb = get_mlb_scores_today(game_date=mlb_date)
-    nba = get_nba_scores_today(
-        game_date=game_date,
-        auto_resolve=auto_resolve and game_date is None,
-    )
-    cfb = get_cfb_scores_today(
-        game_date=game_date,
-        auto_resolve=auto_resolve and game_date is None,
-        force_live=game_date is None,
-    )
-    ufc = get_ufc_scores_today(
-        game_date=game_date,
-        auto_resolve=auto_resolve and game_date is None,
-        force_live=game_date is None,
-    )
+
+    def _fetch_mlb() -> dict[str, Any]:
+        return get_mlb_scores_today(game_date=mlb_date)
+
+    def _fetch_nba() -> dict[str, Any]:
+        return get_nba_scores_today(
+            game_date=game_date,
+            auto_resolve=auto_resolve and game_date is None,
+        )
+
+    def _fetch_cfb() -> dict[str, Any]:
+        return get_cfb_scores_today(
+            game_date=game_date,
+            auto_resolve=auto_resolve and game_date is None,
+            force_live=game_date is None,
+        )
+
+    def _fetch_ufc() -> dict[str, Any]:
+        return get_ufc_scores_today(
+            game_date=game_date,
+            auto_resolve=auto_resolve and game_date is None,
+            force_live=game_date is None,
+        )
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        mlb_future = pool.submit(_fetch_mlb)
+        nba_future = pool.submit(_fetch_nba)
+        cfb_future = pool.submit(_fetch_cfb)
+        ufc_future = pool.submit(_fetch_ufc)
+        mlb = mlb_future.result()
+        nba = nba_future.result()
+        cfb = cfb_future.result()
+        ufc = ufc_future.result()
     games = (
         _tag_sport(mlb.get("games") or [], "mlb")
         + _tag_sport(nba.get("games") or [], "nba")

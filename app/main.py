@@ -1574,11 +1574,8 @@ async def home(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return render_static_page(
-        STATIC_DIR,
-        "index.html",
-        build_home_page_data(game_date),
-    )
+    page_data = await build_home_page_data(game_date)
+    return render_static_page(STATIC_DIR, "index.html", page_data)
 
 
 @app.get("/mlb")
@@ -1586,11 +1583,8 @@ async def mlb_slate(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return render_static_page(
-        STATIC_DIR,
-        "mlb_slate.html",
-        build_mlb_slate_page_data(game_date),
-    )
+    page_data = await build_mlb_slate_page_data(game_date)
+    return render_static_page(STATIC_DIR, "mlb_slate.html", page_data)
 
 
 @app.get("/nba")
@@ -1801,7 +1795,7 @@ async def mlb_props_page(
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
     qp = request.query_params
-    page_data = build_mlb_props_page_data(
+    page_data = await build_mlb_props_page_data(
         game_date,
         bookmaker=bookmaker,
         market_type=market_type or None,

@@ -92,15 +92,17 @@ def _best_bets_for_home(
     slate: list[dict[str, Any]],
     *,
     limit: int = 5,
+    props_payload: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Top home picks: player props by form; ML only if very hot and beats props."""
     from app.services.props_mlb import build_daily_top_props
 
-    try:
-        props_payload = build_daily_top_props(game_date, limit=40, scan=False)
-    except Exception as exc:
-        logger.warning("Could not load daily props for home best bets: %s", exc)
-        props_payload = {}
+    if props_payload is None:
+        try:
+            props_payload = build_daily_top_props(game_date, limit=40, scan=False)
+        except Exception as exc:
+            logger.warning("Could not load daily props for home best bets: %s", exc)
+            props_payload = {}
 
     raw_props = _dedupe_props(
         (props_payload.get("very_strong_props") or [])
@@ -148,11 +150,34 @@ def _best_bets_for_home(
     return chosen[:limit]
 
 
-def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
+def get_home_today_summary(
+    game_date: date | None = None,
+    *,
+    lightweight: bool = False,
+    props_payload: dict[str, Any] | None = None,
+    ufc_card: dict[str, Any] | None = None,
+    fetch_ufc: bool = True,
+) -> dict[str, Any]:
     """Today at a glance + best bets from on-disk daily board (no rebuild)."""
     game_date = game_date or date.today()
     board = _load_board()
     odds_snap = get_today_snapshot()
+
+    if fetch_ufc and ufc_card is None:
+        ufc_card = get_ufc_home_chip()
+
+    empty_ufc = {
+        "available": False,
+        "card_date": None,
+        "days_ahead": 0,
+        "fight_count": 0,
+        "event_name": None,
+        "headline_fight": None,
+        "plus_ev_count": 0,
+        "href": "/ufc",
+        "message": "No upcoming UFC card in the next 30 days.",
+    }
+    resolved_ufc = ufc_card if ufc_card is not None else empty_ufc
 
     empty: dict[str, Any] = {
         "date": game_date.isoformat(),
@@ -166,7 +191,7 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
         "odds_fetched_at": odds_snap.get("fetched_at"),
         "odds_source": board.get("odds_source") if board else None,
         "message": "Run morning refresh or board Run live to populate picks.",
-        "ufc_card": get_ufc_home_chip(),
+        "ufc_card": resolved_ufc,
     }
 
     if board is None or board.get("date") != game_date.isoformat():
@@ -175,7 +200,18 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
     slate = board.get("slate") or []
     plus_ev_singles = sum(1 for g in slate if g.get("plus_ev_single"))
     plus_ev_totals = sum(1 for g in slate if g.get("plus_ev_total"))
-    top_singles = _best_bets_for_home(game_date, slate) if slate else []
+    if lightweight:
+        top_singles: list[dict[str, Any]] = []
+    else:
+        top_singles = (
+            _best_bets_for_home(
+                game_date,
+                slate,
+                props_payload=props_payload,
+            )
+            if slate
+            else []
+        )
     if top_singles and any(
         row.get("bet_type") == "ml"
         and (row.get("line_strength") is None or row.get("win_rate_l10") is None)
@@ -203,5 +239,5 @@ def get_home_today_summary(game_date: date | None = None) -> dict[str, Any]:
         "odds_fetched_at": odds_snap.get("fetched_at"),
         "odds_source": board.get("odds_source"),
         "message": None,
-        "ufc_card": get_ufc_home_chip(),
+        "ufc_card": resolved_ufc,
     }

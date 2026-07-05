@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
+import time
 from datetime import date
 from typing import Any
 
 from app.services.schedule_ufc import get_ufc_schedule
-from app.services.ufc_slate_predictions import predict_slate
+
+_CHIP_CACHE: dict[str, Any] | None = None
+_CHIP_CACHE_AT: float = 0.0
+_CHIP_CACHE_TTL_SECONDS = 600
 
 
 def get_ufc_home_chip() -> dict[str, Any]:
     """Lightweight next-UFC-card summary for /api/home/today."""
+    global _CHIP_CACHE, _CHIP_CACHE_AT
+    now = time.monotonic()
+    if _CHIP_CACHE is not None and (now - _CHIP_CACHE_AT) < _CHIP_CACHE_TTL_SECONDS:
+        return _CHIP_CACHE
+
     empty: dict[str, Any] = {
         "available": False,
         "card_date": None,
@@ -25,10 +34,14 @@ def get_ufc_home_chip() -> dict[str, Any]:
     try:
         schedule = get_ufc_schedule(None, auto_resolve=True)
     except Exception:
+        _CHIP_CACHE = empty
+        _CHIP_CACHE_AT = now
         return empty
 
     fights = list(schedule.get("games") or [])
     if not fights:
+        _CHIP_CACHE = empty
+        _CHIP_CACHE_AT = now
         return empty
 
     card_date = schedule.get("resolved_date") or schedule.get("date")
@@ -51,19 +64,9 @@ def get_ufc_home_chip() -> dict[str, Any]:
             headline = f"{home} vs {away}"
 
     plus_ev = 0
-    try:
-        preds = predict_slate(slate_day)
-        plus_ev = sum(1 for p in preds.values() if p.get("plus_ev_ml"))
-        if not headline and preds:
-            top = max(
-                preds.values(),
-                key=lambda p: float(p.get("model_prob_home") or 0.5),
-            )
-            headline = f"{top.get('home_team')} vs {top.get('away_team')}"
-    except FileNotFoundError:
-        pass
+    # Headline from schedule only — skip predict_slate (~6s full-card ML) on page load.
 
-    return {
+    result = {
         "available": True,
         "card_date": slate_day.isoformat(),
         "days_ahead": int(schedule.get("days_ahead") or 0),
@@ -74,3 +77,6 @@ def get_ufc_home_chip() -> dict[str, Any]:
         "href": f"/ufc?date={slate_day.isoformat()}",
         "message": None,
     }
+    _CHIP_CACHE = result
+    _CHIP_CACHE_AT = now
+    return result
