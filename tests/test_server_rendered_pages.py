@@ -80,3 +80,18 @@ def test_mlb_slate_embeds_page_data(_mock_slate):
     assert res.status_code == 200
     assert 'id="ntg-page-data"' in res.text
     assert "mlb_slate" in res.text
+
+
+@patch("app.services.mlb_page_data.get_scores_today", return_value={"games": []})
+@patch("app.services.mlb_page_data.build_daily_top_props", return_value={"top_props": []})
+@patch("app.services.mlb_page_data.get_home_today_summary", return_value={})
+@patch("app.services.mlb_page_data.get_today_snapshot", return_value={})
+@patch("app.services.mlb_page_data.get_refresh_status", return_value={})
+@patch("app.services.mlb_page_data.summarize_prop_tracker", return_value={})
+@patch("app.services.mlb_page_data.performance_summary_payload", return_value={})
+def test_build_home_page_data_calls_props_builder(*_mocks):
+    from app.services.mlb_page_data import build_home_page_data
+
+    data = build_home_page_data()
+    assert data["kind"] == "home"
+    assert "propsData" in data

@@ -58,8 +58,15 @@ def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
         limit=12,
         scan=False,
         refresh=False,
-        cache_only=True,
     )
+    if not props_data.get("top_props"):
+        props_data = build_daily_top_props(
+            game_date,
+            limit=12,
+            scan=True,
+            refresh=False,
+        )
+        props_data["auto_scanned"] = True
     return {
         "kind": "home",
         "date": game_date.isoformat(),
