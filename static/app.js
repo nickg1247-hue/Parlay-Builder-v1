@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260725";
+const NTG_ASSET_V = "20260735";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -2171,10 +2171,10 @@ async function initPropBookSelect(selectEl, onChange, preloadedBookmakers) {
     setSelectedPropBookmaker("draftkings");
     selectEl.value = "draftkings";
   }
-  selectEl.addEventListener("change", () => {
+  selectEl.onchange = () => {
     setSelectedPropBookmaker(selectEl.value);
     if (onChange) onChange();
-  });
+  };
 }
 
 function buildPropBookQuery(extra = {}) {
@@ -2530,9 +2530,10 @@ function initNTGSplash(splashOptions = {}) {
   const minDurationMs =
     splashOptions.minDurationMs ??
     (typeof window.NTGIntro?.DURATION_MS === "number" ? window.NTGIntro.DURATION_MS : NTG_SPLASH_MAX_MS);
-  const maxMs =
-    splashOptions.maxDurationMs ??
-    (typeof window.NTGIntro?.MAX_MS === "number" ? window.NTGIntro.MAX_MS : NTG_SPLASH_MAX_MS);
+  const maxMs = splashOptions.waitFor
+    ? (splashOptions.maxDurationMs ?? 90000)
+    : (splashOptions.maxDurationMs ??
+      (typeof window.NTGIntro?.MAX_MS === "number" ? window.NTGIntro.MAX_MS : NTG_SPLASH_MAX_MS));
   let finished = false;
 
   return new Promise((resolve) => {
@@ -2743,31 +2744,47 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
 
 function hydrateHomeFromPageData(pageData, progress) {
   const els = homePageElements();
-  if (!els.glance || !pageData) return null;
-  setHomeLoadProgress(progress, 0.35, "Loading embedded slate…");
-  loadTeamColors();
-  if (pageData.odds && pageData.scores?.games) {
-    recordOddsSnapshot(pageData.odds, pageData.scores.games);
-  }
-  setHomeLoadProgress(progress, 0.85, "Ready");
-  const core = renderHomePageCore(
-    pageData.summary,
-    pageData.scores,
-    pageData.odds,
-    pageData.status
-  );
-  renderHomePageSecondary(
-    pageData.summary,
-    pageData.scores,
-    pageData.propsData,
-    pageData.trackerSummary,
-    pageData.perfSummary
-  );
-  if (pageData.build?.build_id) {
-    showBuildBadgeFromData(pageData.build);
-  }
-  setHomeLoadProgress(progress, 1, "Ready");
-  return core;
+  if (!els.glance || !pageData) return Promise.resolve(null);
+  return (async () => {
+    setHomeLoadProgress(progress, 0.12, "Loading embedded slate…");
+    try {
+      await loadTeamColors();
+      setHomeLoadProgress(progress, 0.35, "Running win-probability models…");
+      if (pageData.odds && pageData.scores?.games) {
+        recordOddsSnapshot(pageData.odds, pageData.scores.games);
+      }
+      const core = renderHomePageCore(
+        pageData.summary,
+        pageData.scores,
+        pageData.odds,
+        pageData.status
+      );
+      setHomeLoadProgress(progress, 0.72, "Syncing live odds…");
+      await new Promise((resolve) => {
+        if (typeof requestAnimationFrame === "function") {
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        } else {
+          setTimeout(resolve, 0);
+        }
+      });
+      renderHomePageSecondary(
+        pageData.summary,
+        pageData.scores,
+        pageData.propsData,
+        pageData.trackerSummary,
+        pageData.perfSummary
+      );
+      if (pageData.build?.build_id) {
+        showBuildBadgeFromData(pageData.build);
+      }
+      setHomeLoadProgress(progress, 1, "Ready");
+      return core;
+    } catch (err) {
+      console.error("Home hydrate failed", err);
+      setHomeLoadProgress(progress, 1, "Ready");
+      return null;
+    }
+  })();
 }
 
 function showBuildBadgeFromData(data) {
@@ -4124,7 +4141,7 @@ function bootNTGSplash() {
   const embeddedPage = getPageData();
   const homeCritical =
     isHomePage() && embeddedPage?.kind === "home"
-      ? Promise.resolve(hydrateHomeFromPageData(embeddedPage, homeProgress))
+      ? hydrateHomeFromPageData(embeddedPage, homeProgress)
       : isHomePage()
         ? loadHomePageCritical(homeProgress)
         : Promise.resolve(null);
@@ -4137,6 +4154,7 @@ function bootNTGSplash() {
       getProgress: () => homeProgress.value,
       getStatus: () => homeProgress.status,
       waitFor: splashReady,
+      maxDurationMs: 90000,
     })
       .catch(() => clearNTGSplashState())
       .finally(() => {

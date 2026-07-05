@@ -42,6 +42,7 @@ from app.services.mlb_page_data import (
     build_mlb_props_page_data,
     build_mlb_slate_page_data,
 )
+from app.services.page_data_cache import get_or_build
 from app.services.page_render import render_static_page
 from app.db.database import get_connection, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
@@ -251,6 +252,25 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(ensure_today_daily_board)
     except Exception as exc:
         logger.warning("Startup daily board ensure failed: %s", exc)
+
+    async def _warm_page_caches() -> None:
+        try:
+            today = date_type.today()
+            await get_or_build(
+                f"home:{today.isoformat()}",
+                120,
+                lambda: build_home_page_data(today),
+            )
+            await get_or_build(
+                f"slate:{today.isoformat()}",
+                120,
+                lambda: build_mlb_slate_page_data(today),
+            )
+            logger.info("SSR page cache warmed for %s", today.isoformat())
+        except Exception as exc:
+            logger.warning("SSR page cache warm failed: %s", exc)
+
+    asyncio.create_task(_warm_page_caches())
     if (
         (hourly_refresh_enabled() and live_odds_enabled())
         or periodic_refresh_enabled()
@@ -1574,7 +1594,11 @@ async def home(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await build_home_page_data(game_date)
+    page_data = await get_or_build(
+        f"home:{game_date.isoformat()}",
+        60,
+        lambda: build_home_page_data(game_date),
+    )
     return render_static_page(STATIC_DIR, "index.html", page_data)
 
 
@@ -1583,7 +1607,11 @@ async def mlb_slate(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await build_mlb_slate_page_data(game_date)
+    page_data = await get_or_build(
+        f"slate:{game_date.isoformat()}",
+        60,
+        lambda: build_mlb_slate_page_data(game_date),
+    )
     return render_static_page(STATIC_DIR, "mlb_slate.html", page_data)
 
 
@@ -1739,13 +1767,30 @@ async def mlb_game_page(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await build_mlb_game_page_data(
-        game_id,
-        game_date,
-        use_cache=use_cache,
-        refresh=refresh,
-        bookmaker=bookmaker,
-    )
+    if refresh:
+        page_data = await build_mlb_game_page_data(
+            game_id,
+            game_date,
+            use_cache=use_cache,
+            refresh=refresh,
+            bookmaker=bookmaker,
+        )
+    else:
+        cache_key = (
+            f"game:{game_id}:{game_date.isoformat()}:"
+            f"{bookmaker or DEFAULT_DISPLAY_BOOKMAKER}:{use_cache}"
+        )
+        page_data = await get_or_build(
+            cache_key,
+            45,
+            lambda: build_mlb_game_page_data(
+                game_id,
+                game_date,
+                use_cache=use_cache,
+                refresh=False,
+                bookmaker=bookmaker,
+            ),
+        )
     if page_data is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return render_static_page(STATIC_DIR, "game.html", page_data)

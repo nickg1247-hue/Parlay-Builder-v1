@@ -75,7 +75,10 @@
 
 
   initSiteChrome();
-  initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+  initLiveTicker("live-ticker", {
+    date: dateParam,
+    sport: useEmbeddedPage ? "mlb" : "all",
+  });
   initHeadlineTicker("headline-ticker");
 
   let scorePollerStarted = false;
@@ -914,21 +917,12 @@
       const idx = Number(el.dataset.openGameProp);
       const open = () => {
         const prop = resolveProp(listName, idx);
+        if (!prop) return;
         const propForModal =
           typeof window.normalizePropForModal === "function"
-            ? window.normalizePropForModal({
-                ...prop,
-                game_id: gameId,
-                matchup: data.matchup,
-                recommended_odds: odds,
-              })
-            : {
-                ...prop,
-                game_id: gameId,
-                matchup: data.matchup,
-                recommended_odds: odds,
-              };
-        if (propForModal) openPropModal(propForModal, "mlb");
+            ? window.normalizePropForModal(prop)
+            : prop;
+        openPropModal(propForModal, "mlb");
       };
       el.addEventListener("click", (e) => {
         if (e.target.closest("button")) return;
@@ -1593,60 +1587,80 @@
   }
 
   function applyEmbeddedGamePage(pageData) {
-    loading.classList.add("hidden");
-    content.classList.remove("hidden");
-    renderInsights(pageData.insights);
-    loadLineup(pageData.insights?.game);
-    if (pageData.gameProps) embeddedGameProps = pageData.gameProps;
-    if (pageData.propMarkets?.length) _gameMarketTypes = pageData.propMarkets;
-    schedulePropsLoad(false);
+    try {
+      loading.classList.add("hidden");
+      content.classList.remove("hidden");
+      renderInsights(pageData.insights);
+      loadLineup(pageData.insights?.game);
+      if (pageData.gameProps) embeddedGameProps = pageData.gameProps;
+      if (pageData.propMarkets?.length) _gameMarketTypes = pageData.propMarkets;
+      schedulePropsLoad(false);
+    } catch (err) {
+      console.error("Game page render failed", err);
+      loading.classList.add("hidden");
+      if (errEl) {
+        errEl.classList.remove("hidden");
+        errEl.textContent = err.message || "Could not render game page";
+      }
+    }
   }
 
-  loadTeamColors()
-    .then(async () => {
-      if (typeof window.ensureAppReady === "function") {
-        await window.ensureAppReady();
-      }
-      if (typeof initDesignSystem === "function") initDesignSystem();
-      if (typeof initGameStickyNav === "function") initGameStickyNav();
-
-      if (ntgGamePageData?.kind === "mlb_game" && ntgGamePageData.insights) {
-        applyEmbeddedGamePage(ntgGamePageData);
-        return;
-      }
-
-      prefetchMatchupHeader();
-      try {
-        await loadInsights(false);
-      } catch (e) {
-        loading.classList.add("hidden");
-        if (errEl) {
-          errEl.classList.remove("hidden");
-          const msg = e.message || "Could not load game insights";
-          if (typeof brandedErrorState === "function") {
-            brandedErrorState(errEl, {
-              title: "Game insights unavailable",
-              message: msg,
-              onRetry: () => window.location.reload(),
-            });
-          } else {
-            errEl.textContent = msg;
+  function bootGamePage() {
+    if (ntgGamePageData?.kind === "mlb_game" && ntgGamePageData.insights) {
+      loadTeamColors()
+        .then(() => {
+          applyEmbeddedGamePage(ntgGamePageData);
+          if (typeof initDesignSystem === "function") initDesignSystem();
+          if (typeof initGameStickyNav === "function") initGameStickyNav();
+          if (typeof window.ensureAppReady === "function") {
+            window.ensureAppReady().catch(() => {});
           }
+        })
+        .catch((e) => {
+          loading.classList.add("hidden");
+          errEl.classList.remove("hidden");
+          errEl.textContent = e.message || "Game not found";
+        });
+      return;
+    }
+
+    loadTeamColors()
+      .then(async () => {
+        if (typeof window.ensureAppReady === "function") {
+          await window.ensureAppReady();
         }
-        return;
-      }
-      schedulePropsLoad(false);
-    })
-    .catch((e) => {
+        if (typeof initDesignSystem === "function") initDesignSystem();
+        if (typeof initGameStickyNav === "function") initGameStickyNav();
 
-      loading.classList.add("hidden");
+        prefetchMatchupHeader();
+        try {
+          await loadInsights(false);
+        } catch (e) {
+          loading.classList.add("hidden");
+          if (errEl) {
+            errEl.classList.remove("hidden");
+            const msg = e.message || "Could not load game insights";
+            if (typeof brandedErrorState === "function") {
+              brandedErrorState(errEl, {
+                title: "Game insights unavailable",
+                message: msg,
+                onRetry: () => window.location.reload(),
+              });
+            } else {
+              errEl.textContent = msg;
+            }
+          }
+          return;
+        }
+        schedulePropsLoad(false);
+      })
+      .catch((e) => {
+        loading.classList.add("hidden");
+        errEl.classList.remove("hidden");
+        errEl.textContent = e.message || "Game not found";
+      });
+  }
 
-      errEl.classList.remove("hidden");
-
-      errEl.textContent = e.message || "Game not found";
-
-    });
+  bootGamePage();
 
 })();
-
-
