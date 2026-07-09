@@ -101,6 +101,7 @@ from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
 from app.services.ufc_slate_predictions import predict_slate, _clean_json_value
+from app.services.ufc_model_comparison import load_model_comparison
 from app.services.ufc_backtest_report import (
     load_saved_ufc_backtest_report,
     run_ufc_walk_forward_backtest,
@@ -834,8 +835,24 @@ async def ufc_daily(
 async def ufc_predictions(
     date_param: str | None = Query(None, alias="date"),
 ):
-    game_date = date_type.fromisoformat(date_param) if date_param else None
-    return _clean_json_value(predict_slate(game_date))
+    preds = _clean_json_value(predict_slate(date_type.fromisoformat(date_param) if date_param else None))
+    comparison = load_model_comparison()
+    return {
+        "model_label": comparison.get("active_model_label"),
+        "active_model": comparison.get("active_model"),
+        "predictions": preds,
+    }
+
+
+@app.get("/api/ufc/model-comparison")
+async def ufc_model_comparison(
+    refresh: bool = Query(False, description="Re-run matchup vs baseline comparison"),
+):
+    from app.services.ufc_model_comparison import run_model_comparison
+
+    if refresh:
+        return run_model_comparison(write_cache=True)
+    return load_model_comparison()
 
 
 @app.get("/api/ufc/backtest")
@@ -1648,6 +1665,21 @@ async def ufc_board():
 @app.get("/ufc/game/{fight_id}")
 async def ufc_fight_page(fight_id: str):
     return FileResponse(STATIC_DIR / "ufc_fight.html")
+
+
+@app.get("/ufc/fighter/{slug}")
+async def ufc_fighter_page(slug: str):
+    return FileResponse(STATIC_DIR / "ufc_fighter.html")
+
+
+@app.get("/api/ufc/fighter/{slug}")
+async def ufc_fighter_api(slug: str):
+    from app.services.ufc_fighter_profile import get_ufc_fighter_profile
+
+    profile = get_ufc_fighter_profile(slug)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Fighter not found")
+    return profile
 
 
 @app.get("/api/games/ufc/{fight_id}/insights")

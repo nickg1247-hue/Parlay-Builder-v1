@@ -2705,6 +2705,35 @@ body.slate-mlb .app-main > * {
   .game-list:not(.game-list-compact) {
     grid-template-columns: 1fr;
   }
+
+  .game-card-color-band.win-prob-band,
+  .win-prob-band-ufc {
+    height: auto;
+    min-height: 1.35rem;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.35rem;
+    padding: 0.2rem 0.35rem;
+  }
+
+  .win-prob-band-label {
+    font-size: 0.58rem;
+    max-width: 48%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .matchup-header-wrap .matchup-band.win-prob-band {
+    height: auto;
+    min-height: 1.5rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .matchup-header-wrap .win-prob-band-label {
+    font-size: 0.62rem;
+    max-width: 46%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .slate-header {

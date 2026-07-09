@@ -221,6 +221,14 @@ function renderFooter(data) {
     `Fights: ${(data.slate || []).length}`,
   ];
   els.footer.textContent = parts.join(" · ");
+  fetch("/api/ufc/model-comparison")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((cmp) => {
+      if (cmp?.active_model_label) {
+        els.footer.textContent = `${parts.join(" · ")} · Active: ${cmp.active_model_label}`;
+      }
+    })
+    .catch(() => {});
 }
 
 async function loadBoard(refresh = false) {

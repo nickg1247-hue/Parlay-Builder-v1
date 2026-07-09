@@ -194,6 +194,9 @@ def predict_slate_with_meta(
                 "totals_line": _optional_float(row.get("totals_line")),
                 "over_odds": _optional_int(row.get("over_odds")),
                 "under_odds": _optional_int(row.get("under_odds")),
+                "method_props": row.get("method_props") if isinstance(row.get("method_props"), dict) else None,
+                "goes_distance_yes": _optional_int(row.get("goes_distance_yes")),
+                "goes_distance_no": _optional_int(row.get("goes_distance_no")),
                 **ml_fields,
             }
         )

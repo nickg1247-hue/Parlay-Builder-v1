@@ -61,6 +61,11 @@
       <div id="slate-loading" class="hidden"></div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
+
+      <section id="ufc-parlays-section" class="hidden dash-panel" style="margin-top:1.5rem">
+        <h2 class="app-section-title" style="margin-top:0">Top parlays <span class="sub" id="parlays-threshold-label">(cross-fight, ≥8% EV)</span></h2>
+        <div id="parlays-list" class="card-list"></div>
+      </section>
     </main>
   </div>
   <script src="/static/app.js?v=20260725"></script>
@@ -76,6 +81,9 @@
       const goBtn = document.getElementById("slate-date-go");
       const refreshBtn = document.getElementById("slate-date-refresh");
       const sourceEl = document.getElementById("slate-source");
+      const parlaysSection = document.getElementById("ufc-parlays-section");
+      const parlaysList = document.getElementById("parlays-list");
+      const parlaysThreshold = document.getElementById("parlays-threshold-label");
       const dateParam = qs("date");
       const refreshParam = qs("refresh") === "true";
       let pollTimer = null;
@@ -119,6 +127,72 @@
         ? scheduleUrl(refreshParam)
         : "/api/scores/today?sport=ufc";
 
+      function fmtPct(prob) {
+        if (prob == null) return "—";
+        return `${(prob * 100).toFixed(0)}%`;
+      }
+
+      function fmtAmerican(am) {
+        if (am == null) return "—";
+        return am > 0 ? `+${am}` : String(am);
+      }
+
+      function edgePctLabel(fraction) {
+        return `${(fraction * 100).toFixed(0)}%`;
+      }
+
+      function renderParlays(parlays, edgeFraction = 0.08) {
+        if (!parlaysList || !parlaysSection) return;
+        if (parlaysThreshold) {
+          parlaysThreshold.textContent = `(cross-fight, ≥${edgePctLabel(edgeFraction)} EV)`;
+        }
+        if (!parlays?.length) {
+          parlaysSection.classList.add("hidden");
+          parlaysList.innerHTML = "";
+          return;
+        }
+        parlaysSection.classList.remove("hidden");
+        const slateDate = dateParam || dateInput.value || "";
+        parlaysList.innerHTML = parlays
+          .map(
+            (p, i) => `
+          <div class="card">
+            <div class="card-title">#${i + 1} · ${p.num_legs} legs · <span class="edge-pos">EV ${p.ev_pct || fmtPct(p.ev)}</span></div>
+            <div class="card-meta">Model joint ${fmtPct(p.model_joint_prob)} · Market ${fmtPct(p.market_joint_prob)} · Payout ${p.decimal_payout}x</div>
+            <div class="card-legs">
+              ${(p.legs || [])
+                .map((leg) => {
+                  const fid = leg.game_id;
+                  const href = fid
+                    ? `/ufc/game/${encodeURIComponent(fid)}${slateDate ? `?date=${encodeURIComponent(slateDate)}` : ""}`
+                    : "#";
+                  return `<div class="leg"><a href="${href}">${leg.team}</a> (${fmtAmerican(leg.american_odds)})</div>`;
+                })
+                .join("")}
+            </div>
+          </div>`
+          )
+          .join("");
+      }
+
+      function dailyBoardUrl(slateDate) {
+        const params = new URLSearchParams();
+        if (slateDate) params.set("date", slateDate);
+        params.set("use_cache", "true");
+        return `/api/ufc/daily?${params.toString()}`;
+      }
+
+      async function loadParlays(slateDate) {
+        try {
+          const board = await fetchJSON(dailyBoardUrl(slateDate));
+          const edge =
+            typeof board.edge_threshold === "number" ? board.edge_threshold : 0.08;
+          renderParlays(board.top_parlays || [], edge);
+        } catch (_) {
+          if (parlaysSection) parlaysSection.classList.add("hidden");
+        }
+      }
+
       function sourceLabel(source) {
         if (source === "ingest") return "Saved ingest";
         if (source === "cache") return "Saved snapshot";
@@ -157,10 +231,13 @@
         const slateDate = slate.resolved_date || slate.date || "";
 
         let boardMap = {};
+        let modelLabel = "";
         try {
-          const preds = await fetchJSON(
+          const predPayload = await fetchJSON(
             `/api/ufc/predictions?date=${encodeURIComponent(slateDate)}`
           );
+          const preds = predPayload?.predictions ?? predPayload;
+          modelLabel = predPayload?.model_label || "";
           if (Array.isArray(preds)) {
             preds.forEach((p) => { boardMap[p.fight_id || p.game_id] = p; });
           } else if (preds && typeof preds === "object") {
@@ -175,6 +252,13 @@
         if (slateDate) dateInput.value = slateDate.slice(0, 10);
         showSource(slate);
         renderSlateAdvanceBanner(advanceEl, slate);
+        if (modelLabel) {
+          const note = document.querySelector(".slate-note");
+          if (note && !note.dataset.modelLabel) {
+            note.dataset.modelLabel = "1";
+            note.innerHTML += ` · Model: <strong>${modelLabel}</strong>`;
+          }
+        }
 
         if (!games.length) {
           list.innerHTML = "";
@@ -187,6 +271,7 @@
           gameDate: slateDate,
           useCache: true,
         });
+        await loadParlays(slateDate);
       }
 
       try {

@@ -11,6 +11,7 @@ import pandas as pd
 from app.config import PROJECT_ROOT
 from app.odds.team_aliases import is_valid_american_odds
 from app.odds.ufc_fighter_aliases import normalize_fighter_name
+from app.odds.ufc_odds_convert import CANONICAL_COLUMNS, convert_odds_file, merge_odds_frames
 from app.odds.ufc_odds_repository import repository_odds_dataframe
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,42 @@ def load_csv_odds(path: Path | None = None) -> pd.DataFrame:
 def import_csv(source: Path, dest: Path | None = None) -> Path:
     """Validate and copy user CSV to the canonical holdout odds path."""
     dest = dest or ODDS_2024_CSV
-    df = load_csv_odds(source)
+    df = convert_odds_file(source)
+    if df.empty:
+        df = load_csv_odds(source)
     if df.empty:
         raise ValueError(f"No valid odds rows in {source}")
     dest.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(dest, index=False)
-    logger.info("Wrote %s UFC odds rows to %s", len(df), dest)
+    out = df[list(CANONICAL_COLUMNS)].copy() if all(c in df.columns for c in CANONICAL_COLUMNS) else df
+    out.to_csv(dest, index=False)
+    logger.info("Wrote %s UFC odds rows to %s", len(out), dest)
+    return dest
+
+
+def import_bulk(sources: list[Path], dest: Path | None = None) -> Path:
+    """Merge multiple external odds CSVs into canonical holdout file."""
+    dest = dest or ODDS_2024_CSV
+    frames: list[pd.DataFrame] = []
+    for path in sources:
+        if not path.exists():
+            logger.warning("Skipping missing odds file: %s", path)
+            continue
+        try:
+            converted = convert_odds_file(path)
+            if not converted.empty:
+                converted = converted.assign(priority=0)
+                frames.append(converted)
+        except ValueError as exc:
+            logger.warning("Could not convert %s: %s", path, exc)
+    existing = load_csv_odds()
+    if not existing.empty:
+        frames.append(existing.assign(priority=1))
+    merged = merge_odds_frames(frames)
+    if merged.empty:
+        raise ValueError("No valid odds rows from bulk import")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    merged[list(CANONICAL_COLUMNS)].to_csv(dest, index=False)
+    logger.info("Bulk import wrote %s rows -> %s", len(merged), dest)
     return dest
 
 

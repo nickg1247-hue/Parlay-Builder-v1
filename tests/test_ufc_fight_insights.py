@@ -166,8 +166,9 @@ def test_ufc_fight_page():
     assert resp.status_code == 200
     assert "UFC Fight" in resp.text
     assert "ufc_fight.js" in resp.text
-    assert "ufc_fight.js" in resp.text
     assert "fighter-stats" in resp.text
+    assert "ufc-matchup-insight" in resp.text
+    assert "fight-props" in resp.text
 
 
 @patch("app.services.ufc_fight_insights._load_slate_features", return_value={})
@@ -233,6 +234,117 @@ def test_fight_preview_matches_matchup_probs(
     assert ml["model_prob_away"] == 0.60
     assert ml["model_prob_home"] == 0.40
     assert ml["model_pick"] == "Max Holloway"
+
+
+@patch("app.services.ufc_fight_insights._load_slate_features", return_value={})
+@patch("app.services.ufc_fight_insights._build_fighter_stats")
+@patch("app.services.ufc_fight_insights._pred_row", return_value=None)
+@patch("app.services.ufc_fight_insights.build_ufc_daily_board")
+@patch("app.services.ufc_fight_insights.get_ufc_fight")
+@patch("app.services.ufc_fight_insights.predict_matchup")
+def test_matchup_prediction_full_payload_in_insights(
+    mock_matchup, mock_fight, mock_board, _mock_pred, mock_stats, _mock_feats
+):
+    mock_fight.return_value = {
+        "game": SAMPLE_FIGHT,
+        "date": "2026-07-11",
+        "resolved_date": "2026-07-11",
+    }
+    mock_board.return_value = {
+        "mode": "demo",
+        "odds_source": "repository",
+        "warnings": [],
+        "slate": [SAMPLE_BOARD_ROW],
+        "top_parlays": [],
+    }
+    mock_stats.return_value = {"home": {}, "away": {}}
+    mock_matchup.return_value = {
+        "predictedWinner": "Magomed Ankalaev",
+        "predictedWinnerSide": "home",
+        "confidence": 62.0,
+        "probAway": 0.38,
+        "probHome": 0.62,
+        "fighterScores": {"fighterA": 58.0, "fighterB": 61.0},
+        "categoryBreakdown": {"striking": "Fighter B edge"},
+        "categoryEdges": {"striking": -0.18, "recent_form": 0.05},
+        "winMethodProbabilities": {
+            "fighterA_KO_TKO": 0.12,
+            "fighterB_KO_TKO": 0.22,
+            "fighterB_Decision": 0.35,
+        },
+        "keyReasons": ["Reason one", "Reason two", "Reason three"],
+        "riskFactors": ["Risk one", "Risk two"],
+        "modelNotes": ["note"],
+    }
+
+    result = ufi.build_ufc_fight_insights(
+        "401613930", game_date=date(2026, 7, 11), use_cache=True
+    )
+
+    mp = result["matchup_prediction"]
+    assert mp["keyReasons"] == ["Reason one", "Reason two", "Reason three"]
+    assert mp["riskFactors"] == ["Risk one", "Risk two"]
+    assert mp["winMethodProbabilities"]["fighterB_Decision"] == 0.35
+    assert mp["categoryEdges"]["striking"] == -0.18
+
+
+@patch("app.services.ufc_fight_insights._load_slate_features", return_value={})
+@patch("app.services.ufc_fight_insights._build_fighter_stats")
+@patch("app.services.ufc_fight_insights._pred_row", return_value=None)
+@patch("app.services.ufc_fight_insights.build_ufc_daily_board")
+@patch("app.services.ufc_fight_insights.get_ufc_fight")
+@patch("app.services.ufc_fight_insights.predict_matchup")
+def test_fight_insights_method_prop_edges(
+    mock_matchup, mock_fight, mock_board, _mock_pred, mock_stats, _mock_feats
+):
+    mock_fight.return_value = {
+        "game": SAMPLE_FIGHT,
+        "date": "2026-07-11",
+        "resolved_date": "2026-07-11",
+    }
+    board_row = {
+        **SAMPLE_BOARD_ROW,
+        "method_props": {"fighterA_KO_TKO": 450},
+        "totals_line": 2.5,
+        "over_odds": -110,
+        "under_odds": -110,
+    }
+    mock_board.return_value = {
+        "mode": "demo",
+        "odds_source": "repository",
+        "warnings": [],
+        "slate": [board_row],
+        "top_parlays": [],
+    }
+    mock_stats.return_value = {"home": {}, "away": {}}
+    mock_matchup.return_value = {
+        "predictedWinner": "Johnny Walker",
+        "predictedWinnerSide": "away",
+        "confidence": 55.0,
+        "probAway": 0.55,
+        "probHome": 0.45,
+        "winMethodProbabilities": {
+            "fighterA_KO_TKO": 0.30,
+            "fighterA_Submission": 0.05,
+            "fighterA_Decision": 0.20,
+            "fighterB_KO_TKO": 0.18,
+            "fighterB_Submission": 0.07,
+            "fighterB_Decision": 0.20,
+        },
+        "keyReasons": [],
+        "riskFactors": [],
+    }
+
+    result = ufi.build_ufc_fight_insights(
+        "401613930", game_date=date(2026, 7, 11), use_cache=True
+    )
+
+    props = result["bets"]["props"]
+    method_props = [p for p in props if p.get("market") == "method"]
+    assert method_props
+    assert method_props[0]["method_key"] == "fighterA_KO_TKO"
+    assert method_props[0]["plus_ev"] is True
+    assert method_props[0]["edge"] >= 0.08
 
 
 @patch("app.services.ufc_fight_insights.enrich_fight_media")

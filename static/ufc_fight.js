@@ -24,6 +24,26 @@
 
   const betsEl = document.getElementById("fight-bets");
 
+  const propsSection = document.getElementById("ufc-props-section");
+
+  const propsEl = document.getElementById("fight-props");
+
+  const matchupInsightEl = document.getElementById("ufc-matchup-insight");
+
+  const leanNameEl = document.getElementById("ufc-lean-name");
+
+  const leanReasonsEl = document.getElementById("ufc-lean-reasons");
+
+  const leanRisksEl = document.getElementById("ufc-lean-risks");
+
+  const methodSection = document.getElementById("ufc-method-section");
+
+  const methodBarsEl = document.getElementById("ufc-method-bars");
+
+  const categorySection = document.getElementById("ufc-category-section");
+
+  const categoryBarsEl = document.getElementById("ufc-category-bars");
+
   const cardFightsEl = document.getElementById("card-fights");
 
   const cardFightsWrap = document.getElementById("card-fights-wrap");
@@ -468,11 +488,18 @@
 
       if (!corner) return "";
 
+      const nameHtml =
+        typeof ufcFighterNameHtml === "function"
+          ? ufcFighterNameHtml(corner.name)
+          : (corner.name || "—");
+
       return `
 
         <article class="ufc-fighter-card">
 
           <h3>${label}</h3>
+
+          <p class="ufc-fighter-card-name">${nameHtml}</p>
 
           <dl>
 
@@ -530,8 +557,6 @@
 
     const singles = bets?.singles || [];
 
-    const props = bets?.props || [];
-
     let html = "";
 
 
@@ -544,41 +569,14 @@
 
           const tag = s.plus_ev ? `<span class="ufc-lean-tag">Value</span>` : "";
 
-          return `
-
-          <div class="ufc-lean-row">
-
-            <span><strong>${s.fighter}</strong> to win ${fmtOdds(s.american_odds)}${tag}</span>
-
-          </div>`;
-
-        })
-
-        .join("");
-
-    }
-
-
-
-    if (props.length) {
-
-      html += props
-
-        .map((p) => {
-
-          const over = p.over_odds != null ? `Over ${fmtOdds(p.over_odds)}` : "";
-
-          const under = p.under_odds != null ? `Under ${fmtOdds(p.under_odds)}` : "";
-
-          const prices = [over, under].filter(Boolean).join(" · ");
+          const edge =
+            s.edge != null ? ` <span class="ufc-edge-tag">+${(s.edge * 100).toFixed(1)}%</span>` : "";
 
           return `
 
           <div class="ufc-lean-row">
 
-            <span><strong>${p.label || p.market}</strong></span>
-
-            <span>${prices || "—"}</span>
+            <span><strong>${s.fighter}</strong> to win ${fmtOdds(s.american_odds)}${tag}${edge}</span>
 
           </div>`;
 
@@ -592,11 +590,319 @@
 
     if (!html) {
 
-      html = `<p class="model-empty" style="margin:0">No strong leans on this fight right now.</p>`;
+      html = `<p class="model-empty" style="margin:0">No strong moneyline leans on this fight right now.</p>`;
 
     }
 
     betsEl.innerHTML = html;
+
+  }
+
+
+
+  function renderProps(bets) {
+
+    if (!propsEl || !propsSection) return;
+
+    const props = (bets?.props || []).filter((p) => p.market !== "moneyline");
+
+    if (!props.length) {
+
+      propsSection.classList.add("hidden");
+
+      propsEl.innerHTML = "";
+
+      if (bets?.props_note) {
+
+        propsSection.classList.remove("hidden");
+
+        propsEl.innerHTML = `<p class="model-empty" style="margin:0">${bets.props_note}</p>`;
+
+      }
+
+      return;
+
+    }
+
+    propsSection.classList.remove("hidden");
+
+    propsEl.innerHTML = props
+
+      .map((p) => {
+
+        const tag = p.plus_ev ? `<span class="ufc-lean-tag">Value</span>` : "";
+
+        const edge =
+          p.edge != null ? ` <span class="ufc-edge-tag">+${(p.edge * 100).toFixed(1)}%</span>` : "";
+
+        const price = p.american_odds != null ? fmtOdds(p.american_odds) : "";
+
+        const over =
+          p.over_odds != null && !p.american_odds ? `Over ${fmtOdds(p.over_odds)}` : "";
+
+        const under =
+          p.under_odds != null && !p.american_odds ? `Under ${fmtOdds(p.under_odds)}` : "";
+
+        const prices = price || [over, under].filter(Boolean).join(" · ");
+
+        const model =
+          p.model_prob != null ? `Model ${fmtPct(p.model_prob)}` : "";
+
+        return `
+
+        <div class="ufc-lean-row">
+
+          <span><strong>${p.label || p.market}</strong>${tag}</span>
+
+          <span>${prices}${model ? ` · ${model}` : ""}${edge}</span>
+
+        </div>`;
+
+      })
+
+      .join("");
+
+  }
+
+
+
+  const CATEGORY_LABELS = {
+
+    style_matchup: "Style matchup",
+
+    striking: "Striking",
+
+    wrestling_grappling: "Grappling",
+
+    cardio_pace: "Cardio / pace",
+
+    fight_iq: "Fight IQ",
+
+    recent_form: "Recent form",
+
+    physical_advantages: "Physical",
+
+    strength_of_competition: "Schedule",
+
+    age_career_trend: "Age / trend",
+
+    miscellaneous: "Momentum",
+
+  };
+
+
+
+  const METHOD_LABELS = {
+
+    fighterA_KO_TKO: "Away KO/TKO",
+
+    fighterA_Submission: "Away Sub",
+
+    fighterA_Decision: "Away Dec",
+
+    fighterB_KO_TKO: "Home KO/TKO",
+
+    fighterB_Submission: "Home Sub",
+
+    fighterB_Decision: "Home Dec",
+
+  };
+
+
+
+  function renderBarRow(label, pct, extraClass) {
+
+    const width = Math.max(2, Math.min(100, pct * 100));
+
+    return `
+
+      <div class="ufc-bar-row ${extraClass || ""}">
+
+        <span class="ufc-bar-label">${label}</span>
+
+        <div class="ufc-bar-track"><div class="ufc-bar-fill" style="width:${width.toFixed(1)}%"></div></div>
+
+        <span class="ufc-bar-pct">${fmtPct(pct)}</span>
+
+      </div>`;
+
+  }
+
+
+
+  function renderCategoryBars(matchup, game) {
+
+    if (!categoryBarsEl || !categorySection) return;
+
+    const edges = matchup?.categoryEdges;
+
+    if (!edges || typeof edges !== "object") {
+
+      categorySection.classList.add("hidden");
+
+      return;
+
+    }
+
+    const rows = Object.entries(edges)
+
+      .map(([key, edge]) => {
+
+        const label = CATEGORY_LABELS[key] || key.replace(/_/g, " ");
+
+        const awayFav = Number(edge) > 0;
+
+        const magnitude = Math.min(1, Math.abs(Number(edge)) / 0.35);
+
+        const awayPct = awayFav ? 0.5 + magnitude * 0.45 : 0.5 - magnitude * 0.45;
+
+        const awayName = game?.away_team || "Away";
+
+        const homeName = game?.home_team || "Home";
+
+        const sideLabel = awayFav ? awayName : homeName;
+
+        return renderBarRow(`${label} · ${sideLabel}`, awayPct, awayFav ? "away-fav" : "home-fav");
+
+      })
+
+      .join("");
+
+    if (!rows) {
+
+      categorySection.classList.add("hidden");
+
+      return;
+
+    }
+
+    categorySection.classList.remove("hidden");
+
+    categoryBarsEl.innerHTML = rows;
+
+  }
+
+
+
+  function renderMethodBars(matchup) {
+
+    if (!methodBarsEl || !methodSection) return;
+
+    const methods = matchup?.winMethodProbabilities;
+
+    if (!methods || typeof methods !== "object") {
+
+      methodSection.classList.add("hidden");
+
+      return;
+
+    }
+
+    const entries = Object.entries(methods).filter(([, v]) => v != null && v > 0);
+
+    if (!entries.length) {
+
+      methodSection.classList.add("hidden");
+
+      return;
+
+    }
+
+    methodSection.classList.remove("hidden");
+
+    methodBarsEl.innerHTML = entries
+
+      .sort((a, b) => b[1] - a[1])
+
+      .map(([key, prob]) =>
+
+        renderBarRow(
+
+          METHOD_LABELS[key] || key,
+
+          Number(prob),
+
+          key.startsWith("fighterA") ? "away-fav" : "home-fav"
+
+        )
+
+      )
+
+      .join("");
+
+  }
+
+
+
+  function renderMatchupInsight(data) {
+
+    if (!matchupInsightEl) return;
+
+    const matchup = data.matchup_prediction;
+
+    const preview = data.fight_preview || {};
+
+    const ml = data.moneyline || {};
+
+    const pickName = preview.pick || ml.model_pick || matchup?.predictedWinner;
+
+
+
+    if (!matchup || !pickName) {
+
+      matchupInsightEl.classList.add("hidden");
+
+      return;
+
+    }
+
+
+
+    const reasons = (matchup.keyReasons || []).slice(0, 3);
+
+    const risks = (matchup.riskFactors || []).slice(0, 2);
+
+
+
+    if (!reasons.length && !risks.length) {
+
+      matchupInsightEl.classList.add("hidden");
+
+      return;
+
+    }
+
+
+
+    matchupInsightEl.classList.remove("hidden");
+
+    if (leanNameEl) leanNameEl.textContent = pickName;
+
+
+
+    if (leanReasonsEl) {
+
+      leanReasonsEl.innerHTML = reasons.length
+
+        ? `<ul class="ufc-bullet-list">${reasons.map((r) => `<li>${r}</li>`).join("")}</ul>`
+
+        : "";
+
+    }
+
+    if (leanRisksEl) {
+
+      leanRisksEl.innerHTML = risks.length
+
+        ? `<p class="ufc-risks-title">Risks</p><ul class="ufc-bullet-list ufc-risks-list">${risks
+
+            .map((r) => `<li>${r}</li>`)
+
+            .join("")}</ul>`
+
+        : "";
+
+    }
 
   }
 
@@ -642,16 +948,25 @@
 
     renderPreview(data);
 
+    renderMatchupInsight(data);
+
+    renderMethodBars(data.matchup_prediction);
+
+    renderCategoryBars(data.matchup_prediction, data.game);
+
     renderFighterStats(data.fighter_stats);
 
     renderBets(data.bets);
 
+    renderProps(data.bets);
+
     renderCardFights(data.card_fights);
 
-    if (disclaimerEl && data.disclaimer) {
-
-      disclaimerEl.textContent = data.disclaimer;
-
+    if (disclaimerEl) {
+      const parts = [];
+      if (data.disclaimer) parts.push(data.disclaimer);
+      if (data.model_label) parts.push(`Model: ${data.model_label}`);
+      if (parts.length) disclaimerEl.textContent = parts.join(" · ");
     }
 
   }

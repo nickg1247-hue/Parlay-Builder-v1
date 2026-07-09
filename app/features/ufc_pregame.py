@@ -30,12 +30,166 @@ FEATURE_COLUMNS = [
     "away_b2b",
 ]
 
+STAT_ROLLING_N = 5
+STAT_ROLLING_COLUMNS = [
+    "home_sig_strikes_landed_avg",
+    "away_sig_strikes_landed_avg",
+    "sig_strikes_landed_diff",
+    "home_takedowns_landed_avg",
+    "away_takedowns_landed_avg",
+    "takedowns_landed_diff",
+    "home_control_seconds_avg",
+    "away_control_seconds_avg",
+    "control_seconds_diff",
+    "stats_available",
+]
+
 
 @dataclass
 class _FightRecord:
     date: pd.Timestamp
     fighter: str
     win: int
+
+
+@dataclass
+class _FighterStatSample:
+    date: pd.Timestamp
+    sig_strikes_landed: float
+    takedowns_landed: float
+    control_seconds: float
+
+
+class _FighterStatsTracker:
+    def __init__(self) -> None:
+        self._samples: dict[str, list[_FighterStatSample]] = defaultdict(list)
+        self._dates: dict[str, list[pd.Timestamp]] = defaultdict(list)
+
+    def samples_before(self, fighter: str, before: pd.Timestamp) -> list[_FighterStatSample]:
+        dates = self._dates.get(fighter)
+        if not dates:
+            return []
+        idx = bisect_left(dates, before)
+        return self._samples[fighter][:idx]
+
+    def update_fight(
+        self,
+        fight_date: pd.Timestamp,
+        home_team: str,
+        away_team: str,
+        *,
+        home_sig_strikes_landed: float | None,
+        away_sig_strikes_landed: float | None,
+        home_takedowns_landed: float | None,
+        away_takedowns_landed: float | None,
+        home_control_seconds: float | None,
+        away_control_seconds: float | None,
+    ) -> None:
+        pairs = (
+            (home_team, home_sig_strikes_landed, home_takedowns_landed, home_control_seconds),
+            (away_team, away_sig_strikes_landed, away_takedowns_landed, away_control_seconds),
+        )
+        for fighter, ssl, td, ctrl in pairs:
+            if ssl is None and td is None and ctrl is None:
+                continue
+            sample = _FighterStatSample(
+                date=fight_date,
+                sig_strikes_landed=float(ssl or 0.0),
+                takedowns_landed=float(td or 0.0),
+                control_seconds=float(ctrl or 0.0),
+            )
+            self._samples[fighter].append(sample)
+            self._dates[fighter].append(fight_date)
+
+
+def build_fighter_stats_tracker_from_history(
+    stats_df: pd.DataFrame,
+) -> _FighterStatsTracker:
+    tracker = _FighterStatsTracker()
+    if stats_df is None or stats_df.empty:
+        return tracker
+    df = stats_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    for row in df.sort_values(["date", "fight_id"]).itertuples(index=False):
+        tracker.update_fight(
+            pd.to_datetime(row.date),
+            normalize_fighter_name(str(row.home_team)),
+            normalize_fighter_name(str(row.away_team)),
+            home_sig_strikes_landed=_optional_float(getattr(row, "home_sig_strikes_landed", None)),
+            away_sig_strikes_landed=_optional_float(getattr(row, "away_sig_strikes_landed", None)),
+            home_takedowns_landed=_optional_float(getattr(row, "home_takedowns_landed", None)),
+            away_takedowns_landed=_optional_float(getattr(row, "away_takedowns_landed", None)),
+            home_control_seconds=_optional_float(getattr(row, "home_control_seconds", None)),
+            away_control_seconds=_optional_float(getattr(row, "away_control_seconds", None)),
+        )
+    return tracker
+
+
+def _optional_float(val: Any) -> float | None:
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return None
+    try:
+        f = float(val)
+    except (TypeError, ValueError):
+        return None
+    if pd.isna(f):
+        return None
+    return f
+
+
+def _rolling_stat_avg(
+    samples: list[_FighterStatSample],
+    attr: str,
+    n: int = STAT_ROLLING_N,
+) -> float | None:
+    if not samples:
+        return None
+    recent = samples[-n:]
+    vals = [getattr(s, attr) for s in recent]
+    if not vals:
+        return None
+    return sum(vals) / len(vals)
+
+
+def _attach_rolling_stats(
+    feats: dict[str, float | str | int],
+    *,
+    home_team: str,
+    away_team: str,
+    game_date: pd.Timestamp,
+    stats_tracker: _FighterStatsTracker | None,
+) -> None:
+    if stats_tracker is None:
+        for col in STAT_ROLLING_COLUMNS:
+            feats[col] = 0 if col == "stats_available" else None
+        return
+
+    home_prior = stats_tracker.samples_before(home_team, game_date)
+    away_prior = stats_tracker.samples_before(away_team, game_date)
+    home_ssl = _rolling_stat_avg(home_prior, "sig_strikes_landed")
+    away_ssl = _rolling_stat_avg(away_prior, "sig_strikes_landed")
+    home_td = _rolling_stat_avg(home_prior, "takedowns_landed")
+    away_td = _rolling_stat_avg(away_prior, "takedowns_landed")
+    home_ctrl = _rolling_stat_avg(home_prior, "control_seconds")
+    away_ctrl = _rolling_stat_avg(away_prior, "control_seconds")
+
+    has_stats = any(v is not None for v in (home_ssl, away_ssl, home_td, away_td, home_ctrl, away_ctrl))
+    feats["home_sig_strikes_landed_avg"] = home_ssl
+    feats["away_sig_strikes_landed_avg"] = away_ssl
+    feats["sig_strikes_landed_diff"] = (
+        (home_ssl - away_ssl) if home_ssl is not None and away_ssl is not None else None
+    )
+    feats["home_takedowns_landed_avg"] = home_td
+    feats["away_takedowns_landed_avg"] = away_td
+    feats["takedowns_landed_diff"] = (
+        (home_td - away_td) if home_td is not None and away_td is not None else None
+    )
+    feats["home_control_seconds_avg"] = home_ctrl
+    feats["away_control_seconds_avg"] = away_ctrl
+    feats["control_seconds_diff"] = (
+        (home_ctrl - away_ctrl) if home_ctrl is not None and away_ctrl is not None else None
+    )
+    feats["stats_available"] = int(has_stats)
 
 
 class _FighterTracker:
@@ -91,10 +245,22 @@ def _last_n_win_pct(games: list[_FightRecord], n: int = LAST_N_FORM) -> float:
     return sum(g.win for g in recent) / len(recent)
 
 
+def _load_fight_stats_df() -> pd.DataFrame | None:
+    try:
+        from app.ingest.ufc_fight_stats import load_fight_stats
+
+        stats = load_fight_stats()
+        return stats if not stats.empty else None
+    except (ImportError, OSError, ValueError):
+        return None
+
+
 def _row_features(
     row,
     tracker: _FighterTracker,
     rest_fill: float,
+    *,
+    stats_tracker: _FighterStatsTracker | None = None,
 ) -> dict[str, float | str | int]:
     game_date = pd.to_datetime(row.date)
     home_team = normalize_fighter_name(str(row.home_team))
@@ -124,7 +290,7 @@ def _row_features(
     elo_home = float(getattr(row, "elo_home_pre", 1500.0) or 1500.0)
     elo_away = float(getattr(row, "elo_away_pre", 1500.0) or 1500.0)
 
-    return {
+    feats: dict[str, float | str | int] = {
         "fight_id": str(row.fight_id),
         "date": game_date,
         "home_team": home_team,
@@ -144,6 +310,14 @@ def _row_features(
         "elo_away_pre": elo_away,
         "elo_diff": elo_home - elo_away,
     }
+    _attach_rolling_stats(
+        feats,
+        home_team=home_team,
+        away_team=away_team,
+        game_date=game_date,
+        stats_tracker=stats_tracker,
+    )
+    return feats
 
 
 def build_features(
@@ -152,16 +326,23 @@ def build_features(
     rest_fill: float = DEFAULT_REST_FILL,
     update_state: bool = True,
     tracker: _FighterTracker | None = None,
+    stats_tracker: _FighterStatsTracker | None = None,
+    fight_stats_df: pd.DataFrame | None = None,
     attach_elo: bool = True,
 ) -> pd.DataFrame:
     df = fights_df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values(["date", "fight_id"]).reset_index(drop=True)
     state = tracker if tracker is not None else _FighterTracker()
+    stats_state = stats_tracker if stats_tracker is not None else _FighterStatsTracker()
+    stats_lookup: pd.DataFrame | None = None
+    if fight_stats_df is not None and not fight_stats_df.empty:
+        stats_lookup = fight_stats_df.copy()
+        stats_lookup["fight_id"] = stats_lookup["fight_id"].astype(str)
     rows: list[dict] = []
 
     for row in df.itertuples(index=False):
-        feats = _row_features(row, state, rest_fill)
+        feats = _row_features(row, state, rest_fill, stats_tracker=stats_state)
         if hasattr(row, "home_win") and pd.notna(getattr(row, "home_win", None)):
             feats["home_win"] = int(row.home_win)
         rows.append(feats)
@@ -172,6 +353,22 @@ def build_features(
                 normalize_fighter_name(str(row.away_team)),
                 int(row.home_win),
             )
+        if stats_lookup is not None:
+            fid = str(row.fight_id)
+            match = stats_lookup[stats_lookup["fight_id"] == fid]
+            if not match.empty:
+                srow = match.iloc[0]
+                stats_state.update_fight(
+                    pd.to_datetime(row.date),
+                    normalize_fighter_name(str(row.home_team)),
+                    normalize_fighter_name(str(row.away_team)),
+                    home_sig_strikes_landed=_optional_float(srow.get("home_sig_strikes_landed")),
+                    away_sig_strikes_landed=_optional_float(srow.get("away_sig_strikes_landed")),
+                    home_takedowns_landed=_optional_float(srow.get("home_takedowns_landed")),
+                    away_takedowns_landed=_optional_float(srow.get("away_takedowns_landed")),
+                    home_control_seconds=_optional_float(srow.get("home_control_seconds")),
+                    away_control_seconds=_optional_float(srow.get("away_control_seconds")),
+                )
 
     out = pd.DataFrame(rows)
     if attach_elo:
@@ -200,7 +397,12 @@ def build_features_for_history(fights_df: pd.DataFrame | None = None) -> pd.Data
 
     fights = fights_df if fights_df is not None else load_fights()
     rest_fill = _train_rest_fill(fights)
-    return build_features(fights, rest_fill=rest_fill)
+    fight_stats = _load_fight_stats_df()
+    return build_features(
+        fights,
+        rest_fill=rest_fill,
+        fight_stats_df=fight_stats,
+    )
 
 
 def format_layoff_label(days: int | float | None) -> str:
@@ -329,6 +531,18 @@ def build_features_for_slate(
     hist = hist[~hist["fight_id"].astype(str).isin(slate_ids)].copy()
     hist_before = hist[hist["date"] < slate_min_date].copy()
     tracker = build_fighter_tracker_from_history(hist_before)
+    fight_stats = _load_fight_stats_df()
+    stats_for_loop = None
+    if fight_stats is not None:
+        stats_for_loop = fight_stats[
+            fight_stats["date"] < slate_min_date
+        ].copy()
+        stats_for_loop = stats_for_loop[
+            ~stats_for_loop["fight_id"].astype(str).isin(slate_ids)
+        ]
+        slate_stats = fight_stats[fight_stats["fight_id"].astype(str).isin(slate_ids)]
+        if not slate_stats.empty:
+            stats_for_loop = pd.concat([stats_for_loop, slate_stats], ignore_index=True)
     combined = pd.concat([hist_before, slate], ignore_index=True, sort=False)
     combined["date"] = pd.to_datetime(combined["date"])
     combined = combined.sort_values(["date", "fight_id"]).reset_index(drop=True)
@@ -336,6 +550,7 @@ def build_features_for_slate(
         combined,
         rest_fill=rest_fill,
         tracker=tracker,
+        fight_stats_df=stats_for_loop,
         attach_elo=True,
     )
     return full[full["fight_id"].astype(str).isin(slate_ids)].drop_duplicates(

@@ -113,6 +113,9 @@ def _slate_rows(
                 "totals_line": pred.get("totals_line"),
                 "over_odds": pred.get("over_odds"),
                 "under_odds": pred.get("under_odds"),
+                "method_props": pred.get("method_props"),
+                "goes_distance_yes": pred.get("goes_distance_yes"),
+                "goes_distance_no": pred.get("goes_distance_no"),
             }
         )
     return rows

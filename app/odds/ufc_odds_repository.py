@@ -19,6 +19,10 @@ from app.odds.odds_repository import (
 from app.odds.team_aliases import is_valid_american_odds
 from app.odds.the_odds_api import fetch_live_ufc_odds
 from app.odds.ufc_fighter_aliases import fighter_match_key, normalize_fighter_name
+from app.odds.ufc_method_markets import (
+    extract_goes_distance_odds,
+    extract_method_props_from_bookmakers,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +156,18 @@ def normalize_ufc_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
             fight_row["totals_line"] = sorted(totals_lines)[mid]
             fight_row["over_odds"] = _median_int(over_prices)
             fight_row["under_odds"] = _median_int(under_prices)
+        method_props = extract_method_props_from_bookmakers(
+            event.get("bookmakers", []),
+            home=home,
+            away=away,
+        )
+        if method_props:
+            fight_row["method_props"] = method_props
+        distance_odds = extract_goes_distance_odds(event.get("bookmakers", []))
+        if distance_odds.get("goes_distance_yes") is not None:
+            fight_row["goes_distance_yes"] = distance_odds["goes_distance_yes"]
+        if distance_odds.get("goes_distance_no") is not None:
+            fight_row["goes_distance_no"] = distance_odds["goes_distance_no"]
         fights.append(fight_row)
     return fights
 

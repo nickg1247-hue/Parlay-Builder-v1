@@ -17,6 +17,7 @@ from app.odds.odds_math import american_payout_profit, market_probs_from_america
 from app.odds.team_aliases import is_valid_american_odds
 from app.odds.ufc_fighter_aliases import normalize_fighter_name
 from app.odds.ufc_odds_free import HOLDOUT_SEASON as ODDS_HOLDOUT_SEASON, load_holdout_odds
+from app.odds.ufc_odds_match import match_diagnostics, merge_fights_odds_fuzzy
 
 MARKET_EVAL_JSON = PROJECT_ROOT / "data" / "processed" / "ufc_market_metrics.json"
 MARKET_EVAL_CSV = PROJECT_ROOT / "data" / "processed" / "ufc_2024_market_eval.csv"
@@ -25,13 +26,11 @@ MARKET_EVAL_CSV = PROJECT_ROOT / "data" / "processed" / "ufc_2024_market_eval.cs
 def _merge_fights_odds(fights: pd.DataFrame, odds: pd.DataFrame) -> pd.DataFrame:
     g = fights.copy()
     o = odds.copy()
-    g["date"] = pd.to_datetime(g["date"]).dt.strftime("%Y-%m-%d")
-    o["date"] = pd.to_datetime(o["date"]).dt.strftime("%Y-%m-%d")
     g["home_team"] = g["home_team"].map(normalize_fighter_name)
     g["away_team"] = g["away_team"].map(normalize_fighter_name)
     o["home_team"] = o["home_team"].map(normalize_fighter_name)
     o["away_team"] = o["away_team"].map(normalize_fighter_name)
-    return g.merge(o, on=["date", "home_team", "away_team"], how="inner")
+    return merge_fights_odds_fuzzy(g, o)
 
 
 def _pick_side(row, edge_threshold: float) -> str | None:
@@ -190,12 +189,15 @@ def run_market_evaluation(edge_threshold: float = DEFAULT_MIN_EDGE) -> dict:
     roi = total_profit / n_bets if n_bets else 0.0
     hit_rate = float(plus_ev["pick_won"].mean()) if n_bets else 0.0
 
+    diag = match_diagnostics(holdout_feat, odds, sample=15)
+
     results = {
         "model_version": model_version,
         "holdout_season": HOLDOUT_SEASON,
         "holdout_games": len(holdout),
         "matched_games": len(matched),
         "match_rate_pct": round(match_rate * 100, 2),
+        "match_diagnostics": diag,
         "odds_sources": odds_sources,
         "edge_threshold": edge_threshold,
         "log_loss_model": round(model_ll, 4),

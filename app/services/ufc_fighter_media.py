@@ -264,6 +264,38 @@ def _corner_media(
     }
 
 
+def lookup_fighter_media(
+    fighter_name: str,
+    *,
+    prefer_date: date | None = None,
+) -> dict[str, Any]:
+    """Best-effort headshot / flag for a fighter name across nearby card dates."""
+    dates_to_try: list[date] = []
+    if prefer_date:
+        dates_to_try.append(prefer_date)
+    try:
+        from app.services.schedule_ufc import get_ufc_schedule
+
+        schedule = get_ufc_schedule(None, auto_resolve=True)
+        resolved = schedule.get("resolved_date") or schedule.get("date")
+        if resolved:
+            card_day = date.fromisoformat(str(resolved)[:10])
+            if card_day not in dates_to_try:
+                dates_to_try.append(card_day)
+    except Exception:
+        pass
+    today = date.today()
+    if today not in dates_to_try:
+        dates_to_try.append(today)
+
+    for game_date in dates_to_try:
+        media_map = media_map_for_date(game_date)
+        row = _corner_media(fighter_name, media_map)
+        if row.get("headshot_url"):
+            return row
+    return _corner_media(fighter_name, {})
+
+
 def enrich_fight_media(fight: dict[str, Any], game_date: date) -> dict[str, Any]:
     """Attach headshot + flag URLs to a fight dict (mutates copy)."""
     enriched = dict(fight)

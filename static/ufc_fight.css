@@ -151,6 +151,21 @@
   .ufc-preview-pick {
     order: -1;
   }
+
+  .ufc-fight-hero .win-prob-band,
+  .ufc-fight-hero .win-prob-band-ufc {
+    min-height: 1.5rem;
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .ufc-fight-hero .win-prob-band-label {
+    font-size: 0.6rem;
+    max-width: 46%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .ufc-fighter-card {
@@ -166,6 +181,12 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
+}
+
+.ufc-fighter-card-name {
+  margin: -0.35rem 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .ufc-fighter-card dl {
@@ -258,4 +279,288 @@
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.35);
   text-align: center;
+}
+
+/* ── Matchup insight (reasons / risks) ───────────────── */
+.ufc-matchup-insight {
+  margin: 1.25rem 0;
+  padding: 1rem 1.1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+}
+
+.ufc-bullet-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.15rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ufc-risks-title {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(251, 191, 36, 0.85);
+}
+
+.ufc-risks-list {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Method / category bar charts ────────────────────── */
+.ufc-bars-section {
+  margin-bottom: 0.5rem;
+}
+
+.ufc-bar-chart {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+}
+
+.ufc-bar-row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 1fr) 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.ufc-bar-label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ufc-bar-track {
+  height: 0.45rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ufc-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.85), rgba(167, 139, 250, 0.95));
+}
+
+.ufc-bar-row.home-fav .ufc-bar-fill {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.75), rgba(96, 165, 250, 0.95));
+}
+
+.ufc-bar-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.ufc-edge-tag {
+  font-size: 0.72rem;
+  color: #86efac;
+  margin-left: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .ufc-bar-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .ufc-bar-pct {
+    text-align: left;
+  }
+}
+
+/* ── Fighter profile page ─────────────────────────────── */
+.ufc-fighter-page .ufc-fighter-hero {
+  margin-bottom: 1.25rem;
+}
+
+.ufc-fighter-hero-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  padding: 1.25rem 1.35rem;
+}
+
+.ufc-fighter-portrait--profile {
+  width: 7.5rem;
+  height: 7.5rem;
+}
+
+.ufc-fighter-hero-copy h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #f9fafb;
+}
+
+.ufc-fighter-record-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.ufc-fighter-stat-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  min-width: 4.5rem;
+}
+
+.ufc-fighter-stat-pill .label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ufc-fighter-stat-pill .value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.ufc-fighter-link {
+  color: #c4b5fd;
+  text-decoration: none;
+}
+
+.ufc-fighter-link:hover {
+  text-decoration: underline;
+}
+
+.ufc-fighter-recent-list,
+.ufc-weight-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ufc-fighter-recent-row,
+.ufc-weight-history-row {
+  display: grid;
+  grid-template-columns: 5.5rem 2rem 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.55rem;
+  font-size: 0.88rem;
+}
+
+.ufc-weight-history-row {
+  grid-template-columns: 1fr auto;
+}
+
+.ufc-fighter-recent-date {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+}
+
+.ufc-result-win {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.ufc-result-loss {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.ufc-fighter-next-card {
+  display: block;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(160deg, rgba(124, 58, 237, 0.18), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ufc-fighter-next-card:hover {
+  border-color: rgba(167, 139, 250, 0.55);
+}
+
+.ufc-fighter-next-label {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ufc-fighter-next-matchup {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.ufc-fighter-next-meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ufc-fighter-next-cta {
+  display: block;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  color: #c4b5fd;
+}
+
+.ufc-fighter-next-opp {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 640px) {
+  .ufc-fighter-hero-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .ufc-fighter-portrait--profile {
+    margin: 0 auto;
+  }
+
+  .ufc-fighter-record-row {
+    justify-content: center;
+  }
+
+  .ufc-fighter-recent-row {
+    grid-template-columns: 1fr 2rem;
+    grid-template-rows: auto auto;
+  }
+
+  .ufc-fighter-recent-wc {
+    grid-column: 1 / -1;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+  }
 }

@@ -669,6 +669,66 @@
 
 
 
+    const ufcCard = summary?.ufc_card;
+
+    let ufcHtml = "";
+
+    if (ufcCard?.available) {
+
+      const daysLabel = ufcCard.days_ahead > 0 ? ` (+${ufcCard.days_ahead}d)` : "";
+
+      const cardDate = ufcCard.card_date
+
+        ? new Date(`${ufcCard.card_date}T12:00:00`).toLocaleDateString(undefined, {
+
+            month: "short",
+
+            day: "numeric",
+
+          })
+
+        : "";
+
+      const mainLine =
+
+        ufcCard.main_event?.matchup || ufcCard.headline_fight || ufcCard.event_name || "Upcoming card";
+
+      let evLine = "Model picks ready";
+
+      if (ufcCard.best_ev_pick?.fighter) {
+
+        const edgePct = Math.round(Number(ufcCard.best_ev_pick.edge || 0) * 100);
+
+        const odds =
+
+          ufcCard.best_ev_pick.american_odds > 0
+
+            ? `+${ufcCard.best_ev_pick.american_odds}`
+
+            : ufcCard.best_ev_pick.american_odds ?? "";
+
+        evLine = `${ufcCard.best_ev_pick.fighter} +EV${odds ? ` ${odds}` : ""} (${edgePct}% edge)`;
+
+      } else if (ufcCard.plus_ev_count > 0) {
+
+        evLine = `${ufcCard.plus_ev_count} +EV pick${ufcCard.plus_ev_count === 1 ? "" : "s"}`;
+
+      }
+
+      ufcHtml = `<a class="dash-widget dash-widget-ufc" href="${ufcCard.href || "/ufc"}">
+
+        <span class="dash-widget-label">Next UFC Card${daysLabel}</span>
+
+        <p class="dash-widget-title">${mainLine}</p>
+
+        <span class="dash-widget-meta">${cardDate}${cardDate ? " · " : ""}${evLine}</span>
+
+      </a>`;
+
+    }
+
+
+
     const mvPoints = charts?.model_vs_market?.points || [];
 
     let modelPct = 58;
@@ -757,7 +817,7 @@
 
 
 
-    el.innerHTML = liveHtml + propHtml + evHtml + chartHtml;
+    el.innerHTML = liveHtml + propHtml + evHtml + ufcHtml + chartHtml;
 
   }
 

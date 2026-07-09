@@ -196,6 +196,10 @@ class FighterContext:
     opponent_win_pct_avg: float = NEUTRAL_WIN_PCT
     recent_losses: int = 0
     finish_rate_proxy: float = 0.35
+    sig_strikes_landed_avg: float | None = None
+    takedowns_landed_avg: float | None = None
+    control_seconds_avg: float | None = None
+    stats_available: bool = False
 
 
 @dataclass
@@ -374,6 +378,14 @@ def build_fighter_context(
     if recent_losses >= 3:
         finish_proxy -= 0.1
 
+    sig_avg = feat.get(f"{prefix}_sig_strikes_landed_avg")
+    td_avg = feat.get(f"{prefix}_takedowns_landed_avg")
+    ctrl_avg = feat.get(f"{prefix}_control_seconds_avg")
+    stats_available = bool(feat.get("stats_available")) and any(
+        v is not None and not (isinstance(v, float) and pd.isna(v))
+        for v in (sig_avg, td_avg, ctrl_avg)
+    )
+
     return FighterContext(
         name=name,
         side=side,
@@ -391,6 +403,10 @@ def build_fighter_context(
         opponent_win_pct_avg=opp_avg,
         recent_losses=recent_losses,
         finish_rate_proxy=finish_proxy,
+        sig_strikes_landed_avg=float(sig_avg) if sig_avg is not None and not pd.isna(sig_avg) else None,
+        takedowns_landed_avg=float(td_avg) if td_avg is not None and not pd.isna(td_avg) else None,
+        control_seconds_avg=float(ctrl_avg) if ctrl_avg is not None and not pd.isna(ctrl_avg) else None,
+        stats_available=stats_available,
     )
 
 
@@ -399,8 +415,12 @@ def score_fighter(ctx: FighterContext) -> FighterFeatureScores:
     priors = _prior_for_weight(ctx.weight_class)
     rec = ctx.record
 
-    striking = _scale_from_rate(ctx.last5_win_pct * 0.55 + ctx.career_win_pct * 0.45)
-    striking = _clamp(striking * 0.65 + priors.get("striking_score", 75) * 0.35)
+    if ctx.stats_available and ctx.sig_strikes_landed_avg is not None:
+        ssl = ctx.sig_strikes_landed_avg
+        striking = _clamp(42 + min(ssl, 120) * 0.38 + ctx.last5_win_pct * 18)
+    else:
+        striking = _scale_from_rate(ctx.last5_win_pct * 0.55 + ctx.career_win_pct * 0.45)
+        striking = _clamp(striking * 0.65 + priors.get("striking_score", 75) * 0.35)
 
     ko_power = _clamp(
         priors.get("knockout_power_score", 65) * 0.5
@@ -409,13 +429,20 @@ def score_fighter(ctx: FighterContext) -> FighterFeatureScores:
     )
     strike_def = _clamp(52 + (ctx.career_win_pct - 0.5) * 40 - ctx.recent_losses * 4)
 
-    td_off = _clamp(
-        priors.get("takedown_offense_score", 60) * 0.45
-        + ctx.career_win_pct * 35
-        + min(15, ctx.fights_per_year * 4)
-    )
+    if ctx.stats_available and ctx.takedowns_landed_avg is not None:
+        td_avg = ctx.takedowns_landed_avg
+        td_off = _clamp(40 + td_avg * 14 + ctx.career_win_pct * 20)
+        control = _clamp(
+            38 + (ctx.control_seconds_avg or 0) * 0.08 + td_off * 0.35
+        )
+    else:
+        td_off = _clamp(
+            priors.get("takedown_offense_score", 60) * 0.45
+            + ctx.career_win_pct * 35
+            + min(15, ctx.fights_per_year * 4)
+        )
+        control = _clamp(td_off * 0.55 + ctx.career_win_pct * 30 + 15)
     td_def = _clamp(50 + (ctx.career_win_pct - 0.5) * 38 - ctx.recent_losses * 3)
-    control = _clamp(td_off * 0.55 + ctx.career_win_pct * 30 + 15)
     sub_threat = _clamp(
         priors.get("submission_threat_score", 55) * 0.5
         + td_off * 0.25
@@ -833,6 +860,11 @@ def predict_matchup(
 
     model_notes = [
         "Matchup engine v1 — style-adjusted heuristic model (not record-only)",
+        (
+            "Rolling sig strikes / TD / control from ESPN bout stats"
+            if away_ctx.stats_available or home_ctx.stats_available
+            else "Proxy striking/grappling until bout stats ingested"
+        ),
         f"Composite category edge favors {'Fighter A' if weighted_edge > 0 else 'Fighter B' if weighted_edge < 0 else 'neither corner'}",
         *style_notes,
     ]

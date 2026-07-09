@@ -2384,6 +2384,28 @@ function renderMatchupHeader(el, game, boardRow, options = {}) {
   }
 }
 
+function ufcFighterSlug(name) {
+  if (!name) return "";
+  return String(name)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+function ufcFighterHref(name) {
+  const slug = ufcFighterSlug(name);
+  return slug ? `/ufc/fighter/${encodeURIComponent(slug)}` : "#";
+}
+
+function ufcFighterNameHtml(name) {
+  if (!name) return "";
+  const href = ufcFighterHref(name);
+  return `<a href="${href}" class="ufc-fighter-link">${name}</a>`;
+}
+
 function ufcFighterPortraitHtml(game, side, options = {}) {
   const isAway = side === "away";
   const name = isAway ? game.away_team : game.home_team;
@@ -2428,6 +2450,8 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
   const homeVisual = isUfc
     ? ufcFighterPortraitHtml(game, "home", portraitOpts)
     : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="${game.home_team}" width="56" height="56">`;
+  const awayNameHtml = isUfc ? ufcFighterNameHtml(game.away_team) : game.away_team;
+  const homeNameHtml = isUfc ? ufcFighterNameHtml(game.home_team) : game.home_team;
   return `
     <div class="matchup-header-wrap ${isUfc ? "matchup-header-ufc" : ""}" style="${gameCardColorStyle(game)}">
     ${bandHtml}
@@ -2436,7 +2460,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
     <div class="matchup-grid">
       <div class="matchup-team">
         ${awayVisual}
-        <h2>${game.away_team}</h2>
+        <h2>${awayNameHtml}</h2>
         ${teamRecordHtml(game.away_record)}
         ${isUfc && game.away_country ? `<p class="ufc-fighter-country">${game.away_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.away_score ?? 0}</span>` : ""}
@@ -2447,7 +2471,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
       </div>
       <div class="matchup-team">
         ${homeVisual}
-        <h2>${game.home_team}</h2>
+        <h2>${homeNameHtml}</h2>
         ${teamRecordHtml(game.home_record)}
         ${isUfc && game.home_country ? `<p class="ufc-fighter-country">${game.home_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}

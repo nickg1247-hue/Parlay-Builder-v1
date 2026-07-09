@@ -11,6 +11,11 @@ import pandas as pd
 
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.ufc_baseline import load_model_artifact
+from app.odds.ufc_method_markets import (
+    method_prop_edges,
+    model_over_rounds_prob,
+    round_totals_edge,
+)
 from app.services.game_insights import _confidence_tier
 from app.services.schedule_ufc import get_ufc_fight
 from app.services.ufc_daily_board import UFC_DISCLAIMER, build_ufc_daily_board
@@ -22,6 +27,7 @@ from app.features.ufc_pregame import (
     format_layoff_label,
 )
 from app.models.ufc_matchup_engine import predict_matchup
+from app.services.ufc_model_comparison import load_model_comparison
 
 FEATURE_NOTES: dict[str, str] = {
     "elo_diff": "Home-corner Elo advantage (pregame ratings)",
@@ -146,7 +152,13 @@ def _build_moneyline(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_bets(moneyline: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+def _build_bets(
+    moneyline: dict[str, Any],
+    row: dict[str, Any],
+    *,
+    matchup_prediction: dict[str, Any] | None = None,
+    min_edge: float = DEFAULT_MIN_EDGE,
+) -> dict[str, Any]:
     singles: list[dict[str, Any]] = []
     if moneyline.get("best_pick"):
         bp = moneyline["best_pick"]
@@ -183,24 +195,100 @@ def _build_bets(moneyline: dict[str, Any], row: dict[str, Any]) -> dict[str, Any
     totals_line = row.get("totals_line")
     over_odds = row.get("over_odds")
     under_odds = row.get("under_odds")
+    method_market = row.get("method_props") or {}
+
+    win_methods = (matchup_prediction or {}).get("winMethodProbabilities") or {}
+    if method_market and win_methods:
+        for prop in method_prop_edges(
+            win_methods, method_market, min_edge=min_edge
+        ):
+            props.append(prop)
+
     if not _is_missing(totals_line) and (
         not _is_missing(over_odds) or not _is_missing(under_odds)
     ):
-        props.append(
-            {
-                "market": "rounds_total",
-                "line": float(totals_line),
-                "over_odds": int(over_odds) if not _is_missing(over_odds) else None,
-                "under_odds": int(under_odds) if not _is_missing(under_odds) else None,
-                "label": f"O/U {float(totals_line):g} rounds",
-            }
+        round_entry: dict[str, Any] = {
+            "market": "rounds_total",
+            "line": float(totals_line),
+            "over_odds": int(over_odds) if not _is_missing(over_odds) else None,
+            "under_odds": int(under_odds) if not _is_missing(under_odds) else None,
+            "label": f"O/U {float(totals_line):g} rounds",
+        }
+        if (
+            win_methods
+            and not _is_missing(over_odds)
+            and not _is_missing(under_odds)
+        ):
+            model_over = model_over_rounds_prob(
+                win_methods, totals_line=float(totals_line)
+            )
+            edge_row = round_totals_edge(
+                totals_line=float(totals_line),
+                over_odds=int(over_odds),
+                under_odds=int(under_odds),
+                model_over_prob=model_over,
+                min_edge=min_edge,
+            )
+            if edge_row:
+                round_entry.update(
+                    {
+                        "side": edge_row.get("side"),
+                        "model_prob": edge_row.get("model_prob"),
+                        "market_prob": edge_row.get("market_prob"),
+                        "edge": edge_row.get("edge"),
+                        "plus_ev": edge_row.get("plus_ev"),
+                        "american_odds": edge_row.get("american_odds"),
+                    }
+                )
+        props.append(round_entry)
+
+    goes_yes = row.get("goes_distance_yes")
+    goes_no = row.get("goes_distance_no")
+    if (
+        win_methods
+        and not _is_missing(goes_yes)
+        and not _is_missing(goes_no)
+    ):
+        decision_prob = float(win_methods.get("fighterA_Decision", 0)) + float(
+            win_methods.get("fighterB_Decision", 0)
         )
+        from app.odds.odds_math import market_probs_from_american_totals
+
+        mkt_yes, mkt_no = market_probs_from_american_totals(int(goes_yes), int(goes_no))
+        edge_yes = decision_prob - mkt_yes
+        edge_no = (1.0 - decision_prob) - mkt_no
+        if edge_yes >= edge_no:
+            props.append(
+                {
+                    "market": "goes_distance",
+                    "side": "yes",
+                    "label": "Fight goes the distance",
+                    "american_odds": int(goes_yes),
+                    "model_prob": round(decision_prob, 4),
+                    "market_prob": round(mkt_yes, 4),
+                    "edge": round(edge_yes, 4),
+                    "plus_ev": edge_yes >= min_edge,
+                }
+            )
+        else:
+            props.append(
+                {
+                    "market": "goes_distance",
+                    "side": "no",
+                    "label": "Fight does not go the distance",
+                    "american_odds": int(goes_no),
+                    "model_prob": round(1.0 - decision_prob, 4),
+                    "market_prob": round(mkt_no, 4),
+                    "edge": round(edge_no, 4),
+                    "plus_ev": edge_no >= min_edge,
+                }
+            )
 
     props_note = None
     if not props:
         props_note = (
-            "Method-of-victory props are not wired yet. Round totals appear when "
-            "live Odds API lines include totals for this fight."
+            "Method-of-victory and round props appear when live Odds API lines "
+            "include those markets for this fight."
         )
 
     return {
@@ -480,7 +568,12 @@ def build_ufc_fight_insights(
     moneyline = _build_moneyline(row)
     highlights = _build_highlights(row, moneyline)
     matchup_board = _build_matchup_board(row, highlights)
-    bets = _build_bets(moneyline, row)
+    bets = _build_bets(
+        moneyline,
+        row,
+        matchup_prediction=matchup_prediction,
+        min_edge=DEFAULT_MIN_EDGE,
+    )
 
     card_segment = (fight.get("card_segment") or "").lower()
     rounds_expected = estimate_rounds_expected(
@@ -507,12 +600,16 @@ def build_ufc_fight_insights(
 
     pick_prob = prob_home if pick_side == "home" else prob_away
 
+    comparison = load_model_comparison()
+
     return _json_safe(
         {
             "game": fight,
             "date": slate_day.isoformat(),
             "sport": "ufc",
             "disclaimer": "For entertainment only. Bet responsibly.",
+            "model_label": comparison.get("active_model_label"),
+            "active_model": comparison.get("active_model"),
             "moneyline": moneyline,
             "bets": bets,
             "fighter_stats": fighter_stats,

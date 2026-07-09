@@ -527,6 +527,15 @@ body.ntg-shell:not(.ntg-ticker-visible) #headline-ticker {
   gap: 0.15rem;
 }
 
+.dash-widget-ufc {
+  background: linear-gradient(160deg, rgba(220, 38, 38, 0.14), rgba(255, 255, 255, 0.03));
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+.dash-widget-ufc:hover {
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
 .dash-widget-form-badge {
   align-self: flex-start;
   font-size: 0.58rem;

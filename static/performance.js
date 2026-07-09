@@ -16,12 +16,15 @@ async function bootPerformancePage() {
     if (strength) qs.set("line_strength", strength);
 
     try {
-      const [mlClv, summary, picksData] = await Promise.all([
+      const [mlClv, summary, picksData, modelCmp] = await Promise.all([
         fetchJSON(`/api/clv/summary?days=${days}&sport=${encodeURIComponent(mlSport)}`),
         fetchJSON(`/api/performance/summary?days=${days}`),
         fetchJSON(`/api/performance/picks?${qs}`),
+        mlSport === "ufc"
+          ? fetchJSON("/api/ufc/model-comparison").catch(() => null)
+          : Promise.resolve(null),
       ]);
-      renderMlClv(mlClvEl, mlClv, days, mlSport);
+      renderMlClv(mlClvEl, mlClv, days, mlSport, modelCmp);
       renderSummary(summaryEl, summary, days);
       renderBuckets(bucketsEl, summary.prop_tracker);
       renderClv(clvEl, summary.clv);
@@ -50,7 +53,7 @@ function fmtPct(v) {
   return `${Math.round(v * 100)}%`;
 }
 
-function renderMlClv(el, clv, days, sport = "mlb") {
+function renderMlClv(el, clv, days, sport = "mlb", modelCmp = null) {
   if (!el) return;
   const sportLabel = sport === "ufc" ? "UFC" : "MLB";
   if (!clv || !clv.picks_logged) {
@@ -60,6 +63,14 @@ function renderMlClv(el, clv, days, sport = "mlb") {
   const mean = clv.mean_clv_implied_prob != null ? `${(clv.mean_clv_implied_prob * 100).toFixed(2)} pts` : "—";
   const pos = clv.pct_positive_clv != null ? fmtPct(clv.pct_positive_clv) : "—";
   const hr = fmtPct(clv.hit_rate);
+  const modelNote =
+    sport === "ufc" && modelCmp?.active_model_label
+      ? `<p class="text-muted" style="font-size:0.82rem;margin-top:0.65rem;">Active model: <strong>${modelCmp.active_model_label}</strong>${
+          modelCmp.baseline?.log_loss != null && modelCmp.matchup?.log_loss != null
+            ? ` · holdout log-loss baseline ${modelCmp.baseline.log_loss.toFixed(4)} vs matchup ${modelCmp.matchup.log_loss.toFixed(4)}`
+            : ""
+        }</p>`
+      : "";
   el.innerHTML = `
     <div class="perf-stat-grid">
       <div class="perf-stat">
@@ -82,7 +93,7 @@ function renderMlClv(el, clv, days, sport = "mlb") {
         <span class="perf-stat-value">${hr}</span>
         <span class="perf-stat-label">Win rate (settled)</span>
       </div>
-    </div>`;
+    </div>${modelNote}`;
 }
 
 function renderSummary(el, summary, days) {

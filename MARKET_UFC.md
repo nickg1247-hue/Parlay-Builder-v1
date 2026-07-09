@@ -36,6 +36,31 @@ Walk-forward backtest (`scripts/evaluate_ufc.py`) is **model-only** — market p
 
 ## Import & evaluate
 
+**Canonical CSV columns:** `date, home_team, away_team, home_ml, away_ml` (American odds).
+
+```powershell
+# Bulk import (MikeSpa ufc-master + demo)
+python scripts/import_ufc_odds_bulk.py --with-demo
+
+# Single file (canonical or BestFightOdds export)
+python scripts/load_ufc_odds_free.py path\to\odds.csv
+
+# Export unmatched 2024 fights for manual fill
+python scripts/export_ufc_odds_gap.py
+
+python scripts/evaluate_ufc_market.py --eval-only
+```
+
+**External datasets (manual download, no scraping in repo):**
+
+| Dataset | Format | Import |
+|---------|--------|--------|
+| MikeSpa `ufc-master.csv` | `R_fighter,B_fighter,R_odds,B_odds,date` | `data/fixtures/ufc_odds_mikespa_master.csv` via bulk script |
+| BestFightOdds archives | Export to canonical CSV | `load_ufc_odds_free.py` |
+| jansen88 `complete_ufc_data.csv` | `favourite,underdog,favourite_odds,underdog_odds` | bulk script (auto-detect) |
+
+**2024 match-rate blocker:** Public snapshots in-repo cover **2017–2021** (MikeSpa) plus **11 fights** on `2024-01-13` (demo). Full 2024 holdout (~562 fights) needs a completed BestFightOdds CSV — use `export_ufc_odds_gap.py` as a template. Target: **match_rate_pct > 70%** before trusting paper-trade ROI.
+
 ```powershell
 python scripts/load_ufc_odds_free.py data\fixtures\ufc_odds_2024_demo.csv
 python scripts/evaluate_ufc_market.py --eval-only

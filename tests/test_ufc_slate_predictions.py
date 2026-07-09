@@ -36,8 +36,10 @@ def test_ufc_predictions_api_json_serializable(mock_preds):
     resp = client.get("/api/ufc/predictions?date=2026-07-11")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["401867788"]["model_prob_home"] == 0.55
-    assert body["401867788"]["totals_line"] is None
+    preds = body.get("predictions", body)
+    assert preds["401867788"]["model_prob_home"] == 0.55
+    assert preds["401867788"]["totals_line"] is None
+    assert "model_label" in body
     json.dumps(body)
 
 

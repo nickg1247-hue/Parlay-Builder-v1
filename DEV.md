@@ -150,7 +150,7 @@ See `CFB_MODEL.md` for holdout gate and feature list.
 |----------|----------|
 | `GET /api/schedule/ufc` | No `date` → auto look-ahead (+30 days); `?date=` → exact date; `?refresh=true` → bypass cache |
 | `GET /api/scores/today?sport=ufc` | Same auto look-ahead when `date` omitted |
-| `GET /api/ufc/predictions?date=` | Moneyline model leans per `fight_id` |
+| `GET /api/ufc/predictions?date=` | `{ model_label, predictions }` — moneyline leans per `fight_id` |
 | `GET /api/ufc/daily` | Full board with odds edge (moneyline only) |
 
 **Date picker:** Past dates load from `ufc_fights.parquet` ingest. Today/future use ESPN, cached to `data/processed/ufc_schedule_{date}.json`.
@@ -186,6 +186,8 @@ pytest tests/test_schedule_ufc.py tests/test_ufc_baseline.py tests/test_ufc_figh
 |---------|--------|
 | Forward CLV | `Run live` on `/ufc/board` logs +EV singles → `forward_clv_ufc_log.jsonl` |
 | Backfill | `python scripts/backfill_forward_clv.py --sport ufc` |
+| Weekly CLV | `scripts/weekly_ufc_clv.ps1` — backfill close + grade results + summary |
+| Demo CLV seed | `python scripts/seed_ufc_forward_clv.py --demo` (empty log UX / dev only) |
 | CLV report | `GET /api/clv/summary?sport=ufc&days=30` |
 | Backtest | `python scripts/evaluate_ufc.py` → `ufc_backtest_report.json` |
 | Backtest API | `GET /api/ufc/backtest` |
@@ -212,7 +214,42 @@ pytest tests/test_ufc_forward_clv.py tests/test_ufc_backtest_report.py tests/tes
 | Parlays | `app/parlay/ufc_parlay.py` on daily board (`top_parlays`) |
 | Performance | `/performance` ML CLV sport selector: MLB / UFC |
 
-Method-of-victory props deferred. Round totals from live Odds API `totals` when available.
+### Phase 4 — Bout stats, model comparison, CLV ops
+
+| Feature | Detail |
+|---------|--------|
+| **Bulk odds import** | `python scripts/import_ufc_odds_bulk.py` — MikeSpa `ufc-master`, canonical CSV, favourite/underdog |
+| **Odds gap export** | `python scripts/export_ufc_odds_gap.py` → `ufc_odds_2024_gap.csv` for manual BestFightOdds fill |
+| **Fuzzy odds match** | `app/odds/ufc_odds_match.py` — date + fighter keys, swapped corners |
+| Fight stats ingest | `python scripts/ingest_ufc_fight_stats.py` → `ufc_fight_stats.parquet` (ESPN Core competition statistics) |
+| Rolling stats | `ufc_pregame.py` + `ufc_matchup_engine.py` use sig strikes / TD / control when parquet available; proxy fallback |
+| Model A/B | `python scripts/compare_ufc_models.py` → `ufc_model_comparison.json` |
+| Model API | `GET /api/ufc/model-comparison` (`?refresh=true` to re-run) |
+| Predictions API | `GET /api/ufc/predictions` returns `{ model_label, predictions }` with NaN cleaned |
+| Post-fight grading | `grade_pick_results()` in `ufc_forward_clv` (also runs from backfill + weekly script) |
+
+```powershell
+python scripts/ingest_ufc_fight_stats.py --limit 50
+python scripts/compare_ufc_models.py
+scripts/weekly_ufc_clv.ps1
+pytest tests/test_ufc_fight_stats.py tests/test_ufc_forward_clv.py -q
+```
+
+### Phase 5 — Fight insights UI, parlays, fighter profiles, props
+
+| Feature | Detail |
+|---------|--------|
+| Fight insights UI | `/ufc/game/{id}` — reasons, risks, method bars, category edges (`ufc_fight.js`) |
+| Slate parlays | `/ufc` renders `top_parlays` from `GET /api/ufc/daily` |
+| Method/round props | `app/odds/ufc_method_markets.py` — edges vs `winMethodProbabilities` when Odds API lines exist |
+| Fighter profiles | `/ufc/fighter/{slug}` + `GET /api/ufc/fighter/{slug}` |
+| Home UFC hero | `home-dashboard.js` — next card, main event lean, best +EV pick |
+
+```powershell
+pytest tests/test_ufc_fighter_profile.py tests/test_ufc_method_markets.py tests/test_ufc_daily_api.py -q
+```
+
+Method-of-victory props deferred when bookmakers omit markets. Round totals from live Odds API `totals` when available.
 
 ```powershell
 python scripts/load_ufc_odds_free.py data/fixtures/ufc_odds_2024_demo.csv

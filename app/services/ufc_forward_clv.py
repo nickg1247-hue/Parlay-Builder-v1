@@ -192,6 +192,47 @@ def _match_odds_row(row: dict[str, Any], odds_df: pd.DataFrame) -> pd.Series | N
     return None
 
 
+def grade_pick_results(
+    game_date: date | None = None,
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Grade pick_won from completed fights in ufc_fights.parquet (MLB-style post-fight)."""
+    rows = _read_all_rows()
+    if not rows:
+        return {"graded": 0, "sport": "ufc", "dry_run": dry_run}
+
+    try:
+        fights = load_fights()
+        fights["fight_id"] = fights["fight_id"].astype(str)
+        results_by_id = fights.set_index("fight_id")["home_win"].to_dict()
+    except Exception:
+        return {"graded": 0, "sport": "ufc", "error": "no_fights", "dry_run": dry_run}
+
+    latest = _latest_by_pick_id(rows)
+    graded = 0
+    for _pid, row in latest.items():
+        if row.get("pick_won") is not None:
+            continue
+        if game_date is not None and row.get("board_date") != game_date.isoformat():
+            continue
+        fid = str(row.get("fight_id") or row.get("game_id") or "")
+        if fid not in results_by_id or pd.isna(results_by_id[fid]):
+            continue
+        hw = int(results_by_id[fid])
+        side = row["side"]
+        new_row = {
+            **row,
+            "home_win": hw,
+            "pick_won": bool(hw == 1 if side == "home" else hw == 0),
+        }
+        if not dry_run:
+            _append_row(new_row)
+        graded += 1
+
+    return {"graded": graded, "sport": "ufc", "dry_run": dry_run}
+
+
 def backfill_closing_odds(
     game_date: date | None = None,
     *,
@@ -300,10 +341,12 @@ def backfill_closing_odds(
         for r in _latest_by_pick_id(_read_all_rows()).values()
         if r.get("close_american_odds") is None
     )
+    grade_result = grade_pick_results(game_date, dry_run=dry_run)
     return {
         "updated": updated,
         "missed": missed,
         "pending": pending,
+        "graded": grade_result.get("graded", 0),
         "sport": "ufc",
         "dry_run": dry_run,
     }
@@ -361,6 +404,10 @@ def summarize_clv(days: int = 30) -> dict[str, Any]:
         st = r.get("close_status") or "pending"
         status_counts[st] = status_counts.get(st, 0) + 1
 
+    settled = [r for r in rows if r.get("pick_won") is not None]
+    hits = sum(1 for r in settled if r.get("pick_won"))
+    hit_rate = round(hits / len(settled), 4) if settled else None
+
     try:
         log_path = FORWARD_CLV_UFC_LOG.relative_to(PROJECT_ROOT).as_posix()
     except ValueError:
@@ -371,6 +418,8 @@ def summarize_clv(days: int = 30) -> dict[str, Any]:
         "days": days,
         "picks_logged": len(rows),
         "picks_with_close": len(with_close),
+        "picks_settled": len(settled),
+        "hit_rate": hit_rate,
         "pct_positive_clv": round(positive / len(clv_vals), 4) if clv_vals else None,
         "mean_clv_implied_prob": round(sum(clv_vals) / len(clv_vals), 6) if clv_vals else None,
         "edge_buckets": buckets,

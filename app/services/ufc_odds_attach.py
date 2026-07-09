@@ -24,6 +24,9 @@ def attach_ufc_odds(
     merged["totals_line"] = np.nan
     merged["over_odds"] = np.nan
     merged["under_odds"] = np.nan
+    merged["method_props"] = None
+    merged["goes_distance_yes"] = np.nan
+    merged["goes_distance_no"] = np.nan
 
     odds_fights, source = get_ufc_odds_for_date(card_date, force_refresh=force_refresh)
     if not odds_fights and card_date < date.today():
@@ -74,5 +77,11 @@ def attach_ufc_odds(
             merged.at[idx, "over_odds"] = match.get("over_odds")
         if match.get("under_odds") is not None:
             merged.at[idx, "under_odds"] = match.get("under_odds")
+        if match.get("method_props"):
+            merged.at[idx, "method_props"] = match.get("method_props")
+        if match.get("goes_distance_yes") is not None:
+            merged.at[idx, "goes_distance_yes"] = match.get("goes_distance_yes")
+        if match.get("goes_distance_no") is not None:
+            merged.at[idx, "goes_distance_no"] = match.get("goes_distance_no")
 
     return merged, source
