@@ -436,3 +436,11 @@ els.runDemo?.addEventListener("click", () => {
 els.refresh?.addEventListener("click", () => {
   loadBoard(true);
 });
+
+els.minEdgeInput?.addEventListener("change", () => {
+  if (boardMode) loadBoard(false);
+});
+
+// Load today's live board immediately — matches MLB/ESPN-style open-on-arrival.
+boardMode = "live";
+loadBoard(false);

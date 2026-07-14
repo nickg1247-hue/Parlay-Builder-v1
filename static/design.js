@@ -251,11 +251,25 @@
 
   function confidenceMeterHtml(boardRow) {
     if (!boardRow) return "";
-    const tier = (
+    let tier = (
       boardRow.model_confidence ||
       boardRow.ml_confidence ||
-      "Lean only"
+      ""
     ).toLowerCase();
+    // When there's no market edge label, derive confidence from model win %.
+    if (!tier || tier === "—" || tier === "lean only") {
+      const p = boardRow.model_prob_home;
+      if (p != null && Number.isFinite(Number(p))) {
+        const gap = Math.abs(Number(p) - 0.5);
+        if (gap < 0.03) tier = "lean only";
+        else if (gap < 0.06) tier = "low";
+        else if (gap < 0.10) tier = "medium";
+        else if (gap < 0.16) tier = "high";
+        else tier = "extremely high";
+      } else {
+        tier = "lean only";
+      }
+    }
     const levels = [
       { key: "toss", label: "Toss-up", match: ["lean only", "blocked"] },
       { key: "lean", label: "Lean", match: ["low"] },
@@ -415,9 +429,14 @@
   window.initThemeMode = initThemeMode;
   window.initStadiumHero = initStadiumHero;
   window.renderHomeScoresRail = renderHomeScoresRail;
-  window.winProbBandHtml = winProbBandHtml;
-  window.winProbBarHtml = winProbBarHtml;
-  window.confidenceMeterHtml = confidenceMeterHtml;
+  // Keep app.js implementations if already loaded (slate pages load app.js first).
+  if (typeof window.winProbBandHtml !== "function") {
+    window.winProbBandHtml = winProbBandHtml;
+    window.winProbBarHtml = winProbBarHtml;
+  }
+  if (typeof window.confidenceMeterHtml !== "function") {
+    window.confidenceMeterHtml = confidenceMeterHtml;
+  }
   window.formSparklineHtml = formSparklineHtml;
   window.propHeatClass = propHeatClass;
   window.lineMoveArrowHtml = lineMoveArrowHtml;

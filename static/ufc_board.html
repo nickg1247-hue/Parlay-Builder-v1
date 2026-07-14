@@ -3,81 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260740" type="image/png">
   <title>UFC Daily Board — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260740">
+  <link rel="stylesheet" href="/static/app.css?v=20260740">
+  <link rel="stylesheet" href="/static/brand.css?v=20260740">
+  <link rel="stylesheet" href="/static/design.css?v=20260740">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260740">
 </head>
-<body>
-  <div class="page">
-    <header class="header">
-      <div>
-        <p class="nav-back"><a href="/sandbox">← Sandbox</a> · <a href="/ufc">Slate</a></p>
-        <h1>UFC Daily Board</h1>
-        <p class="date-line" id="board-date">Click Run live or Demo to load the board.</p>
+<body class="ntg-shell home-v2 board-ufc" data-sport="ufc">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260740" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
       </div>
     </header>
 
-    <div class="toolbar" id="board-toolbar">
-      <button type="button" class="btn" id="run-live-btn">Run live</button>
-      <button type="button" class="btn btn-secondary" id="run-demo-btn">Demo</button>
-      <label class="toolbar-field">
-        Min edge %
-        <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
-      </label>
-      <button type="button" class="btn btn-secondary hidden" id="refresh-btn">Refresh</button>
-    </div>
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
 
-    <div class="banner hidden" id="disclaimer"></div>
-    <div class="warnings" id="warnings"></div>
-    <div class="error" id="error"></div>
-
-    <div class="loading" id="loading">
-      <div class="spinner hidden" id="loading-spinner"></div>
-      <p id="loading-message">Click Run live or Demo to load the board.</p>
-    </div>
-
-    <main class="content hidden" id="content">
-      <section>
-        <h2>Card fights</h2>
-        <div class="table-wrap">
-          <table id="slate-table">
-            <thead>
-              <tr>
-                <th>Matchup</th>
-                <th>Weight</th>
-                <th>Model P(f1)</th>
-                <th>Market P(f1)</th>
-                <th>Edge</th>
-                <th>Confidence</th>
-                <th>+EV</th>
-                <th>Best pick</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+    <main class="app-main dash-main board-main">
+      <header class="dash-page-header">
+        <div>
+          <h1>UFC predictions board</h1>
+          <p class="dash-page-kicker"><a href="/ufc">← Slate</a> · fight moneyline leans</p>
         </div>
-        <p class="simple-note" id="confidence-note">Confidence reflects model vs market edge, not a guarantee.</p>
-      </section>
+        <span class="dash-page-kicker" id="board-date">Click Run live or Demo to load the board.</span>
+      </header>
 
-      <section id="market-eval-section" class="hidden">
-        <h2>Holdout market eval (2024)</h2>
-        <p class="simple-note">Model vs vig-free closing moneylines — paper trade only.</p>
-        <div id="market-eval-panel" class="card"></div>
-      </section>
+      <div class="slate-toolbar dash-toolbar" id="board-toolbar">
+        <button type="button" class="dash-btn dash-btn-primary" id="run-live-btn">Run live</button>
+        <button type="button" class="dash-btn dash-btn-ghost" id="run-demo-btn">Demo</button>
+        <label class="slate-date-field toolbar-field">
+          Min edge %
+          <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
+        </label>
+        <button type="button" class="dash-btn dash-btn-ghost hidden" id="refresh-btn">Refresh</button>
+      </div>
 
-      <section>
-        <h2>+EV singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
-        <div id="singles-list" class="card-list"></div>
-      </section>
+      <div class="banner hidden" id="disclaimer"></div>
+      <div class="warnings" id="warnings"></div>
+      <div class="error error-state hidden" id="error"></div>
 
-      <section>
-        <h2>Cross-fight parlays</h2>
-        <p class="simple-note">Independence assumption — experimental only.</p>
-        <div id="parlays-list" class="card-list"></div>
-      </section>
+      <div class="loading empty-state" id="loading">
+        <div class="spinner hidden" id="loading-spinner"></div>
+        <p id="loading-message">Click Run live or Demo to load the board.</p>
+      </div>
+
+      <div class="content hidden" id="content">
+        <section class="board-section ntg-card">
+          <h2>Card fights</h2>
+          <div class="table-wrap">
+            <table id="slate-table">
+              <thead>
+                <tr>
+                  <th>Matchup</th>
+                  <th>Weight</th>
+                  <th>Model P(f1)</th>
+                  <th>Market P(f1)</th>
+                  <th>Edge</th>
+                  <th>Confidence</th>
+                  <th>+EV</th>
+                  <th>Best pick</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="simple-note" id="confidence-note">Confidence reflects model vs market edge, not a guarantee.</p>
+        </section>
+
+        <section class="board-section ntg-card hidden" id="market-eval-section">
+          <h2>Holdout market eval (2024)</h2>
+          <p class="simple-note">Model vs vig-free closing moneylines — paper trade only.</p>
+          <div id="market-eval-panel" class="card"></div>
+        </section>
+
+        <section class="board-section ntg-card">
+          <h2>+EV singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
+          <div id="singles-list" class="card-list"></div>
+        </section>
+
+        <section class="board-section ntg-card">
+          <h2>Cross-fight parlays</h2>
+          <p class="simple-note">Independence assumption — experimental only.</p>
+          <div id="parlays-list" class="card-list"></div>
+        </section>
+      </div>
+
+      <footer class="footer status-footer hidden" id="status-footer"></footer>
     </main>
-
-    <footer class="footer hidden" id="status-footer"></footer>
   </div>
-  <script src="/static/ufc_board.js"></script>
+  <script src="/static/app.js?v=20260740"></script>
+  <script src="/static/ufc_board.js?v=20260740"></script>
 </body>
 </html>

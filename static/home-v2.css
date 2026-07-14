@@ -83,7 +83,7 @@ body.ntg-shell:not(.ntg-ticker-visible) #headline-ticker {
   padding: 0.45rem 0.75rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--dash-muted);
+  color: #cbd5e1;
   text-decoration: none;
   border-radius: 8px;
   white-space: nowrap;
@@ -124,14 +124,21 @@ body.ntg-shell:not(.ntg-ticker-visible) #headline-ticker {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.75rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.78rem;
   font-weight: 700;
   border-radius: 999px;
-  border: 1px solid var(--dash-border);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--dash-muted);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
   text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.dash-sport-pills .sport-pill:hover {
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.08);
+  color: #f8fafc;
 }
 
 .dash-sport-pills .sport-pill-icon {
@@ -158,8 +165,8 @@ body.ntg-shell:not(.ntg-ticker-visible) #headline-ticker {
 }
 
 .dash-sync-text {
-  font-size: 0.68rem;
-  color: var(--dash-muted);
+  font-size: 0.72rem;
+  color: #94a3b8;
   margin-bottom: 0.35rem;
   max-width: none;
   text-align: left;
@@ -1579,3 +1586,131 @@ body.ntg-shell .props-explorer-list .props-explorer-row {
     animation: none;
   }
 }
+
+/* --- Predictions board surfaces (NBA / CFB / UFC) --- */
+
+body.ntg-shell .board-main .board-section {
+  margin: 1rem 0 1.35rem;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+body.ntg-shell .board-main .board-section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+body.ntg-shell .dash-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+}
+
+body.ntg-shell .dash-toolbar .slate-date-field,
+body.ntg-shell .dash-toolbar .toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--dash-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body.ntg-shell .dash-toolbar input[type="date"],
+body.ntg-shell .dash-toolbar input[type="number"] {
+  min-width: 7rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--dash-border);
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--dash-text);
+  font-size: 0.9rem;
+}
+
+body.ntg-shell .board-main .table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--dash-border);
+}
+
+body.ntg-shell .board-main table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+body.ntg-shell .board-main th,
+body.ntg-shell .board-main td {
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  white-space: nowrap;
+}
+
+body.ntg-shell .board-main th {
+  color: var(--dash-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+body.ntg-shell .board-main tbody tr:hover {
+  background: rgba(34, 211, 238, 0.04);
+}
+
+body.ntg-shell .empty-state,
+body.ntg-shell .error-state {
+  margin: 1rem 0;
+  padding: 1.25rem 1.35rem;
+  border-radius: 14px;
+  border: 1px solid var(--dash-border);
+  background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+  color: var(--dash-text);
+}
+
+body.ntg-shell .error-state {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+body.ntg-shell .dash-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+body.ntg-shell .dash-page-header a {
+  color: var(--dash-cyan);
+  text-decoration: none;
+}
+
+body.ntg-shell .dash-page-header a:hover {
+  text-decoration: underline;
+}
+
+body.ntg-shell .game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+body.ntg-shell .slate-source-badge {
+  align-self: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--dash-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.08);
+}
+

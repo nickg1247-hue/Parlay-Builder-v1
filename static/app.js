@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260737";
+const NTG_ASSET_V = "20260742";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -249,20 +249,48 @@ function ensureSiteStyles() {
 function isNtgShellPage() {
   return (
     document.body.classList.contains("ntg-shell") ||
-    document.body.classList.contains("home-dashboard")
+    document.body.classList.contains("home-dashboard") ||
+    Boolean(document.querySelector(".app-shell"))
   );
 }
 
 function ntgShowLiveTicker() {
   const path = window.location.pathname || "/";
-  return path === "/mlb" || path.startsWith("/mlb/game/");
+  if (path === "/" || path.startsWith("/performance") || path.startsWith("/mlb/props")) {
+    return false;
+  }
+  return (
+    path === "/mlb" ||
+    path.startsWith("/mlb/game/") ||
+    path === "/nba" ||
+    path.startsWith("/nba/game/") ||
+    path === "/cfb" ||
+    path.startsWith("/cfb/game/") ||
+    path === "/ufc" ||
+    path.startsWith("/ufc/game/") ||
+    path.startsWith("/ufc/fighter/")
+  );
 }
 
 function applyShellBodyClasses() {
-  if (document.body.classList.contains("home-dashboard")) {
+  if (document.querySelector(".app-shell") || document.body.classList.contains("home-dashboard")) {
     document.body.classList.add("ntg-shell", "home-v2");
   }
   document.body.classList.toggle("ntg-ticker-visible", ntgShowLiveTicker());
+}
+
+function sportNavContext(path) {
+  const p = path || "/";
+  if (p.startsWith("/nba")) {
+    return { key: "nba", label: "NBA", slate: "/nba", board: "/nba/board" };
+  }
+  if (p.startsWith("/cfb")) {
+    return { key: "cfb", label: "CFB", slate: "/cfb", board: "/cfb/board" };
+  }
+  if (p.startsWith("/ufc")) {
+    return { key: "ufc", label: "UFC", slate: "/ufc", board: "/ufc/board" };
+  }
+  return { key: "mlb", label: "MLB", slate: "/mlb", board: "/mlb/board" };
 }
 
 function ntgBrandLockupHtml() {
@@ -783,20 +811,83 @@ function modelLeanLabel(boardRow, options = {}) {
   return chips.length ? chips[0] : null;
 }
 
+function confidenceFromModelProb(homeProb) {
+  if (homeProb == null || !Number.isFinite(Number(homeProb))) return null;
+  const gap = Math.abs(Number(homeProb) - 0.5);
+  if (gap < 0.03) return "Lean only";
+  if (gap < 0.06) return "Low";
+  if (gap < 0.10) return "Medium";
+  if (gap < 0.16) return "High";
+  return "Extremely high";
+}
+
+/** Toss-up / Lean / Strong / Elite meter from model win % (not market edge). */
+function confidenceMeterHtml(boardRow) {
+  if (!boardRow) return "";
+  let tier = String(
+    boardRow.model_confidence || boardRow.ml_confidence || ""
+  ).toLowerCase();
+  if (!tier || tier === "—" || tier === "lean only") {
+    const derived = confidenceFromModelProb(boardRow.model_prob_home);
+    tier = (derived || "lean only").toLowerCase();
+  }
+  const levels = [
+    { key: "toss", label: "Toss-up", match: ["lean only", "blocked"] },
+    { key: "lean", label: "Lean", match: ["low"] },
+    { key: "strong", label: "Strong", match: ["moderate", "medium", "high"] },
+    { key: "elite", label: "Elite", match: ["very high", "extremely high"] },
+  ];
+  let active = 0;
+  levels.forEach((lv, i) => {
+    if (lv.match.some((m) => tier.includes(m))) active = i;
+  });
+  const dots = levels
+    .map(
+      (lv, i) =>
+        `<span class="conf-dot${i <= active ? " conf-dot-on" : ""}" title="${lv.label}"></span>`
+    )
+    .join("");
+  return `<div class="confidence-meter" aria-label="Model confidence">${dots}<span class="conf-label">${levels[active].label}</span></div>`;
+}
+window.confidenceMeterHtml = confidenceMeterHtml;
+
 function modelLeanChips(boardRow, options = {}) {
   if (!boardRow) return [];
   const chips = [];
   let modelTeam = boardRow.model_pick_team;
-  const modelConf = boardRow.model_confidence;
+  let modelConf =
+    boardRow.model_confidence ||
+    boardRow.ml_confidence ||
+    confidenceFromModelProb(boardRow.model_prob_home);
   if (!modelTeam && boardRow.model_prob_home != null) {
     const home = Number(boardRow.model_prob_home) >= 0.5;
-    modelTeam = home ? boardRow.home_team : boardRow.away_team;
+    modelTeam = home
+      ? boardRow.home_team || "Home"
+      : boardRow.away_team || "Away";
   }
   if (!modelTeam && boardRow.model_pick) {
     modelTeam = boardRow.model_pick;
   }
-  if (modelTeam && modelConf) {
-    chips.push({ text: `Model: ${modelTeam}`, tier: modelConf });
+  if (modelTeam) {
+    const pct =
+      boardRow.model_prob_home != null
+        ? Math.round(
+            (Number(boardRow.model_prob_home) >= 0.5
+              ? Number(boardRow.model_prob_home)
+              : 1 - Number(boardRow.model_prob_home)) * 100
+          )
+        : null;
+    const summerTag =
+      boardRow.is_summer && boardRow.summer_actionable
+        ? " · SL select"
+        : boardRow.is_summer
+          ? " · SL lean"
+          : "";
+    const label =
+      pct != null
+        ? `Model: ${modelTeam} ${pct}%${summerTag}`
+        : `Model: ${modelTeam}${summerTag}`;
+    chips.push({ text: label, tier: modelConf || "Medium" });
   }
   const evTeam = boardRow.ev_pick_team ?? boardRow.best_pick?.team;
   if (evTeam && options.sport !== "cfb") {
@@ -1141,6 +1232,130 @@ function resolveBoardRow(game, boardRow) {
   return boardRow;
 }
 
+function resolveTeamColorsForBand(game, colors) {
+  if (game && (game.sport === "ufc" || String(game.sport || "").toLowerCase() === "ufc")) {
+    return { away: "#2563eb", home: "#dc2626" };
+  }
+  const map = colors || _teamColors || {};
+  return {
+    away:
+      game?.away_color ||
+      game?.away_team_color ||
+      map[game?.away_team] ||
+      map[game?.away_team_abbr] ||
+      "#64748b",
+    home:
+      game?.home_color ||
+      game?.home_team_color ||
+      map[game?.home_team] ||
+      map[game?.home_team_abbr] ||
+      "#2563eb",
+  };
+}
+
+function winProbPcts(boardRow) {
+  if (!boardRow) return null;
+  let homeRaw = boardRow.model_prob_home;
+  if (homeRaw == null && boardRow.market_prob_home != null) {
+    homeRaw = boardRow.market_prob_home;
+  }
+  if (homeRaw == null) return null;
+  const homePct = Math.round(Number(homeRaw) * 100);
+  if (!Number.isFinite(homePct)) return null;
+  return {
+    homePct: Math.max(0, Math.min(100, homePct)),
+    awayPct: Math.max(0, Math.min(100, 100 - homePct)),
+    stale: false,
+  };
+}
+
+/** Top color band sized by each team's model win % (favorite bar on slate cards). */
+function winProbBandHtml(boardRow, game, colors, extraClass) {
+  let pcts = winProbPcts(boardRow);
+  const isUfc = game && (game.sport === "ufc" || String(game.sport || "").toLowerCase() === "ufc");
+  const { away: awayColor, home: homeColor } = resolveTeamColorsForBand(game, colors);
+  const bandClass = [
+    "game-card-color-band",
+    pcts ? "win-prob-band" : "",
+    pcts && pcts.stale ? "win-prob-band-stale" : "",
+    isUfc ? "win-prob-band-ufc" : "",
+    extraClass || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (!pcts) {
+    return `<div class="${bandClass}" aria-hidden="true" style="--away-color:${awayColor};--home-color:${homeColor};"></div>`;
+  }
+
+  const awayShort = (game?.away_team || "Away").split(" ").pop();
+  const homeShort = (game?.home_team || "Home").split(" ").pop();
+  const favSide = pcts.homePct >= pcts.awayPct ? "home" : "away";
+  return `
+      <div class="${bandClass} win-prob-band--${favSide}"
+           style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;--home-pct:${pcts.homePct}%;"
+           aria-label="Model win probability ${pcts.awayPct} percent ${awayShort}, ${pcts.homePct} percent ${homeShort}">
+        <span class="win-prob-band-label win-prob-band-away">${awayShort} ${pcts.awayPct}%</span>
+        <span class="win-prob-band-label win-prob-band-home">${homeShort} ${pcts.homePct}%</span>
+      </div>`;
+}
+
+function boardMapFromSlate(slateRows) {
+  const map = {};
+  for (const row of slateRows || []) {
+    if (!row) continue;
+    if (row.game_id != null) map[String(row.game_id)] = row;
+    if (row.fight_id != null) map[String(row.fight_id)] = row;
+  }
+  return map;
+}
+
+/** Fetch model probs for win-% bars. Returns { [game_id]: boardRow }. */
+async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
+  const date = slateDate || "";
+  const endpoints = {
+    mlb: date ? `/api/daily?date=${encodeURIComponent(date)}` : "/api/daily",
+    nba: date ? `/api/nba/daily?date=${encodeURIComponent(date)}` : "/api/nba/daily",
+    cfb: date
+      ? `/api/cfb/predictions?date=${encodeURIComponent(date)}`
+      : "/api/cfb/predictions",
+    ufc: date
+      ? `/api/ufc/predictions?date=${encodeURIComponent(date)}`
+      : "/api/ufc/predictions",
+  };
+  const url = endpoints[sport];
+  if (!url) return {};
+  try {
+    const data = await fetchJSON(url);
+    let map = {};
+    if (Array.isArray(data)) map = boardMapFromSlate(data);
+    else if (Array.isArray(data.predictions)) map = boardMapFromSlate(data.predictions);
+    else if (Array.isArray(data.fights)) map = boardMapFromSlate(data.fights);
+    else if (Array.isArray(data.slate)) map = boardMapFromSlate(data.slate);
+    else if (data.slate_by_game_id && typeof data.slate_by_game_id === "object") {
+      map = { ...data.slate_by_game_id };
+    }
+    // UFC fights often key as fight_id — mirror onto game_id for slate cards.
+    if (sport === "ufc") {
+      for (const row of Object.values(map)) {
+        if (row && row.fight_id != null && row.game_id == null) {
+          map[String(row.fight_id)] = row;
+        }
+      }
+    }
+    return map;
+  } catch (err) {
+    if (!soft) throw err;
+    console.warn(`Board map unavailable for ${sport}:`, err?.message || err);
+    return {};
+  }
+}
+
+window.winProbPcts = winProbPcts;
+window.winProbBandHtml = winProbBandHtml;
+window.fetchSportBoardMap = fetchSportBoardMap;
+window.boardMapFromSlate = boardMapFromSlate;
+
 function gameCardHtml(game, options = {}) {
   const showScores = shouldShowScores(game);
   const boardRow = resolveBoardRow(game, options.boardRow || null);
@@ -1177,6 +1392,13 @@ function gameCardHtml(game, options = {}) {
   const homeLogoHtml = isUfc
     ? ufcFighterPortraitHtml(game, "home", { size: 48, compact: true })
     : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="" width="40" height="40" loading="lazy">`;
+  const pcts = typeof winProbPcts === "function" ? winProbPcts(boardRow) : null;
+  const awayPctHtml = pcts
+    ? `<span class="team-model-pct${pcts.awayPct >= pcts.homePct ? " team-model-pct--fav" : ""}">${pcts.awayPct}%</span>`
+    : "";
+  const homePctHtml = pcts
+    ? `<span class="team-model-pct${pcts.homePct >= pcts.awayPct ? " team-model-pct--fav" : ""}">${pcts.homePct}%</span>`
+    : "";
   return `
     ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
@@ -1194,6 +1416,7 @@ function gameCardHtml(game, options = {}) {
           <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
           ${teamRecordHtml(game.away_record)}
         </div>
+        ${awayPctHtml}
         ${showScores ? `<span class="team-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       <span class="game-card-at">${matchupSep}</span>
@@ -1203,6 +1426,7 @@ function gameCardHtml(game, options = {}) {
           <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
           ${teamRecordHtml(game.home_record)}
         </div>
+        ${homePctHtml}
         ${showScores ? `<span class="team-score">${game.home_score ?? 0}</span>` : ""}
       </div>
     </div>
@@ -1223,6 +1447,28 @@ function attachWatchHandlers(listEl) {
   });
 }
 
+function lookupBoardRow(boardMap, game) {
+  if (!boardMap || !game) return null;
+  const byId = boardMap[String(game.game_id)];
+  if (byId && (byId.model_prob_home != null || byId.market_prob_home != null)) {
+    return byId;
+  }
+  const away = String(game.away_team || "").toLowerCase();
+  const home = String(game.home_team || "").toLowerCase();
+  if (!away || !home) return byId || null;
+  for (const row of Object.values(boardMap)) {
+    if (!row) continue;
+    if (
+      String(row.away_team || "").toLowerCase() === away &&
+      String(row.home_team || "").toLowerCase() === home
+    ) {
+      return row;
+    }
+  }
+  return byId || null;
+}
+window.lookupBoardRow = lookupBoardRow;
+
 function renderGameList(listEl, games, options = {}) {
   if (!listEl) return;
   listEl._renderOptions = options;
@@ -1235,7 +1481,7 @@ function renderGameList(listEl, games, options = {}) {
     card.href = gameDetailHref(game, options);
     card.dataset.gameId = game.game_id;
     card.style.cssText = gameCardColorStyle(game, options.colors);
-    const boardRow = boardMap[String(game.game_id)];
+    const boardRow = lookupBoardRow(boardMap, game);
     const lineMove = gameDate
       ? lineMovementForGame(game.game_id, gameDate, {
           home_team: game.home_team,
@@ -1248,14 +1494,17 @@ function renderGameList(listEl, games, options = {}) {
   attachWatchHandlers(listEl);
 }
 
-function updateGameCards(listEl, games) {
+function updateGameCards(listEl, games, options = null) {
   if (!listEl) return;
+  if (options && typeof options === "object") {
+    listEl._renderOptions = { ...(listEl._renderOptions || {}), ...options };
+  }
   const opts = listEl._renderOptions || {};
   const byId = Object.fromEntries((games || []).map((g) => [String(g.game_id), g]));
   listEl.querySelectorAll(".game-card").forEach((card) => {
     const game = byId[card.dataset.gameId];
     if (!game) return;
-    const boardRow = (opts.boardMap || {})[String(game.game_id)];
+    const boardRow = lookupBoardRow(opts.boardMap || {}, game);
     const lineMove = opts.gameDate
       ? lineMovementForGame(game.game_id, opts.gameDate, {
           home_team: game.home_team,
@@ -1263,6 +1512,7 @@ function updateGameCards(listEl, games) {
         })
       : null;
     card.classList.toggle("game-card-live", isGameLive(game.status));
+    card.href = gameDetailHref(game, opts);
     card.style.cssText = gameCardColorStyle(game, opts.colors);
     card.innerHTML = gameCardHtml(game, { ...opts, boardRow, lineMove });
   });
@@ -3005,12 +3255,21 @@ function mainNavIsActive(href, path) {
 }
 
 function renderDashboardPrimaryNav(container, path) {
+  const sport = sportNavContext(path);
   const specs = [
     { href: "/", label: "Dashboard" },
     {
-      href: "/mlb",
-      label: "MLB",
-      isActive: (p) => p === "/mlb" || p.startsWith("/mlb/game/"),
+      href: sport.slate,
+      label: "Slate",
+      isActive: (p) =>
+        p === sport.slate ||
+        p.startsWith(`${sport.slate}/game`) ||
+        (sport.key === "ufc" && p.startsWith("/ufc/fighter")),
+    },
+    {
+      href: sport.board,
+      label: "Board",
+      isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
     },
     { href: "/mlb/props", label: "Props" },
     { href: "/performance", label: "Performance" },
@@ -4190,7 +4449,7 @@ function bootNTGSplash() {
     }
     if (!document.querySelector('script[src*="design.js"]')) {
       const script = document.createElement("script");
-      script.src = "/static/design.js?v=20260622";
+      script.src = `/static/design.js?v=${NTG_ASSET_V}`;
       script.onload = () => {
         if (typeof initDesignSystem === "function") initDesignSystem();
       };

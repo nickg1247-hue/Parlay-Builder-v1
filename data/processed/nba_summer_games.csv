@@ -1,0 +1,226 @@
+game_id,date,season_year,home_team,away_team,home_score,away_score,home_win,status
+401558287,2023-07-07,2023,Minnesota Timberwolves,New Orleans Pelicans,102,88,1,Final
+401558288,2023-07-07,2023,Milwaukee Bucks,Denver Nuggets,92,85,1,Final
+401558289,2023-07-07,2023,Toronto Raptors,Chicago Bulls,74,83,0,Final
+401558290,2023-07-07,2023,Houston Rockets,Portland Trail Blazers,100,99,1,Final
+401558311,2023-07-07,2023,Brooklyn Nets,Cleveland Cavaliers,97,101,0,Final
+401558312,2023-07-07,2023,San Antonio Spurs,Charlotte Hornets,76,68,1,Final
+401558313,2023-07-07,2023,Atlanta Hawks,Sacramento Kings,76,80,0,Final
+401558314,2023-07-07,2023,Los Angeles Lakers,Golden State Warriors,103,96,1,Final
+401558315,2023-07-08,2023,Boston Celtics,Miami Heat,88,99,0,Final
+401558316,2023-07-08,2023,Oklahoma City Thunder,Dallas Mavericks,91,80,1,Final
+401558317,2023-07-08,2023,Philadelphia 76ers,New York Knicks,110,101,1,Final
+401558318,2023-07-08,2023,Orlando Magic,Detroit Pistons,78,89,0,Final
+401558319,2023-07-08,2023,Chicago Bulls,Memphis Grizzlies,80,87,0,Final
+401558320,2023-07-08,2023,Washington Wizards,Indiana Pacers,83,91,0,Final
+401558321,2023-07-08,2023,Phoenix Suns,Milwaukee Bucks,75,84,0,Final
+401558322,2023-07-08,2023,Utah Jazz,LA Clippers,105,99,1,Final
+401558323,2023-07-09,2023,Cleveland Cavaliers,Toronto Raptors,99,76,1,Final
+401558324,2023-07-09,2023,Charlotte Hornets,Los Angeles Lakers,75,93,0,Final
+401558325,2023-07-09,2023,Brooklyn Nets,New York Knicks,98,80,1,Final
+401558326,2023-07-09,2023,Houston Rockets,Detroit Pistons,113,101,1,Final
+401558327,2023-07-09,2023,Washington Wizards,Boston Celtics,103,98,1,Final
+401558328,2023-07-09,2023,Portland Trail Blazers,San Antonio Spurs,85,80,1,Final
+401558329,2023-07-09,2023,Denver Nuggets,Atlanta Hawks,93,98,0,Final
+401558330,2023-07-09,2023,Golden State Warriors,New Orleans Pelicans,86,94,0,Final
+401558331,2023-07-10,2023,Cleveland Cavaliers,Memphis Grizzlies,100,77,1,Final
+401558332,2023-07-10,2023,Miami Heat,Phoenix Suns,70,73,0,Final
+401558333,2023-07-10,2023,Dallas Mavericks,Philadelphia 76ers,111,103,1,Final
+401558334,2023-07-10,2023,Orlando Magic,Indiana Pacers,85,108,0,Final
+401558335,2023-07-10,2023,Utah Jazz,Minnesota Timberwolves,108,96,1,Final
+401558336,2023-07-10,2023,LA Clippers,Sacramento Kings,80,70,1,Final
+401558337,2023-07-11,2023,Milwaukee Bucks,Brooklyn Nets,71,92,0,Final
+401558338,2023-07-11,2023,Oklahoma City Thunder,Houston Rockets,92,105,0,Final
+401558339,2023-07-11,2023,New Orleans Pelicans,Phoenix Suns,82,73,1,Final
+401558340,2023-07-11,2023,Charlotte Hornets,Portland Trail Blazers,93,97,0,Final
+401558341,2023-07-11,2023,Sacramento Kings,Chicago Bulls,99,107,0,Final
+401558342,2023-07-11,2023,San Antonio Spurs,Washington Wizards,96,85,1,Final
+401558343,2023-07-12,2023,Memphis Grizzlies,LA Clippers,74,83,0,Final
+401558344,2023-07-12,2023,Atlanta Hawks,Minnesota Timberwolves,99,93,1,Final
+401558345,2023-07-12,2023,Dallas Mavericks,Golden State Warriors,98,96,1,Final
+401558346,2023-07-12,2023,Detroit Pistons,Toronto Raptors,94,90,1,Final
+401558347,2023-07-12,2023,Indiana Pacers,Oklahoma City Thunder,87,98,0,Final
+401558348,2023-07-12,2023,Orlando Magic,New York Knicks,80,82,0,Final
+401558349,2023-07-12,2023,Utah Jazz,Denver Nuggets,96,91,1,Final
+401558350,2023-07-12,2023,Boston Celtics,Los Angeles Lakers,95,90,1,Final
+401558351,2023-07-13,2023,Chicago Bulls,Cleveland Cavaliers,83,87,0,Final
+401558352,2023-07-13,2023,Atlanta Hawks,Philadelphia 76ers,99,98,1,Final
+401558353,2023-07-13,2023,Toronto Raptors,Brooklyn Nets,94,99,0,Final
+401558354,2023-07-13,2023,Milwaukee Bucks,Miami Heat,72,91,0,Final
+401558355,2023-07-13,2023,Golden State Warriors,Houston Rockets,101,118,0,Final
+401558356,2023-07-13,2023,New Orleans Pelicans,Charlotte Hornets,89,83,1,Final
+401558357,2023-07-13,2023,Orlando Magic,Portland Trail Blazers,71,88,0,Final
+401558358,2023-07-13,2023,Sacramento Kings,Minnesota Timberwolves,93,80,1,Final
+401558359,2023-07-14,2023,Philadelphia 76ers,LA Clippers,91,102,0,Final
+401558360,2023-07-14,2023,Washington Wizards,Oklahoma City Thunder,105,89,1,Final
+401558361,2023-07-14,2023,Indiana Pacers,Dallas Mavericks,91,112,0,Final
+401558362,2023-07-14,2023,New York Knicks,Boston Celtics,97,89,1,Final
+401558363,2023-07-14,2023,Detroit Pistons,San Antonio Spurs,79,73,1,Final
+401558364,2023-07-14,2023,Denver Nuggets,Miami Heat,112,81,1,Final
+401558365,2023-07-14,2023,Los Angeles Lakers,Memphis Grizzlies,69,100,0,Final
+401558366,2023-07-14,2023,Phoenix Suns,Utah Jazz,93,97,0,Final
+401558292,2023-07-15,2023,Minnesota Timberwolves,Charlotte Hornets,92,109,0,Final
+401558293,2023-07-15,2023,Toronto Raptors,Golden State Warriors,108,101,1,Final
+401558294,2023-07-15,2023,Sacramento Kings,Milwaukee Bucks,92,84,1,Final
+401558295,2023-07-15,2023,Chicago Bulls,Washington Wizards,90,85,1,Final
+401558297,2023-07-15,2023,Orlando Magic,Boston Celtics,77,94,0,Final
+401558298,2023-07-15,2023,New York Knicks,Denver Nuggets,86,89,0,Final
+401558299,2023-07-15,2023,Phoenix Suns,Memphis Grizzlies,102,79,1,Final
+401558300,2023-07-16,2023,New Orleans Pelicans,Philadelphia 76ers,114,117,0,Final
+401558301,2023-07-16,2023,Cleveland Cavaliers,Brooklyn Nets,102,99,1,Final
+401558302,2023-07-16,2023,Indiana Pacers,Detroit Pistons,85,100,0,Final
+401558303,2023-07-16,2023,Houston Rockets,Utah Jazz,115,101,1,Final
+401558304,2023-07-16,2023,San Antonio Spurs,Oklahoma City Thunder,98,94,1,Final
+401558305,2023-07-16,2023,Portland Trail Blazers,Miami Heat,78,104,0,Final
+401558306,2023-07-16,2023,Dallas Mavericks,Atlanta Hawks,101,80,1,Final
+401558307,2023-07-16,2023,LA Clippers,Los Angeles Lakers,103,104,0,Final
+401558308,2023-07-17,2023,Cleveland Cavaliers,Houston Rockets,99,78,1,Final
+401686817,2024-07-12,2024,Orlando Magic,Cleveland Cavaliers,106,79,1,Final
+401686818,2024-07-12,2024,Minnesota Timberwolves,New Orleans Pelicans,81,74,1,Final
+401686819,2024-07-12,2024,Memphis Grizzlies,Sacramento Kings,103,83,1,Final
+401686820,2024-07-12,2024,Los Angeles Lakers,Houston Rockets,80,99,0,Final
+401686821,2024-07-12,2024,Indiana Pacers,Brooklyn Nets,95,97,0,Final
+401686822,2024-07-12,2024,Washington Wizards,Atlanta Hawks,94,88,1,Final
+401686823,2024-07-12,2024,LA Clippers,Denver Nuggets,88,78,1,Final
+401686824,2024-07-13,2024,Chicago Bulls,Milwaukee Bucks,96,89,1,Final
+401686825,2024-07-13,2024,New York Knicks,Charlotte Hornets,90,94,0,Final
+401686826,2024-07-13,2024,Boston Celtics,Miami Heat,114,119,0,Final
+401686827,2024-07-13,2024,Philadelphia 76ers,Detroit Pistons,94,81,1,Final
+401686828,2024-07-13,2024,Toronto Raptors,Oklahoma City Thunder,94,69,1,Final
+401686829,2024-07-13,2024,Portland Trail Blazers,San Antonio Spurs,77,83,0,Final
+401686830,2024-07-13,2024,Dallas Mavericks,Utah Jazz,89,90,0,Final
+401686831,2024-07-13,2024,Golden State Warriors,Phoenix Suns,90,73,1,Final
+401686832,2024-07-14,2024,Milwaukee Bucks,Cleveland Cavaliers,81,112,0,Final
+401686833,2024-07-14,2024,LA Clippers,Brooklyn Nets,87,78,1,Final
+401686834,2024-07-14,2024,Indiana Pacers,Minnesota Timberwolves,94,105,0,Final
+401686835,2024-07-14,2024,Washington Wizards,Houston Rockets,91,109,0,Final
+401686836,2024-07-14,2024,New Orleans Pelicans,Orlando Magic,86,91,0,Final
+401686837,2024-07-14,2024,Atlanta Hawks,San Antonio Spurs,76,79,0,Final
+401686838,2024-07-14,2024,Toronto Raptors,Denver Nuggets,84,81,1,Final
+401686839,2024-07-14,2024,Golden State Warriors,Chicago Bulls,92,82,1,Final
+401686840,2024-07-15,2024,Miami Heat,Oklahoma City Thunder,102,73,1,Final
+401686841,2024-07-15,2024,Houston Rockets,Detroit Pistons,73,87,0,Final
+401686842,2024-07-15,2024,Memphis Grizzlies,Dallas Mavericks,108,88,1,Final
+401686843,2024-07-15,2024,Philadelphia 76ers,Portland Trail Blazers,95,97,0,Final
+401686844,2024-07-15,2024,Sacramento Kings,Utah Jazz,82,70,1,Final
+401686845,2024-07-15,2024,Los Angeles Lakers,Boston Celtics,74,88,0,Final
+401686846,2024-07-16,2024,Phoenix Suns,Indiana Pacers,94,98,0,Final
+401686847,2024-07-16,2024,Brooklyn Nets,New York Knicks,92,85,1,Final
+401686848,2024-07-16,2024,Denver Nuggets,Charlotte Hornets,66,80,0,Final
+401686849,2024-07-16,2024,Detroit Pistons,Chicago Bulls,85,77,1,Final
+401686850,2024-07-16,2024,Minnesota Timberwolves,Philadelphia 76ers,90,92,0,Final
+401686851,2024-07-16,2024,Portland Trail Blazers,Washington Wizards,82,80,1,Final
+401686852,2024-07-16,2024,Milwaukee Bucks,LA Clippers,97,112,0,Final
+401686853,2024-07-16,2024,San Antonio Spurs,New Orleans Pelicans,90,85,1,Final
+401686854,2024-07-17,2024,Dallas Mavericks,Miami Heat,79,92,0,Final
+401686855,2024-07-17,2024,New York Knicks,Sacramento Kings,106,105,1,Final
+401686856,2024-07-17,2024,Utah Jazz,Toronto Raptors,86,76,1,Final
+401686857,2024-07-17,2024,Charlotte Hornets,Boston Celtics,84,89,0,Final
+401686858,2024-07-17,2024,Orlando Magic,Memphis Grizzlies,98,104,0,Final
+401686859,2024-07-17,2024,Oklahoma City Thunder,Phoenix Suns,99,100,0,Final
+401686860,2024-07-17,2024,Atlanta Hawks,Los Angeles Lakers,86,87,0,Final
+401686861,2024-07-17,2024,Cleveland Cavaliers,Golden State Warriors,85,96,0,Final
+401686862,2024-07-18,2024,Denver Nuggets,Indiana Pacers,86,71,1,Final
+401686863,2024-07-18,2024,New Orleans Pelicans,Memphis Grizzlies,77,88,0,Final
+401686864,2024-07-18,2024,Sacramento Kings,Washington Wizards,69,73,0,Final
+401686865,2024-07-18,2024,Brooklyn Nets,Orlando Magic,102,100,1,Final
+401686866,2024-07-18,2024,Cleveland Cavaliers,Los Angeles Lakers,89,93,0,Final
+401686867,2024-07-18,2024,Utah Jazz,LA Clippers,88,105,0,Final
+401686868,2024-07-18,2024,Houston Rockets,Minnesota Timberwolves,83,93,0,Final
+401686869,2024-07-19,2024,Phoenix Suns,Milwaukee Bucks,115,90,1,Final
+401686870,2024-07-19,2024,Boston Celtics,Dallas Mavericks,90,101,0,Final
+401686871,2024-07-19,2024,Chicago Bulls,Atlanta Hawks,103,99,1,Final
+401686872,2024-07-19,2024,Detroit Pistons,New York Knicks,90,91,0,Final
+401686873,2024-07-19,2024,San Antonio Spurs,Philadelphia 76ers,80,96,0,Final
+401686874,2024-07-19,2024,Miami Heat,Toronto Raptors,109,73,1,Final
+401686875,2024-07-19,2024,Oklahoma City Thunder,Golden State Warriors,83,90,0,Final
+401686876,2024-07-19,2024,Charlotte Hornets,Portland Trail Blazers,84,68,1,Final
+401686896,2024-07-20,2024,Sacramento Kings,Phoenix Suns,87,77,1,Final
+401686897,2024-07-20,2024,Washington Wizards,Milwaukee Bucks,91,79,1,Final
+401686898,2024-07-20,2024,Cleveland Cavaliers,Indiana Pacers,100,93,1,Final
+401686899,2024-07-20,2024,Atlanta Hawks,New York Knicks,82,90,0,Final
+401686900,2024-07-20,2024,Los Angeles Lakers,Chicago Bulls,107,81,1,Final
+401686901,2024-07-20,2024,Denver Nuggets,New Orleans Pelicans,91,82,1,Final
+401686902,2024-07-20,2024,Dallas Mavericks,Oklahoma City Thunder,79,88,0,Final
+401778337,2025-07-05,2025,Miami Heat,San Antonio Spurs,82,69,1,Final
+401778338,2025-07-05,2025,Golden State Warriors,Los Angeles Lakers,89,84,1,Final
+401778339,2025-07-06,2025,Miami Heat,Los Angeles Lakers,83,103,0,Final
+401778340,2025-07-06,2025,Golden State Warriors,San Antonio Spurs,88,90,0,Final
+401778341,2025-07-08,2025,Golden State Warriors,Miami Heat,79,93,0,Final
+401778342,2025-07-08,2025,San Antonio Spurs,Los Angeles Lakers,88,89,0,Final
+401793881,2025-07-10,2025,Minnesota Timberwolves,New Orleans Pelicans,98,91,1,Final
+401793882,2025-07-10,2025,Indiana Pacers,Cleveland Cavaliers,116,115,1,Final
+401793883,2025-07-10,2025,Brooklyn Nets,Oklahoma City Thunder,81,90,0,Final
+401793884,2025-07-10,2025,Sacramento Kings,Orlando Magic,84,81,1,Final
+401793885,2025-07-10,2025,Dallas Mavericks,Los Angeles Lakers,87,85,1,Final
+401793886,2025-07-10,2025,Milwaukee Bucks,Denver Nuggets,90,89,1,Final
+401793887,2025-07-10,2025,Philadelphia 76ers,San Antonio Spurs,70,111,0,Final
+401793888,2025-07-11,2025,Boston Celtics,Memphis Grizzlies,92,78,1,Final
+401793889,2025-07-11,2025,Miami Heat,Atlanta Hawks,98,105,0,Final
+401793890,2025-07-11,2025,Detroit Pistons,New York Knicks,104,86,1,Final
+401793891,2025-07-11,2025,Charlotte Hornets,Utah Jazz,111,105,1,Final
+401793892,2025-07-11,2025,Toronto Raptors,Chicago Bulls,116,72,1,Final
+401793893,2025-07-11,2025,Phoenix Suns,Washington Wizards,103,84,1,Final
+401793894,2025-07-11,2025,Houston Rockets,LA Clippers,92,95,0,Final
+401793895,2025-07-11,2025,Golden State Warriors,Portland Trail Blazers,73,106,0,Final
+401793896,2025-07-12,2025,Milwaukee Bucks,Cleveland Cavaliers,83,93,0,Final
+401793897,2025-07-12,2025,San Antonio Spurs,Dallas Mavericks,76,69,1,Final
+401793898,2025-07-12,2025,Oklahoma City Thunder,Indiana Pacers,104,85,1,Final
+401793899,2025-07-12,2025,Philadelphia 76ers,Charlotte Hornets,94,96,0,Final
+401793900,2025-07-12,2025,Chicago Bulls,Sacramento Kings,92,109,0,Final
+401793901,2025-07-12,2025,New Orleans Pelicans,Los Angeles Lakers,81,94,0,Final
+401793902,2025-07-12,2025,Denver Nuggets,Minnesota Timberwolves,83,94,0,Final
+401793903,2025-07-12,2025,Portland Trail Blazers,Memphis Grizzlies,86,96,0,Final
+401793904,2025-07-13,2025,Atlanta Hawks,Phoenix Suns,98,80,1,Final
+401793905,2025-07-13,2025,Houston Rockets,Detroit Pistons,83,98,0,Final
+401793906,2025-07-13,2025,Boston Celtics,New York Knicks,94,81,1,Final
+401793907,2025-07-13,2025,Orlando Magic,Toronto Raptors,86,89,0,Final
+401793908,2025-07-13,2025,Cleveland Cavaliers,Miami Heat,92,72,1,Final
+401793909,2025-07-13,2025,Washington Wizards,Brooklyn Nets,102,96,1,Final
+401793910,2025-07-13,2025,LA Clippers,Milwaukee Bucks,106,91,1,Final
+401793911,2025-07-13,2025,Utah Jazz,Golden State Warriors,93,103,0,Final
+401793912,2025-07-14,2025,Houston Rockets,Atlanta Hawks,108,111,0,Final
+401793913,2025-07-14,2025,Indiana Pacers,Chicago Bulls,105,114,0,Final
+401793914,2025-07-14,2025,Dallas Mavericks,Charlotte Hornets,69,87,0,Final
+401793915,2025-07-14,2025,Miami Heat,Boston Celtics,100,96,1,Final
+401793916,2025-07-14,2025,San Antonio Spurs,Utah Jazz,93,91,1,Final
+401793917,2025-07-14,2025,Sacramento Kings,Phoenix Suns,94,76,1,Final
+401793918,2025-07-14,2025,Los Angeles Lakers,LA Clippers,58,67,0,Final
+401793919,2025-07-15,2025,Detroit Pistons,Minnesota Timberwolves,73,89,0,Final
+401793920,2025-07-15,2025,New York Knicks,Brooklyn Nets,97,93,1,Final
+401793921,2025-07-15,2025,Orlando Magic,Oklahoma City Thunder,75,92,0,Final
+401793922,2025-07-15,2025,Denver Nuggets,Toronto Raptors,97,101,0,Final
+401793923,2025-07-15,2025,Washington Wizards,Philadelphia 76ers,58,74,0,Final
+401793924,2025-07-15,2025,New Orleans Pelicans,Portland Trail Blazers,87,93,0,Final
+401793925,2025-07-15,2025,Memphis Grizzlies,Golden State Warriors,84,96,0,Final
+401793926,2025-07-16,2025,Cleveland Cavaliers,Sacramento Kings,86,94,0,Final
+401793927,2025-07-16,2025,Minnesota Timberwolves,Phoenix Suns,89,85,1,Final
+401793928,2025-07-16,2025,Chicago Bulls,Milwaukee Bucks,102,96,1,Final
+401793929,2025-07-16,2025,Brooklyn Nets,Orlando Magic,94,90,1,Final
+401793930,2025-07-16,2025,Philadelphia 76ers,Dallas Mavericks,90,82,1,Final
+401793931,2025-07-16,2025,Oklahoma City Thunder,New Orleans Pelicans,95,81,1,Final
+401793932,2025-07-16,2025,Utah Jazz,Washington Wizards,86,76,1,Final
+401793933,2025-07-17,2025,Miami Heat,Detroit Pistons,88,108,0,Final
+401793934,2025-07-17,2025,New York Knicks,Indiana Pacers,88,91,0,Final
+401793935,2025-07-17,2025,Memphis Grizzlies,Atlanta Hawks,88,92,0,Final
+401793936,2025-07-17,2025,Charlotte Hornets,San Antonio Spurs,106,81,1,Final
+401793937,2025-07-17,2025,Portland Trail Blazers,Houston Rockets,102,83,1,Final
+401793938,2025-07-17,2025,Los Angeles Lakers,Boston Celtics,78,87,0,Final
+401793939,2025-07-17,2025,Toronto Raptors,Golden State Warriors,81,69,1,Final
+401793940,2025-07-17,2025,LA Clippers,Denver Nuggets,76,81,0,Final
+401801689,2025-07-18,2025,Orlando Magic,Dallas Mavericks,69,92,0,Final
+401801690,2025-07-18,2025,Brooklyn Nets,Philadelphia 76ers,83,87,0,Final
+401801691,2025-07-18,2025,Milwaukee Bucks,Miami Heat,92,93,0,Final
+401801692,2025-07-18,2025,Chicago Bulls,Utah Jazz,105,92,1,Final
+401801693,2025-07-18,2025,New Orleans Pelicans,Indiana Pacers,104,113,0,Final
+401801694,2025-07-18,2025,Los Angeles Lakers,Denver Nuggets,84,106,0,Final
+401801695,2025-07-19,2025,New York Knicks,Washington Wizards,85,94,0,Final
+401801696,2025-07-19,2025,Toronto Raptors,Sacramento Kings,88,98,0,Final
+401801697,2025-07-19,2025,Minnesota Timberwolves,Houston Rockets,101,104,0,Final
+401801698,2025-07-19,2025,Oklahoma City Thunder,Charlotte Hornets,80,109,0,Final
+401801699,2025-07-19,2025,Golden State Warriors,Cleveland Cavaliers,82,71,1,Final
+401801700,2025-07-19,2025,San Antonio Spurs,Detroit Pistons,96,84,1,Final
+401801701,2025-07-19,2025,Phoenix Suns,Portland Trail Blazers,111,87,1,Final
+401801702,2025-07-20,2025,Boston Celtics,Atlanta Hawks,101,80,1,Final
+401801703,2025-07-20,2025,LA Clippers,Memphis Grizzlies,82,105,0,Final
+401801704,2025-07-20,2025,Charlotte Hornets,Sacramento Kings,83,78,1,Final

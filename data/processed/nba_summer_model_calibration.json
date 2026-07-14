@@ -1,0 +1,40 @@
+{
+  "params": {
+    "elo_k": 28,
+    "elo_scale": 260.0,
+    "w_elo": 1.0,
+    "w_prior_margin": 0.04,
+    "w_prior_winpct": 2.2,
+    "intercept": 0.0,
+    "prob_temp": 0.65,
+    "margin_boost": 0.045,
+    "year_reset": 0.4,
+    "min_edge": 0.22
+  },
+  "holdout_year": 2025,
+  "holdout_accuracy": 0.6216,
+  "overall_accuracy": 0.5146,
+  "all_games_accuracy": 0.48,
+  "coverage": 0.4578,
+  "by_year": {
+    "2023": {
+      "n_games": 38,
+      "n_correct": 20,
+      "accuracy": 0.5263
+    },
+    "2024": {
+      "n_games": 28,
+      "n_correct": 10,
+      "accuracy": 0.3571
+    },
+    "2025": {
+      "n_games": 37,
+      "n_correct": 23,
+      "accuracy": 0.6216
+    }
+  },
+  "target": 0.6,
+  "target_met": true,
+  "n_games": 37,
+  "metric": "selective_accuracy(|p-0.5|>=min_edge)"
+}

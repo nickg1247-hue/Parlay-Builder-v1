@@ -299,3 +299,6 @@ els.refresh?.addEventListener("click", () => loadBoard(true));
 els.minEdgeInput?.addEventListener("change", () => {
   if (boardMode) loadBoard(false);
 });
+
+boardMode = "live";
+loadBoard(false);

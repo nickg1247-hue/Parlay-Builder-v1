@@ -286,6 +286,9 @@ def _slate_rows(
             row.away_team,
             block_strong_picks=block_strong_picks,
         )
+        # When books aren't available, slate meters still need model-strength labels.
+        if ml_edge_best is None and pick.model_confidence:
+            ml_confidence = pick.model_confidence
         model_pick_side = pick.model_pick_side
         model_pick_team = pick.model_pick_team
         model_pick_prob = pick.model_pick_prob

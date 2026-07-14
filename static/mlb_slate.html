@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260736" type="image/png">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260742" type="image/png">
   <title>MLB — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260736">
-  <link rel="stylesheet" href="/static/app.css?v=20260736">
-  <link rel="stylesheet" href="/static/brand.css?v=20260736">
-  <link rel="stylesheet" href="/static/design.css?v=20260736">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260736">
+  <link rel="stylesheet" href="/static/style.css?v=20260742">
+  <link rel="stylesheet" href="/static/app.css?v=20260742">
+  <link rel="stylesheet" href="/static/brand.css?v=20260742">
+  <link rel="stylesheet" href="/static/design.css?v=20260742">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260742">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
     <header class="app-topbar dash-topbar">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260736" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260742" alt="NTG Sports" width="56" height="56" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
@@ -49,7 +49,7 @@
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260736"></script>
+  <script src="/static/app.js?v=20260742"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -165,6 +165,22 @@
       }
 
       renderGameList(list, slate.games, renderOpts);
+
+      // Always refresh model win-% bars from the live MLB board API when SSR map is empty/stale.
+      const needBoard = !summary.board_available || !Object.keys(boardMap).length;
+      if (needBoard || true) {
+        fetchSportBoardMap("mlb", slate.date || pageData.date).then((liveMap) => {
+          if (!Object.keys(liveMap).length) return;
+          updateGameCards(list, slate.games, { boardMap: liveMap });
+          if (refreshEl && needBoard) {
+            refreshEl.textContent = (refreshEl.textContent || "").replace(
+              / · Model picks:.*$/,
+              ""
+            );
+          }
+        });
+      }
+
       renderWatchedGamesSection(watchedEl, slate.games, renderOpts);
     })();
   </script>

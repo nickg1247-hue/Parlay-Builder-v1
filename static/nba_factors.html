@@ -3,38 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260740" type="image/png">
   <title>Factor Weights — NBA Board</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260740">
+  <link rel="stylesheet" href="/static/app.css?v=20260740">
+  <link rel="stylesheet" href="/static/brand.css?v=20260740">
+  <link rel="stylesheet" href="/static/design.css?v=20260740">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260740">
 </head>
-<body>
-  <div class="page">
-    <header class="header">
-      <div>
-        <p class="nav-back"><a href="/sandbox">← Sandbox</a> · <a href="/nba/board">NBA board</a></p>
-        <h1>Factor weights</h1>
-        <p class="date-line">Adjust how much each factor influences every game on the board.</p>
+<body class="ntg-shell home-v2" data-sport="nba">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260740" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
       </div>
     </header>
 
-    <div class="banner factor-banner">
-      Use ▲ and ▼ to shift weight between factors. Total must equal 100%. Changes apply to all matchups.
-    </div>
+    <main class="app-main dash-main board-main">
+      <header class="dash-page-header">
+        <div>
+          <h1>Factor weights</h1>
+          <p class="dash-page-kicker"><a href="/nba/board">← NBA board</a> · shift influence across the 15 factors</p>
+        </div>
+      </header>
 
-    <div class="error" id="error"></div>
-    <p class="factor-status" id="status"></p>
+      <div class="banner factor-banner ntg-card">
+        Use ▲ and ▼ to shift weight between factors. Total must equal 100%. Changes apply to all matchups.
+      </div>
 
-    <main class="content" id="content">
-      <ol class="factor-list" id="factor-list"></ol>
+      <div class="error error-state hidden" id="error"></div>
+      <p class="factor-status" id="status"></p>
 
-      <div class="factor-footer">
-        <p class="factor-total">Total: <strong id="factor-total">100%</strong></p>
-        <div class="factor-actions">
-          <button type="button" class="btn" id="save-btn">Save weights</button>
-          <button type="button" class="btn btn-secondary" id="reset-btn">Reset defaults</button>
+      <div class="content board-section ntg-card" id="content">
+        <ol class="factor-list" id="factor-list"></ol>
+
+        <div class="factor-footer">
+          <p class="factor-total">Total: <strong id="factor-total">100%</strong></p>
+          <div class="factor-actions">
+            <button type="button" class="dash-btn dash-btn-primary" id="save-btn">Save weights</button>
+            <button type="button" class="dash-btn dash-btn-ghost" id="reset-btn">Reset defaults</button>
+          </div>
         </div>
       </div>
     </main>
   </div>
-  <script src="/static/nba_factors.js"></script>
+  <script src="/static/app.js?v=20260740"></script>
+  <script src="/static/nba_factors.js?v=20260740"></script>
 </body>
 </html>

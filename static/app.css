@@ -1656,11 +1656,11 @@ body.slate-mlb .app-main > * {
 }
 
 .game-card-color-band.win-prob-band {
-  height: 1.25rem;
+  height: 1.85rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0.4rem;
+  padding: 0 0.55rem;
   background: linear-gradient(
     90deg,
     var(--away-color, #64748b) 0%,
@@ -1668,16 +1668,17 @@ body.slate-mlb .app-main > * {
     var(--home-color, #2563eb) var(--away-pct, 50%),
     var(--home-color, #2563eb) 100%
   );
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .win-prob-band-label {
   position: relative;
   z-index: 1;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 6px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75), 0 0 8px rgba(0, 0, 0, 0.45);
   line-height: 1;
   white-space: nowrap;
 }
@@ -1688,6 +1689,20 @@ body.slate-mlb .app-main > * {
 
 .win-prob-band-home {
   margin-left: auto;
+}
+
+.team-model-pct {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--muted, #94a3b8);
+  min-width: 2.6rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-model-pct--fav {
+  color: var(--dash-cyan, #22d3ee);
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
 }
 
 .game-card-live {

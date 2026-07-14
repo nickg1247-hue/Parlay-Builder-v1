@@ -387,6 +387,18 @@ def _slate_rows(
         totals = _totals_row_fields(row, min_edge) if totals_enabled else {}
         pick_side = "home" if model_home >= 0.5 else "away"
         model_pick = row.home_team if pick_side == "home" else row.away_team
+        # Model-strength confidence (used by slate win-% bars / Toss-up meter).
+        model_gap = abs(model_home - 0.5)
+        if model_gap < 0.03:
+            model_conf = "Lean only"
+        elif model_gap < 0.06:
+            model_conf = "Low"
+        elif model_gap < 0.10:
+            model_conf = "Medium"
+        elif model_gap < 0.16:
+            model_conf = "High"
+        else:
+            model_conf = "Extremely high"
         row_dict: dict[str, Any] = {
             "game_id": str(row.game_id),
             "matchup": matchup,
@@ -401,10 +413,13 @@ def _slate_rows(
             ),
             "model_pick": model_pick,
             "model_pick_side": pick_side,
+            "model_confidence": model_conf,
             "market_prob_home": round(market_home, 4) if market_home else None,
             "edge_home": round(edge_home, 4) if edge_home is not None else None,
             "ml_edge_best": round(ml_edge_best, 4) if ml_edge_best is not None else None,
-            "ml_confidence": confidence_label(ml_edge_best),
+            "ml_confidence": confidence_label(ml_edge_best)
+            if ml_edge_best is not None
+            else model_conf,
             "plus_ev_single": plus_ev,
             "best_pick": best_pick,
             **spread,
@@ -418,6 +433,22 @@ def _slate_rows(
                 row_dict["summer_league"] = getattr(row, "summer_league")
             if hasattr(row, "pick_source") and getattr(row, "pick_source", None):
                 row_dict["pick_source"] = getattr(row, "pick_source")
+            try:
+                from app.services.nba_summer_model import load_calibration_params
+
+                summer_edge = float(load_calibration_params().get("min_edge", 0.22))
+            except Exception:
+                summer_edge = 0.22
+            row_dict["summer_min_edge"] = summer_edge
+            row_dict["summer_actionable"] = model_gap >= summer_edge
+            if not row_dict["summer_actionable"] and model_conf not in (
+                "Lean only",
+                "Blocked (stale data)",
+            ):
+                # Softer label when outside the backtested selective band.
+                row_dict["model_confidence"] = "Lean only" if model_gap < 0.10 else "Low"
+                if ml_edge_best is None:
+                    row_dict["ml_confidence"] = row_dict["model_confidence"]
         if has_odds and pd.notna(getattr(row, "home_ml", None)):
             row_dict["home_ml"] = int(row.home_ml)
             row_dict["away_ml"] = int(row.away_ml)
@@ -539,6 +570,28 @@ def build_nba_daily_board(
             return base
 
     slate_df["model_prob_away"] = 1.0 - slate_df["model_prob_home"]
+
+    # Summer League: replace franchise-season ML with Elo + prior-season backtested model.
+    if "is_summer" in slate_df.columns and slate_df["is_summer"].fillna(False).any():
+        try:
+            from app.services.nba_summer_model import predict_slate_probs
+
+            summer_probs = predict_slate_probs(slate_df, game_date=game_date)
+            for i, prob in enumerate(summer_probs):
+                if prob is None or (isinstance(prob, float) and np.isnan(prob)):
+                    continue
+                slate_df.iat[i, slate_df.columns.get_loc("model_prob_home")] = float(prob)
+                if "pick_source" not in slate_df.columns:
+                    slate_df["pick_source"] = None
+                slate_df.iat[i, slate_df.columns.get_loc("pick_source")] = "summer_model"
+            slate_df["model_prob_away"] = 1.0 - slate_df["model_prob_home"]
+            if "ml_prob_home" in slate_df.columns:
+                for i, prob in enumerate(summer_probs):
+                    if prob is None or (isinstance(prob, float) and np.isnan(prob)):
+                        continue
+                    slate_df.iat[i, slate_df.columns.get_loc("ml_prob_home")] = float(prob)
+        except Exception as exc:
+            logger.warning("NBA Summer model skipped: %s", exc)
 
     if use_cache:
         merged, odds_source = _attach_cached_odds(slate_df, game_date)
