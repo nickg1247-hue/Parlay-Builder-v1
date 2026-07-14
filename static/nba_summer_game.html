@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Summer Game — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260733">
+  <link rel="stylesheet" href="/static/app.css?v=20260733">
+</head>
+<body class="game-page-bg" data-sport="nba-summer">
+  <div class="game-page-wash" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div id="game-loading" class="empty-state">Loading game…</div>
+      <div id="game-error" class="error-state hidden"></div>
+      <div id="game-content" class="hidden">
+        <header class="matchup-header" id="matchup-header"></header>
+        <p class="app-section-title">
+          Matchup
+          <a href="#" id="insights-refresh" class="insights-refresh-link">Refresh odds</a>
+        </p>
+        <div class="warnings" id="insights-warnings"></div>
+        <div id="game-matchup-board" class="matchup-board"></div>
+        <p class="disclaimer-small" id="game-disclaimer"></p>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260733"></script>
+  <script src="/static/nba_summer_game.js?v=20260733"></script>
+</body>
+</html>

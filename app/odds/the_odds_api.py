@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 SPORT_MLB = "baseball_mlb"
 SPORT_NBA = "basketball_nba"
+SPORT_NBA_SUMMER = "basketball_nba_summer_league"
 SPORT_CFB = "americanfootball_ncaaf"
 SPORT_UFC = "mma_mixed_martial_arts"
 MARKET_H2H = "h2h"
@@ -209,6 +210,26 @@ def fetch_live_nba_odds(
     if include_totals:
         markets.append(MARKET_TOTALS)
     return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_NBA)
+
+
+def fetch_live_nba_summer_odds(
+    api_key: str | None = None,
+    regions: str = "us",
+    include_spreads: bool = False,
+    include_totals: bool = False,
+) -> list[dict[str, Any]] | None:
+    """Live NBA Summer League odds — separate Odds API sport key from regular NBA."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    markets = [MARKET_H2H]
+    if include_spreads:
+        markets.append(MARKET_SPREADS)
+    if include_totals:
+        markets.append(MARKET_TOTALS)
+    return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_NBA_SUMMER)
 
 
 def fetch_live_cfb_odds(

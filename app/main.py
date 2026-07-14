@@ -110,6 +110,12 @@ from app.services.mlb_game_lineup import get_mlb_game_lineup
 from app.services.schedule_mlb import get_mlb_game, get_mlb_schedule
 from app.services.teams_hub import get_team_detail, list_teams
 from app.services.schedule_nba import get_nba_game, get_nba_schedule
+from app.services.schedule_nba_summer import (
+    get_nba_summer_game,
+    get_nba_summer_schedule,
+)
+from app.services.nba_summer_daily_board import build_nba_summer_daily_board
+from app.services.scores_nba_summer import summer_enabled as nba_summer_enabled
 from app.services.scores_today import get_scores_today
 from app.services.backtest_report import load_saved_backtest_report, run_backtest_report
 from app.services.model_lab import (
@@ -759,6 +765,45 @@ async def nba_schedule(
     return get_nba_schedule(None, auto_resolve=True)
 
 
+@app.get("/api/schedule/nba-summer")
+async def nba_summer_schedule(
+    date_param: str | None = Query(None, alias="date"),
+):
+    if not nba_summer_enabled():
+        return {
+            "sport": "nba-summer",
+            "date": date_type.today().isoformat(),
+            "games": [],
+            "games_count": 0,
+            "disabled": True,
+            "message": "NBA Summer League is disabled (NBA_SUMMER_ENABLED=false).",
+        }
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_nba_summer_schedule(game_date, auto_resolve=False)
+    return get_nba_summer_schedule(None, auto_resolve=True)
+
+
+@app.get("/api/nba-summer/daily")
+async def nba_summer_daily(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Force refresh Summer League odds"),
+):
+    if not nba_summer_enabled():
+        return {
+            "sport": "nba-summer",
+            "date": (date_param or date_type.today().isoformat()),
+            "slate": [],
+            "games_on_slate": 0,
+            "disabled": True,
+            "betting_ready": False,
+        }
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return build_nba_summer_daily_board(game_date=game_date, refresh=refresh)
+
+
 @app.get("/api/schedule/cfb")
 async def cfb_schedule(
     date_param: str | None = Query(None, alias="date"),
@@ -906,11 +951,17 @@ async def cfb_backtest_saved():
 
 @app.get("/api/scores/today")
 async def scores_today(
-    sport: str = Query("mlb", pattern="^(mlb|nba|cfb|ufc|all)$"),
+    sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|ufc|all)$"),
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    auto_resolve = date_param is None and sport in ("nba", "cfb", "ufc", "all")
+    auto_resolve = date_param is None and sport in (
+        "nba",
+        "nba-summer",
+        "cfb",
+        "ufc",
+        "all",
+    )
     return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
 
 
@@ -1635,6 +1686,50 @@ async def mlb_slate(date_param: str | None = Query(None, alias="date")):
 @app.get("/nba")
 async def nba_slate():
     return FileResponse(STATIC_DIR / "nba_slate.html")
+
+
+@app.get("/nba-summer")
+async def nba_summer_slate():
+    return FileResponse(STATIC_DIR / "nba_summer_slate.html")
+
+
+@app.get("/nba-summer/board")
+async def nba_summer_board():
+    return FileResponse(STATIC_DIR / "nba_summer_board.html")
+
+
+@app.get("/nba-summer/game/{game_id}")
+async def nba_summer_game_page(game_id: str):
+    return FileResponse(STATIC_DIR / "nba_summer_game.html")
+
+
+@app.get("/api/games/nba-summer/{game_id}")
+async def nba_summer_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    detail = get_nba_summer_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
+
+
+@app.get("/api/games/nba-summer/{game_id}/insights")
+async def nba_summer_game_insights(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False),
+):
+    from app.services.nba_summer_game_insights import build_nba_summer_game_insights
+
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    insights = build_nba_summer_game_insights(
+        game_id, game_date=game_date, refresh=refresh
+    )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return insights
 
 
 @app.get("/cfb")

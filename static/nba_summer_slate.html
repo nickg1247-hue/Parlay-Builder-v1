@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Summer League — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260733">
+  <link rel="stylesheet" href="/static/app.css?v=20260733">
+</head>
+<body data-sport="nba-summer">
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div class="slate-header">
+        <h1>NBA Summer League</h1>
+        <span class="slate-date" id="slate-date"></span>
+      </div>
+      <p class="slate-note">Las Vegas schedule &amp; live scores · market leans on the <a href="/nba-summer/board">predictions board</a></p>
+      <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
+
+      <div id="slate-loading" class="hidden"></div>
+      <div id="slate-error" class="error-state hidden"></div>
+      <div id="game-list" class="game-list"></div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260733"></script>
+  <script>
+    (async function () {
+      const loading = document.getElementById("slate-loading");
+      const errEl = document.getElementById("slate-error");
+      const list = document.getElementById("game-list");
+      const dateEl = document.getElementById("slate-date");
+      const advanceEl = document.getElementById("slate-advance-banner");
+      const dateParam = qs("date");
+
+      initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+      renderSkeletonGameList(list, 6);
+
+      const loadUrl = dateParam
+        ? `/api/schedule/nba-summer?date=${encodeURIComponent(dateParam)}`
+        : "/api/scores/today?sport=nba-summer";
+
+      function mapGames(data) {
+        const slateDate = data.resolved_date || data.date || "";
+        return (data.games || []).map((g) => ({
+          ...g,
+          sport: "nba-summer",
+          slate_date: slateDate,
+        }));
+      }
+
+      try {
+        const slate = await fetchJSON(loadUrl);
+        const games = mapGames(slate);
+        const slateDate = slate.resolved_date || slate.date || "";
+
+        loading.classList.add("hidden");
+        dateEl.textContent = slateDate;
+        if (typeof renderSlateAdvanceBanner === "function") {
+          renderSlateAdvanceBanner(advanceEl, slate);
+        }
+
+        if (!games.length) {
+          list.innerHTML = "";
+          renderEmptyState(list, "no-nba-summer-games");
+          return;
+        }
+
+        renderGameList(list, games, {
+          boardMap: {},
+          gameDate: slateDate,
+          useCache: !!dateParam,
+        });
+
+        if (!dateParam) {
+          setInterval(async () => {
+            try {
+              const live = await fetchJSON("/api/scores/today?sport=nba-summer");
+              if (typeof renderSlateAdvanceBanner === "function") {
+                renderSlateAdvanceBanner(advanceEl, live);
+              }
+              dateEl.textContent = live.resolved_date || live.date || "";
+              updateGameCards(list, mapGames(live));
+            } catch (_) { /* keep last good state */ }
+          }, 60000);
+        }
+      } catch (e) {
+        list.innerHTML = "";
+        loading.classList.add("hidden");
+        errEl.classList.remove("hidden");
+        errEl.textContent = e.message || "Failed to load Summer League schedule";
+      }
+    })();
+  </script>
+</body>
+</html>

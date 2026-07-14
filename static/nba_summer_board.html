@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Summer Board — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260733">
+  <link rel="stylesheet" href="/static/app.css?v=20260733">
+</head>
+<body data-sport="nba-summer">
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="app-nav-row">
+        <a class="app-brand" href="/">NTG <span>Sports</span></a>
+        <nav class="app-nav-links" aria-label="Site tools"></nav>
+      </div>
+      <div class="sport-pills" aria-label="Sports"></div>
+    </header>
+
+    <div id="live-ticker" class="ticker-placeholder" aria-label="Live scores"></div>
+
+    <main class="app-main">
+      <div class="slate-header">
+        <h1>NBA Summer League Predictions</h1>
+        <span class="slate-date" id="board-date"></span>
+      </div>
+      <p class="slate-note">
+        Market-implied favorites from sportsbooks (not the regular-season NBA model).
+        <a href="/nba-summer">View schedule</a>
+      </p>
+      <div class="board-toolbar">
+        <button type="button" id="refresh-board" class="btn-ghost">Refresh</button>
+      </div>
+      <div id="board-warnings" class="warnings"></div>
+      <div id="board-loading" class="empty-state">Loading board…</div>
+      <div id="board-error" class="error-state hidden"></div>
+      <div id="board-table-wrap" class="hidden">
+        <table class="data-table" id="board-table">
+          <thead>
+            <tr>
+              <th>Matchup</th>
+              <th>Market lean</th>
+              <th>Win %</th>
+              <th>Home ML</th>
+              <th>Away ML</th>
+              <th>Spread</th>
+              <th>O/U</th>
+            </tr>
+          </thead>
+          <tbody id="board-body"></tbody>
+        </table>
+      </div>
+      <p class="disclaimer-small" id="board-disclaimer"></p>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260733"></script>
+  <script src="/static/nba_summer_board.js?v=20260733"></script>
+</body>
+</html>

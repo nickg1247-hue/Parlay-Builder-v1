@@ -97,7 +97,7 @@ async function fetchJSON(url, options = {}) {
 }
 
 function teamLogoUrl(teamId, sport = "mlb", abbr) {
-  if (sport === "nba") {
+  if (sport === "nba" || sport === "nba-summer") {
     if (abbr) {
       return `https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/${String(abbr).toLowerCase()}.png`;
     }
@@ -121,7 +121,7 @@ function gameDetailHref(game, options = {}) {
   const base = `/${sport}/game/${game.game_id}`;
   const slateDate = options.gameDate || game.slate_date;
   const params = new URLSearchParams();
-  if ((sport === "nba" || sport === "cfb" || sport === "ufc") && slateDate) {
+  if ((sport === "nba" || sport === "nba-summer" || sport === "cfb" || sport === "ufc") && slateDate) {
     params.set("date", slateDate);
   }
   if (options.useCache) {
@@ -882,6 +882,8 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-nba-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nba-summer-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-cfb-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-ufc-fights":
@@ -914,6 +916,11 @@ function renderEmptyState(el, kind, extraHtml = "") {
       title: "No games on the slate",
       body: "No NBA games in the next few days. Check back during the season or Finals.",
       cta: '<a href="/nba">Refresh slate</a>',
+    },
+    "no-nba-summer-games": {
+      title: "No Summer League games",
+      body: "No NBA Summer League games in the next few days. Check Las Vegas dates or pick another day.",
+      cta: '<a href="/nba-summer">Refresh slate</a>',
     },
     "no-cfb-games": {
       title: "No games on the slate",
@@ -2946,7 +2953,10 @@ function sportPillIsActive(href, path) {
     return path === "/mlb" || path.startsWith("/mlb/game/");
   }
   if (href === "/nba") {
-    return path === "/nba" || path.startsWith("/nba/game/");
+    return path === "/nba" || path.startsWith("/nba/game/") || path.startsWith("/nba/board");
+  }
+  if (href === "/nba-summer") {
+    return path === "/nba-summer" || path.startsWith("/nba-summer/");
   }
   if (href === "/cfb") {
     return path === "/cfb" || (path.startsWith("/cfb/") && !path.startsWith("/cfb/board"));
@@ -3031,6 +3041,8 @@ function sportPillIcon(sport) {
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5c1.4 2.4 1.4 14.6 0 17"/><path d="M12 3.5c-1.4 2.4-1.4 14.6 0 17"/><path d="M8 7.5c2.4 1 5.6 1 8 0"/><path d="M8 16.5c2.4-1 5.6-1 8 0"/></svg>',
     nba:
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5v17"/><path d="M5.5 6.5c3 2 3 9 0 11"/><path d="M18.5 6.5c-3 2-3 9 0 11"/></svg>',
+    "nba-summer":
+      '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5v17"/><path d="M5.5 6.5c3 2 3 9 0 11"/><path d="M18.5 6.5c-3 2-3 9 0 11"/></svg>',
     cfb:
       '<svg class="sport-pill-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
     ufc:
@@ -3053,6 +3065,7 @@ function renderSportPills(container, path) {
   const specs = [
     { href: "/mlb", label: "MLB", sport: "mlb" },
     { href: "/nba", label: "NBA", sport: "nba" },
+    { href: "/nba-summer", label: "NBA Summer", sport: "nba-summer" },
     { href: "/cfb", label: "CFB", sport: "cfb" },
     { href: "/ufc", label: "UFC", sport: "ufc" },
     { href: "/mlb/props", label: "Props" },
