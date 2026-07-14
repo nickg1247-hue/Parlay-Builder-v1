@@ -2871,6 +2871,19 @@ body.slate-mlb .app-main > * {
   color: var(--muted);
 }
 
+.badge-summer {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  border-radius: 4px;
+  background: rgba(232, 145, 48, 0.18);
+  color: #c47a1a;
+}
+
 .game-card-matchup {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

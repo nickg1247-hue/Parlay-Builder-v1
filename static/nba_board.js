@@ -236,7 +236,7 @@ function renderSlate(slate, edgeFraction = 0.08, spreadEnabled = false, totalsEn
       <td>${game.model_ou_correct === true ? "✓" : game.model_ou_correct === false ? "✗" : "—"}</td>`
       : "";
     tr.innerHTML = `
-      <td>${game.matchup}</td>
+      <td>${game.matchup}${game.is_summer ? ' <span class="badge-summer" title="Summer League">Summer</span>' : ""}</td>
       <td>${pct(game.model_prob_home)}</td>
       ${showMl ? `<td class="ml-col">${pct(game.ml_prob_home)}</td>` : ""}
       <td>${pct(game.market_prob_home)}</td>

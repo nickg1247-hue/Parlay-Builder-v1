@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -112,9 +112,7 @@ from app.services.teams_hub import get_team_detail, list_teams
 from app.services.schedule_nba import get_nba_game, get_nba_schedule
 from app.services.schedule_nba_summer import (
     get_nba_summer_game,
-    get_nba_summer_schedule,
 )
-from app.services.nba_summer_daily_board import build_nba_summer_daily_board
 from app.services.scores_nba_summer import summer_enabled as nba_summer_enabled
 from app.services.scores_today import get_scores_today
 from app.services.backtest_report import load_saved_backtest_report, run_backtest_report
@@ -769,6 +767,7 @@ async def nba_schedule(
 async def nba_summer_schedule(
     date_param: str | None = Query(None, alias="date"),
 ):
+    """Legacy — return Summer games from the unified NBA schedule."""
     if not nba_summer_enabled():
         return {
             "sport": "nba-summer",
@@ -778,17 +777,31 @@ async def nba_summer_schedule(
             "disabled": True,
             "message": "NBA Summer League is disabled (NBA_SUMMER_ENABLED=false).",
         }
+    from app.services.schedule_nba import get_nba_schedule
+
     if date_param:
-        game_date = date_type.fromisoformat(date_param)
-        return get_nba_summer_schedule(game_date, auto_resolve=False)
-    return get_nba_summer_schedule(None, auto_resolve=True)
+        payload = get_nba_schedule(date_type.fromisoformat(date_param), auto_resolve=False)
+    else:
+        payload = get_nba_schedule(None, auto_resolve=True)
+    games = [
+        g
+        for g in (payload.get("games") or [])
+        if g.get("is_summer") or g.get("league_tag") == "summer"
+    ]
+    out = dict(payload)
+    out["sport"] = "nba-summer"
+    out["games"] = games
+    out["games_count"] = len(games)
+    return out
 
 
 @app.get("/api/nba-summer/daily")
 async def nba_summer_daily(
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False, description="Force refresh Summer League odds"),
+    min_edge: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
 ):
+    """Legacy — full NBA board filtered to Summer League rows (ML + spread + totals)."""
     if not nba_summer_enabled():
         return {
             "sport": "nba-summer",
@@ -798,10 +811,23 @@ async def nba_summer_daily(
             "disabled": True,
             "betting_ready": False,
         }
+    from app.services.nba_daily_board import build_nba_daily_board
+
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return build_nba_summer_daily_board(game_date=game_date, refresh=refresh)
+    board = build_nba_daily_board(
+        game_date=game_date,
+        min_edge=min_edge,
+        force_refresh=refresh,
+        log_clv=False,
+    )
+    slate = [g for g in (board.get("slate") or []) if g.get("is_summer")]
+    board["sport"] = "nba"
+    board["slate"] = slate
+    board["games_on_slate"] = len(slate)
+    board["summer_only_view"] = True
+    return board
 
 
 @app.get("/api/schedule/cfb")
@@ -1690,17 +1716,22 @@ async def nba_slate():
 
 @app.get("/nba-summer")
 async def nba_summer_slate():
-    return FileResponse(STATIC_DIR / "nba_summer_slate.html")
+    """Summer League lives under the unified NBA tab."""
+    return RedirectResponse(url="/nba", status_code=302)
 
 
 @app.get("/nba-summer/board")
 async def nba_summer_board():
-    return FileResponse(STATIC_DIR / "nba_summer_board.html")
+    return RedirectResponse(url="/nba/board", status_code=302)
 
 
 @app.get("/nba-summer/game/{game_id}")
-async def nba_summer_game_page(game_id: str):
-    return FileResponse(STATIC_DIR / "nba_summer_game.html")
+async def nba_summer_game_page(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    qs = f"?date={date_param}" if date_param else ""
+    return RedirectResponse(url=f"/nba/game/{game_id}{qs}", status_code=302)
 
 
 @app.get("/api/games/nba-summer/{game_id}")
@@ -1708,8 +1739,13 @@ async def nba_summer_game_detail(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
 ):
+    """Legacy path — Summer games resolve via the unified NBA schedule."""
+    from app.services.schedule_nba import get_nba_game
+
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    detail = get_nba_summer_game(game_id, game_date)
+    detail = get_nba_game(game_id, game_date)
+    if detail is None:
+        detail = get_nba_summer_game(game_id, game_date)
     if detail is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return detail
@@ -1721,10 +1757,11 @@ async def nba_summer_game_insights(
     date_param: str | None = Query(None, alias="date"),
     refresh: bool = Query(False),
 ):
-    from app.services.nba_summer_game_insights import build_nba_summer_game_insights
+    """Legacy path — same ML / spread / totals insights as regular NBA."""
+    from app.services.nba_game_insights import build_nba_game_insights
 
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    insights = build_nba_summer_game_insights(
+    insights = build_nba_game_insights(
         game_id, game_date=game_date, refresh=refresh
     )
     if insights is None:

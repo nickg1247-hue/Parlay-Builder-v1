@@ -52,17 +52,19 @@ Home page (`/`) shows up to **10** sports headlines from ESPN RSS. Links open ES
 
 `/nba` shows today's NBA schedule and live scores from the **ESPN scoreboard API** (no API key). Game pages at `/nba/game/{game_id}` reuse the same payload (logos, records, series context, live scores).
 
+**Summer League:** When `NBA_SUMMER_ENABLED=true` (default), Las Vegas Summer League games from ESPN (`nba-summer-las-vegas`) are merged into the same `/nba` slate and `/nba/board`. They use the normal moneyline / spread / totals models with post-hoc calibration (`app/services/nba_summer_calibration.py`) and Summer Odds API lines (`basketball_nba_summer_league`). Tags: `is_summer`, `league_tag=summer`, `series_summary`. Old `/nba-summer*` paths redirect into `/nba*`.
+
 | Endpoint | Behavior |
 |----------|----------|
-| `GET /api/schedule/nba` | No `date` → auto look-ahead; `?date=` → exact date only |
+| `GET /api/schedule/nba` | No `date` → auto look-ahead; `?date=` → exact date only (includes Summer when enabled) |
 | `GET /api/scores/today?sport=nba` | Same auto look-ahead when `date` omitted |
-| `GET /api/games/nba/{game_id}` | No `date` → resolved slate first, then today..+3 |
+| `GET /api/games/nba/{game_id}` | No `date` → resolved slate first, then today..+7 |
 
-**Auto look-ahead:** If the requested day has **zero** games, the backend tries **+1, +2, +3** days (max 3). Disabled when `?date=` is set. Response includes `resolved_date`, `requested_date`, `days_ahead`, and `auto_advanced`.
+**Auto look-ahead:** If the requested day has **zero** games (regular + Summer), the backend tries **+1 … +7** days. Disabled when `?date=` is set. Response includes `resolved_date`, `requested_date`, `days_ahead`, and `auto_advanced`.
 
 **Slate:** `/nba` — schedule, live scores, link to **Advanced board** at `/nba/board`.
 
-**Verify:** open `/nba` on an off-day (e.g. Finals gap) — banner + next game day; `pytest tests/test_schedule_nba.py tests/test_scores_nba.py -q`
+**Verify:** open `/nba` on an off-day (e.g. Finals gap) — banner + next game day; `pytest tests/test_schedule_nba.py tests/test_scores_nba.py tests/test_nba_summer.py -q`
 
 **Game detail:** Slate cards link to `/nba/game/{id}?date={resolved_date}` so detail lookup hits the same ESPN day as the slate. Stale empty schedule cache is bypassed on game fetch.
 

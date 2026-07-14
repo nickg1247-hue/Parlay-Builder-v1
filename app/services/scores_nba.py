@@ -197,6 +197,21 @@ def get_nba_scores_today(
 
     events = fetch_nba_scores_day(resolved_date)
     games = [live_game_record(e) for e in events]
+    seen_ids = {str(g.get("game_id")) for g in games}
+    summer_count = 0
+    try:
+        from app.services.scores_nba_summer import summer_games_for_nba_tab
+
+        for sg in summer_games_for_nba_tab(resolved_date):
+            gid = str(sg.get("game_id") or "")
+            if not gid or gid in seen_ids:
+                continue
+            seen_ids.add(gid)
+            games.append(sg)
+            summer_count += 1
+    except Exception as exc:
+        logger.warning("NBA Summer merge into scores failed: %s", exc)
+    games.sort(key=lambda g: g.get("start_time_utc") or "")
 
     payload: dict[str, Any] = {
         "sport": "nba",
@@ -207,6 +222,7 @@ def get_nba_scores_today(
         "auto_advanced": auto_advanced,
         "games": games,
         "games_count": len(games),
+        "summer_games_count": summer_count,
         "no_games_this_week": bool(
             auto_resolve and game_date is None and len(games) == 0 and not auto_advanced
         ),

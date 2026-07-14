@@ -3091,7 +3091,6 @@ function renderSportPills(container, path) {
   const specs = [
     { href: "/mlb", label: "MLB", sport: "mlb" },
     { href: "/nba", label: "NBA", sport: "nba" },
-    { href: "/nba-summer", label: "NBA Summer", sport: "nba-summer" },
     { href: "/cfb", label: "CFB", sport: "cfb" },
     { href: "/ufc", label: "UFC", sport: "ufc" },
     { href: "/mlb/props", label: "Props" },

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
@@ -38,6 +39,19 @@ FACTOR_LABELS: dict[str, str] = {
 
 def _clamp(value: float, lo: float = -1.0, hi: float = 1.0) -> float:
     return max(lo, min(hi, value))
+
+
+def _summer_home_court(feat: dict[str, Any]) -> float:
+    raw = feat.get("summer_home_court_edge", 0.25)
+    if raw is None:
+        return 0.25
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return 0.25
+    if math.isnan(val):
+        return 0.25
+    return _clamp(val)
 
 
 def _edge_from_diff(diff: float, scale: float) -> float:
@@ -129,7 +143,10 @@ def compute_factor_edges(
             - float(feat.get("away_last10_win_pct", 0.5)),
             scale=0.18,
         ),
-        "home_court_advantage": 1.0,
+        # Summer League is at neutral sites — weaker home-court signal.
+        "home_court_advantage": (
+            _summer_home_court(feat) if feat.get("is_summer") else 1.0
+        ),
         "bench_production": (
             _override_edge(override, "bench_production", default=0.5)
             if override.get("bench_production")

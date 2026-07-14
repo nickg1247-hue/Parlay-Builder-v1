@@ -33,6 +33,11 @@ NBA_DISCLAIMER = (
     "15 user-defined factors; optional overrides for injuries/lineups."
 )
 
+NBA_SUMMER_BOARD_NOTE = (
+    "Summer League games use the same moneyline / spread / totals stack as the NBA season, "
+    "with pace, variance, and home-court adjustments. Franchise form ≠ summer rosters."
+)
+
 SPREAD_DISCLAIMER = (
     "NBA spread model is experimental (margin GBR + Normal cover); not betting-ready. "
     "See SPREAD_NBA.md."
@@ -66,32 +71,32 @@ def _active_nba_model_info() -> dict[str, Any]:
         return {}
 
 
-def _attach_nba_odds(
-    slate_df: pd.DataFrame,
-    game_date: date,
+def _blank_odds_columns(merged: pd.DataFrame) -> pd.DataFrame:
+    out = merged.copy()
+    for col in (
+        "home_ml",
+        "away_ml",
+        "home_spread_point",
+        "home_spread_american",
+        "away_spread_point",
+        "away_spread_american",
+        "ou_line",
+        "over_odds",
+        "under_odds",
+    ):
+        out[col] = np.nan
+    return out
+
+
+def _apply_odds_matchups(
+    merged: pd.DataFrame,
+    odds_games: list[dict[str, Any]],
     *,
-    force_refresh: bool = False,
-) -> tuple[pd.DataFrame, str]:
-    merged = slate_df.copy()
-    merged["home_ml"] = np.nan
-    merged["away_ml"] = np.nan
-    merged["home_spread_point"] = np.nan
-    merged["home_spread_american"] = np.nan
-    merged["away_spread_point"] = np.nan
-    merged["away_spread_american"] = np.nan
-    merged["ou_line"] = np.nan
-    merged["over_odds"] = np.nan
-    merged["under_odds"] = np.nan
-
-    odds_games, source = get_nba_odds_for_date(
-        game_date,
-        force_refresh=force_refresh,
-        include_spreads=True,
-        include_totals=True,
-    )
+    only_summer: bool | None = None,
+) -> int:
+    """Attach odds by matchup. Returns count of rows updated."""
     if not odds_games:
-        return merged, "none"
-
+        return 0
     odds_by_matchup: dict[tuple[str, str], dict[str, Any]] = {}
     for og in odds_games:
         key = (
@@ -100,29 +105,89 @@ def _attach_nba_odds(
         )
         odds_by_matchup[key] = og
 
+    updated = 0
     for idx, row in merged.iterrows():
+        is_summer = bool(row.get("is_summer")) if "is_summer" in merged.columns else False
+        if only_summer is True and not is_summer:
+            continue
+        if only_summer is False and is_summer:
+            continue
         key = (
             normalize_nba_team_name(row["home_team"]),
             normalize_nba_team_name(row["away_team"]),
         )
         match = odds_by_matchup.get(key)
-        if match:
-            merged.at[idx, "home_ml"] = match.get("home_ml")
-            merged.at[idx, "away_ml"] = match.get("away_ml")
-            for col in (
-                "home_spread_point",
-                "home_spread_american",
-                "away_spread_point",
-                "away_spread_american",
-                "ou_line",
-                "over_odds",
-                "under_odds",
-            ):
-                val = match.get(col)
-                if val is not None:
-                    merged.at[idx, col] = val
+        if not match:
+            continue
+        merged.at[idx, "home_ml"] = match.get("home_ml")
+        merged.at[idx, "away_ml"] = match.get("away_ml")
+        for col in (
+            "home_spread_point",
+            "home_spread_american",
+            "away_spread_point",
+            "away_spread_american",
+            "ou_line",
+            "over_odds",
+            "under_odds",
+        ):
+            val = match.get(col)
+            if val is not None:
+                merged.at[idx, col] = val
+        updated += 1
+    return updated
 
-    return merged, source
+
+def _attach_nba_odds(
+    slate_df: pd.DataFrame,
+    game_date: date,
+    *,
+    force_refresh: bool = False,
+) -> tuple[pd.DataFrame, str]:
+    merged = _blank_odds_columns(slate_df)
+    sources: list[str] = []
+
+    has_summer = (
+        "is_summer" in merged.columns and bool(merged["is_summer"].fillna(False).any())
+    )
+    has_regular = (
+        "is_summer" not in merged.columns
+        or bool((~merged["is_summer"].fillna(False)).any())
+    )
+
+    if has_regular:
+        odds_games, source = get_nba_odds_for_date(
+            game_date,
+            force_refresh=force_refresh,
+            include_spreads=True,
+            include_totals=True,
+        )
+        if odds_games:
+            _apply_odds_matchups(merged, odds_games, only_summer=False)
+            if source and source != "none":
+                sources.append(source)
+
+    if has_summer:
+        try:
+            from app.odds.nba_summer_odds_repository import get_nba_summer_odds_for_date
+
+            summer_odds, summer_source = get_nba_summer_odds_for_date(
+                game_date,
+                force_refresh=force_refresh,
+                include_spreads=True,
+                include_totals=True,
+            )
+            if summer_odds:
+                _apply_odds_matchups(merged, summer_odds, only_summer=True)
+                if summer_source and summer_source != "none":
+                    sources.append(f"summer:{summer_source}")
+        except Exception as exc:
+            logger.warning("NBA Summer odds attach failed: %s", exc)
+
+    if not sources:
+        return merged, "none"
+    if len(sources) == 1:
+        return merged, sources[0]
+    return merged, "+".join(sources)
 
 
 def _attach_cached_odds(
@@ -345,6 +410,14 @@ def _slate_rows(
             **spread,
             **totals,
         }
+        if hasattr(row, "is_summer") and bool(getattr(row, "is_summer", False)):
+            row_dict["is_summer"] = True
+            row_dict["league_tag"] = "summer"
+            row_dict["series_summary"] = getattr(row, "series_summary", None) or "NBA Summer League"
+            if hasattr(row, "summer_league") and getattr(row, "summer_league", None):
+                row_dict["summer_league"] = getattr(row, "summer_league")
+            if hasattr(row, "pick_source") and getattr(row, "pick_source", None):
+                row_dict["pick_source"] = getattr(row, "pick_source")
         if has_odds and pd.notna(getattr(row, "home_ml", None)):
             row_dict["home_ml"] = int(row.home_ml)
             row_dict["away_ml"] = int(row.away_ml)
@@ -421,6 +494,12 @@ def build_nba_daily_board(
         return base
 
     season_end = _nba_season_end_year(game_date)
+    try:
+        from app.services.nba_summer_calibration import summer_home_court_edge
+        summer_hc = summer_home_court_edge()
+    except ImportError:
+        summer_hc = 0.25
+
     slate_df = pd.DataFrame(
         [
             {
@@ -429,6 +508,12 @@ def build_nba_daily_board(
                 "season": season_end,
                 "home_team": normalize_nba_team_name(g["home_team"]),
                 "away_team": normalize_nba_team_name(g["away_team"]),
+                "is_summer": bool(g.get("is_summer") or g.get("league_tag") == "summer"),
+                "summer_league": g.get("summer_league"),
+                "series_summary": g.get("series_summary"),
+                "summer_home_court_edge": summer_hc
+                if (g.get("is_summer") or g.get("league_tag") == "summer")
+                else None,
             }
             for g in games
         ]
@@ -538,6 +623,21 @@ def build_nba_daily_board(
                 merged = enrich_totals_columns(merged)
         except (FileNotFoundError, ImportError, ValueError):
             pass
+
+    # Summer League: shrink ML toward 50/50, inflate totals pace, dampen margins.
+    summer_count = 0
+    if "is_summer" in merged.columns:
+        summer_count = int(merged["is_summer"].fillna(False).sum())
+    if summer_count:
+        from app.services.nba_summer_calibration import (
+            apply_summer_calibration,
+            summer_prediction_disclaimer,
+        )
+
+        merged = apply_summer_calibration(merged)
+        base["summer_games_count"] = summer_count
+        base["summer_disclaimer"] = summer_prediction_disclaimer()
+        warnings.append(NBA_SUMMER_BOARD_NOTE)
 
     if demo_synthetic:
         from app.services.nba_eval_slate import attach_actual_results

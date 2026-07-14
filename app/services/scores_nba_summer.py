@@ -77,9 +77,14 @@ def fetch_nba_summer_scores_day(game_date: date) -> list[dict[str, Any]]:
     return events
 
 
-def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
+def live_game_record(event: dict[str, Any], *, as_nba_tab: bool = False) -> dict[str, Any]:
+    """
+    Build a Summer League game row.
+
+    When *as_nba_tab* is True, the row is tagged for the unified NBA tab
+    (sport=nba, is_summer=true) so slate/board/game pages treat it like season NBA.
+    """
     row = _nba_live_game_record(event)
-    row["sport"] = "nba-summer"
     league = event.get("_summer_league")
     if league:
         row["summer_league"] = league
@@ -91,7 +96,23 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
             row["series_summary"] = row.get("series_summary") or "Salt Lake City Summer League"
     else:
         row["series_summary"] = row.get("series_summary") or "NBA Summer League"
+
+    row["is_summer"] = True
+    row["league_tag"] = "summer"
+    if as_nba_tab:
+        row["sport"] = "nba"
+    else:
+        row["sport"] = "nba-summer"
     return row
+
+
+def summer_games_for_nba_tab(game_date: date) -> list[dict[str, Any]]:
+    """Summer League games shaped for merge into the main NBA schedule."""
+    if not summer_enabled():
+        return []
+    return [
+        live_game_record(e, as_nba_tab=True) for e in fetch_nba_summer_scores_day(game_date)
+    ]
 
 
 def clear_scores_cache() -> None:

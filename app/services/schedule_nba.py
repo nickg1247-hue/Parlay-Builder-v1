@@ -18,12 +18,26 @@ SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
 SLATE_LOOKAHEAD_DAYS = 7
 
 
+def _day_has_nba_games(game_date: date) -> bool:
+    """True if regular NBA or (when enabled) Summer League has games that day."""
+    if fetch_nba_scores_day(game_date):
+        return True
+    try:
+        from app.services.scores_nba_summer import summer_enabled, fetch_nba_summer_scores_day
+
+        if summer_enabled() and fetch_nba_summer_scores_day(game_date):
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def resolve_nba_slate_date(start: date | None = None) -> tuple[date, int]:
     """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
     anchor = start or date.today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = anchor + timedelta(days=offset)
-        if fetch_nba_scores_day(candidate):
+        if _day_has_nba_games(candidate):
             return candidate, offset
     # Nothing in the next week — keep today so the UI can say "no games this week".
     return anchor, 0
@@ -98,22 +112,45 @@ def _game_from_payload(payload: dict[str, Any], game_id: str) -> dict[str, Any] 
 
 
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
-    """Fetch NBA scoreboard and write ``nba_schedule_{date}.json``."""
+    """Fetch NBA (+ Summer League when enabled) and write ``nba_schedule_{date}.json``."""
     game_date = game_date or date.today()
     events = fetch_nba_scores_day(game_date)
     games = [live_game_record(e) for e in events]
+    seen_ids = {str(g.get("game_id")) for g in games}
+
+    summer_count = 0
+    try:
+        from app.services.scores_nba_summer import summer_games_for_nba_tab
+
+        for sg in summer_games_for_nba_tab(game_date):
+            gid = str(sg.get("game_id") or "")
+            if not gid or gid in seen_ids:
+                continue
+            seen_ids.add(gid)
+            games.append(sg)
+            summer_count += 1
+    except Exception as exc:
+        logger.warning("NBA Summer merge into schedule failed: %s", exc)
+
+    games.sort(key=lambda g: g.get("start_time_utc") or "")
     cached_at = datetime.now(timezone.utc).isoformat()
     payload = {
         "date": game_date.isoformat(),
         "sport": "nba",
         "games": games,
         "games_count": len(games),
+        "summer_games_count": summer_count,
         "cached_at": cached_at,
     }
     path = schedule_cache_path(game_date)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    logger.info("Wrote NBA schedule cache: %s (%d games)", path.name, len(games))
+    logger.info(
+        "Wrote NBA schedule cache: %s (%d games, %d summer)",
+        path.name,
+        len(games),
+        summer_count,
+    )
     return payload
 
 
