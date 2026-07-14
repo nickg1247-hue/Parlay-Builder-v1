@@ -1,4 +1,4 @@
-"""Block direct public GET access to pick/score JSON APIs (admin bypass)."""
+"""Block bare/public scraping of pick/score JSON APIs — allow site browser loads."""
 
 from __future__ import annotations
 
@@ -18,8 +18,6 @@ _BLOCKED_EXACT = frozenset({
     "/api/props/search",
 })
 
-# MLB game insights stays public — game pages use it when SSR embed is missing.
-
 
 def public_api_gate_enabled() -> bool:
     raw = os.getenv("PUBLIC_API_GATE", "true").strip().lower()
@@ -37,8 +35,22 @@ def _admin_api_bypass(request: Request) -> bool:
     return is_authenticated(request)
 
 
+def is_site_browser_request(request: Request) -> bool:
+    """
+    True for loads from our own pages (same-origin fetch / navigation).
+
+    Browsers send Sec-Fetch-Site on fetch(); curl/scripts typically do not.
+    FetchJSON also sends X-NTG-Client: site as a secondary signal.
+    """
+    client = (request.headers.get("x-ntg-client") or "").strip().lower()
+    if client == "site":
+        return True
+    site = (request.headers.get("sec-fetch-site") or "").strip().lower()
+    return site in ("same-origin", "same-site")
+
+
 class PublicApiGateMiddleware(BaseHTTPMiddleware):
-    """Return 403 for blocked GET /api routes unless admin session is active."""
+    """403 for blocked GET /api when the caller is not our site or an admin session."""
 
     def __init__(self, app: ASGIApp) -> None:
         super().__init__(app)
@@ -53,12 +65,15 @@ class PublicApiGateMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if not is_blocked_public_get(path):
             return await call_next(request)
-        if _admin_api_bypass(request):
+        if is_site_browser_request(request) or _admin_api_bypass(request):
             return await call_next(request)
         return JSONResponse(
             status_code=403,
             content={
-                "detail": "Direct API access is disabled. Load the page in your browser.",
+                "detail": (
+                    "Direct API access is disabled. "
+                    "Open the site in your browser to view games and picks."
+                ),
                 "code": "public_api_disabled",
             },
         )

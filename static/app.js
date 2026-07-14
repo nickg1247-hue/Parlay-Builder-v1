@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260736";
+const NTG_ASSET_V = "20260737";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -56,7 +56,19 @@ async function fetchJSON(url, options = {}) {
     window.setTimeout(() => controller.abort(), timeoutMs);
   let res;
   try {
-    res = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    const headers = {
+      "X-NTG-Client": "site",
+      ...(options.headers || {}),
+    };
+    const fetchOpts = {
+      credentials: options.credentials || "same-origin",
+      headers,
+      ...(controller ? { signal: controller.signal } : {}),
+    };
+    if (options.method) fetchOpts.method = options.method;
+    if (options.body != null) fetchOpts.body = options.body;
+    if (options.cache) fetchOpts.cache = options.cache;
+    res = await fetch(url, fetchOpts);
   } catch (err) {
     if (err?.name === "AbortError") {
       throw new Error("Request timed out — the server may be busy. Try again.");
@@ -882,7 +894,11 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-nba-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nba-games-week":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-nba-summer-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nba-summer-games-week":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-cfb-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
@@ -913,14 +929,24 @@ function renderEmptyState(el, kind, extraHtml = "") {
       cta: '<a href="/mlb">MLB slate</a>',
     },
     "no-nba-games": {
-      title: "No games on the slate",
-      body: "No NBA games in the next few days. Check back during the season or Finals.",
+      title: "No NBA games today",
+      body: "Nothing on today’s slate. Check back later or pick another date.",
       cta: '<a href="/nba">Refresh slate</a>',
     },
+    "no-nba-games-week": {
+      title: "No games this week",
+      body: "We looked ahead seven days and didn’t find an NBA slate. Regular-season tip-offs resume in the fall.",
+      cta: '<a href="/nba-summer">NBA Summer League</a>',
+    },
     "no-nba-summer-games": {
-      title: "No Summer League games",
-      body: "No NBA Summer League games in the next few days. Check Las Vegas dates or pick another day.",
+      title: "No Summer League games today",
+      body: "Nothing scheduled for this date. Try another day during Las Vegas Summer League.",
       cta: '<a href="/nba-summer">Refresh slate</a>',
+    },
+    "no-nba-summer-games-week": {
+      title: "No Summer League games this week",
+      body: "We looked ahead seven days and didn’t find a Summer League slate. Check back closer to tip-off or visit the predictions board later.",
+      cta: '<a href="/nba-summer/board">Predictions board</a>',
     },
     "no-cfb-games": {
       title: "No games on the slate",

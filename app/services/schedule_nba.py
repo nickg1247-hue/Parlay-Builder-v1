@@ -15,17 +15,18 @@ logger = logging.getLogger(__name__)
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
-SLATE_LOOKAHEAD_DAYS = 3
+SLATE_LOOKAHEAD_DAYS = 7
 
 
 def resolve_nba_slate_date(start: date | None = None) -> tuple[date, int]:
-    """Pick slate date: start at *start* or today; if no games, try +1..+3 days."""
+    """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
     anchor = start or date.today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = anchor + timedelta(days=offset)
         if fetch_nba_scores_day(candidate):
             return candidate, offset
-    return anchor + timedelta(days=SLATE_LOOKAHEAD_DAYS), SLATE_LOOKAHEAD_DAYS
+    # Nothing in the next week — keep today so the UI can say "no games this week".
+    return anchor, 0
 
 
 def _slate_meta(
@@ -138,6 +139,7 @@ def get_nba_schedule(
     payload = _load_schedule_payload(resolved_date)
 
     payload["date"] = resolved_date.isoformat()
+    payload["sport"] = "nba"
     payload.update(
         _slate_meta(
             requested_date=requested_date,
@@ -145,6 +147,14 @@ def get_nba_schedule(
             days_ahead=days_ahead,
             auto_advanced=auto_advanced,
         )
+    )
+    games_count = payload.get("games_count")
+    if games_count is None:
+        games_count = len(payload.get("games") or [])
+    payload["games_count"] = games_count
+    # Auto slate with an empty week after looking ahead.
+    payload["no_games_this_week"] = bool(
+        auto_resolve and game_date is None and games_count == 0 and not auto_advanced
     )
     return payload
 

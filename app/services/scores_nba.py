@@ -187,6 +187,12 @@ def get_nba_scores_today(
         payload["resolved_date"] = resolved_date.isoformat()
         payload["days_ahead"] = days_ahead
         payload["auto_advanced"] = auto_advanced
+        payload["no_games_this_week"] = bool(
+            auto_resolve
+            and game_date is None
+            and int(payload.get("games_count") or 0) == 0
+            and not auto_advanced
+        )
         return payload
 
     events = fetch_nba_scores_day(resolved_date)
@@ -201,6 +207,9 @@ def get_nba_scores_today(
         "auto_advanced": auto_advanced,
         "games": games,
         "games_count": len(games),
+        "no_games_this_week": bool(
+            auto_resolve and game_date is None and len(games) == 0 and not auto_advanced
+        ),
         "cached_at": now.isoformat(),
         "cache_ttl_seconds": SCORES_CACHE_TTL_SECONDS,
         "source": "live",

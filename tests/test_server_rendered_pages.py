@@ -66,6 +66,22 @@ def test_public_api_gate_blocks_home_today():
     assert res.json().get("code") == "public_api_disabled"
 
 
+def test_public_api_gate_allows_site_browser_header():
+    client = TestClient(app)
+    res = client.get("/api/scores/today?sport=nba", headers={"X-NTG-Client": "site"})
+    assert res.status_code == 200
+    assert "games" in res.json()
+
+
+def test_public_api_gate_allows_sec_fetch_same_origin():
+    client = TestClient(app)
+    res = client.get(
+        "/api/scores/today?sport=nba",
+        headers={"Sec-Fetch-Site": "same-origin"},
+    )
+    assert res.status_code == 200
+
+
 @patch("app.main.build_home_page_data", new_callable=AsyncMock, return_value=_MIN_HOME)
 def test_home_page_embeds_page_data(_mock_home):
     client = TestClient(app)

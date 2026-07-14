@@ -146,6 +146,9 @@ def get_nba_summer_scores_today(
         "auto_advanced": auto_advanced,
         "games": games,
         "games_count": len(games),
+        "no_games_this_week": bool(
+            auto_resolve and game_date is None and len(games) == 0 and not auto_advanced
+        ),
         "cached_at": now.isoformat(),
         "cache_ttl_seconds": SCORES_CACHE_TTL_SECONDS,
         "source": "live",

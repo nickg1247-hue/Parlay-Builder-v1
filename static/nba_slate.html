@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NBA — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260737">
+  <link rel="stylesheet" href="/static/app.css?v=20260737">
 </head>
-<body>
+<body data-sport="nba">
   <div class="app-shell">
     <header class="app-topbar">
       <div class="app-nav-row">
@@ -24,15 +24,15 @@
         <h1>NBA</h1>
         <span class="slate-date" id="slate-date"></span>
       </div>
-      <p class="slate-note">Schedule and live scores</p>
+      <p class="slate-note">Upcoming games over the next week · live scores when tip-off starts</p>
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
 
-      <div id="slate-loading" class="hidden"></div>
+      <div id="slate-loading" class="empty-state">Loading NBA slate…</div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260737"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -45,9 +45,10 @@
       initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
       renderSkeletonGameList(list, 6);
 
+      // Schedule API auto-resolves to the next game day within ~7 days.
       const loadUrl = dateParam
         ? `/api/schedule/nba?date=${encodeURIComponent(dateParam)}`
-        : "/api/scores/today?sport=nba";
+        : "/api/schedule/nba";
 
       function mapGames(data) {
         const slateDate = data.resolved_date || data.date || "";
@@ -58,35 +59,55 @@
         }));
       }
 
+      function showEmpty(slate) {
+        list.innerHTML = "";
+        const kind = slate.no_games_this_week ? "no-nba-games-week" : "no-nba-games";
+        renderEmptyState(list, kind);
+      }
+
       try {
         const slate = await fetchJSON(loadUrl);
         const games = mapGames(slate);
         const slateDate = slate.resolved_date || slate.date || "";
 
         loading.classList.add("hidden");
-        dateEl.textContent = slateDate;
-        renderSlateAdvanceBanner(advanceEl, slate);
+        dateEl.textContent = slateDate
+          ? (slate.auto_advanced
+              ? `Next slate · ${slateDate}`
+              : slateDate)
+          : "";
+        if (typeof renderSlateAdvanceBanner === "function") {
+          renderSlateAdvanceBanner(advanceEl, slate);
+        }
 
         if (!games.length) {
-          list.innerHTML = "";
-          renderEmptyState(list, "no-nba-games");
+          showEmpty(slate);
           return;
         }
 
-        const renderOpts = {
+        renderGameList(list, games, {
           boardMap: {},
           gameDate: slateDate,
           useCache: !!dateParam,
-        };
-        renderGameList(list, games, renderOpts);
+        });
 
         if (!dateParam) {
           setInterval(async () => {
             try {
-              const live = await fetchJSON("/api/scores/today?sport=nba");
-              renderSlateAdvanceBanner(advanceEl, live);
-              dateEl.textContent = live.resolved_date || live.date || "";
-              updateGameCards(list, mapGames(live));
+              const live = await fetchJSON("/api/schedule/nba");
+              if (typeof renderSlateAdvanceBanner === "function") {
+                renderSlateAdvanceBanner(advanceEl, live);
+              }
+              const liveDate = live.resolved_date || live.date || "";
+              dateEl.textContent = live.auto_advanced
+                ? `Next slate · ${liveDate}`
+                : liveDate;
+              const mapped = mapGames(live);
+              if (!mapped.length) {
+                showEmpty(live);
+                return;
+              }
+              updateGameCards(list, mapped);
             } catch (_) { /* keep last good state */ }
           }, 60000);
         }

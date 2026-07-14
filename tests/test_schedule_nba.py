@@ -43,6 +43,16 @@ def clear_nba_cache():
 
 
 @patch("app.services.schedule_nba.fetch_nba_scores_day")
+def test_resolve_nba_slate_date_empty_week_stays_today(mock_fetch):
+    start = date(2025, 6, 10)
+    mock_fetch.return_value = []
+    resolved, days_ahead = resolve_nba_slate_date(start)
+    assert resolved == start
+    assert days_ahead == 0
+    assert mock_fetch.call_count == 8  # today + 7 look-ahead days
+
+
+@patch("app.services.schedule_nba.fetch_nba_scores_day")
 def test_resolve_nba_slate_date_advances_when_today_empty(mock_fetch):
     start = date(2025, 6, 10)
 

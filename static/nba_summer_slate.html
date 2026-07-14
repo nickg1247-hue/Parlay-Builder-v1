@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NBA Summer League — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260733">
-  <link rel="stylesheet" href="/static/app.css?v=20260733">
+  <link rel="stylesheet" href="/static/style.css?v=20260737">
+  <link rel="stylesheet" href="/static/app.css?v=20260737">
 </head>
 <body data-sport="nba-summer">
   <div class="app-shell">
@@ -24,15 +24,15 @@
         <h1>NBA Summer League</h1>
         <span class="slate-date" id="slate-date"></span>
       </div>
-      <p class="slate-note">Las Vegas schedule &amp; live scores · market leans on the <a href="/nba-summer/board">predictions board</a></p>
+      <p class="slate-note">Las Vegas schedule over the next week · market leans on the <a href="/nba-summer/board">predictions board</a></p>
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
 
-      <div id="slate-loading" class="hidden"></div>
+      <div id="slate-loading" class="empty-state">Loading Summer League slate…</div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260733"></script>
+  <script src="/static/app.js?v=20260737"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -47,7 +47,7 @@
 
       const loadUrl = dateParam
         ? `/api/schedule/nba-summer?date=${encodeURIComponent(dateParam)}`
-        : "/api/scores/today?sport=nba-summer";
+        : "/api/schedule/nba-summer";
 
       function mapGames(data) {
         const slateDate = data.resolved_date || data.date || "";
@@ -58,20 +58,29 @@
         }));
       }
 
+      function showEmpty(slate) {
+        list.innerHTML = "";
+        const kind = slate.no_games_this_week
+          ? "no-nba-summer-games-week"
+          : "no-nba-summer-games";
+        renderEmptyState(list, kind);
+      }
+
       try {
         const slate = await fetchJSON(loadUrl);
         const games = mapGames(slate);
         const slateDate = slate.resolved_date || slate.date || "";
 
         loading.classList.add("hidden");
-        dateEl.textContent = slateDate;
+        dateEl.textContent = slateDate
+          ? (slate.auto_advanced ? `Next slate · ${slateDate}` : slateDate)
+          : "";
         if (typeof renderSlateAdvanceBanner === "function") {
           renderSlateAdvanceBanner(advanceEl, slate);
         }
 
         if (!games.length) {
-          list.innerHTML = "";
-          renderEmptyState(list, "no-nba-summer-games");
+          showEmpty(slate);
           return;
         }
 
@@ -84,12 +93,20 @@
         if (!dateParam) {
           setInterval(async () => {
             try {
-              const live = await fetchJSON("/api/scores/today?sport=nba-summer");
+              const live = await fetchJSON("/api/schedule/nba-summer");
               if (typeof renderSlateAdvanceBanner === "function") {
                 renderSlateAdvanceBanner(advanceEl, live);
               }
-              dateEl.textContent = live.resolved_date || live.date || "";
-              updateGameCards(list, mapGames(live));
+              const liveDate = live.resolved_date || live.date || "";
+              dateEl.textContent = live.auto_advanced
+                ? `Next slate · ${liveDate}`
+                : liveDate;
+              const mapped = mapGames(live);
+              if (!mapped.length) {
+                showEmpty(live);
+                return;
+              }
+              updateGameCards(list, mapped);
             } catch (_) { /* keep last good state */ }
           }, 60000);
         }
