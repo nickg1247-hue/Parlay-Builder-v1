@@ -91,6 +91,10 @@ from app.services.props_mlb import (
 )
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
+from app.services.nfl_fantasy_draft import (
+    list_players_for_api,
+    recommend_from_board,
+)
 from app.services.cfb_daily_board import build_cfb_daily_board
 from app.services.cfb_slate_predictions import predict_slate
 from app.services.cfb_backtest_report import (
@@ -396,6 +400,20 @@ class PropSlipExportRequest(BaseModel):
         True,
         description="When cached props lack deeplinks, refresh from Odds API (quota-gated).",
     )
+
+
+class NflFantasyPick(BaseModel):
+    overall: int = Field(..., ge=1)
+    team_slot: int = Field(..., ge=1)
+    player_id: str
+
+
+class NflFantasyRecommendRequest(BaseModel):
+    league_size: int = Field(..., ge=8, le=14)
+    scoring: str = Field("half_ppr")
+    user_slot: int = Field(..., ge=1)
+    picks: list[NflFantasyPick] = Field(default_factory=list)
+    roster_template: list[str] | None = None
 
 
 @app.get("/login")
@@ -1695,6 +1713,38 @@ async def home(date_param: str | None = Query(None, alias="date")):
         lambda: build_home_page_data(game_date),
     )
     return render_static_page(STATIC_DIR, "index.html", page_data)
+
+
+@app.get("/nfl/draft")
+async def nfl_draft_page():
+    return _html_page("nfl_draft.html")
+
+
+@app.get("/api/fantasy/nfl/players")
+async def fantasy_nfl_players(
+    scoring: str = Query("half_ppr", description="standard | half_ppr | ppr"),
+):
+    try:
+        return list_players_for_api(scoring)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/fantasy/nfl/recommend")
+async def fantasy_nfl_recommend(body: NflFantasyRecommendRequest):
+    try:
+        picks = [p.model_dump() for p in body.picks]
+        return recommend_from_board(
+            league_size=body.league_size,
+            scoring=body.scoring,
+            user_slot=body.user_slot,
+            picks=picks,
+            roster_template=body.roster_template,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/mlb")

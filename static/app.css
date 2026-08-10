@@ -4100,6 +4100,25 @@ body.slate-mlb .app-main > * {
   opacity: 0.65;
 }
 
+/* Discreet home entry — intentionally easy to overlook */
+.home-quiet-link {
+  margin: 2.5rem 0 0.5rem;
+  text-align: center;
+  font-size: 0.65rem;
+  line-height: 1.2;
+}
+
+.home-quiet-link a,
+.home-quiet-link a:visited {
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.home-quiet-link a:hover {
+  color: var(--muted);
+}
+
 .app-nav-utility {
   margin-left: auto;
   flex-shrink: 0;
@@ -4828,6 +4847,7 @@ body.player-prop-modal-open {
   cursor: pointer;
 }
 
+
 /* --- PWA install banner + install help page --- */
 
 .ntg-pwa-install {
@@ -4953,4 +4973,396 @@ body.ntg-pwa-install-visible {
   color: var(--muted, #94a3b8);
   line-height: 1.5;
   margin: 1rem 0 1.25rem;
+}
+
+/* —— NFL fantasy draft room —— */
+.draft-room-page .draft-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+.draft-setup {
+  padding: 1.25rem 0 2rem;
+  animation: draft-rise 0.45s ease-out both;
+}
+
+.draft-brand {
+  font-family: var(--font-display, "Segoe UI Semibold", Georgia, serif);
+  font-size: clamp(1.85rem, 4vw, 2.6rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem;
+  color: var(--text);
+}
+
+.draft-lede,
+.draft-roster-note,
+.draft-section-lede,
+.draft-needs,
+.draft-clock-detail,
+.draft-rec-meta {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  max-width: 36rem;
+}
+
+.draft-roster-note {
+  margin-top: 1.25rem;
+  font-size: 0.82rem;
+}
+
+.draft-roster-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.draft-setup-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 8.5rem)) auto;
+  gap: 0.85rem 1rem;
+  align-items: end;
+  margin-top: 1.5rem;
+}
+
+.draft-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.draft-field select,
+.draft-search {
+  font: inherit;
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 35%, transparent);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.draft-cta {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #061018;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.15rem;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.draft-cta:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.draft-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.draft-btn-ghost {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--muted) 30%, transparent);
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+
+.draft-btn-ghost:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.draft-hero {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 0 1.75rem;
+  animation: draft-rise 0.4s ease-out both;
+}
+
+.draft-clock-label {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.draft-rec-eyebrow {
+  margin: 0.75rem 0 0.15rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.draft-rec-name {
+  margin: 0;
+  font-family: var(--font-display, "Segoe UI Semibold", Georgia, serif);
+  font-size: clamp(1.65rem, 3.5vw, 2.35rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.draft-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0.35rem;
+}
+
+.draft-chip {
+  font-size: 0.72rem;
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, var(--muted) 28%, transparent);
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+}
+
+.draft-chip--need {
+  color: color-mix(in srgb, var(--accent) 85%, var(--text));
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.draft-chip--warn {
+  color: #d4a574;
+  border-color: color-mix(in srgb, #d4a574 40%, transparent);
+}
+
+.draft-rec-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.draft-alts {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.draft-alts li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.draft-alts li:hover,
+.draft-alts li:focus-visible {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-color: color-mix(in srgb, var(--muted) 25%, transparent);
+  outline: none;
+}
+
+.draft-alts .alt-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.draft-alts .alt-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.draft-section-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.draft-board-section,
+.draft-rosters-section {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--muted) 22%, transparent);
+}
+
+.draft-board-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0.75rem;
+  align-items: center;
+}
+
+.draft-search {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+}
+
+.draft-pos-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.draft-pos-btn {
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--muted) 28%, transparent);
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+}
+
+.draft-pos-btn.is-active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.draft-player-list {
+  display: grid;
+  gap: 0.15rem;
+  max-height: 28rem;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+.draft-player-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto auto;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.draft-player-row:hover,
+.draft-player-row:focus-visible {
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  outline: none;
+}
+
+.draft-player-row .rk {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+
+.draft-player-row .nm {
+  font-weight: 550;
+}
+
+.draft-player-row .pos,
+.draft-player-row .tm {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.draft-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.draft-roster-card {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--muted) 22%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  min-height: 6rem;
+}
+
+.draft-roster-card.is-user {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.draft-roster-card.is-clock {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.draft-roster-card h4 {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.draft-roster-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.draft-roster-card .ppos {
+  display: inline-block;
+  width: 1.7rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+@keyframes draft-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .draft-setup-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .draft-setup-form .draft-cta {
+    grid-column: 1 / -1;
+  }
+
+  .draft-player-row {
+    grid-template-columns: 2rem 1fr auto;
+  }
+
+  .draft-player-row .tm {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draft-setup,
+  .draft-hero {
+    animation: none;
+  }
+
+  .draft-cta,
+  .draft-alts li,
+  .draft-player-row {
+    transition: none;
+  }
 }

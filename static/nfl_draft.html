@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
+  <title>Draft room — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260725">
+  <link rel="stylesheet" href="/static/app.css?v=20260725">
+  <link rel="stylesheet" href="/static/brand.css?v=20260725">
+  <link rel="stylesheet" href="/static/design.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+</head>
+<body class="ntg-shell home-v2 draft-room-page">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+    </header>
+
+    <main class="app-main dash-main draft-main">
+      <section id="setup-panel" class="draft-setup" aria-labelledby="setup-title">
+        <h1 id="setup-title" class="draft-brand">Draft room</h1>
+        <p class="draft-lede">Snake redraft assistant. Set your league, then track the board and always see your next best pick.</p>
+
+        <form id="setup-form" class="draft-setup-form">
+          <label class="draft-field">
+            <span>Teams</span>
+            <select id="league-size" name="league_size" required>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10" selected>10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+            </select>
+          </label>
+          <label class="draft-field">
+            <span>Your slot</span>
+            <select id="user-slot" name="user_slot" required></select>
+          </label>
+          <label class="draft-field">
+            <span>Scoring</span>
+            <select id="scoring" name="scoring">
+              <option value="standard">Standard</option>
+              <option value="half_ppr" selected>Half-PPR</option>
+              <option value="ppr">PPR</option>
+            </select>
+          </label>
+          <button type="submit" class="draft-cta">Enter draft room</button>
+        </form>
+
+        <p class="draft-roster-note">
+          Default starters (9 rounds): <strong>QB1 · RB2 · WR2 · TE1 · FLEX1 · DST1 · K1</strong>.
+          FLEX is RB/WR/TE. Snake order only — no auction, no superflex.
+        </p>
+      </section>
+
+      <section id="room-panel" class="draft-room hidden" hidden aria-labelledby="clock-label">
+        <div class="draft-hero">
+          <div class="draft-clock">
+            <p id="clock-label" class="draft-clock-label">On the clock</p>
+            <p id="clock-detail" class="draft-clock-detail"></p>
+          </div>
+          <div class="draft-rec" aria-live="polite">
+            <p id="rec-eyebrow" class="draft-rec-eyebrow">Your next pick</p>
+            <h2 id="rec-name" class="draft-rec-name">—</h2>
+            <p id="rec-meta" class="draft-rec-meta"></p>
+            <div id="rec-chips" class="draft-chips"></div>
+            <p id="needs-line" class="draft-needs"></p>
+            <div class="draft-rec-actions">
+              <button type="button" id="btn-draft-rec" class="draft-cta">Draft recommended</button>
+              <button type="button" id="btn-undo" class="draft-btn-ghost">Undo</button>
+              <button type="button" id="btn-reset" class="draft-btn-ghost">Reset</button>
+              <button type="button" id="btn-back-setup" class="draft-btn-ghost">Setup</button>
+            </div>
+            <ul id="rec-alts" class="draft-alts" aria-label="Alternates"></ul>
+          </div>
+        </div>
+
+        <section class="draft-board-section" aria-labelledby="board-heading">
+          <h3 id="board-heading" class="draft-section-title">Available players</h3>
+          <p class="draft-section-lede">Click a player to draft them to the team on the clock.</p>
+          <div class="draft-board-tools">
+            <input id="player-search" type="search" class="draft-search" placeholder="Search name, team, position" autocomplete="off" />
+            <div id="pos-filters" class="draft-pos-filters" role="group" aria-label="Position filter">
+              <button type="button" class="draft-pos-btn is-active" data-pos="">All</button>
+              <button type="button" class="draft-pos-btn" data-pos="QB">QB</button>
+              <button type="button" class="draft-pos-btn" data-pos="RB">RB</button>
+              <button type="button" class="draft-pos-btn" data-pos="WR">WR</button>
+              <button type="button" class="draft-pos-btn" data-pos="TE">TE</button>
+              <button type="button" class="draft-pos-btn" data-pos="DST">DST</button>
+              <button type="button" class="draft-pos-btn" data-pos="K">K</button>
+            </div>
+          </div>
+          <div id="player-list" class="draft-player-list"></div>
+        </section>
+
+        <section class="draft-rosters-section" aria-labelledby="rosters-heading">
+          <h3 id="rosters-heading" class="draft-section-title">Team rosters</h3>
+          <div id="roster-grid" class="draft-roster-grid"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260725"></script>
+  <script src="/static/nfl_draft.js?v=20260809"></script>
+  <script>
+    if (typeof initSiteChrome === "function") initSiteChrome();
+  </script>
+</body>
+</html>
