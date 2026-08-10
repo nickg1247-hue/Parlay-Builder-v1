@@ -294,12 +294,96 @@ def test_need_bonus_prefers_missing_rb():
     assert result["primary"]["player_id"] == "rb_need"
 
 
-def test_fit_and_power_rank_helpers():
-    assert draft.power_rank_from_consensus(1) == 100
-    assert draft.power_rank_from_consensus(50) == 51
-    assert draft.fit_pct_from_scores(100, 100) == 99
-    assert draft.fit_pct_from_scores(50, 100) == 70
-    assert 40 <= draft.fit_pct_from_scores(0, 100) <= 50
+def test_position_max_blocks_recommend():
+    """With QB max 1 and a QB already rostered, do not recommend another QB."""
+    players = [
+        {
+            "player_id": "qb_owned",
+            "name": "Owned QB",
+            "position": "QB",
+            "team": "BAL",
+            "bye": 14,
+            "adp": 40,
+            "rank_std": 40,
+            "rank_half": 40,
+            "rank_ppr": 40,
+            "tier": 5,
+        },
+        {
+            "player_id": "qb_elite",
+            "name": "Elite QB",
+            "position": "QB",
+            "team": "BUF",
+            "bye": 7,
+            "adp": 15,
+            "rank_std": 15,
+            "rank_half": 15,
+            "rank_ppr": 15,
+            "tier": 2,
+        },
+        {
+            "player_id": "rb_ok",
+            "name": "Okay RB",
+            "position": "RB",
+            "team": "ATL",
+            "bye": 12,
+            "adp": 25,
+            "rank_std": 25,
+            "rank_half": 25,
+            "rank_ppr": 25,
+            "tier": 3,
+        },
+    ]
+    picks = [{"overall": 1, "team_slot": 1, "player_id": "qb_owned"}]
+    # Pad to user slot 1's next pick (overall 20 in 10-team)
+    for o in range(2, 20):
+        pid = f"pad_{o}"
+        players.append(
+            {
+                "player_id": pid,
+                "name": f"Pad {o}",
+                "position": "WR",
+                "team": "XX",
+                "bye": 5,
+                "adp": 100 + o,
+                "rank_std": 100 + o,
+                "rank_half": 100 + o,
+                "rank_ppr": 100 + o,
+                "tier": 12,
+            }
+        )
+        picks.append(
+            {
+                "overall": o,
+                "team_slot": draft.team_slot_for_overall(o, 10),
+                "player_id": pid,
+            }
+        )
+
+    assert draft.can_add_position(
+        [{"position": "QB"}], "QB", {"QB": 1, "RB": 8, "WR": 8, "TE": 3, "DST": 3, "K": 3}
+    ) is False
+
+    result = draft.recommend(
+        players,
+        league_size=10,
+        scoring="half_ppr",
+        user_slot=1,
+        picks=picks,
+        roster_size=15,
+        position_maxes={"QB": 1, "RB": 8, "WR": 8, "TE": 3, "DST": 3, "K": 3},
+    )
+    assert result["primary"] is not None
+    assert result["primary"]["position"] != "QB"
+    assert result["board_meta"]["position_maxes"]["QB"] == 1
+    assert result["board_meta"]["user_position_counts"]["QB"] == 1
+
+
+def test_normalize_position_maxes_clamps():
+    out = draft.normalize_position_maxes({"QB": 99, "rb": 2})
+    assert out["QB"] == 20
+    assert out["RB"] == 2
+    assert out["WR"] == draft.DEFAULT_POSITION_MAXES["WR"]
 
 
 def test_scoring_column_selection():

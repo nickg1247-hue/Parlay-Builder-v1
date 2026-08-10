@@ -3,15 +3,17 @@
  */
 (function () {
   const STORAGE_KEY = "ntg_nfl_draft_v1";
-  const ROSTER_TEMPLATE = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DST", "K"];
+  const STARTER_TEMPLATE = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DST", "K"];
   const FLEX = new Set(["RB", "WR", "TE"]);
-  const POS_CAPS = { QB: 4, RB: 8, WR: 8, TE: 3, DST: 3, K: 3 };
+  const DEFAULT_MAXES = { QB: 4, RB: 8, WR: 8, TE: 3, DST: 3, K: 3 };
   const TIMER_SECS = 90;
 
   const state = {
     leagueSize: 10,
     userSlot: 3,
     scoring: "half_ppr",
+    rosterSize: 15,
+    positionMaxes: { ...DEFAULT_MAXES },
     picks: [],
     players: [],
     playersById: {},
@@ -51,8 +53,58 @@
     return `${r}.${p}`;
   }
 
+  function rosterTemplate() {
+    const size = Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
+    return STARTER_TEMPLATE.concat(
+      Array(size - STARTER_TEMPLATE.length).fill("BENCH")
+    );
+  }
+
   function totalPicks() {
-    return state.leagueSize * ROSTER_TEMPLATE.length;
+    return state.leagueSize * Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
+  }
+
+  function readMaxesFromForm() {
+    const clamp = (id, fallback) => {
+      const el = $(id);
+      const n = Number(el && el.value);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(0, Math.min(20, Math.round(n)));
+    };
+    return {
+      QB: clamp("max-qb", 4),
+      RB: clamp("max-rb", 8),
+      WR: clamp("max-wr", 8),
+      TE: clamp("max-te", 3),
+      DST: clamp("max-dst", 3),
+      K: clamp("max-k", 3),
+    };
+  }
+
+  function writeMaxesToForm(maxes) {
+    const m = { ...DEFAULT_MAXES, ...(maxes || {}) };
+    const map = {
+      QB: "max-qb",
+      RB: "max-rb",
+      WR: "max-wr",
+      TE: "max-te",
+      DST: "max-dst",
+      K: "max-k",
+    };
+    Object.keys(map).forEach((pos) => {
+      const el = $(map[pos]);
+      if (el) el.value = String(m[pos]);
+    });
+  }
+
+  function countPos(rosterPlayers, pos) {
+    return rosterPlayers.filter((p) => p.position === pos).length;
+  }
+
+  function canAddToTeam(teamSlot, position) {
+    const max = state.positionMaxes[position];
+    if (max == null) return true;
+    return countPos(rosterForTeam(teamSlot), position) < max;
   }
 
   function nextOverall() {
@@ -96,6 +148,8 @@
           leagueSize: state.leagueSize,
           userSlot: state.userSlot,
           scoring: state.scoring,
+          rosterSize: state.rosterSize,
+          positionMaxes: state.positionMaxes,
           picks: state.picks,
           queue: state.queue,
           inRoom: state.inRoom,
@@ -148,7 +202,9 @@
       scoring: state.scoring,
       user_slot: state.userSlot,
       picks: state.picks,
-      roster_template: ROSTER_TEMPLATE,
+      roster_template: STARTER_TEMPLATE,
+      roster_size: state.rosterSize,
+      position_maxes: state.positionMaxes,
     };
     const res = await fetch("/api/fantasy/nfl/recommend", {
       method: "POST",
@@ -177,7 +233,9 @@
         scoring: state.scoring,
         user_slot: state.userSlot,
         picks: state.picks,
-        roster_template: ROSTER_TEMPLATE,
+        roster_template: STARTER_TEMPLATE,
+        roster_size: state.rosterSize,
+        position_maxes: state.positionMaxes,
       }),
     });
     if (!res.ok) {
@@ -188,10 +246,10 @@
   }
 
   function assignSlots(rosterPlayers) {
-    const slots = ROSTER_TEMPLATE.map((s) => ({ slot: s, player: null }));
+    const slots = rosterTemplate().map((s) => ({ slot: s, player: null }));
     const used = new Set();
     for (let i = 0; i < slots.length; i++) {
-      if (slots[i].slot === "FLEX") continue;
+      if (slots[i].slot === "FLEX" || slots[i].slot === "BENCH") continue;
       for (let j = 0; j < rosterPlayers.length; j++) {
         if (used.has(j)) continue;
         if (rosterPlayers[j].position === slots[i].slot) {
@@ -210,6 +268,15 @@
           used.add(j);
           break;
         }
+      }
+    }
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i].slot !== "BENCH" || slots[i].player) continue;
+      for (let j = 0; j < rosterPlayers.length; j++) {
+        if (used.has(j)) continue;
+        slots[i].player = rosterPlayers[j];
+        used.add(j);
+        break;
       }
     }
     return slots;
@@ -376,14 +443,17 @@
 
   function renderPlayers() {
     const list = availablePlayers();
+    const clockSlot = state.rec?.board_meta?.on_clock_slot;
     els.playerList.innerHTML = list
       .slice(0, 220)
       .map((p) => {
         const fit = state.fitById[p.player_id];
         const fitPct = fit?.fit_pct;
-        return `<div class="draft-player-row" data-insight="${escapeAttr(p.player_id)}" role="button" tabindex="0">
+        const blocked =
+          clockSlot != null && !canAddToTeam(clockSlot, p.position);
+        return `<div class="draft-player-row${blocked ? " is-blocked" : ""}" data-insight="${escapeAttr(p.player_id)}" role="button" tabindex="0">
           <span class="rk">${p.rank ?? "—"}</span>
-          <span class="nm">${escapeHtml(p.name)}<small>${escapeHtml(p.team || "")}${p.bye ? ` · Bye ${p.bye}` : ""}</small></span>
+          <span class="nm">${escapeHtml(p.name)}<small>${escapeHtml(p.team || "")}${p.bye ? ` · Bye ${p.bye}` : ""}${blocked ? " · at team max" : ""}</small></span>
           <span class="pos ${posClass(p.position)}">${escapeHtml(p.position)}</span>
           <span class="proj">${p.projected_pick ?? p.adp ?? "—"}</span>
           <span class="pwr">${p.power_rank ?? "—"}</span>
@@ -420,7 +490,7 @@
   }
 
   function renderBoardRound() {
-    const rounds = ROSTER_TEMPLATE.length;
+    const rounds = Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
     let html = `<div class="draft-board-rounds" style="--teams:${state.leagueSize}">`;
     html += `<div class="draft-round-head"><span></span>`;
     for (let s = 1; s <= state.leagueSize; s++) {
@@ -475,10 +545,10 @@
     for (const p of rosterForTeam(state.userSlot)) {
       if (counts[p.position] != null) counts[p.position] += 1;
     }
-    els.posLimits.innerHTML = Object.keys(POS_CAPS)
+    els.posLimits.innerHTML = Object.keys(state.positionMaxes)
       .map(
         (pos) =>
-          `<span class="${posClass(pos)}">${pos} ${counts[pos]}/${POS_CAPS[pos]}</span>`
+          `<span class="${posClass(pos)}${counts[pos] >= state.positionMaxes[pos] ? " is-maxed" : ""}">${pos} ${counts[pos]}/${state.positionMaxes[pos]}</span>`
       )
       .join("");
   }
@@ -558,19 +628,30 @@
         els.modalChips.innerHTML = (data.reasons || [])
           .map((r) => `<span class="${chipClass(r)}">${escapeHtml(r)}</span>`)
           .join("");
-        els.modalNote.textContent =
-          fit != null
-            ? fit >= 85
-              ? "Excellent value for your roster right now."
-              : fit >= 70
-                ? "Solid fit versus board and your needs."
-                : fit >= 55
-                  ? "Playable, but better fits may still be open."
-                  : "Below your best available options."
-            : "";
-        const you = state.rec?.board_meta?.user_on_clock;
-        els.modalDraft.disabled = false;
-        els.modalDraft.textContent = you ? "Draft now" : "Draft to team on clock";
+        const clockOk = data.legal_for_clock_team !== false;
+        const userOk = data.legal_for_user !== false;
+        if (!clockOk) {
+          els.modalNote.textContent = `Team on the clock is at the ${p.position} max (${state.positionMaxes[p.position]}).`;
+          els.modalDraft.disabled = true;
+        } else if (!userOk) {
+          els.modalNote.textContent = `You are at the ${p.position} max — poor fit for your next pick, but another team can still take them.`;
+          els.modalDraft.disabled = false;
+          els.modalDraft.textContent = "Draft to team on clock";
+        } else {
+          els.modalNote.textContent =
+            fit != null
+              ? fit >= 85
+                ? "Excellent value for your roster right now."
+                : fit >= 70
+                  ? "Solid fit versus board and your needs."
+                  : fit >= 55
+                    ? "Playable, but better fits may still be open."
+                    : "Below your best available options."
+              : "";
+          const you = state.rec?.board_meta?.user_on_clock;
+          els.modalDraft.disabled = false;
+          els.modalDraft.textContent = you ? "Draft now" : "Draft to team on clock";
+        }
       }
     } catch (err) {
       els.modalName.textContent = "Couldn’t load player";
@@ -599,7 +680,15 @@
     const overall = nextOverall();
     if (overall > totalPicks()) return;
     if (draftedIds().has(playerId)) return;
+    const pl = state.playersById[playerId];
+    if (!pl) return;
     const teamSlot = teamSlotForOverall(overall, state.leagueSize);
+    if (!canAddToTeam(teamSlot, pl.position)) {
+      alert(
+        `Team ${teamSlot} is already at the ${pl.position} max (${state.positionMaxes[pl.position]}). Pick another position.`
+      );
+      return;
+    }
     state.picks.push({ overall, team_slot: teamSlot, player_id: playerId });
     state.queue = state.queue.filter((id) => id !== playerId);
     resetTimer();
@@ -645,6 +734,8 @@
     state.leagueSize = Number(els.leagueSize.value);
     state.userSlot = Number(els.userSlot.value);
     state.scoring = els.scoring.value || "half_ppr";
+    state.rosterSize = Number(els.rosterSize.value) || 15;
+    state.positionMaxes = readMaxesFromForm();
     if (state.userSlot > state.leagueSize) state.userSlot = state.leagueSize;
     if (!fromSaved) state.picks = [];
     showSetup(false);
@@ -666,6 +757,7 @@
     els.leagueSize = $("league-size");
     els.userSlot = $("user-slot");
     els.scoring = $("scoring");
+    els.rosterSize = $("roster-size");
     els.setupForm = $("setup-form");
     els.clockBar = $("clock-bar");
     els.clockLabel = $("clock-label");
@@ -813,6 +905,15 @@
         Math.min(saved.userSlot || 1, Number(els.leagueSize.value))
       );
       els.scoring.value = saved.scoring || "half_ppr";
+      if (els.rosterSize) {
+        els.rosterSize.value = String(saved.rosterSize || 15);
+      }
+      writeMaxesToForm(saved.positionMaxes || DEFAULT_MAXES);
+      state.rosterSize = Number(saved.rosterSize) || 15;
+      state.positionMaxes = {
+        ...DEFAULT_MAXES,
+        ...(saved.positionMaxes || {}),
+      };
       state.queue = Array.isArray(saved.queue) ? saved.queue : [];
       state.tab = saved.tab || "players";
       state.boardMode = saved.boardMode || "roster";

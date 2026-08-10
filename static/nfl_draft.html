@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
-  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809b">
+  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809c">
 </head>
 <body class="ntg-shell home-v2 draft-room-page">
   <div class="app-shell draft-shell">
@@ -56,12 +56,41 @@
                 <option value="ppr">PPR</option>
               </select>
             </label>
+            <label class="draft-field">
+              <span>Roster size</span>
+              <select id="roster-size" name="roster_size">
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15" selected>15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+              </select>
+            </label>
+
+            <fieldset class="draft-rules">
+              <legend>Position max per team</legend>
+              <p class="draft-rules-hint">Applies to every team. Recommend + draft block when a team hits the cap.</p>
+              <div class="draft-rules-grid">
+                <label class="draft-field"><span>QB</span><input id="max-qb" type="number" min="0" max="20" value="4" /></label>
+                <label class="draft-field"><span>RB</span><input id="max-rb" type="number" min="0" max="20" value="8" /></label>
+                <label class="draft-field"><span>WR</span><input id="max-wr" type="number" min="0" max="20" value="8" /></label>
+                <label class="draft-field"><span>TE</span><input id="max-te" type="number" min="0" max="20" value="3" /></label>
+                <label class="draft-field"><span>DST</span><input id="max-dst" type="number" min="0" max="20" value="3" /></label>
+                <label class="draft-field"><span>K</span><input id="max-k" type="number" min="0" max="20" value="3" /></label>
+              </div>
+            </fieldset>
+
             <button type="submit" class="draft-cta">Enter draft room</button>
           </form>
 
           <p class="draft-roster-note">
             Starters: <strong>QB · RB · RB · WR · WR · TE · FLEX · DST · K</strong>
-            · FLEX is RB/WR/TE · Snake only
+            · remaining rounds are bench · Snake only
           </p>
         </div>
       </section>
@@ -180,7 +209,7 @@
   </div>
 
   <script src="/static/app.js?v=20260725"></script>
-  <script src="/static/nfl_draft.js?v=20260809b"></script>
+  <script src="/static/nfl_draft.js?v=20260809c"></script>
   <script>
     if (typeof initSiteChrome === "function") initSiteChrome();
   </script>

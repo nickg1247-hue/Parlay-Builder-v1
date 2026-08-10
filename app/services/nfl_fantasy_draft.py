@@ -25,7 +25,20 @@ DEFAULT_ROSTER_TEMPLATE: list[str] = [
     "K",
 ]
 
+# Per-team position caps (typical ESPN/Yahoo defaults). Configurable per league.
+DEFAULT_POSITION_MAXES: dict[str, int] = {
+    "QB": 4,
+    "RB": 8,
+    "WR": 8,
+    "TE": 3,
+    "DST": 3,
+    "K": 3,
+}
+
+DEFAULT_ROSTER_SIZE = 15  # picks per team (snake rounds)
+
 FLEX_ELIGIBLE = frozenset({"RB", "WR", "TE"})
+POSITION_KEYS = ("QB", "RB", "WR", "TE", "DST", "K")
 
 SCORING_RANK_KEY = {
     "standard": "rank_std",
@@ -131,12 +144,95 @@ def normalize_scoring(scoring: str | None) -> str:
     return "half_ppr"
 
 
+def normalize_position_maxes(
+    maxes: dict[str, Any] | None = None,
+) -> dict[str, int]:
+    """Merge league maxes onto defaults; values clamped to 0–20."""
+    out = dict(DEFAULT_POSITION_MAXES)
+    if not maxes:
+        return out
+    for key in POSITION_KEYS:
+        if key not in maxes and key.lower() not in {k.lower() for k in maxes}:
+            continue
+        raw = maxes.get(key, maxes.get(key.lower()))
+        try:
+            val = int(raw)
+        except (TypeError, ValueError):
+            continue
+        out[key] = max(0, min(20, val))
+    return out
+
+
+def normalize_roster_size(
+    roster_size: int | None,
+    starter_count: int,
+) -> int:
+    size = int(roster_size) if roster_size is not None else DEFAULT_ROSTER_SIZE
+    size = max(starter_count, min(18, size))
+    return size
+
+
+def resolve_roster_template(
+    roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+) -> tuple[list[str], list[str], int]:
+    """Return (full_template with BENCH, starter_slots_only, roster_size)."""
+    starters = [
+        s
+        for s in (roster_template or DEFAULT_ROSTER_TEMPLATE)
+        if str(s).upper() != "BENCH"
+    ]
+    if not starters:
+        starters = list(DEFAULT_ROSTER_TEMPLATE)
+    size = normalize_roster_size(roster_size, len(starters))
+    full = list(starters) + ["BENCH"] * (size - len(starters))
+    return full, starters, size
+
+
+def count_by_position(rostered: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {k: 0 for k in POSITION_KEYS}
+    for p in rostered:
+        pos = str(p.get("position") or "")
+        if pos in counts:
+            counts[pos] += 1
+    return counts
+
+
+def can_add_position(
+    rostered: list[dict[str, Any]],
+    position: str,
+    position_maxes: dict[str, int] | None = None,
+) -> bool:
+    """True if adding this position would not exceed the league max for the team."""
+    maxes = normalize_position_maxes(position_maxes)
+    pos = str(position or "")
+    if pos not in maxes:
+        return True
+    return count_by_position(rostered).get(pos, 0) < maxes[pos]
+
+
+def team_roster_players(
+    players_by_id: dict[str, dict[str, Any]],
+    picks: list[dict[str, Any]],
+    team_slot: int,
+) -> list[dict[str, Any]]:
+    return [
+        players_by_id[str(p["player_id"])]
+        for p in picks
+        if int(p["team_slot"]) == team_slot and str(p["player_id"]) in players_by_id
+    ]
+
+
 def compute_open_needs(
     rostered: list[dict[str, Any]],
     template: list[str] | None = None,
 ) -> list[str]:
-    """Remaining unfilled starter/flex slots for a roster."""
-    slots = list(template or DEFAULT_ROSTER_TEMPLATE)
+    """Remaining unfilled starter/flex slots (BENCH ignored)."""
+    slots = [
+        s
+        for s in (template or DEFAULT_ROSTER_TEMPLATE)
+        if str(s).upper() != "BENCH"
+    ]
     remaining: list[str | None] = list(slots)
     used = [False] * len(rostered)
 
@@ -274,17 +370,22 @@ def score_player(
     league_size: int,
     need_weight: float,
     picks_until_user: int,
+    position_maxes: dict[str, int] | None = None,
 ) -> tuple[float, list[str]]:
     rank = rank_for_scoring(player, scoring)
     base = BASE_RANK_SPAN + 1.0 - float(rank)
     reasons: list[str] = []
+    pos = str(player.get("position") or "")
 
-    fills, slot = player_fills_need(str(player.get("position") or ""), open_needs)
+    if not can_add_position(rostered, pos, position_maxes):
+        # Illegal under league max — bury so it never wins primary
+        return -10_000.0, [f"At {pos} max"]
+
+    fills, slot = player_fills_need(pos, open_needs)
     need = need_weight if fills else 0.0
     if fills:
-        reasons.append(f"Fills {slot}" if slot != player.get("position") else f"Fills {slot} need")
+        reasons.append(f"Fills {slot}" if slot != pos else f"Fills {slot} need")
 
-    pos = str(player.get("position") or "")
     scarce = _scarcity_bonus(
         pos,
         available,
@@ -316,9 +417,12 @@ def evaluate_player(
     user_slot: int,
     picks: list[dict[str, Any]],
     roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+    position_maxes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Full insight card for one player in the current draft context."""
     scoring = normalize_scoring(scoring)
+    maxes = normalize_position_maxes(position_maxes)
     rec = recommend(
         players,
         league_size=league_size,
@@ -326,6 +430,8 @@ def evaluate_player(
         user_slot=user_slot,
         picks=picks,
         roster_template=roster_template,
+        roster_size=roster_size,
+        position_maxes=maxes,
         alternate_count=5,
     )
     by_id = {str(p["player_id"]): p for p in players}
@@ -339,19 +445,28 @@ def evaluate_player(
         (row for row in (rec.get("top_pool") or []) if row["player_id"] == player_id),
         None,
     )
+    full_template, starters, size = resolve_roster_template(
+        roster_template, roster_size
+    )
+    user_rostered = team_roster_players(by_id, picks, user_slot)
+    current = next_overall_after(picks)
+    total_picks = league_size * size
+    on_clock = (
+        team_slot_for_overall(current, league_size) if current <= total_picks else None
+    )
+    clock_rostered = (
+        team_roster_players(by_id, picks, on_clock) if on_clock is not None else []
+    )
+    pos = str(player.get("position") or "")
+    legal_for_user = can_add_position(user_rostered, pos, maxes)
+    legal_for_clock = (
+        can_add_position(clock_rostered, pos, maxes) if on_clock is not None else True
+    )
+
     # If outside top_pool, re-score against same context
     if pool_hit is None and not drafted:
-        # Fall back: compare to primary score using a fresh score_player pass
-        template = list(roster_template or DEFAULT_ROSTER_TEMPLATE)
-        user_rostered = [
-            by_id[str(p["player_id"])]
-            for p in picks
-            if int(p["team_slot"]) == user_slot and str(p["player_id"]) in by_id
-        ]
-        open_needs = compute_open_needs(user_rostered, template)
+        open_needs = compute_open_needs(user_rostered, starters)
         avail = available_players(players, picks)
-        current = next_overall_after(picks)
-        total_picks = league_size * len(template)
         user_next = user_next_overall(league_size, user_slot, current, total_picks) or current
         picks_until_user = max(user_next - current, 0)
         user_picks_left = sum(
@@ -374,16 +489,20 @@ def evaluate_player(
             league_size=league_size,
             need_weight=need_weight,
             picks_until_user=picks_until_user,
+            position_maxes=maxes,
         )
-        top = float((rec.get("primary") or {}).get("score") or total)
+        top = float((rec.get("primary") or {}).get("score") or max(total, 1.0))
         pool_hit = {
             "player_id": player_id,
             "score": round(total, 3),
-            "fit_pct": fit_pct_from_scores(total, top),
+            "fit_pct": fit_pct_from_scores(total, top) if total > -1000 else 40,
             "reasons": reasons,
         }
 
     pick_meta = next((p for p in picks if str(p["player_id"]) == str(player_id)), None)
+    reasons = [] if drafted else list((pool_hit or {}).get("reasons") or [])
+    if not drafted and not legal_for_user and "At" not in " ".join(reasons):
+        reasons = [f"At {pos} max"] + reasons
 
     return {
         "player": {
@@ -402,9 +521,15 @@ def evaluate_player(
         "pick": pick_meta,
         "fit_pct": None if drafted else (pool_hit or {}).get("fit_pct"),
         "score": None if drafted else (pool_hit or {}).get("score"),
-        "reasons": [] if drafted else list((pool_hit or {}).get("reasons") or []),
+        "reasons": reasons[:3],
+        "legal_for_user": legal_for_user,
+        "legal_for_clock_team": legal_for_clock,
+        "position_maxes": maxes,
+        "user_position_counts": count_by_position(user_rostered),
+        "clock_position_counts": count_by_position(clock_rostered),
         "primary": rec.get("primary"),
         "board_meta": rec.get("board_meta"),
+        "roster_template_full": full_template,
     }
 
 
@@ -416,17 +541,22 @@ def recommend(
     user_slot: int,
     picks: list[dict[str, Any]],
     roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+    position_maxes: dict[str, Any] | None = None,
     alternate_count: int = 3,
 ) -> dict[str, Any]:
     """Recommend for the USER's next pick; board_meta includes on-clock state."""
     scoring = normalize_scoring(scoring)
-    template = list(roster_template or DEFAULT_ROSTER_TEMPLATE)
+    maxes = normalize_position_maxes(position_maxes)
+    full_template, starters, size = resolve_roster_template(
+        roster_template, roster_size
+    )
     if league_size < 8 or league_size > 14:
         raise ValueError("league_size must be 8–14")
     if user_slot < 1 or user_slot > league_size:
         raise ValueError("user_slot must be 1..league_size")
 
-    total_picks = league_size * len(template)
+    total_picks = league_size * size
     current = next_overall_after(picks)
     on_clock = (
         team_slot_for_overall(current, league_size) if current <= total_picks else None
@@ -435,29 +565,43 @@ def recommend(
     user_on_clock = on_clock == user_slot and current <= total_picks
 
     by_id = {str(p["player_id"]): p for p in players}
-    user_rostered = [
-        by_id[str(p["player_id"])]
-        for p in picks
-        if int(p["team_slot"]) == user_slot and str(p["player_id"]) in by_id
-    ]
-    open_needs = compute_open_needs(user_rostered, template)
+    user_rostered = team_roster_players(by_id, picks, user_slot)
+    open_needs = compute_open_needs(user_rostered, starters)
     avail = available_players(players, picks)
+    user_counts = count_by_position(user_rostered)
+    clock_counts = (
+        count_by_position(team_roster_players(by_id, picks, on_clock))
+        if on_clock is not None
+        else {k: 0 for k in POSITION_KEYS}
+    )
 
-    if user_next is None or not avail:
+    meta_base = {
+        "current_overall": current if current <= total_picks else None,
+        "on_clock_slot": on_clock,
+        "user_on_clock": bool(user_on_clock),
+        "user_next_overall": user_next,
+        "user_needs": open_needs,
+        "scoring": scoring,
+        "league_size": league_size,
+        "total_picks": total_picks,
+        "picks_made": len(picks),
+        "roster_size": size,
+        "position_maxes": maxes,
+        "user_position_counts": user_counts,
+        "clock_position_counts": clock_counts,
+        "starter_template": starters,
+    }
+
+    legal_avail = [
+        p for p in avail if can_add_position(user_rostered, str(p.get("position") or ""), maxes)
+    ]
+
+    if user_next is None or not legal_avail:
         return {
             "primary": None,
             "alternates": [],
-            "board_meta": {
-                "current_overall": current if current <= total_picks else None,
-                "on_clock_slot": on_clock,
-                "user_on_clock": False,
-                "user_next_overall": None,
-                "user_needs": open_needs,
-                "scoring": scoring,
-                "league_size": league_size,
-                "total_picks": total_picks,
-                "picks_made": len(picks),
-            },
+            "top_pool": [],
+            "board_meta": {**meta_base, "user_on_clock": False if user_next is None else meta_base["user_on_clock"]},
         }
 
     picks_until_user = max(user_next - current, 0)
@@ -474,7 +618,7 @@ def recommend(
     )
 
     scored: list[tuple[float, dict[str, Any], list[str]]] = []
-    for p in avail:
+    for p in legal_avail:
         total, reasons = score_player(
             p,
             scoring=scoring,
@@ -484,6 +628,7 @@ def recommend(
             league_size=league_size,
             need_weight=need_weight,
             picks_until_user=picks_until_user,
+            position_maxes=maxes,
         )
         scored.append((total, p, reasons))
 
@@ -512,24 +657,14 @@ def recommend(
 
     primary = pack(scored[0]) if scored else None
     alts = [pack(r) for r in scored[1 : 1 + max(0, alternate_count)]]
-    # Top pool for board tooltips / player cards (keep payload modest)
     top_pool = [pack(r) for r in scored[:40]]
 
     return {
         "primary": primary,
         "alternates": alts,
         "top_pool": top_pool,
-        "board_meta": {
-            "current_overall": current if current <= total_picks else None,
-            "on_clock_slot": on_clock,
-            "user_on_clock": bool(user_on_clock),
-            "user_next_overall": user_next,
-            "user_needs": open_needs,
-            "scoring": scoring,
-            "league_size": league_size,
-            "total_picks": total_picks,
-            "picks_made": len(picks),
-        },
+        "board_meta": meta_base,
+        "roster_template_full": full_template,
     }
 
 
@@ -579,6 +714,8 @@ def list_players_for_api(scoring: str | None = None) -> dict[str, Any]:
         "count": len(players_out),
         "players": players_out,
         "roster_template": list(DEFAULT_ROSTER_TEMPLATE),
+        "default_roster_size": DEFAULT_ROSTER_SIZE,
+        "default_position_maxes": dict(DEFAULT_POSITION_MAXES),
     }
 
 
@@ -589,6 +726,8 @@ def recommend_from_board(
     user_slot: int,
     picks: list[dict[str, Any]],
     roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+    position_maxes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     data = load_rankings()
     return recommend(
@@ -598,6 +737,8 @@ def recommend_from_board(
         user_slot=user_slot,
         picks=picks,
         roster_template=roster_template,
+        roster_size=roster_size,
+        position_maxes=position_maxes,
     )
 
 
@@ -609,6 +750,8 @@ def evaluate_player_from_board(
     user_slot: int,
     picks: list[dict[str, Any]],
     roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+    position_maxes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     data = load_rankings()
     return evaluate_player(
@@ -619,4 +762,6 @@ def evaluate_player_from_board(
         user_slot=user_slot,
         picks=picks,
         roster_template=roster_template,
+        roster_size=roster_size,
+        position_maxes=position_maxes,
     )

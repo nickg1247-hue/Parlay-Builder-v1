@@ -88,8 +88,63 @@
 
 .draft-setup-form {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.85rem;
+}
+
+.draft-setup-form .draft-cta {
+  grid-column: 1 / -1;
+}
+
+.draft-rules {
+  grid-column: 1 / -1;
+  margin: 0.25rem 0 0;
+  padding: 0.85rem 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--draft-line);
+  background: rgba(10, 16, 24, 0.85);
+}
+
+.draft-rules legend {
+  padding: 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.draft-rules-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.draft-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.draft-rules-grid input[type="number"] {
+  font: inherit;
+  font-size: 0.95rem;
+  color: #f1f5f9;
+  background: #0a1018;
+  border: 1px solid var(--draft-line);
+  border-radius: 10px;
+  padding: 0.55rem 0.5rem;
+  width: 100%;
+}
+
+.draft-player-row.is-blocked {
+  opacity: 0.45;
+}
+
+.draft-pos-limits span.is-maxed {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
 }
 
 .draft-field {
@@ -1011,6 +1066,10 @@
 @media (max-width: 640px) {
   .draft-setup-form {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .draft-rules-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .draft-player-table-head {

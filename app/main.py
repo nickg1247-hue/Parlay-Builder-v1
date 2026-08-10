@@ -415,6 +415,8 @@ class NflFantasyRecommendRequest(BaseModel):
     user_slot: int = Field(..., ge=1)
     picks: list[NflFantasyPick] = Field(default_factory=list)
     roster_template: list[str] | None = None
+    roster_size: int | None = Field(None, ge=9, le=18)
+    position_maxes: dict[str, int] | None = None
 
 
 class NflFantasyInsightRequest(BaseModel):
@@ -424,6 +426,8 @@ class NflFantasyInsightRequest(BaseModel):
     user_slot: int = Field(..., ge=1)
     picks: list[NflFantasyPick] = Field(default_factory=list)
     roster_template: list[str] | None = None
+    roster_size: int | None = Field(None, ge=9, le=18)
+    position_maxes: dict[str, int] | None = None
 
 
 @app.get("/login")
@@ -1750,6 +1754,8 @@ async def fantasy_nfl_recommend(body: NflFantasyRecommendRequest):
             user_slot=body.user_slot,
             picks=picks,
             roster_template=body.roster_template,
+            roster_size=body.roster_size,
+            position_maxes=body.position_maxes,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1768,6 +1774,8 @@ async def fantasy_nfl_insight(body: NflFantasyInsightRequest):
             user_slot=body.user_slot,
             picks=picks,
             roster_template=body.roster_template,
+            roster_size=body.roster_size,
+            position_maxes=body.position_maxes,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
