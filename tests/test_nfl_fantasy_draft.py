@@ -294,10 +294,33 @@ def test_need_bonus_prefers_missing_rb():
     assert result["primary"]["player_id"] == "rb_need"
 
 
+def test_fit_and_power_rank_helpers():
+    assert draft.power_rank_from_consensus(1) == 100
+    assert draft.power_rank_from_consensus(50) == 51
+    assert draft.fit_pct_from_scores(100, 100) == 99
+    assert draft.fit_pct_from_scores(50, 100) == 70
+    assert 40 <= draft.fit_pct_from_scores(0, 100) <= 50
+
+
 def test_scoring_column_selection():
     assert draft.rank_for_scoring(SAMPLE_PLAYERS[0], "half_ppr") == 1
     assert draft.rank_for_scoring(SAMPLE_PLAYERS[1], "ppr") == 1
     assert draft.rank_for_scoring(SAMPLE_PLAYERS[0], "standard") == 1
+
+
+def test_evaluate_player_returns_projected_and_fit():
+    result = draft.evaluate_player(
+        SAMPLE_PLAYERS,
+        player_id="rb_b",
+        league_size=10,
+        scoring="half_ppr",
+        user_slot=3,
+        picks=[],
+    )
+    assert result["player"]["projected_pick"] is not None
+    assert result["player"]["power_rank"] >= 1
+    assert result["fit_pct"] is not None
+    assert result["drafted"] is False
 
 
 def test_recommend_updates_after_pick():

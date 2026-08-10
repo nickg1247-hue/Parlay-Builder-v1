@@ -251,6 +251,19 @@ def _bye_collision(
     return False
 
 
+def power_rank_from_consensus(rank: int) -> int:
+    """1–100 power rating from consensus rank (1 = elite)."""
+    return int(max(1, min(100, 101 - int(rank))))
+
+
+def fit_pct_from_scores(score: float, top_score: float) -> int:
+    """How good this pick is for *you* vs the current best available (40–99)."""
+    if top_score <= 0:
+        return 50
+    ratio = max(0.0, min(1.0, score / top_score))
+    return int(round(40 + ratio * 59))
+
+
 def score_player(
     player: dict[str, Any],
     *,
@@ -292,6 +305,107 @@ def score_player(
 
     total = base + need + scarce - bye_pen
     return total, reasons[:3]
+
+
+def evaluate_player(
+    players: list[dict[str, Any]],
+    *,
+    player_id: str,
+    league_size: int,
+    scoring: str,
+    user_slot: int,
+    picks: list[dict[str, Any]],
+    roster_template: list[str] | None = None,
+) -> dict[str, Any]:
+    """Full insight card for one player in the current draft context."""
+    scoring = normalize_scoring(scoring)
+    rec = recommend(
+        players,
+        league_size=league_size,
+        scoring=scoring,
+        user_slot=user_slot,
+        picks=picks,
+        roster_template=roster_template,
+        alternate_count=5,
+    )
+    by_id = {str(p["player_id"]): p for p in players}
+    player = by_id.get(str(player_id))
+    if player is None:
+        raise ValueError("Unknown player_id")
+
+    rank = rank_for_scoring(player, scoring)
+    drafted = str(player_id) in drafted_ids(picks)
+    pool_hit = next(
+        (row for row in (rec.get("top_pool") or []) if row["player_id"] == player_id),
+        None,
+    )
+    # If outside top_pool, re-score against same context
+    if pool_hit is None and not drafted:
+        # Fall back: compare to primary score using a fresh score_player pass
+        template = list(roster_template or DEFAULT_ROSTER_TEMPLATE)
+        user_rostered = [
+            by_id[str(p["player_id"])]
+            for p in picks
+            if int(p["team_slot"]) == user_slot and str(p["player_id"]) in by_id
+        ]
+        open_needs = compute_open_needs(user_rostered, template)
+        avail = available_players(players, picks)
+        current = next_overall_after(picks)
+        total_picks = league_size * len(template)
+        user_next = user_next_overall(league_size, user_slot, current, total_picks) or current
+        picks_until_user = max(user_next - current, 0)
+        user_picks_left = sum(
+            1
+            for o in range(user_next, total_picks + 1)
+            if team_slot_for_overall(o, league_size) == user_slot
+        )
+        need_weight = _need_bonus_weight(
+            open_needs=open_needs,
+            user_next=user_next,
+            total_picks=total_picks,
+            user_picks_left=max(user_picks_left, 1),
+        )
+        total, reasons = score_player(
+            player,
+            scoring=scoring,
+            open_needs=open_needs,
+            rostered=user_rostered,
+            available=avail,
+            league_size=league_size,
+            need_weight=need_weight,
+            picks_until_user=picks_until_user,
+        )
+        top = float((rec.get("primary") or {}).get("score") or total)
+        pool_hit = {
+            "player_id": player_id,
+            "score": round(total, 3),
+            "fit_pct": fit_pct_from_scores(total, top),
+            "reasons": reasons,
+        }
+
+    pick_meta = next((p for p in picks if str(p["player_id"]) == str(player_id)), None)
+
+    return {
+        "player": {
+            "player_id": player["player_id"],
+            "name": player["name"],
+            "position": player["position"],
+            "team": player.get("team"),
+            "bye": player.get("bye"),
+            "tier": player.get("tier"),
+            "rank": rank,
+            "power_rank": power_rank_from_consensus(rank),
+            "adp": player.get("adp"),
+            "projected_pick": round(float(player.get("adp") or rank), 1),
+        },
+        "drafted": drafted,
+        "pick": pick_meta,
+        "fit_pct": None if drafted else (pool_hit or {}).get("fit_pct"),
+        "score": None if drafted else (pool_hit or {}).get("score"),
+        "reasons": [] if drafted else list((pool_hit or {}).get("reasons") or []),
+        "primary": rec.get("primary"),
+        "board_meta": rec.get("board_meta"),
+    }
 
 
 def recommend(
@@ -375,8 +489,11 @@ def recommend(
 
     scored.sort(key=lambda t: (-t[0], rank_for_scoring(t[1], scoring), t[1]["name"]))
 
+    top_score = scored[0][0] if scored else 0.0
+
     def pack(row: tuple[float, dict[str, Any], list[str]]) -> dict[str, Any]:
         total, p, reasons = row
+        rank = rank_for_scoring(p, scoring)
         return {
             "player_id": p["player_id"],
             "name": p["name"],
@@ -384,18 +501,24 @@ def recommend(
             "team": p.get("team"),
             "bye": p.get("bye"),
             "tier": p.get("tier"),
-            "rank": rank_for_scoring(p, scoring),
+            "rank": rank,
+            "power_rank": power_rank_from_consensus(rank),
             "adp": p.get("adp"),
+            "projected_pick": round(float(p.get("adp") or rank), 1),
             "score": round(total, 3),
+            "fit_pct": fit_pct_from_scores(total, top_score),
             "reasons": reasons,
         }
 
     primary = pack(scored[0]) if scored else None
     alts = [pack(r) for r in scored[1 : 1 + max(0, alternate_count)]]
+    # Top pool for board tooltips / player cards (keep payload modest)
+    top_pool = [pack(r) for r in scored[:40]]
 
     return {
         "primary": primary,
         "alternates": alts,
+        "top_pool": top_pool,
         "board_meta": {
             "current_overall": current if current <= total_picks else None,
             "on_clock_slot": on_clock,
@@ -430,6 +553,7 @@ def list_players_for_api(scoring: str | None = None) -> dict[str, Any]:
     data = load_rankings()
     players_out: list[dict[str, Any]] = []
     for p in data.get("players") or []:
+        rank = rank_for_scoring(p, scoring)
         players_out.append(
             {
                 "player_id": p["player_id"],
@@ -442,7 +566,9 @@ def list_players_for_api(scoring: str | None = None) -> dict[str, Any]:
                 "rank_std": p.get("rank_std"),
                 "rank_half": p.get("rank_half"),
                 "rank_ppr": p.get("rank_ppr"),
-                "rank": rank_for_scoring(p, scoring),
+                "rank": rank,
+                "power_rank": power_rank_from_consensus(rank),
+                "projected_pick": round(float(p.get("adp") or rank), 1),
             }
         )
     players_out.sort(key=lambda x: (x["rank"], x["name"]))
@@ -467,6 +593,27 @@ def recommend_from_board(
     data = load_rankings()
     return recommend(
         list(data.get("players") or []),
+        league_size=league_size,
+        scoring=scoring,
+        user_slot=user_slot,
+        picks=picks,
+        roster_template=roster_template,
+    )
+
+
+def evaluate_player_from_board(
+    *,
+    player_id: str,
+    league_size: int,
+    scoring: str,
+    user_slot: int,
+    picks: list[dict[str, Any]],
+    roster_template: list[str] | None = None,
+) -> dict[str, Any]:
+    data = load_rankings()
+    return evaluate_player(
+        list(data.get("players") or []),
+        player_id=player_id,
         league_size=league_size,
         scoring=scoring,
         user_slot=user_slot,

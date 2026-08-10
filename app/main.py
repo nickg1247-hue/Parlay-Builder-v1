@@ -92,6 +92,7 @@ from app.services.props_mlb import (
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.nfl_fantasy_draft import (
+    evaluate_player_from_board,
     list_players_for_api,
     recommend_from_board,
 )
@@ -409,6 +410,15 @@ class NflFantasyPick(BaseModel):
 
 
 class NflFantasyRecommendRequest(BaseModel):
+    league_size: int = Field(..., ge=8, le=14)
+    scoring: str = Field("half_ppr")
+    user_slot: int = Field(..., ge=1)
+    picks: list[NflFantasyPick] = Field(default_factory=list)
+    roster_template: list[str] | None = None
+
+
+class NflFantasyInsightRequest(BaseModel):
+    player_id: str
     league_size: int = Field(..., ge=8, le=14)
     scoring: str = Field("half_ppr")
     user_slot: int = Field(..., ge=1)
@@ -1735,6 +1745,24 @@ async def fantasy_nfl_recommend(body: NflFantasyRecommendRequest):
     try:
         picks = [p.model_dump() for p in body.picks]
         return recommend_from_board(
+            league_size=body.league_size,
+            scoring=body.scoring,
+            user_slot=body.user_slot,
+            picks=picks,
+            roster_template=body.roster_template,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/fantasy/nfl/insight")
+async def fantasy_nfl_insight(body: NflFantasyInsightRequest):
+    try:
+        picks = [p.model_dump() for p in body.picks]
+        return evaluate_player_from_board(
+            player_id=body.player_id,
             league_size=body.league_size,
             scoring=body.scoring,
             user_slot=body.user_slot,

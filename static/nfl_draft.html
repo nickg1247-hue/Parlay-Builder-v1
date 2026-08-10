@@ -10,110 +10,177 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809b">
 </head>
 <body class="ntg-shell home-v2 draft-room-page">
-  <div class="app-shell">
-    <header class="app-topbar dash-topbar">
+  <div class="app-shell draft-shell">
+    <header class="app-topbar dash-topbar draft-topbar-slim">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260725" alt="NTG Sports" width="44" height="44" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="dash-subnav">
-        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
-      </div>
     </header>
 
-    <main class="app-main dash-main draft-main">
+    <main class="draft-main">
       <section id="setup-panel" class="draft-setup" aria-labelledby="setup-title">
-        <h1 id="setup-title" class="draft-brand">Draft room</h1>
-        <p class="draft-lede">Snake redraft assistant. Set your league, then track the board and always see your next best pick.</p>
+        <div class="draft-setup-card">
+          <p class="draft-setup-kicker">NTG Draft</p>
+          <h1 id="setup-title" class="draft-brand">Draft room</h1>
+          <p class="draft-lede">Snake redraft command center. Track every pick, open any player for ADP + power + fit, and always know your next best move.</p>
 
-        <form id="setup-form" class="draft-setup-form">
-          <label class="draft-field">
-            <span>Teams</span>
-            <select id="league-size" name="league_size" required>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10" selected>10</option>
-              <option value="11">11</option>
-              <option value="12">12</option>
-              <option value="13">13</option>
-              <option value="14">14</option>
-            </select>
-          </label>
-          <label class="draft-field">
-            <span>Your slot</span>
-            <select id="user-slot" name="user_slot" required></select>
-          </label>
-          <label class="draft-field">
-            <span>Scoring</span>
-            <select id="scoring" name="scoring">
-              <option value="standard">Standard</option>
-              <option value="half_ppr" selected>Half-PPR</option>
-              <option value="ppr">PPR</option>
-            </select>
-          </label>
-          <button type="submit" class="draft-cta">Enter draft room</button>
-        </form>
+          <form id="setup-form" class="draft-setup-form">
+            <label class="draft-field">
+              <span>Teams</span>
+              <select id="league-size" name="league_size" required>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10" selected>10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+              </select>
+            </label>
+            <label class="draft-field">
+              <span>Your slot</span>
+              <select id="user-slot" name="user_slot" required></select>
+            </label>
+            <label class="draft-field">
+              <span>Scoring</span>
+              <select id="scoring" name="scoring">
+                <option value="standard">Standard</option>
+                <option value="half_ppr" selected>Half-PPR</option>
+                <option value="ppr">PPR</option>
+              </select>
+            </label>
+            <button type="submit" class="draft-cta">Enter draft room</button>
+          </form>
 
-        <p class="draft-roster-note">
-          Default starters (9 rounds): <strong>QB1 · RB2 · WR2 · TE1 · FLEX1 · DST1 · K1</strong>.
-          FLEX is RB/WR/TE. Snake order only — no auction, no superflex.
-        </p>
+          <p class="draft-roster-note">
+            Starters: <strong>QB · RB · RB · WR · WR · TE · FLEX · DST · K</strong>
+            · FLEX is RB/WR/TE · Snake only
+          </p>
+        </div>
       </section>
 
-      <section id="room-panel" class="draft-room hidden" hidden aria-labelledby="clock-label">
-        <div class="draft-hero">
-          <div class="draft-clock">
-            <p id="clock-label" class="draft-clock-label">On the clock</p>
-            <p id="clock-detail" class="draft-clock-detail"></p>
+      <section id="room-panel" class="draft-room hidden" hidden>
+        <div id="clock-bar" class="draft-clock-bar" aria-live="polite">
+          <div class="draft-clock-copy">
+            <p id="clock-label" class="draft-clock-title">On the clock</p>
+            <p id="clock-detail" class="draft-clock-sub"></p>
           </div>
-          <div class="draft-rec" aria-live="polite">
-            <p id="rec-eyebrow" class="draft-rec-eyebrow">Your next pick</p>
-            <h2 id="rec-name" class="draft-rec-name">—</h2>
-            <p id="rec-meta" class="draft-rec-meta"></p>
-            <div id="rec-chips" class="draft-chips"></div>
-            <p id="needs-line" class="draft-needs"></p>
-            <div class="draft-rec-actions">
-              <button type="button" id="btn-draft-rec" class="draft-cta">Draft recommended</button>
-              <button type="button" id="btn-undo" class="draft-btn-ghost">Undo</button>
-              <button type="button" id="btn-reset" class="draft-btn-ghost">Reset</button>
-              <button type="button" id="btn-back-setup" class="draft-btn-ghost">Setup</button>
-            </div>
-            <ul id="rec-alts" class="draft-alts" aria-label="Alternates"></ul>
+          <div class="draft-clock-timer-wrap">
+            <p id="clock-timer" class="draft-clock-timer">—:—</p>
+            <p id="clock-autopick" class="draft-clock-autopick"></p>
+          </div>
+          <div class="draft-clock-actions">
+            <button type="button" id="btn-draft-rec" class="draft-cta draft-cta--clock">Draft recommended</button>
+            <button type="button" id="btn-undo" class="draft-btn-ghost">Undo</button>
+            <button type="button" id="btn-reset" class="draft-btn-ghost">Reset</button>
+            <button type="button" id="btn-back-setup" class="draft-btn-ghost">Setup</button>
           </div>
         </div>
 
-        <section class="draft-board-section" aria-labelledby="board-heading">
-          <h3 id="board-heading" class="draft-section-title">Available players</h3>
-          <p class="draft-section-lede">Click a player to draft them to the team on the clock.</p>
-          <div class="draft-board-tools">
-            <input id="player-search" type="search" class="draft-search" placeholder="Search name, team, position" autocomplete="off" />
-            <div id="pos-filters" class="draft-pos-filters" role="group" aria-label="Position filter">
-              <button type="button" class="draft-pos-btn is-active" data-pos="">All</button>
-              <button type="button" class="draft-pos-btn" data-pos="QB">QB</button>
-              <button type="button" class="draft-pos-btn" data-pos="RB">RB</button>
-              <button type="button" class="draft-pos-btn" data-pos="WR">WR</button>
-              <button type="button" class="draft-pos-btn" data-pos="TE">TE</button>
-              <button type="button" class="draft-pos-btn" data-pos="DST">DST</button>
-              <button type="button" class="draft-pos-btn" data-pos="K">K</button>
+        <div id="pick-strip" class="draft-pick-strip" aria-label="Recent and upcoming picks"></div>
+
+        <div class="draft-workspace">
+          <div class="draft-workspace-main">
+            <div class="draft-tabs" role="tablist" aria-label="Draft views">
+              <button type="button" class="draft-tab is-active" data-tab="players" role="tab" aria-selected="true">Players</button>
+              <button type="button" class="draft-tab" data-tab="board" role="tab" aria-selected="false">Board</button>
+              <button type="button" class="draft-tab" data-tab="queue" role="tab" aria-selected="false">Queue</button>
+            </div>
+
+            <div id="tab-players" class="draft-tab-panel">
+              <div class="draft-board-tools">
+                <input id="player-search" type="search" class="draft-search" placeholder="Search players, teams…" autocomplete="off" />
+                <div id="pos-filters" class="draft-pos-filters" role="group" aria-label="Position filter">
+                  <button type="button" class="draft-pos-btn is-active" data-pos="">All</button>
+                  <button type="button" class="draft-pos-btn" data-pos="QB">QB</button>
+                  <button type="button" class="draft-pos-btn" data-pos="RB">RB</button>
+                  <button type="button" class="draft-pos-btn" data-pos="WR">WR</button>
+                  <button type="button" class="draft-pos-btn" data-pos="TE">TE</button>
+                  <button type="button" class="draft-pos-btn" data-pos="DST">DST</button>
+                  <button type="button" class="draft-pos-btn" data-pos="K">K</button>
+                </div>
+              </div>
+              <div class="draft-player-table-head" aria-hidden="true">
+                <span>Rk</span><span>Player</span><span>Pos</span><span>Proj</span><span>Power</span><span>Fit</span>
+              </div>
+              <div id="player-list" class="draft-player-list"></div>
+            </div>
+
+            <div id="tab-board" class="draft-tab-panel hidden" hidden>
+              <div class="draft-board-toggle">
+                <button type="button" id="btn-view-roster" class="draft-view-pill is-active">Roster view</button>
+                <button type="button" id="btn-view-round" class="draft-view-pill">Round view</button>
+              </div>
+              <div id="board-grid" class="draft-board-grid"></div>
+            </div>
+
+            <div id="tab-queue" class="draft-tab-panel hidden" hidden>
+              <p class="draft-queue-lede">Your shortlist. Click a name for full insight. Draft from here when you’re on the clock.</p>
+              <ul id="queue-list" class="draft-queue-list"></ul>
             </div>
           </div>
-          <div id="player-list" class="draft-player-list"></div>
-        </section>
 
-        <section class="draft-rosters-section" aria-labelledby="rosters-heading">
-          <h3 id="rosters-heading" class="draft-section-title">Team rosters</h3>
-          <div id="roster-grid" class="draft-roster-grid"></div>
-        </section>
+          <aside class="draft-sidebar" aria-label="Your team">
+            <div class="draft-sidebar-rec" id="sidebar-rec">
+              <p class="draft-sidebar-kicker" id="rec-eyebrow">Your next pick</p>
+              <h2 id="rec-name" class="draft-sidebar-name">—</h2>
+              <p id="rec-meta" class="draft-sidebar-meta"></p>
+              <div id="rec-chips" class="draft-chips"></div>
+              <p id="needs-line" class="draft-needs"></p>
+              <ul id="rec-alts" class="draft-alts" aria-label="Alternates"></ul>
+            </div>
+            <div class="draft-sidebar-roster">
+              <h3>Roster</h3>
+              <div id="user-roster" class="draft-user-roster"></div>
+            </div>
+            <div class="draft-pos-limits" id="pos-limits"></div>
+          </aside>
+        </div>
       </section>
     </main>
   </div>
+
+  <div id="player-modal" class="draft-modal hidden" hidden role="dialog" aria-modal="true" aria-labelledby="modal-name">
+    <div class="draft-modal-backdrop" data-close-modal></div>
+    <div class="draft-modal-card">
+      <button type="button" class="draft-modal-close" data-close-modal aria-label="Close">×</button>
+      <div class="draft-modal-head">
+        <span id="modal-pos" class="draft-pos-pill">—</span>
+        <h2 id="modal-name">—</h2>
+        <p id="modal-meta" class="draft-modal-meta"></p>
+      </div>
+      <div class="draft-modal-stats">
+        <div class="draft-stat">
+          <span class="draft-stat-label">Projected pick</span>
+          <span id="modal-adp" class="draft-stat-value">—</span>
+        </div>
+        <div class="draft-stat">
+          <span class="draft-stat-label">Power rank</span>
+          <span id="modal-power" class="draft-stat-value">—</span>
+        </div>
+        <div class="draft-stat draft-stat--fit">
+          <span class="draft-stat-label">Good pick for you</span>
+          <span id="modal-fit" class="draft-stat-value">—</span>
+        </div>
+      </div>
+      <div id="modal-chips" class="draft-chips"></div>
+      <p id="modal-note" class="draft-modal-note"></p>
+      <div class="draft-modal-actions">
+        <button type="button" id="modal-draft" class="draft-cta">Draft to clock</button>
+        <button type="button" id="modal-queue" class="draft-btn-ghost">Add to queue</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/static/app.js?v=20260725"></script>
-  <script src="/static/nfl_draft.js?v=20260809"></script>
+  <script src="/static/nfl_draft.js?v=20260809b"></script>
   <script>
     if (typeof initSiteChrome === "function") initSiteChrome();
   </script>

@@ -57,12 +57,14 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 | Page | `/nfl/draft` → `static/nfl_draft.html` |
 | API players | `GET /api/fantasy/nfl/players?scoring=half_ppr` |
 | API recommend | `POST /api/fantasy/nfl/recommend` |
+| API insight | `POST /api/fantasy/nfl/insight` — ADP / power rank / fit% for one player |
 | Logic | `app/services/nfl_fantasy_draft.py` |
 | Rankings | `data/processed/nfl_fantasy_rankings_2026.json` |
+| UI | `static/nfl_draft.html` + `nfl_draft.js` + `nfl_draft.css` |
 
 **Rankings source:** curated static consensus-style board (~230 players across QB/RB/WR/TE/DST/K) — not live ESPN/Sleeper ADP. To refresh: edit the JSON (or re-run `python scripts/generate_nfl_fantasy_rankings.py`) and bump fields `rank_std` / `rank_half` / `rank_ppr` / `adp` / `bye` / `tier`.
 
-**Recommend score (plain English):** invert the scoring-format rank (lower rank = higher base value), add a need bonus when the player fills an open starter/FLEX hole on *your* roster (small early when needs are wide open so BPA wins; larger later as holes remain), add a scarcity bonus when few starter-quality players remain at that position relative to picks until you are up, and subtract a small soft penalty if the player’s bye week matches someone already on your roster.
+**Recommend score (plain English):** invert the scoring-format rank (lower rank = higher base value), add a need bonus when the player fills an open starter/FLEX hole on *your* roster (small early when needs are wide open so BPA wins; larger later as holes remain), add a scarcity bonus when few starter-quality players remain at that position relative to picks until you are up, and subtract a small soft penalty if the player’s bye week matches someone already on your roster. **Fit %** is that score vs the current #1 available (roughly 40–99). **Power rank** is `101 − consensus rank` capped 1–100. **Projected pick** is ADP.
 
 **Verify:** `pytest tests/test_nfl_fantasy_draft.py -q`
 
