@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
-  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809c">
+  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809e">
 </head>
 <body class="ntg-shell home-v2 draft-room-page">
   <div class="app-shell draft-shell">
@@ -56,32 +56,35 @@
                 <option value="ppr">PPR</option>
               </select>
             </label>
-            <label class="draft-field">
-              <span>Roster size</span>
-              <select id="roster-size" name="roster_size">
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="13">13</option>
-                <option value="14">14</option>
-                <option value="15" selected>15</option>
-                <option value="16">16</option>
-                <option value="17">17</option>
-                <option value="18">18</option>
-              </select>
-            </label>
+
+            <fieldset class="draft-rules">
+              <legend>Starting roster slots</legend>
+              <p class="draft-rules-hint">WRT = WR / RB / TE flex. Bench is separate from starters.</p>
+              <div class="draft-rules-grid">
+                <label class="draft-field"><span>QB</span><input id="slot-qb" type="number" min="0" max="4" value="1" /></label>
+                <label class="draft-field"><span>RB</span><input id="slot-rb" type="number" min="0" max="4" value="2" /></label>
+                <label class="draft-field"><span>WR</span><input id="slot-wr" type="number" min="0" max="5" value="2" /></label>
+                <label class="draft-field"><span>TE</span><input id="slot-te" type="number" min="0" max="3" value="1" /></label>
+                <label class="draft-field"><span>WRT</span><input id="slot-wrt" type="number" min="0" max="4" value="2" /></label>
+                <label class="draft-field"><span>Superflex</span><input id="slot-sf" type="number" min="0" max="2" value="0" /></label>
+                <label class="draft-field"><span>K</span><input id="slot-k" type="number" min="0" max="2" value="1" /></label>
+                <label class="draft-field"><span>DST</span><input id="slot-dst" type="number" min="0" max="2" value="1" /></label>
+                <label class="draft-field"><span>Bench</span><input id="slot-bench" type="number" min="0" max="12" value="6" /></label>
+                <label class="draft-field"><span>IR</span><input id="slot-ir" type="number" min="0" max="4" value="0" /></label>
+              </div>
+              <p class="draft-roster-note" id="slot-summary">Roster capacity: 16 (10 starters + 6 bench)</p>
+            </fieldset>
 
             <fieldset class="draft-rules">
               <legend>Position max per team</legend>
-              <p class="draft-rules-hint">Applies to every team. Recommend + draft block when a team hits the cap.</p>
+              <p class="draft-rules-hint">Caps total players at a position (starters + WRT + bench). Separate from starting slots.</p>
               <div class="draft-rules-grid">
-                <label class="draft-field"><span>QB</span><input id="max-qb" type="number" min="0" max="20" value="4" /></label>
-                <label class="draft-field"><span>RB</span><input id="max-rb" type="number" min="0" max="20" value="8" /></label>
-                <label class="draft-field"><span>WR</span><input id="max-wr" type="number" min="0" max="20" value="8" /></label>
-                <label class="draft-field"><span>TE</span><input id="max-te" type="number" min="0" max="20" value="3" /></label>
-                <label class="draft-field"><span>DST</span><input id="max-dst" type="number" min="0" max="20" value="3" /></label>
-                <label class="draft-field"><span>K</span><input id="max-k" type="number" min="0" max="20" value="3" /></label>
+                <label class="draft-field"><span>QB max</span><input id="max-qb" type="number" min="0" max="20" value="4" /></label>
+                <label class="draft-field"><span>RB max</span><input id="max-rb" type="number" min="0" max="20" value="7" /></label>
+                <label class="draft-field"><span>WR max</span><input id="max-wr" type="number" min="0" max="20" value="7" /></label>
+                <label class="draft-field"><span>TE max</span><input id="max-te" type="number" min="0" max="20" value="3" /></label>
+                <label class="draft-field"><span>DST max</span><input id="max-dst" type="number" min="0" max="20" value="3" /></label>
+                <label class="draft-field"><span>K max</span><input id="max-k" type="number" min="0" max="20" value="3" /></label>
               </div>
             </fieldset>
 
@@ -89,8 +92,8 @@
           </form>
 
           <p class="draft-roster-note">
-            Starters: <strong>QB · RB · RB · WR · WR · TE · FLEX · DST · K</strong>
-            · remaining rounds are bench · Snake only
+            Default: <strong>QB · RB×2 · WR×2 · TE · WRT×2 · K · DST · Bench×6</strong>
+            · Snake only · Maxes ≠ starters
           </p>
         </div>
       </section>
@@ -159,10 +162,13 @@
           <aside class="draft-sidebar" aria-label="Your team">
             <div class="draft-sidebar-rec" id="sidebar-rec">
               <p class="draft-sidebar-kicker" id="rec-eyebrow">Your next pick</p>
+              <p id="rec-role-badge" class="draft-role-badge hidden" hidden></p>
               <h2 id="rec-name" class="draft-sidebar-name">—</h2>
               <p id="rec-meta" class="draft-sidebar-meta"></p>
+              <p id="rec-role-line" class="draft-role-line"></p>
               <div id="rec-chips" class="draft-chips"></div>
               <p id="needs-line" class="draft-needs"></p>
+              <p id="fill-line" class="draft-fill-line"></p>
               <ul id="rec-alts" class="draft-alts" aria-label="Alternates"></ul>
             </div>
             <div class="draft-sidebar-roster">
@@ -209,7 +215,7 @@
   </div>
 
   <script src="/static/app.js?v=20260725"></script>
-  <script src="/static/nfl_draft.js?v=20260809c"></script>
+  <script src="/static/nfl_draft.js?v=20260809e"></script>
   <script>
     if (typeof initSiteChrome === "function") initSiteChrome();
   </script>

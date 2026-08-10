@@ -761,6 +761,64 @@
   border-color: rgba(251, 146, 60, 0.35);
 }
 
+.draft-chip--bench {
+  color: #efc87a;
+  border-color: rgba(220, 170, 70, 0.45);
+}
+
+.draft-role-badge {
+  display: inline-block;
+  margin: 0 0 0.35rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--draft-line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.draft-role-badge.is-starter {
+  border-color: rgba(70, 180, 120, 0.55);
+  color: #8fdfb0;
+}
+
+.draft-role-badge.is-wrt {
+  border-color: rgba(90, 160, 220, 0.55);
+  color: #9cc8ef;
+}
+
+.draft-role-badge.is-bench {
+  border-color: rgba(220, 170, 70, 0.55);
+  color: #efc87a;
+}
+
+.draft-role-line {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  opacity: 0.85;
+  color: #cbd5e1;
+}
+
+.draft-fill-line {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.draft-roster-section {
+  margin-bottom: 0.85rem;
+}
+
+.draft-roster-section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .draft-alts {
   list-style: none;
   margin: 0.65rem 0 0;
@@ -790,9 +848,11 @@
   color: #e2e8f0;
 }
 
-.alt-meta {
-  font-size: 0.72rem;
+.draft-alts .alt-why {
+  flex: 1 1 100%;
+  font-size: 0.68rem;
   color: #64748b;
+  line-height: 1.35;
 }
 
 .draft-sidebar-roster h3 {

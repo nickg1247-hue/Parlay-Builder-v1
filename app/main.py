@@ -92,6 +92,7 @@ from app.services.props_mlb import (
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
 from app.services.nfl_fantasy_draft import (
+    apply_pick_from_board,
     evaluate_player_from_board,
     list_players_for_api,
     recommend_from_board,
@@ -415,8 +416,11 @@ class NflFantasyRecommendRequest(BaseModel):
     user_slot: int = Field(..., ge=1)
     picks: list[NflFantasyPick] = Field(default_factory=list)
     roster_template: list[str] | None = None
-    roster_size: int | None = Field(None, ge=9, le=18)
+    roster_size: int | None = Field(None, ge=9, le=20)
+    slot_counts: dict[str, int] | None = None
     position_maxes: dict[str, int] | None = None
+    superflex: bool = False
+    debug: bool = False
 
 
 class NflFantasyInsightRequest(BaseModel):
@@ -426,8 +430,22 @@ class NflFantasyInsightRequest(BaseModel):
     user_slot: int = Field(..., ge=1)
     picks: list[NflFantasyPick] = Field(default_factory=list)
     roster_template: list[str] | None = None
-    roster_size: int | None = Field(None, ge=9, le=18)
+    roster_size: int | None = Field(None, ge=9, le=20)
+    slot_counts: dict[str, int] | None = None
     position_maxes: dict[str, int] | None = None
+    superflex: bool = False
+
+
+class NflFantasyApplyPickRequest(BaseModel):
+    player_id: str
+    league_size: int = Field(..., ge=8, le=14)
+    scoring: str = Field("half_ppr")
+    picks: list[NflFantasyPick] = Field(default_factory=list)
+    roster_template: list[str] | None = None
+    roster_size: int | None = Field(None, ge=9, le=20)
+    slot_counts: dict[str, int] | None = None
+    position_maxes: dict[str, int] | None = None
+    superflex: bool = False
 
 
 @app.get("/login")
@@ -1755,7 +1773,10 @@ async def fantasy_nfl_recommend(body: NflFantasyRecommendRequest):
             picks=picks,
             roster_template=body.roster_template,
             roster_size=body.roster_size,
+            slot_counts=body.slot_counts,
             position_maxes=body.position_maxes,
+            superflex=body.superflex,
+            debug=body.debug,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1775,8 +1796,36 @@ async def fantasy_nfl_insight(body: NflFantasyInsightRequest):
             picks=picks,
             roster_template=body.roster_template,
             roster_size=body.roster_size,
+            slot_counts=body.slot_counts,
             position_maxes=body.position_maxes,
+            superflex=body.superflex,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/fantasy/nfl/apply-pick")
+async def fantasy_nfl_apply_pick(body: NflFantasyApplyPickRequest):
+    try:
+        picks = [p.model_dump() for p in body.picks]
+        result = apply_pick_from_board(
+            player_id=body.player_id,
+            league_size=body.league_size,
+            scoring=body.scoring,
+            picks=picks,
+            roster_template=body.roster_template,
+            roster_size=body.roster_size,
+            slot_counts=body.slot_counts,
+            position_maxes=body.position_maxes,
+            superflex=body.superflex,
+        )
+        if not result.get("ok"):
+            raise HTTPException(status_code=400, detail=result.get("error") or "Illegal pick")
+        return result
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:

@@ -34,6 +34,11 @@ def cached_mlb_game() -> tuple[str, str]:
 @pytest.fixture(autouse=True)
 def _no_auto_mlb_ingest_during_board_builds():
     """Prevent live daily board builds from running ingest/odds HTTP mid-test."""
+    try:
+        import app.services.daily_board  # noqa: F401
+    except Exception:
+        yield
+        return
     with (
         patch(
             "app.services.daily_board.ensure_mlb_ingest_fresh",

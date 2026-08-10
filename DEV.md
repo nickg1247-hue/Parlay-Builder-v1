@@ -64,11 +64,11 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 
 **Rankings source:** curated static consensus-style board (~230 players across QB/RB/WR/TE/DST/K) — not live ESPN/Sleeper ADP. To refresh: edit the JSON (or re-run `python scripts/generate_nfl_fantasy_rankings.py`) and bump fields `rank_std` / `rank_half` / `rank_ppr` / `adp` / `bye` / `tier`.
 
-**Recommend score (plain English):** invert the scoring-format rank (lower rank = higher base value), add a need bonus when the player fills an open starter/FLEX hole on *your* roster (small early when needs are wide open so BPA wins; larger later as holes remain), add a scarcity bonus when few starter-quality players remain at that position relative to picks until you are up, and subtract a small soft penalty if the player’s bye week matches someone already on your roster. **Fit %** is that score vs the current #1 available (roughly 40–99). **Power rank** is `101 − consensus rank` capped 1–100. **Projected pick** is ADP.
+**Recommend score (ERVA engine):** modular `app/services/fantasy_draft/` — hard eligibility via `can_team_draft_player` / `get_eligible_players` before scoring. Score blends projected points (rank→pts curve until `proj_pts_*` exists), VORP (WRT demand included), scarcity, tier drop, roster need, starting-lineup impact, ADP value, next-pick availability urgency, upside, risk, roster-imbalance, bye, and a light look-ahead. Recommendations attach `projected_role` (STARTER / WRT / BENCH). Weights live in `DEFAULT_DRAFT_WEIGHTS`.
 
-**League rules:** setup sets `roster_size` (rounds per team, default 15) and per-team `position_maxes` (QB/RB/WR/TE/DST/K). Recommend skips positions you’ve already maxed; drafting to the team on the clock is blocked at that team’s cap. Caps apply to every team the same way.
+**League rules:** setup configures **slot counts** (`QB/RB/WR/TE/WRT/Superflex/K/DST/BENCH/IR`) separately from per-team **position maxes**. WRT = WR/RB/TE (default 2). `optimize_starting_lineup` builds the strongest legal starters; leftovers are bench. Eligibility enforces position max + roster capacity. `POST /api/fantasy/nfl/apply-pick` re-validates (duplicate + max + capacity). CPU/mock: `simulate_full_draft` / `cpu_select_player`.
 
-**Verify:** `pytest tests/test_nfl_fantasy_draft.py -q`
+**Verify:** `pytest tests/test_nfl_fantasy_draft.py tests/test_fantasy_draft_engine.py -q`
 
 ---
 

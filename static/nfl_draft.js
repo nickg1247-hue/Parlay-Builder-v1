@@ -2,17 +2,30 @@
  * NFL snake draft room — board / players / queue + player insight modal.
  */
 (function () {
-  const STORAGE_KEY = "ntg_nfl_draft_v1";
-  const STARTER_TEMPLATE = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DST", "K"];
-  const FLEX = new Set(["RB", "WR", "TE"]);
-  const DEFAULT_MAXES = { QB: 4, RB: 8, WR: 8, TE: 3, DST: 3, K: 3 };
+  const STORAGE_KEY = "ntg_nfl_draft_v2";
+  const WRT_ELIGIBLE = new Set(["RB", "WR", "TE"]);
+  const SF_ELIGIBLE = new Set(["QB", "RB", "WR", "TE"]);
+  const DEFAULT_SLOT_COUNTS = {
+    QB: 1,
+    RB: 2,
+    WR: 2,
+    TE: 1,
+    WRT: 2,
+    SUPERFLEX: 0,
+    K: 1,
+    DST: 1,
+    BENCH: 6,
+    IR: 0,
+  };
+  const DEFAULT_MAXES = { QB: 4, RB: 7, WR: 7, TE: 3, DST: 3, K: 3 };
   const TIMER_SECS = 90;
 
   const state = {
     leagueSize: 10,
     userSlot: 3,
     scoring: "half_ppr",
-    rosterSize: 15,
+    slotCounts: { ...DEFAULT_SLOT_COUNTS },
+    rosterSize: 16,
     positionMaxes: { ...DEFAULT_MAXES },
     picks: [],
     players: [],
@@ -53,15 +66,108 @@
     return `${r}.${p}`;
   }
 
-  function rosterTemplate() {
-    const size = Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
-    return STARTER_TEMPLATE.concat(
-      Array(size - STARTER_TEMPLATE.length).fill("BENCH")
+  function expandSlotCounts(counts) {
+    const c = { ...DEFAULT_SLOT_COUNTS, ...(counts || {}) };
+    const order = [
+      "QB",
+      "RB",
+      "WR",
+      "TE",
+      "WRT",
+      "SUPERFLEX",
+      "K",
+      "DST",
+      "BENCH",
+      "IR",
+    ];
+    const out = [];
+    order.forEach((key) => {
+      const n = Math.max(0, Number(c[key]) || 0);
+      for (let i = 0; i < n; i++) out.push(key);
+    });
+    return out;
+  }
+
+  function starterTemplate() {
+    return expandSlotCounts(state.slotCounts).filter(
+      (s) => s !== "BENCH" && s !== "IR"
     );
   }
 
+  function rosterTemplate() {
+    return expandSlotCounts(state.slotCounts).filter((s) => s !== "IR");
+  }
+
+  function rosterCapacity() {
+    return starterTemplate().length + (Number(state.slotCounts.BENCH) || 0);
+  }
+
   function totalPicks() {
-    return state.leagueSize * Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
+    return state.leagueSize * rosterCapacity();
+  }
+
+  function apiLeaguePayload() {
+    return {
+      league_size: state.leagueSize,
+      scoring: state.scoring,
+      slot_counts: state.slotCounts,
+      roster_size: rosterCapacity(),
+      position_maxes: state.positionMaxes,
+      superflex: (Number(state.slotCounts.SUPERFLEX) || 0) > 0,
+    };
+  }
+
+  function readSlotCountsFromForm() {
+    const clamp = (id, fallback) => {
+      const el = $(id);
+      const n = Number(el && el.value);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.max(0, Math.min(20, Math.round(n)));
+    };
+    return {
+      QB: clamp("slot-qb", 1),
+      RB: clamp("slot-rb", 2),
+      WR: clamp("slot-wr", 2),
+      TE: clamp("slot-te", 1),
+      WRT: clamp("slot-wrt", 2),
+      SUPERFLEX: clamp("slot-sf", 0),
+      K: clamp("slot-k", 1),
+      DST: clamp("slot-dst", 1),
+      BENCH: clamp("slot-bench", 6),
+      IR: clamp("slot-ir", 0),
+    };
+  }
+
+  function writeSlotCountsToForm(counts) {
+    const c = { ...DEFAULT_SLOT_COUNTS, ...(counts || {}) };
+    const map = {
+      QB: "slot-qb",
+      RB: "slot-rb",
+      WR: "slot-wr",
+      TE: "slot-te",
+      WRT: "slot-wrt",
+      SUPERFLEX: "slot-sf",
+      K: "slot-k",
+      DST: "slot-dst",
+      BENCH: "slot-bench",
+      IR: "slot-ir",
+    };
+    Object.keys(map).forEach((key) => {
+      const el = $(map[key]);
+      if (el) el.value = String(c[key]);
+    });
+    updateSlotSummary();
+  }
+
+  function updateSlotSummary() {
+    const el = $("slot-summary");
+    if (!el) return;
+    const c = readSlotCountsFromForm();
+    const starters = expandSlotCounts(c).filter(
+      (s) => s !== "BENCH" && s !== "IR"
+    ).length;
+    const bench = Number(c.BENCH) || 0;
+    el.textContent = `Roster capacity: ${starters + bench} (${starters} starters + ${bench} bench)`;
   }
 
   function readMaxesFromForm() {
@@ -73,8 +179,8 @@
     };
     return {
       QB: clamp("max-qb", 4),
-      RB: clamp("max-rb", 8),
-      WR: clamp("max-wr", 8),
+      RB: clamp("max-rb", 7),
+      WR: clamp("max-wr", 7),
       TE: clamp("max-te", 3),
       DST: clamp("max-dst", 3),
       K: clamp("max-k", 3),
@@ -102,9 +208,11 @@
   }
 
   function canAddToTeam(teamSlot, position) {
+    const roster = rosterForTeam(teamSlot);
+    if (roster.length >= rosterCapacity()) return false;
     const max = state.positionMaxes[position];
     if (max == null) return true;
-    return countPos(rosterForTeam(teamSlot), position) < max;
+    return countPos(roster, position) < max;
   }
 
   function nextOverall() {
@@ -148,7 +256,8 @@
           leagueSize: state.leagueSize,
           userSlot: state.userSlot,
           scoring: state.scoring,
-          rosterSize: state.rosterSize,
+          slotCounts: state.slotCounts,
+          rosterSize: rosterCapacity(),
           positionMaxes: state.positionMaxes,
           picks: state.picks,
           queue: state.queue,
@@ -198,13 +307,9 @@
 
   async function fetchRecommend() {
     const body = {
-      league_size: state.leagueSize,
-      scoring: state.scoring,
+      ...apiLeaguePayload(),
       user_slot: state.userSlot,
       picks: state.picks,
-      roster_template: STARTER_TEMPLATE,
-      roster_size: state.rosterSize,
-      position_maxes: state.positionMaxes,
     };
     const res = await fetch("/api/fantasy/nfl/recommend", {
       method: "POST",
@@ -228,14 +333,10 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        ...apiLeaguePayload(),
         player_id: playerId,
-        league_size: state.leagueSize,
-        scoring: state.scoring,
         user_slot: state.userSlot,
         picks: state.picks,
-        roster_template: STARTER_TEMPLATE,
-        roster_size: state.rosterSize,
-        position_maxes: state.positionMaxes,
       }),
     });
     if (!res.ok) {
@@ -245,36 +346,55 @@
     return res.json();
   }
 
+  function projPts(player) {
+    if (player && player.projected_points != null) return Number(player.projected_points);
+    const fit = state.fitById[player?.player_id];
+    if (fit && fit.projected_points != null) return Number(fit.projected_points);
+    return 0;
+  }
+
   function assignSlots(rosterPlayers) {
     const slots = rosterTemplate().map((s) => ({ slot: s, player: null }));
+    const indexed = rosterPlayers
+      .map((p, j) => ({ p, j }))
+      .sort((a, b) => projPts(b.p) - projPts(a.p));
     const used = new Set();
+
+    // Dedicated starters
     for (let i = 0; i < slots.length; i++) {
-      if (slots[i].slot === "FLEX" || slots[i].slot === "BENCH") continue;
-      for (let j = 0; j < rosterPlayers.length; j++) {
+      const su = slots[i].slot;
+      if (su === "WRT" || su === "FLEX" || su === "SUPERFLEX" || su === "BENCH" || su === "IR")
+        continue;
+      for (const { p, j } of indexed) {
         if (used.has(j)) continue;
-        if (rosterPlayers[j].position === slots[i].slot) {
-          slots[i].player = rosterPlayers[j];
+        if (p.position === su) {
+          slots[i].player = p;
           used.add(j);
           break;
         }
       }
     }
+    // WRT / SUPERFLEX
     for (let i = 0; i < slots.length; i++) {
-      if (slots[i].slot !== "FLEX" || slots[i].player) continue;
-      for (let j = 0; j < rosterPlayers.length; j++) {
+      const su = slots[i].slot;
+      if (su !== "WRT" && su !== "FLEX" && su !== "SUPERFLEX") continue;
+      if (slots[i].player) continue;
+      const ok = su === "SUPERFLEX" ? SF_ELIGIBLE : WRT_ELIGIBLE;
+      for (const { p, j } of indexed) {
         if (used.has(j)) continue;
-        if (FLEX.has(rosterPlayers[j].position)) {
-          slots[i].player = rosterPlayers[j];
+        if (ok.has(p.position)) {
+          slots[i].player = p;
           used.add(j);
           break;
         }
       }
     }
+    // Bench
     for (let i = 0; i < slots.length; i++) {
       if (slots[i].slot !== "BENCH" || slots[i].player) continue;
-      for (let j = 0; j < rosterPlayers.length; j++) {
+      for (const { p, j } of indexed) {
         if (used.has(j)) continue;
-        slots[i].player = rosterPlayers[j];
+        slots[i].player = p;
         used.add(j);
         break;
       }
@@ -288,16 +408,58 @@
       .sort((a, b) => a.overall - b.overall)
       .map((p) => {
         const pl = state.playersById[p.player_id];
-        return pl ? { ...pl, overall: p.overall } : null;
-      })
-      .filter(Boolean);
+        if (pl) return { ...pl, overall: p.overall };
+        // Do not drop unknown IDs — undercount was a max-bypass bug
+        return {
+          player_id: p.player_id,
+          name: p.name || p.player_id,
+          position: p.position || "RB",
+          overall: p.overall,
+          _unknown: true,
+        };
+      });
   }
 
   function chipClass(text) {
     const t = (text || "").toLowerCase();
-    if (t.includes("fills") || t.includes("scarce")) return "draft-chip draft-chip--need";
+    if (t.includes("bench pick") || t.includes("value override"))
+      return "draft-chip draft-chip--bench";
+    if (t.includes("fills") || t.includes("scarce") || t.includes("wrt"))
+      return "draft-chip draft-chip--need";
     if (t.includes("bye")) return "draft-chip draft-chip--warn";
     return "draft-chip";
+  }
+
+  function roleBadgeClass(badge) {
+    const t = (badge || "").toUpperCase();
+    if (t.includes("BENCH")) return "draft-role-badge is-bench";
+    if (t.includes("WRT")) return "draft-role-badge is-wrt";
+    return "draft-role-badge is-starter";
+  }
+
+  function renderRoleUi(primary) {
+    const badgeEl = els.recRoleBadge;
+    const roleLine = els.recRoleLine;
+    if (!badgeEl || !roleLine) return;
+    const role = primary?.projected_role;
+    if (!primary || !role) {
+      badgeEl.hidden = true;
+      badgeEl.classList.add("hidden");
+      badgeEl.textContent = "";
+      roleLine.textContent = "";
+      return;
+    }
+    const badge = role.badge || (role.is_bench ? "BENCH VALUE" : "STARTER");
+    badgeEl.hidden = false;
+    badgeEl.classList.remove("hidden");
+    badgeEl.className = roleBadgeClass(badge);
+    badgeEl.textContent = badge;
+    const prefix = role.is_bench
+      ? "Projected role: BENCH"
+      : role.is_wrt
+        ? "Projected role: WRT"
+        : "Projected role: STARTER";
+    roleLine.textContent = `${prefix} — ${role.label || ""}`;
   }
 
   function resetTimer() {
@@ -365,29 +527,56 @@
       els.recChips.innerHTML = "";
       els.recAlts.innerHTML = "";
       els.btnDraftRec.disabled = true;
+      renderRoleUi(null);
     } else {
       els.recName.textContent = primary.name;
       els.recMeta.textContent = `${primary.position} · ${primary.team || "—"}${
         primary.bye ? ` · Bye ${primary.bye}` : ""
-      } · Proj ${primary.projected_pick ?? primary.adp ?? "—"} · Power ${primary.power_rank ?? "—"} · ${primary.fit_pct ?? "—"}% fit`;
+      } · ${primary.projected_points != null ? `${primary.projected_points} proj` : `Proj pick ${primary.projected_pick ?? "—"}`}${
+        primary.vorp != null ? ` · VORP ${primary.vorp > 0 ? "+" : ""}${primary.vorp}` : ""
+      } · ${primary.fit_pct ?? primary.score ?? "—"} score`;
+      renderRoleUi(primary);
       els.recChips.innerHTML = (primary.reasons || [])
         .map((r) => `<span class="${chipClass(r)}">${escapeHtml(r)}</span>`)
         .join("");
       els.btnDraftRec.disabled = done || !you;
       els.recAlts.innerHTML = (rec.alternates || [])
-        .map(
-          (alt) => `<li data-id="${escapeAttr(alt.player_id)}" role="button" tabindex="0">
+        .map((alt) => {
+          const rlabel = alt.projected_role?.label
+            ? ` · ${alt.projected_role.label}`
+            : "";
+          return `<li data-id="${escapeAttr(alt.player_id)}" role="button" tabindex="0">
             <span class="alt-name">${escapeHtml(alt.name)}</span>
-            <span class="alt-meta">${escapeHtml(alt.position)} · ${alt.fit_pct ?? "—"}%</span>
-          </li>`
-        )
+            <span class="alt-meta">${escapeHtml(alt.position)}${escapeHtml(rlabel)} · ${alt.fit_pct ?? alt.score ?? "—"}</span>
+            ${alt.why_not ? `<span class="alt-why">${escapeHtml(alt.why_not)}</span>` : ""}
+          </li>`;
+        })
         .join("");
     }
 
     const needs = meta.user_needs || [];
-    els.needsLine.textContent = needs.length
-      ? `Open: ${needs.join(", ")}`
-      : "Starters filled";
+    const outlook = meta.position_outlook || {};
+    const outlookBits = Object.keys(outlook)
+      .slice(0, 6)
+      .map((k) => `${k}: ${outlook[k]}`)
+      .join(" · ");
+    els.needsLine.textContent = [
+      needs.length ? `Open: ${needs.join(", ")}` : "Starters filled",
+      outlookBits ? `Pool: ${outlookBits}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const counts = meta.lineup?.counts || {};
+    if (els.fillLine) {
+      const sf = counts.starters_filled ?? 0;
+      const st = counts.starters_total ?? starterTemplate().length;
+      const wf = counts.wrt_filled ?? 0;
+      const wt = counts.wrt_total ?? state.slotCounts.WRT ?? 0;
+      const bf = counts.bench_filled ?? 0;
+      const bt = counts.bench_total ?? state.slotCounts.BENCH ?? 0;
+      els.fillLine.textContent = `STARTERS ${sf}/${st} · WRT ${wf}/${wt} · BENCH ${bf}/${bt}`;
+    }
   }
 
   function renderPickStrip() {
@@ -490,7 +679,7 @@
   }
 
   function renderBoardRound() {
-    const rounds = Math.max(STARTER_TEMPLATE.length, Number(state.rosterSize) || 15);
+    const rounds = rosterCapacity();
     let html = `<div class="draft-board-rounds" style="--teams:${state.leagueSize}">`;
     html += `<div class="draft-round-head"><span></span>`;
     for (let s = 1; s <= state.leagueSize; s++) {
@@ -528,18 +717,22 @@
 
   function renderUserRoster() {
     const assigned = assignSlots(rosterForTeam(state.userSlot));
-    els.userRoster.innerHTML = assigned
-      .map(({ slot, player }) => {
-        if (!player) {
-          return `<div class="draft-roster-line"><span class="r-slot">${escapeHtml(slot)}</span><span class="r-empty">Empty</span><span></span></div>`;
-        }
-        return `<button type="button" class="draft-roster-line" data-insight="${escapeAttr(player.player_id)}">
+    const starters = assigned.filter((r) => r.slot !== "BENCH");
+    const bench = assigned.filter((r) => r.slot === "BENCH");
+    const line = ({ slot, player }) => {
+      if (!player) {
+        return `<div class="draft-roster-line"><span class="r-slot">${escapeHtml(slot)}</span><span class="r-empty">Empty</span><span></span></div>`;
+      }
+      return `<button type="button" class="draft-roster-line" data-insight="${escapeAttr(player.player_id)}">
           <span class="r-slot">${escapeHtml(slot)}</span>
           <span class="r-name">${escapeHtml(player.name)}</span>
           <span class="r-bye">${player.bye ? `Bye ${player.bye}` : ""}</span>
         </button>`;
-      })
-      .join("");
+    };
+    els.userRoster.innerHTML = [
+      `<div class="draft-roster-section"><h4>Starters</h4>${starters.map(line).join("")}</div>`,
+      `<div class="draft-roster-section"><h4>Bench</h4>${bench.map(line).join("")}</div>`,
+    ].join("");
 
     const counts = { QB: 0, RB: 0, WR: 0, TE: 0, DST: 0, K: 0 };
     for (const p of rosterForTeam(state.userSlot)) {
@@ -611,9 +804,9 @@
       els.modalPos.textContent = p.position;
       els.modalPos.className = `draft-pos-pill ${posClass(p.position)}`;
       els.modalName.textContent = p.name;
-      els.modalMeta.textContent = `${p.team || "FA"}${p.bye ? ` · Bye ${p.bye}` : ""} · Consensus #${p.rank}${p.tier ? ` · Tier ${p.tier}` : ""}`;
-      els.modalAdp.textContent = String(p.projected_pick ?? p.adp ?? "—");
-      els.modalPower.textContent = String(p.power_rank ?? "—");
+        els.modalMeta.textContent = `${p.team || "FA"}${p.bye ? ` · Bye ${p.bye}` : ""} · Consensus #${p.rank}${p.projected_points != null ? ` · ${p.projected_points} proj pts` : ""}${p.tier ? ` · Tier ${p.tier}` : ""}`;
+        els.modalAdp.textContent = String(p.projected_pick ?? p.adp ?? "—");
+        els.modalPower.textContent = String(p.power_rank ?? "—");
       if (data.drafted) {
         els.modalFit.textContent = "Drafted";
         els.modalFit.className = "draft-stat-value";
@@ -676,7 +869,7 @@
     save();
   }
 
-  function draftPlayer(playerId) {
+  async function draftPlayer(playerId) {
     const overall = nextOverall();
     if (overall > totalPicks()) return;
     if (draftedIds().has(playerId)) return;
@@ -689,7 +882,53 @@
       );
       return;
     }
-    state.picks.push({ overall, team_slot: teamSlot, player_id: playerId });
+    // Server-side hard validation (source of truth)
+    try {
+      const res = await fetch("/api/fantasy/nfl/apply-pick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          player_id: playerId,
+          picks: state.picks,
+          ...apiLeaguePayload(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        const detail = data.detail || data.error || data;
+        alert(
+          typeof detail === "string"
+            ? detail
+            : detail.detail || detail.error || "Illegal pick blocked"
+        );
+        return;
+      }
+      state.picks = data.picks || [
+        ...state.picks,
+        {
+          overall,
+          team_slot: teamSlot,
+          player_id: playerId,
+          position: pl.position,
+          name: pl.name,
+        },
+      ];
+      // Ensure position stamped for client max checks
+      const last = state.picks[state.picks.length - 1];
+      if (last && !last.position) {
+        last.position = pl.position;
+        last.name = pl.name;
+      }
+    } catch (err) {
+      // Offline fallback: still enforce client gate
+      state.picks.push({
+        overall,
+        team_slot: teamSlot,
+        player_id: playerId,
+        position: pl.position,
+        name: pl.name,
+      });
+    }
     state.queue = state.queue.filter((id) => id !== playerId);
     resetTimer();
     closeModal();
@@ -734,7 +973,8 @@
     state.leagueSize = Number(els.leagueSize.value);
     state.userSlot = Number(els.userSlot.value);
     state.scoring = els.scoring.value || "half_ppr";
-    state.rosterSize = Number(els.rosterSize.value) || 15;
+    state.slotCounts = readSlotCountsFromForm();
+    state.rosterSize = rosterCapacity();
     state.positionMaxes = readMaxesFromForm();
     if (state.userSlot > state.leagueSize) state.userSlot = state.leagueSize;
     if (!fromSaved) state.picks = [];
@@ -757,7 +997,6 @@
     els.leagueSize = $("league-size");
     els.userSlot = $("user-slot");
     els.scoring = $("scoring");
-    els.rosterSize = $("roster-size");
     els.setupForm = $("setup-form");
     els.clockBar = $("clock-bar");
     els.clockLabel = $("clock-label");
@@ -766,8 +1005,10 @@
     els.clockAutopick = $("clock-autopick");
     els.pickStrip = $("pick-strip");
     els.recEyebrow = $("rec-eyebrow");
+    els.recRoleBadge = $("rec-role-badge");
     els.recName = $("rec-name");
     els.recMeta = $("rec-meta");
+    els.recRoleLine = $("rec-role-line");
     els.recChips = $("rec-chips");
     els.recAlts = $("rec-alts");
     els.btnDraftRec = $("btn-draft-rec");
@@ -779,6 +1020,7 @@
     els.playerList = $("player-list");
     els.boardGrid = $("board-grid");
     els.needsLine = $("needs-line");
+    els.fillLine = $("fill-line");
     els.userRoster = $("user-roster");
     els.posLimits = $("pos-limits");
     els.queueList = $("queue-list");
@@ -796,6 +1038,22 @@
 
     fillSlotOptions();
     els.leagueSize.addEventListener("change", fillSlotOptions);
+    [
+      "slot-qb",
+      "slot-rb",
+      "slot-wr",
+      "slot-te",
+      "slot-wrt",
+      "slot-sf",
+      "slot-k",
+      "slot-dst",
+      "slot-bench",
+      "slot-ir",
+    ].forEach((id) => {
+      const el = $(id);
+      if (el) el.addEventListener("input", updateSlotSummary);
+    });
+    updateSlotSummary();
 
     els.setupForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -804,7 +1062,7 @@
 
     els.btnDraftRec.addEventListener("click", () => {
       const id = state.rec?.primary?.player_id;
-      if (id) draftPlayer(id);
+      if (id) draftPlayer(id).catch(showError);
     });
     els.btnUndo.addEventListener("click", undo);
     els.btnReset.addEventListener("click", resetDraft);
@@ -882,7 +1140,7 @@
       if (e.key === "Escape") closeModal();
     });
     els.modalDraft.addEventListener("click", () => {
-      if (state.modalPlayerId) draftPlayer(state.modalPlayerId);
+      if (state.modalPlayerId) draftPlayer(state.modalPlayerId).catch(showError);
     });
     els.modalQueue.addEventListener("click", () => {
       const id = state.modalPlayerId;
@@ -905,11 +1163,13 @@
         Math.min(saved.userSlot || 1, Number(els.leagueSize.value))
       );
       els.scoring.value = saved.scoring || "half_ppr";
-      if (els.rosterSize) {
-        els.rosterSize.value = String(saved.rosterSize || 15);
-      }
+      writeSlotCountsToForm(saved.slotCounts || DEFAULT_SLOT_COUNTS);
       writeMaxesToForm(saved.positionMaxes || DEFAULT_MAXES);
-      state.rosterSize = Number(saved.rosterSize) || 15;
+      state.slotCounts = {
+        ...DEFAULT_SLOT_COUNTS,
+        ...(saved.slotCounts || {}),
+      };
+      state.rosterSize = rosterCapacity();
       state.positionMaxes = {
         ...DEFAULT_MAXES,
         ...(saved.positionMaxes || {}),

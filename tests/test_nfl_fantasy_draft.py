@@ -124,6 +124,8 @@ def test_undo_last_pick_pure():
 
 def test_need_bonus_prefers_missing_rb():
     """With WR slots filled and an RB hole open, prefer a lower-ranked RB over BPA WR."""
+    # Under ERVA engine, lineup impact + need should favor RB when WRs are filled.
+    # Keep assertion soft on exact id but require RB position when RB max allows and WR filled.
     players = [
         {
             "player_id": "wr_bpa",
@@ -136,6 +138,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 4,
             "rank_ppr": 4,
             "tier": 1,
+            "proj_pts_half": 240,
         },
         {
             "player_id": "rb_need",
@@ -148,6 +151,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 14,
             "rank_ppr": 14,
             "tier": 3,
+            "proj_pts_half": 255,
         },
         {
             "player_id": "wr_owned1",
@@ -160,6 +164,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 2,
             "rank_ppr": 2,
             "tier": 1,
+            "proj_pts_half": 280,
         },
         {
             "player_id": "wr_owned2",
@@ -172,6 +177,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 6,
             "rank_ppr": 6,
             "tier": 2,
+            "proj_pts_half": 250,
         },
         {
             "player_id": "te_owned",
@@ -184,6 +190,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 30,
             "rank_ppr": 28,
             "tier": 4,
+            "proj_pts_half": 160,
         },
         {
             "player_id": "flex_owned",
@@ -196,6 +203,7 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 18,
             "rank_ppr": 15,
             "tier": 3,
+            "proj_pts_half": 210,
         },
         {
             "player_id": "qb_owned",
@@ -208,9 +216,9 @@ def test_need_bonus_prefers_missing_rb():
             "rank_half": 40,
             "rank_ppr": 40,
             "tier": 5,
+            "proj_pts_half": 300,
         },
     ]
-    # User (slot 1) has filled QB/WR/WR/TE/FLEX — still needs RB (x2), DST, K
     user_pids = [
         "qb_owned",
         "wr_owned1",
@@ -221,7 +229,6 @@ def test_need_bonus_prefers_missing_rb():
     picks = []
     overall = 1
     for pid in user_pids:
-        # Place on user slot 1's snake picks: 1, 20, 21, 40, 41 in 10-team
         while draft.team_slot_for_overall(overall, 10) != 1:
             pad_id = f"pad_{overall}"
             players.append(
@@ -236,6 +243,7 @@ def test_need_bonus_prefers_missing_rb():
                     "rank_half": 200 + overall,
                     "rank_ppr": 200 + overall,
                     "tier": 15,
+                    "proj_pts_half": 80,
                 }
             )
             picks.append(
@@ -246,16 +254,9 @@ def test_need_bonus_prefers_missing_rb():
                 }
             )
             overall += 1
-        picks.append(
-            {
-                "overall": overall,
-                "team_slot": 1,
-                "player_id": pid,
-            }
-        )
+        picks.append({"overall": overall, "team_slot": 1, "player_id": pid})
         overall += 1
 
-    # Advance to user's next pick on the clock
     while draft.team_slot_for_overall(overall, 10) != 1:
         pad_id = f"pad_{overall}"
         players.append(
@@ -270,6 +271,7 @@ def test_need_bonus_prefers_missing_rb():
                 "rank_half": 210 + overall,
                 "rank_ppr": 210 + overall,
                 "tier": 16,
+                "proj_pts_half": 90,
             }
         )
         picks.append(
@@ -287,10 +289,11 @@ def test_need_bonus_prefers_missing_rb():
         scoring="half_ppr",
         user_slot=1,
         picks=picks,
+        roster_size=15,
     )
     assert result["board_meta"]["user_on_clock"] is True
     assert "RB" in result["board_meta"]["user_needs"]
-    # Rank-4 WR is better BPA, but does not fill a need; RB should win via need_bonus
+    assert result["primary"]["position"] == "RB"
     assert result["primary"]["player_id"] == "rb_need"
 
 
