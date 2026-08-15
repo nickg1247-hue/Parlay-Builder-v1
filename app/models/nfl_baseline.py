@@ -137,10 +137,15 @@ def _row_neutral(row) -> bool:
 
 
 def _elo_team_key(row, side: str) -> str:
+    from app.ingest.nfl import normalize_abbr
+
     abbr = getattr(row, f"{side}_team_abbr", None)
-    if abbr:
-        return str(abbr)
-    return str(getattr(row, f"{side}_team"))
+    if abbr is not None and not (isinstance(abbr, float) and pd.isna(abbr)):
+        key = normalize_abbr(str(abbr))
+        if key:
+            return key
+    name = getattr(row, f"{side}_team", "")
+    return normalize_abbr(str(name)) or str(name)
 
 
 def attach_elo_features(df: pd.DataFrame, *, update_ratings: bool = True) -> pd.DataFrame:
@@ -191,8 +196,15 @@ def attach_elo_for_slate(
 ) -> pd.DataFrame:
     hist = history if history is not None else load_games()
     out = df.copy()
-    min_date = pd.to_datetime(out["date"]).min()
-    prior = hist[pd.to_datetime(hist["date"]) < min_date]
+    out["date"] = pd.to_datetime(out["date"])
+    hist = hist.copy()
+    hist["date"] = pd.to_datetime(hist["date"])
+    if "home_win" in hist.columns:
+        hist = hist[hist["home_win"].notna()]
+    # Use games before this slate's kickoffs — not before the earliest row
+    # in `df`. A history+slate frame starts in 2019 and would wipe ratings.
+    min_date = out["date"].min()
+    prior = hist[hist["date"] < min_date]
     ratings = current_elo_ratings(prior) if not prior.empty else {}
     home_keys = [_elo_team_key(row, "home") for row in out.itertuples(index=False)]
     away_keys = [_elo_team_key(row, "away") for row in out.itertuples(index=False)]

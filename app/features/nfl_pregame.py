@@ -408,15 +408,14 @@ def build_features(
             )
 
     out = pd.DataFrame(rows)
-    if attach_elo and "home_win" in out.columns and out["home_win"].notna().all():
+    if attach_elo:
         from app.models.nfl_baseline import attach_elo_features
 
+        # Walk ratings in date order. Rows without home_win (live slate) keep
+        # the current rating and do not update. Never use attach_elo_for_slate
+        # on a history+slate frame — min_date would be 2019 and every team
+        # would reset to 1500 (≈58/42 home-field).
         out = attach_elo_features(out)
-        out["elo_diff"] = out["elo_home_pre"] - out["elo_away_pre"]
-    elif attach_elo:
-        from app.models.nfl_baseline import attach_elo_for_slate
-
-        out = attach_elo_for_slate(out)
         out["elo_diff"] = out["elo_home_pre"] - out["elo_away_pre"]
     return out
 
@@ -511,16 +510,18 @@ def build_features_for_slate(
     slate["home_rest_days"] = home_rest
     slate["away_rest_days"] = away_rest
 
-    combined = pd.concat([hist_before, slate], ignore_index=True, sort=False)
-    combined["date"] = pd.to_datetime(combined["date"])
-    combined = combined.sort_values(["date", "game_id"]).reset_index(drop=True)
+    from app.models.nfl_baseline import attach_elo_for_slate
+
     full = build_features(
-        combined,
+        slate,
         rest_fill=fill,
         tracker=tracker,
-        attach_elo=True,
+        update_state=False,
+        attach_elo=False,
         include_scoring=include_scoring,
     )
+    full = attach_elo_for_slate(full, history=hist_before)
+    full["elo_diff"] = full["elo_home_pre"] - full["elo_away_pre"]
     return (
         full[full["game_id"].astype(str).isin(slate_ids)]
         .drop_duplicates(subset=["game_id"], keep="last")

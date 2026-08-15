@@ -2,7 +2,12 @@
 
 import pandas as pd
 
-from app.features.nfl_pregame import FEATURE_COLUMNS, FEATURE_COLUMNS_V2, build_features
+from app.features.nfl_pregame import (
+    FEATURE_COLUMNS,
+    FEATURE_COLUMNS_V2,
+    build_features,
+    build_features_for_slate,
+)
 from app.features.nfl_stadiums import travel_miles
 from app.models.nfl_baseline import production_gate_passes
 
@@ -154,6 +159,51 @@ def test_scoring_features_no_same_game_leakage():
     week2 = feat[feat["game_id"] == "2"].iloc[0]
     assert week1["home_season_pts_for"] == 22.0
     assert week2["home_season_pts_for"] == 24.0
+
+
+def test_slate_elo_does_not_collapse_to_home_field():
+    history = pd.DataFrame(
+        [
+            _game("1", "2024-09-08", 2024, "KC", "BAL", 1, week=1),
+            _game("2", "2024-09-15", 2024, "KC", "CIN", 1, week=2),
+            _game("3", "2024-09-22", 2024, "KC", "NYJ", 1, week=3),
+            _game("4", "2024-09-08", 2024, "CAR", "CHI", 0, week=1),
+            _game("5", "2024-09-15", 2024, "CAR", "ATL", 0, week=2),
+        ]
+    )
+    slate = pd.DataFrame(
+        [
+            {
+                "game_id": "live-1",
+                "date": "2024-09-29",
+                "season": 2024,
+                "week": 4,
+                "home_team": "KC",
+                "away_team": "CAR",
+                "home_team_abbr": "KC",
+                "away_team_abbr": "CAR",
+                "game_type": "regular",
+            },
+            {
+                "game_id": "live-2",
+                "date": "2024-09-29",
+                "season": 2024,
+                "week": 4,
+                "home_team": "CAR",
+                "away_team": "KC",
+                "home_team_abbr": "CAR",
+                "away_team_abbr": "KC",
+                "game_type": "regular",
+            },
+        ]
+    )
+    feat = build_features_for_slate(slate, history_df=history)
+    kc_home = feat[feat["game_id"] == "live-1"].iloc[0]
+    car_home = feat[feat["game_id"] == "live-2"].iloc[0]
+    assert kc_home["elo_home_pre"] > 1500
+    assert car_home["elo_home_pre"] < 1500
+    assert kc_home["elo_diff"] != 0
+    assert abs(kc_home["elo_diff"] - car_home["elo_diff"]) > 1
 
 
 def test_production_gate_math():
