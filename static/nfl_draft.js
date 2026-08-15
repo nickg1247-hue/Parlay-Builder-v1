@@ -643,7 +643,13 @@
       .map((k) => `${k}: ${outlook[k]}`)
       .join(" · ");
     els.needsLine.textContent = [
-      needs.length ? `Open: ${needs.join(", ")}` : "Starters filled",
+      needs.length ? `Open needs: ${needs.join(", ")}` : "Starters filled",
+      meta.starter_need_urgency != null
+        ? `Need urgency ${Math.round(Number(meta.starter_need_urgency) * 100)}%`
+        : "",
+      meta.remaining_team_picks != null
+        ? `${meta.remaining_team_picks} picks left for you`
+        : "",
       outlookBits ? `Pool: ${outlookBits}` : "",
     ]
       .filter(Boolean)

@@ -348,6 +348,175 @@ def test_mock_advance_finish_completes_draft():
     assert len(result["picks"]) == settings.total_picks
 
 
+def test_flex_lineup_impact_credits_wrt_upgrade():
+    from app.services.fantasy_draft.roster import flex_lineup_impact, roster_need_score
+
+    settings = league_settings_from_request(
+        league_size=12,
+        slot_counts={
+            "QB": 1,
+            "RB": 2,
+            "WR": 2,
+            "TE": 1,
+            "WRT": 2,
+            "K": 1,
+            "DST": 1,
+            "BENCH": 6,
+        },
+    )
+    roster = [
+        {"player_id": "qb1", "position": "QB", "proj_pts_half": 300},
+        {"player_id": "rb1", "position": "RB", "proj_pts_half": 280},
+        {"player_id": "rb2", "position": "RB", "proj_pts_half": 250},
+        {"player_id": "wr1", "position": "WR", "proj_pts_half": 270},
+        {"player_id": "wr2", "position": "WR", "proj_pts_half": 240},
+        {"player_id": "te1", "position": "TE", "proj_pts_half": 180},
+        {"player_id": "wrt_weak", "position": "WR", "proj_pts_half": 160},
+        {"player_id": "wrt2", "position": "RB", "proj_pts_half": 170},
+        {"player_id": "k1", "position": "K", "proj_pts_half": 120},
+        {"player_id": "d1", "position": "DST", "proj_pts_half": 110},
+    ]
+    # Dedicated + both WRT filled with weak WR at floor ~160
+    cand = {
+        "player_id": "stud_rb",
+        "position": "RB",
+        "proj_pts_half": 230,
+        "name": "Stud RB",
+    }
+    flex = flex_lineup_impact(roster, cand, settings)
+    assert flex["eligible"] is True
+    assert flex["would_start_wrt"] is True
+    assert flex["delta"] >= 50  # 230 vs ~160 floor
+
+    need = roster_need_score(
+        cand,
+        open_needs=[],
+        settings=settings,
+        draft_progress=0.5,
+        rostered=roster,
+    )
+    # No open starters, but strong WRT upgrade should still register some need
+    assert need >= 0.2
+
+    open_need = roster_need_score(
+        {"player_id": "x", "position": "WR", "proj_pts_half": 200},
+        open_needs=["WRT", "WRT"],
+        settings=settings,
+        draft_progress=0.4,
+        rostered=roster[:6],  # WRT empty
+    )
+    assert open_need >= 0.55
+
+
+def test_wrt_scarcity_higher_than_single_flex():
+    from app.services.fantasy_draft.scarcity import positional_scarcity
+
+    players = _mini_board()
+    one = league_settings_from_request(
+        league_size=10,
+        slot_counts={
+            "QB": 1,
+            "RB": 2,
+            "WR": 2,
+            "TE": 1,
+            "WRT": 1,
+            "K": 1,
+            "DST": 1,
+            "BENCH": 5,
+        },
+    )
+    two = league_settings_from_request(
+        league_size=10,
+        slot_counts={
+            "QB": 1,
+            "RB": 2,
+            "WR": 2,
+            "TE": 1,
+            "WRT": 2,
+            "K": 1,
+            "DST": 1,
+            "BENCH": 6,
+        },
+    )
+    s1 = positional_scarcity(players, one)
+    s2 = positional_scarcity(players, two)
+    # Extra WRT should not make RB/WR less scarce
+    assert s2["RB"] >= s1["RB"] - 0.01
+    assert s2["WR"] >= s1["WR"] - 0.01
+
+
+def test_needs_update_after_pick_changes_recommendation_context():
+    """Open needs shrink after filling a slot; need scores shift with roster."""
+    from app.services.fantasy_draft.roster import compute_open_needs, roster_need_score
+
+    players = _mini_board()
+    settings = league_settings_from_request(
+        league_size=10,
+        slot_counts={
+            "QB": 1,
+            "RB": 2,
+            "WR": 2,
+            "TE": 1,
+            "WRT": 2,
+            "K": 1,
+            "DST": 1,
+            "BENCH": 6,
+        },
+    )
+    empty_needs = compute_open_needs([], settings)
+    assert "QB" in empty_needs
+    assert empty_needs.count("WRT") == 2
+
+    qb = next(p for p in players if p["position"] == "QB")
+    after_qb = compute_open_needs([qb], settings)
+    assert "QB" not in after_qb
+    assert len(after_qb) == len(empty_needs) - 1
+
+    need_before = roster_need_score(
+        qb,
+        empty_needs,
+        settings,
+        draft_progress=0.2,
+        rostered=[],
+        available=players,
+        remaining_team_picks=14,
+    )
+    wr = next(p for p in players if p["position"] == "WR")
+    need_wr_while_qb_open = roster_need_score(
+        wr,
+        empty_needs,
+        settings,
+        draft_progress=0.2,
+        rostered=[],
+        available=players,
+        remaining_team_picks=14,
+    )
+    # Filling open QB should score as higher need than a WR when QB is empty
+    # (WR can still fill WRT, so not necessarily tiny — but QB dedicated wins)
+    assert need_before > need_wr_while_qb_open
+
+    # After QB filled, another QB is low need; WR rises relatively for WRT/WR
+    need_qb_after = roster_need_score(
+        next(p for p in players if p["position"] == "QB" and p["player_id"] != qb["player_id"]),
+        after_qb,
+        settings,
+        draft_progress=0.25,
+        rostered=[qb],
+        available=players,
+        remaining_team_picks=13,
+    )
+    need_wr_after = roster_need_score(
+        wr,
+        after_qb,
+        settings,
+        draft_progress=0.25,
+        rostered=[qb],
+        available=players,
+        remaining_team_picks=13,
+    )
+    assert need_wr_after > need_qb_after
+
+
 def test_position_max_overrides_flex():
     players = _mini_board()
     settings = league_settings_from_request(

@@ -49,19 +49,21 @@ SUPERFLEX_ELIGIBLE = frozenset({"QB", "RB", "WR", "TE"})
 FLEX_ELIGIBLE = WRT_ELIGIBLE  # back-compat alias
 
 DEFAULT_DRAFT_WEIGHTS: dict[str, float] = {
-    "projection": 0.12,
-    "vorp": 0.28,
+    # Team construction > raw season projection
+    "projection": 0.06,
+    "vorp": 0.20,
     "scarcity": 0.12,
-    "tier_drop": 0.10,
-    "roster_need": 0.12,
-    "lineup_impact": 0.14,
-    "adp_value": 0.06,
-    "availability_urgency": 0.14,
+    "tier_drop": 0.09,
+    "roster_need": 0.18,
+    "lineup_impact": 0.16,
+    "adp_value": 0.05,
+    "availability_urgency": 0.12,
     "upside": 0.05,
     "risk": 0.04,
-    "roster_imbalance": 0.10,
+    "roster_imbalance": 0.12,
     "bye": 0.02,
     "lookahead": 0.08,
+    "team_usefulness": 0.10,
 }
 
 

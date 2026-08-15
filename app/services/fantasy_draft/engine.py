@@ -49,6 +49,8 @@ def _build_explanations(row: dict[str, Any], *, open_needs: list[str]) -> list[s
     c = row.get("components") or {}
     role = row.get("projected_role") or {}
     impact = float(row.get("lineup_impact") or 0)
+    flex = row.get("flex_lineup_impact") or {}
+    flex_delta = float(flex.get("delta") or 0)
 
     if role.get("is_bench") and open_needs:
         open_label = ", ".join(str(s) for s in open_needs[:3])
@@ -64,23 +66,37 @@ def _build_explanations(row: dict[str, Any], *, open_needs: list[str]) -> list[s
                 f"BENCH PICK — VALUE OVERRIDE: {open_label} remains open; "
                 "waiting is estimated better than taking a weaker fill now."
             )
-    elif role.get("is_wrt") and impact >= 8:
-        reasons.append(
-            f"Adds {impact:.0f} projected points to your optimal lineup "
-            f"as {role.get('label', 'WRT')}."
-        )
+    elif role.get("is_wrt") and (impact >= 8 or flex_delta >= 15):
+        if flex_delta >= 15 and flex.get("wrt_floor") is not None:
+            reasons.append(
+                f"WRT upgrade +{flex_delta:.0f} pts vs current WRT floor "
+                f"({flex.get('wrt_floor'):.0f}) as {role.get('label', 'WRT')}."
+            )
+        else:
+            reasons.append(
+                f"Adds {impact:.0f} projected points to your optimal lineup "
+                f"as {role.get('label', 'WRT')}."
+            )
     elif role.get("is_starter") and impact >= 8:
         reasons.append(
             f"Adds {impact:.0f} projected starter points "
             f"({role.get('label', row.get('position'))})."
         )
+        if flex_delta >= 20:
+            reasons.append(
+                f"Also strengthens WRT depth (+{flex_delta:.0f} flex value)."
+            )
     elif impact >= 20:
         reasons.append(f"Lineup +{impact:.0f} pts")
+    elif flex_delta >= 25:
+        reasons.append(
+            f"Strong WRT value: +{flex_delta:.0f} vs your weakest flex starter."
+        )
 
     if row.get("vorp", 0) >= 25:
         reasons.append(f"Strong VORP (+{row['vorp']:.0f})")
     if c.get("scarcity", 0) >= 0.55:
-        reasons.append(f"Scarce at {row.get('position')}")
+        reasons.append(f"Scarce at {row.get('position')} (incl. WRT demand)")
     if row.get("tier_drop", 0) >= 15:
         reasons.append(f"Major tier drop ({row.get('tier')})")
     if c.get("roster_need", 0) >= 0.55 and not role.get("is_bench"):
@@ -89,9 +105,18 @@ def _build_explanations(row: dict[str, Any], *, open_needs: list[str]) -> list[s
         if slot in norm:
             reasons.append(f"Fills {slot} starter need")
         elif any(s in ("WRT", "FLEX") for s in norm):
-            reasons.append("Strong WRT / starter fit")
+            open_wrt = sum(1 for s in norm if s in ("WRT", "FLEX"))
+            reasons.append(
+                f"Fills WRT need ({open_wrt} open) — eligible as WR/RB/TE flex"
+            )
         else:
             reasons.append("Matches roster need")
+    usefulness = row.get("team_usefulness")
+    if usefulness is not None and usefulness >= 0.7 and not role.get("is_bench"):
+        reasons.append(f"High team usefulness ({usefulness:.0%}) for current roster")
+    urg = row.get("starter_need_urgency")
+    if urg is not None and urg >= 0.75 and open_needs and not role.get("is_bench"):
+        reasons.append("Starter holes becoming urgent — prioritize need fills")
     p_av = row.get("p_available_next")
     if p_av is not None and p_av <= 0.25 and not role.get("is_bench"):
         reasons.append(f"Only {int(p_av * 100)}% chance survives to your next pick")
@@ -276,6 +301,7 @@ def recommend_for_team(
                 for p in lineup["bench"]
             ],
         },
+        "remaining_team_picks": None,  # filled after we know team_next
         "superflex": settings.superflex,
         "position_outlook": {},
         "recent_run": recent_position_run(picks, players_by_id),
@@ -307,28 +333,54 @@ def recommend_for_team(
 
     draft_progress = (team_next - 1) / max(settings.total_picks - 1, 1)
     # Spans for normalization from eligible set
+    from app.services.fantasy_draft.roster import flex_lineup_impact, lineup_impact
+
     projs = [projected_fantasy_points(p, settings.scoring) for p in eligible]
     vorps = [
-        projected_fantasy_points(p, settings.scoring) - replacement.get(str(p.get("position") or ""), 0)
+        projected_fantasy_points(p, settings.scoring)
+        - replacement.get(str(p.get("position") or ""), 0)
         for p in eligible
     ]
-    impacts = [0.0]  # filled below per candidate; use provisional span
-    for p in eligible[:40]:
-        from app.services.fantasy_draft.roster import lineup_impact
-
+    impacts = [0.0]
+    flex_deltas = [0.0]
+    for p in eligible[:50]:
         impacts.append(lineup_impact(rostered, p, settings))
+        flex_deltas.append(
+            float(flex_lineup_impact(rostered, p, settings).get("delta") or 0.0)
+        )
 
     proj_span = (min(projs), max(projs)) if projs else (0.0, 1.0)
     vorp_span = (min(vorps), max(vorps)) if vorps else (0.0, 1.0)
     impact_span = (min(impacts), max(impacts)) if impacts else (0.0, 1.0)
+    flex_span = (min(flex_deltas), max(flex_deltas)) if flex_deltas else (0.0, 40.0)
     if proj_span[0] == proj_span[1]:
         proj_span = (proj_span[0] - 1, proj_span[1] + 1)
     if vorp_span[0] == vorp_span[1]:
         vorp_span = (vorp_span[0] - 1, vorp_span[1] + 1)
     if impact_span[0] == impact_span[1]:
         impact_span = (impact_span[0] - 1, impact_span[1] + 1)
+    if flex_span[0] == flex_span[1]:
+        flex_span = (flex_span[0], flex_span[1] + 40.0)
 
     scored: list[dict[str, Any]] = []
+    remaining_team_picks = 0
+    for o in range(team_next, settings.total_picks + 1):
+        if team_slot_for_overall(o, settings.league_size) == team_slot:
+            remaining_team_picks += 1
+    meta["remaining_team_picks"] = remaining_team_picks
+    from app.services.fantasy_draft.roster import starter_need_urgency
+
+    meta["starter_need_urgency"] = round(
+        starter_need_urgency(
+            open_needs,
+            settings=settings,
+            draft_progress=draft_progress,
+            remaining_team_picks=remaining_team_picks,
+            available=pool,
+        ),
+        3,
+    )
+
     for p in eligible:
         row = score_candidate(
             p,
@@ -346,6 +398,8 @@ def recommend_for_team(
             vorp_span=vorp_span,
             proj_span=proj_span,
             impact_span=impact_span,
+            flex_span=flex_span,
+            remaining_team_picks=remaining_team_picks,
         )
         scored.append(row)
 

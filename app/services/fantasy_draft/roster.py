@@ -247,25 +247,235 @@ def lineup_impact(
     return after - before
 
 
+def flex_lineup_impact(
+    rostered: list[dict[str, Any]],
+    player: dict[str, Any],
+    settings: LeagueSettings,
+) -> dict[str, Any]:
+    """
+    How much this WR/RB/TE would improve WRT starters specifically.
+
+    Compares candidate projected points to the weakest current WRT starter
+    (or credits full projection when filling an open WRT). Used so 2×WRT
+    leagues correctly value skill-position depth beyond named starters.
+    """
+    pos = str(player.get("position") or "")
+    empty = {
+        "delta": 0.0,
+        "candidate_pts": 0.0,
+        "wrt_floor": 0.0,
+        "open_wrt": 0,
+        "would_start_wrt": False,
+        "eligible": False,
+    }
+    if pos not in WRT_ELIGIBLE or settings.wrt_slots <= 0:
+        return empty
+
+    cand_pts = projected_fantasy_points(player, settings.scoring)
+    before = optimize_starting_lineup(rostered, settings)
+    after = optimize_starting_lineup(rostered + [player], settings)
+    pid = str(player.get("player_id"))
+
+    wrt_before = [
+        r
+        for r in before["starters"]
+        if str(r["slot"]).upper() in ("WRT", "FLEX")
+    ]
+    open_wrt = sum(1 for r in wrt_before if r.get("player") is None)
+    filled_pts = [
+        float(r["projected_points"])
+        for r in wrt_before
+        if r.get("player") is not None
+    ]
+    wrt_floor = min(filled_pts) if filled_pts else 0.0
+
+    would_start_wrt = any(
+        str(r["slot"]).upper() in ("WRT", "FLEX")
+        and r.get("player")
+        and str(r["player"].get("player_id")) == pid
+        for r in after["starters"]
+    )
+
+    if would_start_wrt:
+        # Points this player contributes in a WRT slot after assignment
+        after_pts = next(
+            (
+                float(r["projected_points"])
+                for r in after["starters"]
+                if str(r["slot"]).upper() in ("WRT", "FLEX")
+                and r.get("player")
+                and str(r["player"].get("player_id")) == pid
+            ),
+            cand_pts,
+        )
+        if open_wrt > 0:
+            delta = after_pts  # filling an empty WRT
+        else:
+            delta = max(0.0, after_pts - wrt_floor)
+    else:
+        # Started at dedicated RB/WR/TE — measure WRT pool upgrade indirectly
+        before_wrt_pts = sum(float(r["projected_points"]) for r in wrt_before)
+        after_wrt_pts = sum(
+            float(r["projected_points"])
+            for r in after["starters"]
+            if str(r["slot"]).upper() in ("WRT", "FLEX")
+        )
+        delta = max(0.0, after_wrt_pts - before_wrt_pts)
+
+    return {
+        "delta": round(delta, 2),
+        "candidate_pts": round(cand_pts, 2),
+        "wrt_floor": round(wrt_floor, 2),
+        "open_wrt": open_wrt,
+        "would_start_wrt": would_start_wrt,
+        "eligible": True,
+    }
+
+
+def starter_need_urgency(
+    open_needs: list[str],
+    *,
+    settings: LeagueSettings,
+    draft_progress: float,
+    remaining_team_picks: int,
+    available: list[dict[str, Any]] | None = None,
+    position: str | None = None,
+) -> float:
+    """
+    How dangerous it is to leave starter holes unfilled.
+
+    Not round-number alone — also remaining team picks, hole count, and
+    (when available) quality left at the relevant position.
+    """
+    holes = [str(s).upper() for s in open_needs if str(s).upper() not in ("BENCH", "IR")]
+    if not holes:
+        return 0.15  # residual depth urgency only
+
+    progress = max(0.0, min(1.0, draft_progress))
+    hole_pressure = min(1.0, 0.22 * len(holes) + 0.12 * sum(
+        1 for h in holes if h not in ("WRT", "FLEX", "SUPERFLEX", "SF")
+    ))
+
+    # Running out of picks while holes remain → urgency spikes
+    picks_left = max(0, int(remaining_team_picks))
+    if picks_left <= len(holes):
+        pick_pressure = 1.0
+    elif picks_left <= len(holes) + 2:
+        pick_pressure = 0.85
+    else:
+        # fraction of remaining picks that must cover holes
+        pick_pressure = min(1.0, len(holes) / max(1, picks_left) * 1.4)
+
+    quality_pressure = 0.35
+    if available is not None and position:
+        pos = str(position)
+        relevant = []
+        for p in available:
+            ppos = str(p.get("position") or "")
+            if ppos == pos:
+                relevant.append(projected_fantasy_points(p, settings.scoring))
+            elif pos in ("WRT", "FLEX") and ppos in WRT_ELIGIBLE:
+                relevant.append(projected_fantasy_points(p, settings.scoring))
+        relevant.sort(reverse=True)
+        if not relevant:
+            quality_pressure = 1.0
+        else:
+            # Thin / weak remaining pool → higher urgency
+            top = relevant[0]
+            depth = relevant[min(4, len(relevant) - 1)]
+            cliff = top - depth
+            if top < 140:
+                quality_pressure = 0.9
+            elif cliff < 15 and len(relevant) < 8:
+                quality_pressure = 0.75
+            elif len(relevant) < settings.league_size:
+                quality_pressure = 0.65
+            else:
+                quality_pressure = 0.35 + 0.25 * progress
+
+    urgency = (
+        0.25 * progress
+        + 0.30 * hole_pressure
+        + 0.25 * pick_pressure
+        + 0.20 * quality_pressure
+    )
+    return max(0.2, min(1.0, urgency))
+
+
 def roster_need_score(
     player: dict[str, Any],
     open_needs: list[str],
     settings: LeagueSettings,
     *,
     draft_progress: float,
+    rostered: list[dict[str, Any]] | None = None,
+    available: list[dict[str, Any]] | None = None,
+    remaining_team_picks: int | None = None,
 ) -> float:
+    """
+    Need fit for this player given the team's *current* open starter slots.
+
+    Recomputed every recommendation from the live roster — as picks land,
+    open_needs shrink and this score shifts automatically.
+    """
     pos = str(player.get("position") or "")
     norm_needs = [str(s).upper() for s in open_needs]
-    if pos in norm_needs:
-        base = 1.0
-    elif any(s in ("WRT", "FLEX") for s in norm_needs) and pos in WRT_ELIGIBLE:
-        base = 0.78
+    open_wrt = sum(1 for s in norm_needs if s in ("WRT", "FLEX"))
+    has_dedicated = pos in norm_needs
+    rem = (
+        remaining_team_picks
+        if remaining_team_picks is not None
+        else max(1, settings.rounds - (len(rostered) if rostered else 0))
+    )
+
+    urgency = starter_need_urgency(
+        open_needs,
+        settings=settings,
+        draft_progress=draft_progress,
+        remaining_team_picks=rem,
+        available=available,
+        position=pos if has_dedicated else ("WRT" if open_wrt and pos in WRT_ELIGIBLE else pos),
+    )
+
+    if has_dedicated:
+        base = 0.88 + 0.12 * urgency
+    elif open_wrt and pos in WRT_ELIGIBLE:
+        wrt_weight = 0.68 + 0.08 * min(3, open_wrt) + 0.04 * min(2, settings.wrt_slots)
+        if rostered is not None:
+            flex = flex_lineup_impact(rostered, player, settings)
+            if flex["delta"] >= 40:
+                wrt_weight = max(wrt_weight, 0.90)
+            elif flex["delta"] >= 20:
+                wrt_weight = max(wrt_weight, 0.82)
+            elif flex["open_wrt"] == 0 and flex["delta"] < 5:
+                wrt_weight = min(wrt_weight, 0.50)
+        base = min(0.94, wrt_weight) * (0.75 + 0.25 * urgency)
     elif any(s in ("SUPERFLEX", "SF") for s in norm_needs) and pos in settings.superflex_eligible:
-        base = 0.82
+        base = 0.80 * (0.75 + 0.25 * urgency)
+    elif pos in WRT_ELIGIBLE and settings.wrt_slots >= 2 and rostered is not None:
+        flex = flex_lineup_impact(rostered, player, settings)
+        if flex["delta"] >= 25:
+            base = 0.48
+        elif flex["delta"] >= 12:
+            base = 0.32
+        else:
+            base = 0.12
     else:
-        base = 0.18
-    phase = 0.45 + 0.55 * max(0.0, min(1.0, draft_progress))
-    return max(0.0, min(1.0, base * phase))
+        # Does not fill a current hole — low need, especially early with open starters
+        hole_count = len([s for s in norm_needs if s not in ("BENCH", "IR")])
+        if hole_count >= 3:
+            base = 0.08
+        elif hole_count >= 1:
+            base = 0.12
+        else:
+            base = 0.22  # starters full — depth is legitimate
+
+    # When many holes remain and few picks left, non-fits get crushed harder
+    if not has_dedicated and not (open_wrt and pos in WRT_ELIGIBLE):
+        if len(norm_needs) >= 2 and rem <= len(norm_needs) + 1:
+            base *= 0.45
+
+    return max(0.0, min(1.0, base))
 
 
 def roster_imbalance_penalty(
@@ -281,6 +491,7 @@ def roster_imbalance_penalty(
     n = counts.get(pos, 0) + 1
 
     dedicated = sum(1 for s in settings.starter_slots if s == pos)
+    # 2 WRT slots meaningfully raise comfortable RB/WR/TE depth
     wrt_room = settings.wrt_slots if pos in WRT_ELIGIBLE else 0
     sflex_room = (
         int(settings.slot_counts.get("SUPERFLEX", 0) or 0)
@@ -292,7 +503,20 @@ def roster_imbalance_penalty(
     if n <= comfortable:
         return 0.0
 
-    holes = [h for h in open_needs if str(h).upper() not in (pos, "BENCH", "IR")]
+    # Don't treat WRT-open as a "hole" against drafting another WRT-eligible
+    holes = [
+        h
+        for h in open_needs
+        if str(h).upper() not in (pos, "BENCH", "IR", "WRT", "FLEX")
+        or (
+            str(h).upper() in ("WRT", "FLEX")
+            and pos not in WRT_ELIGIBLE
+        )
+    ]
+    # Soften penalty when WRT still open and this player can fill it
+    if any(str(h).upper() in ("WRT", "FLEX") for h in open_needs) and pos in WRT_ELIGIBLE:
+        return min(0.35, 0.08 * (n - comfortable))
+
     if not holes:
         return min(0.55, 0.1 * (n - comfortable))
     return min(1.0, 0.16 * (n - comfortable) + 0.1 * len(holes))

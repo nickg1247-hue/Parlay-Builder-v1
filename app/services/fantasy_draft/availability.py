@@ -73,10 +73,12 @@ def probability_available_next_pick(
         if not can_team_draft_player(roster, player, settings):
             continue
         needs = compute_open_needs(roster, settings)
-        if pos in needs or (
-            "FLEX" in needs and pos in {"RB", "WR", "TE"}
+        norm = [str(s).upper() for s in needs]
+        if pos in norm or (
+            any(s in ("WRT", "FLEX") for s in norm) and pos in {"RB", "WR", "TE"}
         ) or (
-            any(s in ("SUPERFLEX", "SF") for s in needs) and pos == "QB"
+            any(s in ("SUPERFLEX", "SF") for s in norm)
+            and pos in {"QB", "RB", "WR", "TE"}
         ):
             need_boost += 0.045
         else:

@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from app.services.fantasy_draft.projections import projected_fantasy_points
-from app.services.fantasy_draft.settings import POSITION_KEYS, LeagueSettings
+from app.services.fantasy_draft.settings import POSITION_KEYS, LeagueSettings, WRT_ELIGIBLE
+from app.services.fantasy_draft.vorp import allocate_wrt_demand
 
 
 def _sorted_pts(
@@ -26,7 +27,11 @@ def positional_scarcity(
 ) -> dict[str, float]:
     """
     0–1 scarcity: larger cliff between best remaining and depth = higher.
+
+    For RB/WR/TE, WRT demand tightens the effective starter pool — two WRT
+    slots make skill positions scarcer than named starters alone imply.
     """
+    demand = allocate_wrt_demand(available, settings)
     out: dict[str, float] = {}
     for pos in POSITION_KEYS:
         pts = _sorted_pts(available, settings, pos)
@@ -34,12 +39,24 @@ def positional_scarcity(
             out[pos] = 0.55 if pts else 0.0
             continue
         best = pts[0]
-        # Compare to ~league_size-th remaining / mid pack
-        idx = min(len(pts) - 1, max(2, settings.league_size // 2))
+        # Compare deeper into the board when WRT inflates starter demand
+        demand_n = max(1.0, float(demand.get(pos, 1.0)))
+        idx = min(
+            len(pts) - 1,
+            max(2, int(round(settings.league_size * min(demand_n, 3.5) * 0.45))),
+        )
         cliff = best - pts[idx]
-        # Normalize: 40+ pt cliff ≈ 1.0 for skill, lower for K/DST
         scale = 35.0 if pos in ("RB", "WR", "TE", "QB") else 20.0
-        out[pos] = max(0.0, min(1.0, cliff / scale))
+        base = max(0.0, min(1.0, cliff / scale))
+
+        # WRT demand premium: positions that fill more flex slots get a bump
+        if pos in WRT_ELIGIBLE and settings.wrt_slots > 0:
+            dedicated = sum(1 for s in settings.starter_slots if s == pos)
+            flex_share = max(0.0, demand_n - dedicated)
+            # Up to +0.18 when this position is heavily used in WRT
+            base = min(1.0, base + 0.06 * settings.wrt_slots + 0.08 * min(1.5, flex_share))
+
+        out[pos] = base
     return out
 
 
@@ -84,7 +101,6 @@ def tier_for_player(
     if tier_idx < len(tiers):
         drop = max(0.0, pts - max(tiers[tier_idx]))
     elif len(same) > 1:
-        # within last tier: drop to next player
         try:
             i = same.index(pts)
             if i + 1 < len(same):
