@@ -87,6 +87,27 @@ def test_schedule_api_uses_espn_game_id(mock_fetch):
     assert game["home_team_abbr"] == "KC"
 
 
+@patch("app.services.schedule_nfl.fetch_nfl_scores_day", side_effect=Exception("espn down"))
+def test_resolve_survives_espn_failure(mock_fetch):
+    start = date.today()
+    resolved, days_ahead = resolve_nfl_slate_date(start)
+    assert resolved == start + timedelta(days=7)
+    assert days_ahead == 7
+
+
+@patch("app.services.scores_today.get_ufc_scores_today", side_effect=TimeoutError)
+@patch("app.services.scores_today.get_cfb_scores_today", return_value={"games": [], "games_count": 0})
+@patch("app.services.scores_today.get_nba_scores_today", return_value={"games": [], "games_count": 0})
+@patch("app.services.scores_today.get_mlb_scores_today", return_value={"games": [], "games_count": 0, "cached_at": ""})
+@patch("app.services.scores_today.get_nfl_scores_today", side_effect=TimeoutError("nfl hung"))
+def test_merged_scores_survive_nfl_failure(_nfl, _mlb, _nba, _cfb, _ufc):
+    from app.services.scores_today import get_scores_today
+
+    merged = get_scores_today(sport="all", game_date=date(2026, 8, 14))
+    assert merged["sport"] == "all"
+    assert merged["games_count"] == 0
+
+
 @patch("app.services.schedule_nfl.fetch_nfl_scores_day")
 def test_schedule_endpoint(mock_fetch):
     mock_fetch.return_value = [ESPN_EVENT]

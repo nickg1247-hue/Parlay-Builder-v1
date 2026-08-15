@@ -25,11 +25,15 @@ def _espn_date_param(game_date: date) -> str:
 
 def fetch_nfl_scores_day(game_date: date) -> list[dict[str, Any]]:
     params = {"dates": _espn_date_param(game_date)}
-    with httpx.Client(timeout=30.0) as client:
-        response = client.get(ESPN_NFL_SCOREBOARD, params=params)
-        response.raise_for_status()
-        data = response.json()
-    return list(data.get("events") or [])
+    try:
+        with httpx.Client(timeout=6.0) as client:
+            response = client.get(ESPN_NFL_SCOREBOARD, params=params)
+            response.raise_for_status()
+            data = response.json()
+        return list(data.get("events") or [])
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("ESPN NFL scoreboard failed for %s: %s", game_date.isoformat(), exc)
+        return []
 
 
 def _parse_score(value: Any) -> int | None:
@@ -144,13 +148,12 @@ def get_nfl_scores_today(
     from app.services.schedule_nfl import get_nfl_schedule
 
     requested_date = game_date or date.today()
-    cache_key = f"nfl:{requested_date.isoformat()}:live={force_live}"
+    cache_key = f"nfl:{requested_date.isoformat()}:ar={int(auto_resolve)}"
     now = datetime.now(timezone.utc)
 
     global _scores_cache, _scores_cache_key, _scores_cache_at
     if (
-        not force_live
-        and _scores_cache is not None
+        _scores_cache is not None
         and _scores_cache_key == cache_key
         and _scores_cache_at is not None
         and (now - _scores_cache_at).total_seconds() < SCORES_CACHE_TTL_SECONDS
@@ -167,10 +170,9 @@ def get_nfl_scores_today(
         "cache_hit": schedule.get("source") in ("cache", "ingest"),
         "cache_ttl_seconds": SCORES_CACHE_TTL_SECONDS,
     }
-    if not force_live:
-        _scores_cache = payload
-        _scores_cache_key = cache_key
-        _scores_cache_at = now
+    _scores_cache = payload
+    _scores_cache_key = cache_key
+    _scores_cache_at = now
     logger.debug(
         "NFL scores: %s (%d games, source=%s)",
         payload.get("resolved_date"),

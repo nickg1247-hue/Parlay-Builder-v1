@@ -9,12 +9,29 @@ import pandas as pd
 
 from app.models.nfl_baseline import load_games
 
+_INGEST_DATES: set[str] | None = None
+
 
 def _date_str(game_date: date) -> str:
     return game_date.isoformat()
 
 
+def ingest_dates() -> set[str]:
+    global _INGEST_DATES
+    if _INGEST_DATES is not None:
+        return _INGEST_DATES
+    try:
+        games = load_games()
+    except FileNotFoundError:
+        _INGEST_DATES = set()
+        return _INGEST_DATES
+    _INGEST_DATES = set(pd.to_datetime(games["date"]).dt.strftime("%Y-%m-%d"))
+    return _INGEST_DATES
+
+
 def games_from_ingest(game_date: date) -> list[dict[str, Any]]:
+    if _date_str(game_date) not in ingest_dates():
+        return []
     try:
         games = load_games()
     except FileNotFoundError:
@@ -72,4 +89,4 @@ def games_from_ingest(game_date: date) -> list[dict[str, Any]]:
 
 
 def ingest_has_games(game_date: date) -> bool:
-    return bool(games_from_ingest(game_date))
+    return _date_str(game_date) in ingest_dates()

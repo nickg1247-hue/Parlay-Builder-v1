@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from typing import Any
@@ -13,7 +14,33 @@ from app.services.scores_nba_summer import get_nba_summer_scores_today
 from app.services.scores_nfl import get_nfl_scores_today
 from app.services.scores_ufc import get_ufc_scores_today
 
+logger = logging.getLogger(__name__)
+
 SUPPORTED_SPORTS = ("mlb", "nba", "nba-summer", "cfb", "nfl", "ufc", "all")
+MERGED_SPORT_TIMEOUT_SECONDS = 8.0
+
+
+def _empty_scores(sport: str, game_date: date) -> dict[str, Any]:
+    iso = game_date.isoformat()
+    return {
+        "sport": sport,
+        "date": iso,
+        "games": [],
+        "games_count": 0,
+        "cached_at": "",
+        "cache_hit": False,
+        "resolved_date": iso,
+        "days_ahead": 0,
+        "auto_advanced": False,
+    }
+
+
+def _future_result(future, sport: str, game_date: date) -> dict[str, Any]:
+    try:
+        return future.result(timeout=MERGED_SPORT_TIMEOUT_SECONDS)
+    except Exception:
+        logger.warning("Merged scores: %s timed out or failed", sport, exc_info=True)
+        return _empty_scores(sport, game_date)
 
 
 def _tag_sport(games: list[dict[str, Any]], sport: str) -> list[dict[str, Any]]:
@@ -62,11 +89,15 @@ def get_scores_today(
         )
 
     if sport == "nfl":
-        return get_nfl_scores_today(
-            game_date=game_date,
-            auto_resolve=auto_resolve and game_date is None,
-            force_live=game_date is None,
-        )
+        try:
+            return get_nfl_scores_today(
+                game_date=game_date,
+                auto_resolve=auto_resolve and game_date is None,
+                force_live=False,
+            )
+        except Exception:
+            logger.warning("NFL scores failed", exc_info=True)
+            return _empty_scores("nfl", game_date or date.today())
 
     if sport == "ufc":
         return get_ufc_scores_today(
@@ -97,7 +128,7 @@ def get_scores_today(
         return get_nfl_scores_today(
             game_date=game_date,
             auto_resolve=auto_resolve and game_date is None,
-            force_live=game_date is None,
+            force_live=False,
         )
 
     def _fetch_ufc() -> dict[str, Any]:
@@ -107,17 +138,21 @@ def get_scores_today(
             force_live=game_date is None,
         )
 
-    with ThreadPoolExecutor(max_workers=5) as pool:
+    pool = ThreadPoolExecutor(max_workers=5)
+    try:
         mlb_future = pool.submit(_fetch_mlb)
         nba_future = pool.submit(_fetch_nba)
         cfb_future = pool.submit(_fetch_cfb)
         nfl_future = pool.submit(_fetch_nfl)
         ufc_future = pool.submit(_fetch_ufc)
-        mlb = mlb_future.result()
-        nba = nba_future.result()
-        cfb = cfb_future.result()
-        nfl = nfl_future.result()
-        ufc = ufc_future.result()
+        fallback_date = game_date or date.today()
+        mlb = _future_result(mlb_future, "mlb", fallback_date)
+        nba = _future_result(nba_future, "nba", fallback_date)
+        cfb = _future_result(cfb_future, "cfb", fallback_date)
+        nfl = _future_result(nfl_future, "nfl", fallback_date)
+        ufc = _future_result(ufc_future, "ufc", fallback_date)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
     nba_games = nba.get("games") or []
     summer_count = sum(

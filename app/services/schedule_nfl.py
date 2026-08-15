@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -26,26 +27,56 @@ def _is_past_date(game_date: date) -> bool:
 def resolve_nfl_slate_date(start: date | None = None) -> tuple[date, int]:
     """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
     anchor = start or date.today()
-    for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
-        candidate = anchor + timedelta(days=offset)
-        if _date_has_games(candidate):
+    candidates = [anchor + timedelta(days=offset) for offset in range(SLATE_LOOKAHEAD_DAYS + 1)]
+    for offset, candidate in enumerate(candidates):
+        count = _local_games_count(candidate)
+        if count is not None and count > 0:
             return candidate, offset
-    return anchor + timedelta(days=SLATE_LOOKAHEAD_DAYS), SLATE_LOOKAHEAD_DAYS
+    unknown = [d for d in candidates if _local_games_count(d) is None]
+    if unknown:
+        _prefetch_espn_days(unknown)
+    for offset, candidate in enumerate(candidates):
+        count = _local_games_count(candidate)
+        if count is not None and count > 0:
+            return candidate, offset
+    return candidates[-1], SLATE_LOOKAHEAD_DAYS
 
 
-def _date_has_games(game_date: date) -> bool:
+def _local_games_count(game_date: date) -> int | None:
+    """Games on disk/ingest, or None if we still need ESPN."""
     path = schedule_cache_path(game_date)
     if path.exists():
         try:
             payload = _load_cache_payload(path)
-            count = payload.get("games_count", len(payload.get("games") or []))
-            if count > 0:
-                return True
-        except (json.JSONDecodeError, OSError):
-            pass
+            return int(payload.get("games_count", len(payload.get("games") or [])))
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
+            return None
     if _is_past_date(game_date):
-        return ingest_has_games(game_date)
-    return bool(fetch_nfl_scores_day(game_date))
+        return 1 if ingest_has_games(game_date) else 0
+    return None
+
+
+def _prefetch_espn_days(days: list[date]) -> None:
+    if not days:
+        return
+
+    def _one(game_date: date) -> None:
+        try:
+            _load_schedule_payload(game_date, force_live=False)
+        except Exception:
+            logger.warning("NFL look-ahead prefetch failed for %s", game_date.isoformat())
+
+    workers = min(8, len(days))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        list(pool.map(_one, days))
+
+
+def _date_has_games(game_date: date) -> bool:
+    count = _local_games_count(game_date)
+    if count is not None:
+        return count > 0
+    payload = _load_schedule_payload(game_date, force_live=False)
+    return bool(payload.get("games"))
 
 
 def _slate_meta(
@@ -112,9 +143,14 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
             logger.info("No ingested NFL games for %s", game_date.isoformat())
         return _write_schedule_cache(game_date, games, source=source)
 
-    events = fetch_nfl_scores_day(game_date)
-    games = [live_game_record(e) for e in events]
-    return _write_schedule_cache(game_date, games, source="api")
+    try:
+        events = fetch_nfl_scores_day(game_date)
+        games = [live_game_record(e) for e in events]
+    except Exception:
+        logger.warning("NFL ESPN parse failed for %s", game_date.isoformat(), exc_info=True)
+        events = []
+        games = []
+    return _write_schedule_cache(game_date, games, source="api" if events else "none")
 
 
 def _game_from_payload(payload: dict[str, Any], game_id: str) -> dict[str, Any] | None:

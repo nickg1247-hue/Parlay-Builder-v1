@@ -86,9 +86,12 @@ def test_get_nba_scores_today(mock_fetch):
     mock_fetch.assert_called_once()
 
 
+@patch("app.services.scores_today.get_ufc_scores_today", return_value={"games": [], "games_count": 0})
+@patch("app.services.scores_today.get_nfl_scores_today", return_value={"games": [], "games_count": 0})
+@patch("app.services.scores_today.get_cfb_scores_today", return_value={"games": [], "games_count": 0})
 @patch("app.services.scores_today.get_nba_scores_today")
 @patch("app.services.scores_today.get_mlb_scores_today")
-def test_merged_scores_all(mock_mlb, mock_nba):
+def test_merged_scores_all(mock_mlb, mock_nba, _cfb, _nfl, _ufc):
     mock_mlb.return_value = {
         "sport": "mlb",
         "date": "2026-06-06",
