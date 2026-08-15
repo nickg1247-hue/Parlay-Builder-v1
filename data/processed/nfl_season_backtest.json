@@ -1,0 +1,838 @@
+{
+  "generated_at": "2026-08-15T15:41:49.335721+00:00",
+  "method": "Walk-forward v2: GBR on form/rest/travel/pythagorean features, Elo override when the model is inside a toss-up band tuned on the prior season. Categories fit on regular-season favorite-% hit rates for the scored years. Lock may be an interior band when a higher-% upset breaks the tail. Preseason is capped at soft. No future games in train. No API calls.",
+  "feature_set": "nfl_v2",
+  "model": "v2_gbr_elo_tossup",
+  "goals": {
+    "hard_min_pct": 60.0,
+    "soft_floor_pct": 60,
+    "hard_floor_pct": 75,
+    "lock_floor_pct": 95
+  },
+  "seasons": [
+    2024,
+    2025
+  ],
+  "folds": [
+    {
+      "season": 2024,
+      "train_seasons": [
+        2019,
+        2020,
+        2021,
+        2022
+      ],
+      "tune_season": 2023,
+      "tossup_cut": 0.07,
+      "train_games": 1514,
+      "model": {
+        "name": "v2_gbr_elo_tossup",
+        "games": 320,
+        "correct": 205,
+        "wrong": 115,
+        "accuracy": 0.6406,
+        "accuracy_pct": 64.1,
+        "log_loss": 0.6497,
+        "brier": 0.2287
+      },
+      "elo": {
+        "name": "elo",
+        "games": 320,
+        "correct": 206,
+        "wrong": 114,
+        "accuracy": 0.6438,
+        "accuracy_pct": 64.4,
+        "log_loss": 0.6548,
+        "brier": 0.2308
+      },
+      "home_rate": {
+        "name": "home_win_rate",
+        "games": 320,
+        "correct": 171,
+        "wrong": 149,
+        "accuracy": 0.5344,
+        "accuracy_pct": 53.4,
+        "log_loss": 0.6909,
+        "brier": 0.2489
+      },
+      "regular": {
+        "name": "regular",
+        "games": 272,
+        "correct": 183,
+        "wrong": 89,
+        "accuracy": 0.6728,
+        "accuracy_pct": 67.3,
+        "log_loss": 0.6339,
+        "brier": 0.2213
+      },
+      "preseason": {
+        "name": "preseason",
+        "games": 48,
+        "correct": 22,
+        "wrong": 26,
+        "accuracy": 0.4583,
+        "accuracy_pct": 45.8,
+        "log_loss": 0.7391,
+        "brier": 0.2707
+      }
+    },
+    {
+      "season": 2025,
+      "train_seasons": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "tune_season": 2024,
+      "tossup_cut": 0.15,
+      "train_games": 1834,
+      "model": {
+        "name": "v2_gbr_elo_tossup",
+        "games": 317,
+        "correct": 199,
+        "wrong": 118,
+        "accuracy": 0.6278,
+        "accuracy_pct": 62.8,
+        "log_loss": 0.6589,
+        "brier": 0.232
+      },
+      "elo": {
+        "name": "elo",
+        "games": 317,
+        "correct": 194,
+        "wrong": 123,
+        "accuracy": 0.612,
+        "accuracy_pct": 61.2,
+        "log_loss": 0.6661,
+        "brier": 0.2351
+      },
+      "home_rate": {
+        "name": "home_win_rate",
+        "games": 317,
+        "correct": 168,
+        "wrong": 149,
+        "accuracy": 0.53,
+        "accuracy_pct": 53.0,
+        "log_loss": 0.6914,
+        "brier": 0.2491
+      },
+      "regular": {
+        "name": "regular",
+        "games": 271,
+        "correct": 172,
+        "wrong": 99,
+        "accuracy": 0.6347,
+        "accuracy_pct": 63.5,
+        "log_loss": 0.6409,
+        "brier": 0.2246
+      },
+      "preseason": {
+        "name": "preseason",
+        "games": 46,
+        "correct": 27,
+        "wrong": 19,
+        "accuracy": 0.587,
+        "accuracy_pct": 58.7,
+        "log_loss": 0.7651,
+        "brier": 0.2761
+      }
+    }
+  ],
+  "categories": {
+    "method": "Favorite % = max(home, away) walk-forward win probability. Toss-up is each 5-point bin from 50% that still hits under 60%. Soft / hard / lock bands must hit 60% / 75% / 95%. Lock may be an interior band when a higher favorite-% upset would break a [cut, 100) tail. Preseason is capped at soft.",
+    "floors": {
+      "soft": 60,
+      "hard": 75,
+      "lock": 95
+    },
+    "min_games": {
+      "soft": 25,
+      "hard": 15,
+      "lock": 8
+    },
+    "cuts": {
+      "toss-up": {
+        "lo": 50.0,
+        "hi": 55.0
+      },
+      "soft": {
+        "lo": 55.0,
+        "hi": 73.0
+      },
+      "hard": {
+        "lo": 73.0,
+        "hi": 80.5
+      },
+      "lock": {
+        "lo": 80.5,
+        "hi": 86.0
+      },
+      "hard_tail": {
+        "lo": 86.0,
+        "hi": 100.01
+      }
+    }
+  },
+  "category_proof": {
+    "all_games": [
+      {
+        "category": "toss-up",
+        "favorite_range": "50\u201355%",
+        "lo": 50.0,
+        "hi": 55.0,
+        "games": 66,
+        "correct": 36,
+        "wrong": 30,
+        "hit_pct": 54.5,
+        "floor_pct": null,
+        "meets_floor": true,
+        "note": "Favorites from 50% up to 55% went 36/66 (54.5%) \u2014 treated as a coin flip."
+      },
+      {
+        "category": "soft",
+        "favorite_range": "55\u201373%",
+        "lo": 55.0,
+        "hi": 73.0,
+        "games": 453,
+        "correct": 282,
+        "wrong": 171,
+        "hit_pct": 62.3,
+        "floor_pct": 60,
+        "meets_floor": true,
+        "note": "Favorites 55\u201373% went 282/453 (62.3%). Floor is 60%."
+      },
+      {
+        "category": "hard",
+        "favorite_range": "73\u201380.5% + 86\u2013100%",
+        "lo": 73.0,
+        "hi": 80.5,
+        "games": 103,
+        "correct": 75,
+        "wrong": 28,
+        "hit_pct": 72.8,
+        "floor_pct": 75,
+        "meets_floor": false,
+        "note": "Favorites 73\u201380.5% + 86\u2013100% went 75/103 (72.8%). Floor is 75%."
+      },
+      {
+        "category": "lock",
+        "favorite_range": "80.5\u201386%",
+        "lo": 80.5,
+        "hi": 86.0,
+        "games": 15,
+        "correct": 11,
+        "wrong": 4,
+        "hit_pct": 73.3,
+        "floor_pct": 95,
+        "meets_floor": false,
+        "note": "Favorites 80.5\u201386% went 11/15 (73.3%). Floor is 95%."
+      }
+    ],
+    "regular": [
+      {
+        "category": "toss-up",
+        "favorite_range": "50\u201355%",
+        "lo": 50.0,
+        "hi": 55.0,
+        "games": 57,
+        "correct": 31,
+        "wrong": 26,
+        "hit_pct": 54.4,
+        "floor_pct": null,
+        "meets_floor": true,
+        "note": "Favorites from 50% up to 55% went 31/57 (54.4%) \u2014 treated as a coin flip."
+      },
+      {
+        "category": "soft",
+        "favorite_range": "55\u201373%",
+        "lo": 55.0,
+        "hi": 73.0,
+        "games": 387,
+        "correct": 248,
+        "wrong": 139,
+        "hit_pct": 64.1,
+        "floor_pct": 60,
+        "meets_floor": true,
+        "note": "Favorites 55\u201373% went 248/387 (64.1%). Floor is 60%."
+      },
+      {
+        "category": "hard",
+        "favorite_range": "73\u201380.5% + 86\u2013100%",
+        "lo": 73.0,
+        "hi": 80.5,
+        "games": 89,
+        "correct": 66,
+        "wrong": 23,
+        "hit_pct": 74.2,
+        "floor_pct": 75,
+        "meets_floor": false,
+        "note": "Favorites 73\u201380.5% + 86\u2013100% went 66/89 (74.2%). Floor is 75%."
+      },
+      {
+        "category": "lock",
+        "favorite_range": "80.5\u201386%",
+        "lo": 80.5,
+        "hi": 86.0,
+        "games": 10,
+        "correct": 10,
+        "wrong": 0,
+        "hit_pct": 100.0,
+        "floor_pct": 95,
+        "meets_floor": true,
+        "note": "Favorites 80.5\u201386% went 10/10 (100.0%). Floor is 95%."
+      }
+    ],
+    "labeled_all": [
+      {
+        "category": "toss-up",
+        "games": 66,
+        "correct": 36,
+        "wrong": 30,
+        "hit_pct": 54.5,
+        "floor_pct": null,
+        "meets_floor": true
+      },
+      {
+        "category": "soft",
+        "games": 472,
+        "correct": 292,
+        "wrong": 180,
+        "hit_pct": 61.9,
+        "floor_pct": 60,
+        "meets_floor": true
+      },
+      {
+        "category": "hard",
+        "games": 89,
+        "correct": 66,
+        "wrong": 23,
+        "hit_pct": 74.2,
+        "floor_pct": 75,
+        "meets_floor": false
+      },
+      {
+        "category": "lock",
+        "games": 10,
+        "correct": 10,
+        "wrong": 0,
+        "hit_pct": 100.0,
+        "floor_pct": 95,
+        "meets_floor": true
+      }
+    ],
+    "labeled_regular": [
+      {
+        "category": "toss-up",
+        "games": 57,
+        "correct": 31,
+        "wrong": 26,
+        "hit_pct": 54.4,
+        "floor_pct": null,
+        "meets_floor": true
+      },
+      {
+        "category": "soft",
+        "games": 387,
+        "correct": 248,
+        "wrong": 139,
+        "hit_pct": 64.1,
+        "floor_pct": 60,
+        "meets_floor": true
+      },
+      {
+        "category": "hard",
+        "games": 89,
+        "correct": 66,
+        "wrong": 23,
+        "hit_pct": 74.2,
+        "floor_pct": 75,
+        "meets_floor": false
+      },
+      {
+        "category": "lock",
+        "games": 10,
+        "correct": 10,
+        "wrong": 0,
+        "hit_pct": 100.0,
+        "floor_pct": 95,
+        "meets_floor": true
+      }
+    ]
+  },
+  "favorite_bins_5pct": {
+    "all_games": [
+      {
+        "favorite_range": "50\u201355%",
+        "games": 66,
+        "correct": 36,
+        "hit_pct": 54.5
+      },
+      {
+        "favorite_range": "55\u201360%",
+        "games": 124,
+        "correct": 72,
+        "hit_pct": 58.1
+      },
+      {
+        "favorite_range": "60\u201365%",
+        "games": 102,
+        "correct": 61,
+        "hit_pct": 59.8
+      },
+      {
+        "favorite_range": "65\u201370%",
+        "games": 148,
+        "correct": 102,
+        "hit_pct": 68.9
+      },
+      {
+        "favorite_range": "70\u201375%",
+        "games": 122,
+        "correct": 82,
+        "hit_pct": 67.2
+      },
+      {
+        "favorite_range": "75\u201380%",
+        "games": 55,
+        "correct": 37,
+        "hit_pct": 67.3
+      },
+      {
+        "favorite_range": "80\u201385%",
+        "games": 15,
+        "correct": 11,
+        "hit_pct": 73.3
+      },
+      {
+        "favorite_range": "85\u201390%",
+        "games": 5,
+        "correct": 3,
+        "hit_pct": 60.0
+      }
+    ],
+    "regular": [
+      {
+        "favorite_range": "50\u201355%",
+        "games": 57,
+        "correct": 31,
+        "hit_pct": 54.4
+      },
+      {
+        "favorite_range": "55\u201360%",
+        "games": 103,
+        "correct": 63,
+        "hit_pct": 61.2
+      },
+      {
+        "favorite_range": "60\u201365%",
+        "games": 86,
+        "correct": 54,
+        "hit_pct": 62.8
+      },
+      {
+        "favorite_range": "65\u201370%",
+        "games": 126,
+        "correct": 87,
+        "hit_pct": 69.0
+      },
+      {
+        "favorite_range": "70\u201375%",
+        "games": 110,
+        "correct": 74,
+        "hit_pct": 67.3
+      },
+      {
+        "favorite_range": "75\u201380%",
+        "games": 49,
+        "correct": 35,
+        "hit_pct": 71.4
+      },
+      {
+        "favorite_range": "80\u201385%",
+        "games": 10,
+        "correct": 10,
+        "hit_pct": 100.0
+      },
+      {
+        "favorite_range": "85\u201390%",
+        "games": 2,
+        "correct": 1,
+        "hit_pct": 50.0
+      }
+    ],
+    "by_season_regular": {
+      "2024": [
+        {
+          "favorite_range": "50\u201355%",
+          "games": 22,
+          "correct": 14,
+          "hit_pct": 63.6
+        },
+        {
+          "favorite_range": "55\u201360%",
+          "games": 58,
+          "correct": 37,
+          "hit_pct": 63.8
+        },
+        {
+          "favorite_range": "60\u201365%",
+          "games": 60,
+          "correct": 40,
+          "hit_pct": 66.7
+        },
+        {
+          "favorite_range": "65\u201370%",
+          "games": 62,
+          "correct": 45,
+          "hit_pct": 72.6
+        },
+        {
+          "favorite_range": "70\u201375%",
+          "games": 46,
+          "correct": 28,
+          "hit_pct": 60.9
+        },
+        {
+          "favorite_range": "75\u201380%",
+          "games": 19,
+          "correct": 14,
+          "hit_pct": 73.7
+        },
+        {
+          "favorite_range": "80\u201385%",
+          "games": 4,
+          "correct": 4,
+          "hit_pct": 100.0
+        },
+        {
+          "favorite_range": "85\u201390%",
+          "games": 1,
+          "correct": 1,
+          "hit_pct": 100.0
+        }
+      ],
+      "2025": [
+        {
+          "favorite_range": "50\u201355%",
+          "games": 35,
+          "correct": 17,
+          "hit_pct": 48.6
+        },
+        {
+          "favorite_range": "55\u201360%",
+          "games": 45,
+          "correct": 26,
+          "hit_pct": 57.8
+        },
+        {
+          "favorite_range": "60\u201365%",
+          "games": 26,
+          "correct": 14,
+          "hit_pct": 53.8
+        },
+        {
+          "favorite_range": "65\u201370%",
+          "games": 64,
+          "correct": 42,
+          "hit_pct": 65.6
+        },
+        {
+          "favorite_range": "70\u201375%",
+          "games": 64,
+          "correct": 46,
+          "hit_pct": 71.9
+        },
+        {
+          "favorite_range": "75\u201380%",
+          "games": 30,
+          "correct": 21,
+          "hit_pct": 70.0
+        },
+        {
+          "favorite_range": "80\u201385%",
+          "games": 6,
+          "correct": 6,
+          "hit_pct": 100.0
+        },
+        {
+          "favorite_range": "85\u201390%",
+          "games": 1,
+          "correct": 0,
+          "hit_pct": 0.0
+        }
+      ]
+    }
+  },
+  "favorite_bins": [
+    {
+      "favorite_range": "50\u201355%",
+      "games": 57,
+      "correct": 31,
+      "hit_pct": 54.4
+    },
+    {
+      "favorite_range": "55\u201360%",
+      "games": 103,
+      "correct": 63,
+      "hit_pct": 61.2
+    },
+    {
+      "favorite_range": "60\u201365%",
+      "games": 86,
+      "correct": 54,
+      "hit_pct": 62.8
+    },
+    {
+      "favorite_range": "65\u201370%",
+      "games": 126,
+      "correct": 87,
+      "hit_pct": 69.0
+    },
+    {
+      "favorite_range": "70\u201375%",
+      "games": 110,
+      "correct": 74,
+      "hit_pct": 67.3
+    },
+    {
+      "favorite_range": "75\u201380%",
+      "games": 49,
+      "correct": 35,
+      "hit_pct": 71.4
+    },
+    {
+      "favorite_range": "80\u201385%",
+      "games": 10,
+      "correct": 10,
+      "hit_pct": 100.0
+    },
+    {
+      "favorite_range": "85\u201390%",
+      "games": 2,
+      "correct": 1,
+      "hit_pct": 50.0
+    }
+  ],
+  "tail_proof": {
+    "note": "When we post a favorite at X%, this is how often that pick hits. Hard needs a 75% band with 15+ regular-season games. Lock needs 95% with 8+ games and may stop before 100% if a higher favorite-% upset would break the tail.",
+    "all_years": [
+      {
+        "favorite_range": ">=50%",
+        "lo": 50.0,
+        "games": 637,
+        "correct": 404,
+        "wrong": 233,
+        "hit_pct": 63.4
+      },
+      {
+        "favorite_range": ">=60%",
+        "lo": 60.0,
+        "games": 447,
+        "correct": 296,
+        "wrong": 151,
+        "hit_pct": 66.2
+      },
+      {
+        "favorite_range": ">=66%",
+        "lo": 66.0,
+        "games": 325,
+        "correct": 222,
+        "wrong": 103,
+        "hit_pct": 68.3
+      },
+      {
+        "favorite_range": ">=70%",
+        "lo": 70.0,
+        "games": 197,
+        "correct": 133,
+        "wrong": 64,
+        "hit_pct": 67.5
+      },
+      {
+        "favorite_range": ">=74%",
+        "lo": 74.0,
+        "games": 94,
+        "correct": 66,
+        "wrong": 28,
+        "hit_pct": 70.2
+      },
+      {
+        "favorite_range": ">=76%",
+        "lo": 76.0,
+        "games": 61,
+        "correct": 42,
+        "wrong": 19,
+        "hit_pct": 68.9
+      },
+      {
+        "favorite_range": ">=80%",
+        "lo": 80.0,
+        "games": 20,
+        "correct": 14,
+        "wrong": 6,
+        "hit_pct": 70.0
+      },
+      {
+        "favorite_range": ">=82%",
+        "lo": 82.0,
+        "games": 12,
+        "correct": 8,
+        "wrong": 4,
+        "hit_pct": 66.7
+      },
+      {
+        "favorite_range": ">=86%",
+        "lo": 86.0,
+        "games": 5,
+        "correct": 3,
+        "wrong": 2,
+        "hit_pct": 60.0
+      }
+    ],
+    "regular": [
+      {
+        "favorite_range": ">=50%",
+        "lo": 50.0,
+        "games": 543,
+        "correct": 355,
+        "wrong": 188,
+        "hit_pct": 65.4
+      },
+      {
+        "favorite_range": ">=60%",
+        "lo": 60.0,
+        "games": 383,
+        "correct": 261,
+        "wrong": 122,
+        "hit_pct": 68.1
+      },
+      {
+        "favorite_range": ">=66%",
+        "lo": 66.0,
+        "games": 280,
+        "correct": 196,
+        "wrong": 84,
+        "hit_pct": 70.0
+      },
+      {
+        "favorite_range": ">=70%",
+        "lo": 70.0,
+        "games": 171,
+        "correct": 120,
+        "wrong": 51,
+        "hit_pct": 70.2
+      },
+      {
+        "favorite_range": ">=74%",
+        "lo": 74.0,
+        "games": 78,
+        "correct": 59,
+        "wrong": 19,
+        "hit_pct": 75.6
+      },
+      {
+        "favorite_range": ">=76%",
+        "lo": 76.0,
+        "games": 47,
+        "correct": 37,
+        "wrong": 10,
+        "hit_pct": 78.7
+      },
+      {
+        "favorite_range": ">=80%",
+        "lo": 80.0,
+        "games": 12,
+        "correct": 11,
+        "wrong": 1,
+        "hit_pct": 91.7
+      },
+      {
+        "favorite_range": ">=82%",
+        "lo": 82.0,
+        "games": 6,
+        "correct": 5,
+        "wrong": 1,
+        "hit_pct": 83.3
+      },
+      {
+        "favorite_range": ">=86%",
+        "lo": 86.0,
+        "games": 2,
+        "correct": 1,
+        "wrong": 1,
+        "hit_pct": 50.0
+      }
+    ]
+  },
+  "category_by_season": {
+    "2024": {
+      "soft": {
+        "games": 259,
+        "correct": 162,
+        "hit_pct": 62.5
+      },
+      "toss-up": {
+        "games": 28,
+        "correct": 16,
+        "hit_pct": 57.1
+      },
+      "hard": {
+        "games": 29,
+        "correct": 23,
+        "hit_pct": 79.3
+      },
+      "lock": {
+        "games": 4,
+        "correct": 4,
+        "hit_pct": 100.0
+      }
+    },
+    "2025": {
+      "soft": {
+        "games": 213,
+        "correct": 130,
+        "hit_pct": 61.0
+      },
+      "toss-up": {
+        "games": 38,
+        "correct": 20,
+        "hit_pct": 52.6
+      },
+      "hard": {
+        "games": 60,
+        "correct": 43,
+        "hit_pct": 71.7
+      },
+      "lock": {
+        "games": 6,
+        "correct": 6,
+        "hit_pct": 100.0
+      }
+    }
+  },
+  "aggregate": {
+    "games": 637,
+    "correct": 404,
+    "wrong": 233,
+    "accuracy": 0.6342,
+    "accuracy_pct": 63.4,
+    "hard_min_met": true,
+    "regular": {
+      "games": 543,
+      "correct": 355,
+      "accuracy_pct": 65.4
+    },
+    "preseason": {
+      "games": 94,
+      "correct": 49,
+      "accuracy_pct": 52.1
+    }
+  },
+  "lessons": [
+    "233 misses in 637 games (36.6%).",
+    "45 misses were preseason (48% of preseason).",
+    "30 misses were toss-ups (both sides 45\u201355%). Those stay close to a coin flip even after the Elo override."
+  ]
+}

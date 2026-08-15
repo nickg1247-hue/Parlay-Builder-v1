@@ -10,17 +10,18 @@
   "holdout_season": 2025,
   "train_rows": 1834,
   "holdout_rows": 317,
-  "feature_set": "nfl_v1",
-  "production_model": "v1_logistic_platt",
-  "active_model": "v1_logistic_platt",
+  "feature_set": "nfl_v2",
+  "production_model": "v2_gbr_elo_tossup",
+  "active_model": "v2_gbr_elo_tossup",
+  "tossup_cut": 0.15,
   "imputation": {
     "rest_days": 7.0
   },
   "metrics": {
-    "logistic_regression_v1": {
-      "log_loss": 0.6514505409708329,
-      "brier": 0.22969725563148913,
-      "accuracy": 0.6214511041009464
+    "v2_gbr_elo_tossup": {
+      "log_loss": 0.6589007090069875,
+      "brier": 0.23204057819580914,
+      "accuracy": 0.6277602523659306
     },
     "naive_home_win_rate": {
       "log_loss": 0.6913666193327124,
@@ -34,14 +35,17 @@
     }
   },
   "phase_gate": {
-    "rule": "Holdout log loss must beat min(naive home-win-rate, Elo).",
+    "rule": "Holdout log loss must beat min(naive home-win-rate, Elo) and accuracy >= 60%.",
     "best_naive_log_loss": 0.6660889667595101,
+    "accuracy_hard_min": 0.6,
+    "log_loss_passes": true,
+    "accuracy_passes": true,
     "passes": true,
-    "active_model": "v1_logistic_platt"
+    "active_model": "v2_gbr_elo_tossup"
   },
   "active_holdout": {
-    "log_loss": 0.6514505409708329,
-    "brier": 0.22969725563148913,
-    "accuracy": 0.6214511041009464
+    "log_loss": 0.6589007090069875,
+    "brier": 0.23204057819580914,
+    "accuracy": 0.6277602523659306
   }
 }

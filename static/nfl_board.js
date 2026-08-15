@@ -62,6 +62,14 @@ function fmtSpread(point) {
 
 function confidenceClass(label) {
   switch (label) {
+    case "Toss-up":
+      return "conf-low";
+    case "Soft":
+      return "conf-medium";
+    case "Hard":
+      return "conf-high";
+    case "Lock":
+      return "conf-extreme";
     case "Low":
       return "conf-low";
     case "Medium":
@@ -102,7 +110,7 @@ function renderSlate(slate, edgeFraction = 0.08) {
       tr.classList.add("plus-ev");
     }
     const edge = game.ml_edge_best ?? game.edge_home;
-    const mlConf = game.ml_confidence || "—";
+    const mlConf = game.model_category_label || game.ml_confidence || "—";
     let bestPick = "—";
     if (game.best_pick) {
       const bp = game.best_pick;

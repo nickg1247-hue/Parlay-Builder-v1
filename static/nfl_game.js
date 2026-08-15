@@ -184,7 +184,7 @@
         ${totalsBlock}
         ${marginBlock}
         ${spreadPickBlock}
-        <p class="model-edge">Edge ${edgeStr} · ${ml.ml_confidence || "—"}</p>
+        <p class="model-edge">Edge ${edgeStr} · ${ml.model_category_label || ml.ml_confidence || "—"}</p>
         ${evBadge}
       </div>
     `;

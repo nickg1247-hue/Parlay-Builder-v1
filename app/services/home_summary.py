@@ -46,6 +46,8 @@ def _slate_index(slate: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             "model_pick_team": row.get("model_pick_team"),
             "model_pick_side": row.get("model_pick_side"),
             "model_confidence": row.get("model_confidence"),
+            "model_category": row.get("model_category"),
+            "model_category_label": row.get("model_category_label"),
             "ev_pick_team": row.get("ev_pick_team"),
             "ev_pick_edge": row.get("ev_pick_edge"),
             "totals_pick": row.get("totals_pick"),

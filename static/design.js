@@ -256,6 +256,23 @@
 
   function confidenceMeterHtml(boardRow) {
     if (!boardRow) return "";
+    const nflCat = String(boardRow.model_category || "").toLowerCase();
+    if (nflCat && ["toss-up", "soft", "hard", "lock"].includes(nflCat)) {
+      const nflLevels = [
+        { key: "toss-up", label: "Toss-up" },
+        { key: "soft", label: "Soft" },
+        { key: "hard", label: "Hard" },
+        { key: "lock", label: "Lock" },
+      ];
+      const activeNfl = Math.max(0, nflLevels.findIndex((lv) => lv.key === nflCat));
+      const nflDots = nflLevels
+        .map(
+          (lv, i) =>
+            `<span class="conf-dot${i <= activeNfl ? " conf-dot-on" : ""}" title="${lv.label}"></span>`
+        )
+        .join("");
+      return `<div class="confidence-meter" aria-label="Model confidence">${nflDots}<span class="conf-label">${nflLevels[activeNfl].label}</span></div>`;
+    }
     let tier = (
       boardRow.model_confidence ||
       boardRow.ml_confidence ||
@@ -276,10 +293,10 @@
       }
     }
     const levels = [
-      { key: "toss", label: "Toss-up", match: ["lean only", "blocked"] },
-      { key: "lean", label: "Lean", match: ["low"] },
-      { key: "strong", label: "Strong", match: ["moderate", "medium", "high"] },
-      { key: "elite", label: "Elite", match: ["very high", "extremely high"] },
+      { key: "toss", label: "Toss-up", match: ["lean only", "blocked", "toss-up"] },
+      { key: "lean", label: "Lean", match: ["low", "soft"] },
+      { key: "strong", label: "Strong", match: ["moderate", "medium", "high", "hard"] },
+      { key: "elite", label: "Elite", match: ["very high", "extremely high", "lock"] },
     ];
     let active = 0;
     levels.forEach((lv, i) => {

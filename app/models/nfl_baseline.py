@@ -12,6 +12,7 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, brier_score_loss, log_loss
 from sklearn.pipeline import Pipeline
@@ -19,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 
 from app.config import PROJECT_ROOT
 from app.db.database import get_connection
-from app.features.nfl_pregame import FEATURE_COLUMNS, build_features_for_history
+from app.features.nfl_pregame import FEATURE_COLUMNS, FEATURE_COLUMNS_V2, build_features_for_history
 from app.ingest.nfl import DEFAULT_REST_FILL
 from app.models.platt_calibration import PlattCalibrator
 
@@ -33,7 +34,10 @@ BASE_TRAIN_SEASONS = (2019, 2020, 2021, 2022, 2023)
 PLATT_SEASON = 2024
 HOLDOUT_SEASON = 2025
 REGRESSION_TRAIN_SEASONS = (2019, 2020, 2021, 2022, 2023, 2024)
-FEATURE_SET = "nfl_v1"
+FEATURE_SET = "nfl_v2"
+MODEL_VERSION = "v2_gbr_elo_tossup"
+ACCURACY_HARD_MIN = 0.60
+TOSSUP_CUT_GRID = (0.03, 0.05, 0.07, 0.10, 0.12, 0.15)
 
 ELO_START = 1500.0
 ELO_K = 20.0
@@ -232,6 +236,53 @@ def production_gate_passes(model_log_loss: float, naive_log_loss: float) -> bool
     return model_log_loss < naive_log_loss
 
 
+def train_gbr(
+    train: pd.DataFrame,
+    feature_cols: list[str] | None = None,
+) -> GradientBoostingClassifier:
+    cols = feature_cols or FEATURE_COLUMNS_V2
+    model = GradientBoostingClassifier(
+        n_estimators=120,
+        max_depth=2,
+        learning_rate=0.05,
+        subsample=0.85,
+        random_state=42,
+    )
+    model.fit(train[cols].values, train["home_win"].values)
+    return model
+
+
+def elo_probs_from_pre(df: pd.DataFrame) -> np.ndarray:
+    probs: list[float] = []
+    for row in df.itertuples(index=False):
+        home = float(getattr(row, "elo_home_pre", ELO_START) or ELO_START)
+        away = float(getattr(row, "elo_away_pre", ELO_START) or ELO_START)
+        home_field = getattr(row, "home_field", 1)
+        neutral = int(home_field or 0) == 0
+        probs.append(_elo_expected(home, away, neutral=neutral))
+    return np.array(probs)
+
+
+def apply_elo_tossup(model_p: np.ndarray, elo_p: np.ndarray, cut: float) -> np.ndarray:
+    if cut is None or cut <= 0:
+        return np.asarray(model_p, dtype=float)
+    model_p = np.asarray(model_p, dtype=float)
+    elo_p = np.asarray(elo_p, dtype=float)
+    return np.where(np.abs(model_p - 0.5) < float(cut), elo_p, model_p)
+
+
+def tune_tossup_cut(y_true: np.ndarray, model_p: np.ndarray, elo_p: np.ndarray) -> float:
+    best_t = 0.0
+    best = float(accuracy_score(y_true, np.asarray(model_p) >= 0.5))
+    for t in TOSSUP_CUT_GRID:
+        mixed = apply_elo_tossup(model_p, elo_p, t)
+        acc = float(accuracy_score(y_true, mixed >= 0.5))
+        if acc > best + 1e-9:
+            best = acc
+            best_t = float(t)
+    return best_t
+
+
 def train_logistic(
     train: pd.DataFrame,
     feature_cols: list[str] | None = None,
@@ -295,13 +346,16 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
     from app.features.nfl_pregame import build_features_for_slate
 
     artifact = load_model_artifact()
-    cols = list(artifact.get("feature_columns") or FEATURE_COLUMNS)
+    cols = list(artifact.get("feature_columns") or FEATURE_COLUMNS_V2)
     rest_fill = float(artifact.get("rest_fill", DEFAULT_REST_FILL))
     prepared = build_features_for_slate(df, rest_fill=rest_fill)
     raw = artifact["model"].predict_proba(prepared[cols].values)[:, 1]
     platt = artifact.get("platt_calibrator")
     if platt is not None:
         raw = platt.transform(raw)
+    cut = float(artifact.get("tossup_cut") or 0.0)
+    if cut > 0:
+        raw = apply_elo_tossup(raw, elo_probs_from_pre(prepared), cut)
     by_id = dict(zip(prepared["game_id"].astype(str), raw))
     mapped = df["game_id"].astype(str).map(by_id)
     return mapped.to_numpy(dtype=float)
@@ -341,10 +395,15 @@ def run_training() -> dict[str, Any]:
     train_raw = raw[raw["season"].isin(BASE_TRAIN_SEASONS)]
     home_rate = float(train_raw["home_win"].mean())
 
-    model, platt, cal_holdout = _train_calibrated_holdout(
-        base, platt_df, holdout, FEATURE_COLUMNS
-    )
-    model_metrics = compute_metrics("logistic_regression_v1", y_holdout, cal_holdout)
+    cols = list(FEATURE_COLUMNS_V2)
+    model = train_gbr(base, cols)
+    raw_val = model.predict_proba(platt_df[cols].values)[:, 1]
+    raw_holdout = model.predict_proba(holdout[cols].values)[:, 1]
+    elo_val = elo_probs_from_pre(platt_df)
+    elo_holdout = elo_probs_from_pre(holdout)
+    tossup_cut = tune_tossup_cut(platt_df["home_win"].values, raw_val, elo_val)
+    blended_holdout = apply_elo_tossup(raw_holdout, elo_holdout, tossup_cut)
+    model_metrics = compute_metrics(MODEL_VERSION, y_holdout, blended_holdout)
 
     n_before_holdout = len(feat_all[feat_all["season"] != HOLDOUT_SEASON])
     elo_probs = predict_elo(feat_all)[n_before_holdout:]
@@ -353,14 +412,17 @@ def run_training() -> dict[str, Any]:
     elo_metrics = compute_metrics("elo_baseline", y_holdout, elo_probs)
 
     naive_ll = min(home_rate_metrics.log_loss, elo_metrics.log_loss)
-    gate_passes = production_gate_passes(model_metrics.log_loss, naive_ll)
+    ll_pass = production_gate_passes(model_metrics.log_loss, naive_ll)
+    acc_pass = model_metrics.accuracy >= ACCURACY_HARD_MIN
+    gate_passes = ll_pass and acc_pass
 
     artifact = {
         "model": model,
-        "platt_calibrator": platt,
-        "model_version": "v1_logistic_platt",
+        "platt_calibrator": None,
+        "tossup_cut": tossup_cut,
+        "model_version": MODEL_VERSION,
         "feature_set": FEATURE_SET,
-        "feature_columns": list(FEATURE_COLUMNS),
+        "feature_columns": cols,
         "rest_fill": rest_fill,
         "base_train_seasons": list(BASE_TRAIN_SEASONS),
         "platt_season": PLATT_SEASON,
@@ -377,18 +439,25 @@ def run_training() -> dict[str, Any]:
         "train_rows": len(base) + len(platt_df),
         "holdout_rows": len(holdout),
         "feature_set": FEATURE_SET,
-        "production_model": "v1_logistic_platt",
-        "active_model": "v1_logistic_platt",
+        "production_model": MODEL_VERSION,
+        "active_model": MODEL_VERSION,
+        "tossup_cut": tossup_cut,
         "imputation": {"rest_days": rest_fill},
         "metrics": {
             m.name: _metrics_dict(m)
             for m in (model_metrics, home_rate_metrics, elo_metrics)
         },
         "phase_gate": {
-            "rule": "Holdout log loss must beat min(naive home-win-rate, Elo).",
+            "rule": (
+                "Holdout log loss must beat min(naive home-win-rate, Elo) "
+                f"and accuracy >= {ACCURACY_HARD_MIN:.0%}."
+            ),
             "best_naive_log_loss": naive_ll,
+            "accuracy_hard_min": ACCURACY_HARD_MIN,
+            "log_loss_passes": ll_pass,
+            "accuracy_passes": acc_pass,
             "passes": gate_passes,
-            "active_model": "v1_logistic_platt",
+            "active_model": MODEL_VERSION,
         },
         "active_holdout": _metrics_dict(model_metrics),
     }

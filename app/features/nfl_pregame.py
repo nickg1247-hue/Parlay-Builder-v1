@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from app.features.nfl_stadiums import travel_miles
 from app.ingest.nfl import (
     DEFAULT_REST_FILL,
     MAX_REST_GAP_DAYS,
@@ -33,6 +34,25 @@ FEATURE_COLUMNS = [
     "is_preseason",
 ]
 
+FEATURE_COLUMNS_V2 = FEATURE_COLUMNS + [
+    "home_l5_win_pct",
+    "away_l5_win_pct",
+    "home_l5_margin",
+    "away_l5_margin",
+    "home_streak",
+    "away_streak",
+    "home_home_win_pct",
+    "away_road_win_pct",
+    "short_rest_home",
+    "short_rest_away",
+    "bye_home",
+    "bye_away",
+    "week_norm",
+    "margin_diff",
+    "pyth_diff",
+    "travel_miles",
+]
+
 MARGIN_FEATURE_COLUMNS = FEATURE_COLUMNS + [
     "home_season_pts_for",
     "away_season_pts_for",
@@ -53,6 +73,7 @@ class _GameRecord:
     season: int
     pts_for: int | None = None
     pts_against: int | None = None
+    is_home: int = 0
 
 
 class _TeamTracker:
@@ -84,12 +105,12 @@ class _TeamTracker:
         home_score: int | None = None,
         away_score: int | None = None,
     ) -> None:
-        for team, win, pts_for, pts_against in (
-            (home_team, int(home_win), home_score, away_score),
-            (away_team, 1 - int(home_win), away_score, home_score),
+        for team, win, pts_for, pts_against, is_home in (
+            (home_team, int(home_win), home_score, away_score, 1),
+            (away_team, 1 - int(home_win), away_score, home_score, 0),
         ):
             self._records[team].append(
-                _GameRecord(game_date, team, win, season, pts_for, pts_against)
+                _GameRecord(game_date, team, win, season, pts_for, pts_against, is_home)
             )
             self._dates[team].append(game_date)
 
@@ -137,6 +158,48 @@ def _win_pct(games: list[_GameRecord]) -> float:
     if not games:
         return NEUTRAL_SEASON_WIN_PCT
     return sum(g.win for g in games) / len(games)
+
+
+def _last_n(games: list[_GameRecord], n: int) -> list[_GameRecord]:
+    if not games:
+        return []
+    return games[-n:]
+
+
+def _last_n_win_pct(games: list[_GameRecord], n: int) -> float:
+    return _win_pct(_last_n(games, n))
+
+
+def _last_n_margin(games: list[_GameRecord], n: int) -> float:
+    return _margin_avg(_last_n(games, n))
+
+
+def _streak(games: list[_GameRecord]) -> float:
+    if not games:
+        return 0.0
+    last = games[-1].win
+    count = 0
+    for g in reversed(games):
+        if g.win != last:
+            break
+        count += 1
+    return float(count if last else -count)
+
+
+def _split_win_pct(games: list[_GameRecord], *, is_home: int) -> float:
+    subset = [g for g in games if int(g.is_home) == int(is_home)]
+    return _win_pct(subset) if subset else NEUTRAL_SEASON_WIN_PCT
+
+
+def _pythagorean(games: list[_GameRecord], pts_fill: float) -> float:
+    pf = _avg_pts(games, "pts_for", pts_fill)
+    pa = _avg_pts(games, "pts_against", pts_fill)
+    exp = 2.37
+    num = pf**exp
+    den = num + (pa**exp)
+    if den <= 0:
+        return NEUTRAL_SEASON_WIN_PCT
+    return float(num / den)
 
 
 def _season_games(games: list[_GameRecord], season: int) -> list[_GameRecord]:
@@ -233,6 +296,16 @@ def _row_features(
     elo_home = float(getattr(row, "elo_home_pre", 1500.0) or 1500.0)
     elo_away = float(getattr(row, "elo_away_pre", 1500.0) or 1500.0)
     home_field = 0 if _neutral_site(row) else 1
+    raw_week = getattr(row, "week", 0)
+    week = 0 if raw_week is None or (isinstance(raw_week, float) and pd.isna(raw_week)) else int(raw_week or 0)
+    pre = _is_preseason(row)
+    week_norm = (week / 4.0) if pre and week else (week / 18.0 if week else 0.0)
+    home_pf = _avg_pts(home_season_g, "pts_for", pts_fill) if home_season_g else pts_fill
+    away_pf = _avg_pts(away_season_g, "pts_for", pts_fill) if away_season_g else pts_fill
+    home_pa = _avg_pts(home_season_g, "pts_against", pts_fill) if home_season_g else pts_fill
+    away_pa = _avg_pts(away_season_g, "pts_against", pts_fill) if away_season_g else pts_fill
+    home_margin = _margin_avg(home_season_g)
+    away_margin = _margin_avg(away_season_g)
 
     feats: dict[str, float | str | int] = {
         "game_id": str(row.game_id),
@@ -253,27 +326,35 @@ def _row_features(
         ),
         "home_field": home_field,
         "divisional": _divisional_flag(row),
-        "is_preseason": _is_preseason(row),
-        "game_type": "preseason" if _is_preseason(row) else "regular",
+        "is_preseason": pre,
+        "game_type": "preseason" if pre else "regular",
+        "week": week,
         "elo_home_pre": elo_home,
         "elo_away_pre": elo_away,
         "elo_diff": elo_home - elo_away,
+        "home_l5_win_pct": _last_n_win_pct(home_prior, 5),
+        "away_l5_win_pct": _last_n_win_pct(away_prior, 5),
+        "home_l5_margin": _last_n_margin(home_prior, 5),
+        "away_l5_margin": _last_n_margin(away_prior, 5),
+        "home_streak": _streak(home_prior),
+        "away_streak": _streak(away_prior),
+        "home_home_win_pct": _split_win_pct(home_season_g, is_home=1),
+        "away_road_win_pct": _split_win_pct(away_season_g, is_home=0),
+        "short_rest_home": int(home_rest <= 5),
+        "short_rest_away": int(away_rest <= 5),
+        "bye_home": int(home_rest >= 13),
+        "bye_away": int(away_rest >= 13),
+        "week_norm": week_norm,
+        "margin_diff": home_margin - away_margin,
+        "pyth_diff": _pythagorean(home_season_g, pts_fill) - _pythagorean(away_season_g, pts_fill),
+        "travel_miles": travel_miles(away_team, home_team, neutral=home_field == 0),
+        "home_season_pts_for": home_pf,
+        "away_season_pts_for": away_pf,
+        "home_season_pts_against": home_pa,
+        "away_season_pts_against": away_pa,
+        "home_season_margin_avg": home_margin,
+        "away_season_margin_avg": away_margin,
     }
-    if include_scoring:
-        feats["home_season_pts_for"] = (
-            _avg_pts(home_season_g, "pts_for", pts_fill) if home_season_g else pts_fill
-        )
-        feats["away_season_pts_for"] = (
-            _avg_pts(away_season_g, "pts_for", pts_fill) if away_season_g else pts_fill
-        )
-        feats["home_season_pts_against"] = (
-            _avg_pts(home_season_g, "pts_against", pts_fill) if home_season_g else pts_fill
-        )
-        feats["away_season_pts_against"] = (
-            _avg_pts(away_season_g, "pts_against", pts_fill) if away_season_g else pts_fill
-        )
-        feats["home_season_margin_avg"] = _margin_avg(home_season_g)
-        feats["away_season_margin_avg"] = _margin_avg(away_season_g)
     return feats
 
 

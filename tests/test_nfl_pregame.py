@@ -2,7 +2,8 @@
 
 import pandas as pd
 
-from app.features.nfl_pregame import FEATURE_COLUMNS, build_features
+from app.features.nfl_pregame import FEATURE_COLUMNS, FEATURE_COLUMNS_V2, build_features
+from app.features.nfl_stadiums import travel_miles
 from app.models.nfl_baseline import production_gate_passes
 
 
@@ -38,6 +39,26 @@ def _game(
         "divisional": divisional,
         "neutral_site": neutral,
     }
+
+
+def test_v2_feature_columns_present():
+    df = pd.DataFrame(
+        [
+            _game("1", "2024-09-08", 2024, "KC", "BAL", 1),
+            _game("2", "2024-09-15", 2024, "BAL", "KC", 0, week=2),
+        ]
+    )
+    feat = build_features(df, attach_elo=True)
+    for col in FEATURE_COLUMNS_V2:
+        assert col in feat.columns
+    week2 = feat[feat["game_id"] == "2"].iloc[0]
+    assert week2["home_l5_win_pct"] == 0.0
+    assert week2["travel_miles"] > 0
+
+
+def test_travel_miles_public_coords():
+    miles = travel_miles("SEA", "MIA")
+    assert 2500 < miles < 3400
 
 
 def test_feature_columns_present():

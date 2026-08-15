@@ -2,7 +2,7 @@
   "track": "nfl_moneyline",
   "run_id": "train_nfl_baseline",
   "path": "data/processed/nfl_baseline_model.joblib",
-  "feature_set": "nfl_v1",
-  "model_version": "v1_logistic_platt",
-  "promoted_at": "2026-08-15T01:52:15.917370+00:00"
+  "feature_set": "nfl_v2",
+  "model_version": "v2_gbr_elo_tossup",
+  "promoted_at": "2026-08-15T03:45:33.366327+00:00"
 }

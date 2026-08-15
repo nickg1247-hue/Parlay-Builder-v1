@@ -60,7 +60,10 @@ def _build_moneyline(row: dict[str, Any]) -> dict[str, Any]:
         "ev_home": row.get("ev_home") if row.get("ev_home") is not None else row.get("edge_home"),
         "ev_away": row.get("ev_away") if row.get("ev_away") is not None else row.get("edge_away"),
         "plus_ev_ml": bool(row.get("plus_ev_ml") or row.get("plus_ev_single")),
-        "ml_confidence": row.get("ml_confidence"),
+        "ml_confidence": row.get("ml_confidence") or row.get("model_category_label"),
+        "model_category": row.get("model_category"),
+        "model_category_label": row.get("model_category_label"),
+        "model_confidence": row.get("model_confidence") or row.get("model_category_label"),
         "model_pick": row.get("model_pick"),
         "model_pick_side": row.get("model_pick_side"),
         "best_pick": row.get("best_pick"),
@@ -105,7 +108,11 @@ def _build_highlights(row: dict[str, Any]) -> dict[str, Any]:
     total_side = "over" if totals_pick.startswith("over") else "under" if totals_pick.startswith("under") else None
     return {
         "moneyline_side": ml_side,
-        "moneyline_tier": _confidence_tier(row.get("ml_confidence")) if ml_side else None,
+        "moneyline_tier": _confidence_tier(
+            row.get("model_category_label") or row.get("ml_confidence")
+        )
+        if ml_side
+        else None,
         "spread_side": spread_side,
         "spread_tier": _confidence_tier(row.get("spread_confidence")) if spread_side else None,
         "total_side": total_side,

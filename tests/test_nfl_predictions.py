@@ -76,6 +76,8 @@ def test_predictions_include_spread_and_totals(
     assert row["model_prob_home"] == 0.62
     assert row["model_pick"] == "Kansas City Chiefs"
     assert row["model_pick_side"] == "home"
+    assert row["model_category"] == "soft"
+    assert row["model_category_label"] == "Soft"
     assert row["game_id"] == "401671617"
     assert row["spread_pick"] is not None
     assert row["spread_line_source"] == "proxy"

@@ -1,0 +1,35 @@
+{
+  "method": "Favorite % = max(home, away) walk-forward win probability. Toss-up is each 5-point bin from 50% that still hits under 60%. Soft / hard / lock bands must hit 60% / 75% / 95%. Lock may be an interior band when a higher favorite-% upset would break a [cut, 100) tail. Preseason is capped at soft.",
+  "floors": {
+    "soft": 60,
+    "hard": 75,
+    "lock": 95
+  },
+  "min_games": {
+    "soft": 25,
+    "hard": 15,
+    "lock": 8
+  },
+  "cuts": {
+    "toss-up": {
+      "lo": 50.0,
+      "hi": 55.0
+    },
+    "soft": {
+      "lo": 55.0,
+      "hi": 73.0
+    },
+    "hard": {
+      "lo": 73.0,
+      "hi": 80.5
+    },
+    "lock": {
+      "lo": 80.5,
+      "hi": 86.0
+    },
+    "hard_tail": {
+      "lo": 86.0,
+      "hi": 100.01
+    }
+  }
+}

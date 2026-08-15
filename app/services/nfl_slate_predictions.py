@@ -10,6 +10,7 @@ import pandas as pd
 from app.ingest.nfl import is_divisional, normalize_abbr
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.nfl_baseline import predict_home_win_proba
+from app.models.nfl_confidence import category_for_proba, category_label
 from app.models.nfl_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD, predict_spread_covers
 from app.models.nfl_totals import enrich_totals_columns
 from app.odds.odds_math import market_probs_from_american
@@ -161,16 +162,22 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
         pick_side = "home" if prob >= 0.5 else "away"
         model_pick = row["home_team"] if pick_side == "home" else row["away_team"]
         ml_fields = _ml_market_fields(prob, row.get("home_ml"), row.get("away_ml"))
+        game_type = row.get("game_type") or "regular"
+        category = category_for_proba(prob, game_type=str(game_type))
+        cat_label = category_label(category)
         payload: dict[str, Any] = {
             "game_id": gid,
             "home_team": row["home_team"],
             "away_team": row["away_team"],
-            "game_type": row.get("game_type") or "regular",
+            "game_type": game_type,
             "model_prob_home": round(prob, 4),
             "model_prob_away": round(1.0 - prob, 4),
             "model_pick": model_pick,
             "model_pick_side": pick_side,
-            "ml_confidence": confidence_label(ml_fields["model_edge_ml"]),
+            "model_category": category,
+            "model_category_label": cat_label,
+            "model_confidence": cat_label,
+            "ml_confidence": cat_label,
             "odds_source": odds_source,
             **ml_fields,
         }

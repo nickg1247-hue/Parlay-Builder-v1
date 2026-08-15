@@ -845,9 +845,26 @@ function confidenceFromModelProb(homeProb) {
   return "Extremely high";
 }
 
-/** Toss-up / Lean / Strong / Elite meter from model win % (not market edge). */
+/** Toss-up / Soft / Hard / Lock for NFL; Toss-up / Lean / Strong / Elite otherwise. */
 function confidenceMeterHtml(boardRow) {
   if (!boardRow) return "";
+  const nflCat = String(boardRow.model_category || "").toLowerCase();
+  if (nflCat && ["toss-up", "soft", "hard", "lock"].includes(nflCat)) {
+    const nflLevels = [
+      { key: "toss-up", label: "Toss-up" },
+      { key: "soft", label: "Soft" },
+      { key: "hard", label: "Hard" },
+      { key: "lock", label: "Lock" },
+    ];
+    const active = Math.max(0, nflLevels.findIndex((lv) => lv.key === nflCat));
+    const dots = nflLevels
+      .map(
+        (lv, i) =>
+          `<span class="conf-dot${i <= active ? " conf-dot-on" : ""}" title="${lv.label}"></span>`
+      )
+      .join("");
+    return `<div class="confidence-meter" aria-label="Model confidence">${dots}<span class="conf-label">${nflLevels[active].label}</span></div>`;
+  }
   let tier = String(
     boardRow.model_confidence || boardRow.ml_confidence || ""
   ).toLowerCase();
@@ -856,10 +873,10 @@ function confidenceMeterHtml(boardRow) {
     tier = (derived || "lean only").toLowerCase();
   }
   const levels = [
-    { key: "toss", label: "Toss-up", match: ["lean only", "blocked"] },
-    { key: "lean", label: "Lean", match: ["low"] },
-    { key: "strong", label: "Strong", match: ["moderate", "medium", "high"] },
-    { key: "elite", label: "Elite", match: ["very high", "extremely high"] },
+    { key: "toss", label: "Toss-up", match: ["lean only", "blocked", "toss-up"] },
+    { key: "lean", label: "Lean", match: ["low", "soft"] },
+    { key: "strong", label: "Strong", match: ["moderate", "medium", "high", "hard"] },
+    { key: "elite", label: "Elite", match: ["very high", "extremely high", "lock"] },
   ];
   let active = 0;
   levels.forEach((lv, i) => {
@@ -1279,6 +1296,8 @@ function resolveBoardRow(game, boardRow) {
       model_pick_side: game.model_pick_side,
       ml_confidence: game.ml_confidence,
       model_confidence: game.model_confidence,
+      model_category: game.model_category,
+      model_category_label: game.model_category_label,
     };
   }
   return impliedMarketRowFromGame(game) || boardRow;
@@ -1306,6 +1325,9 @@ function boardRowFromInsights(data) {
     model_pick: ml.model_pick || ml.pick,
     model_pick_side: ml.model_pick_side || ml.pick_side,
     ml_confidence: ml.ml_confidence || ml.confidence,
+    model_category: ml.model_category || row?.model_category || data.board_row?.model_category,
+    model_category_label:
+      ml.model_category_label || row?.model_category_label || data.board_row?.model_category_label,
   };
 }
 

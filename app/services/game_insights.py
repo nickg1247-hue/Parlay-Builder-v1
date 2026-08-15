@@ -392,8 +392,14 @@ def _confidence_tier(label: str | None) -> str | None:
         return "low"
     if key in ("moderate", "medium"):
         return "medium"
-    if key in ("high", "very high", "extremely high"):
+    if key in ("high", "very high", "extremely high", "lock"):
         return "high"
+    if key == "hard":
+        return "medium"
+    if key == "soft":
+        return "low"
+    if key in ("toss-up", "toss up"):
+        return None
     return None
 
 

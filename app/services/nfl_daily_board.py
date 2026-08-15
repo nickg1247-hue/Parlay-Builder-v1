@@ -13,8 +13,9 @@ from app.services.nfl_slate_predictions import predict_slate
 from app.services.schedule_nfl import get_nfl_schedule
 
 NFL_DISCLAIMER = (
-    "NFL moneyline v1 plus experimental spread/totals — not betting advice. "
-    "Preseason games are included. Betting_ready=false until forward CLV validates edge."
+    "NFL moneyline v2 (GBR + Elo toss-up) with toss-up / soft / hard / lock "
+    "labels from 2024–2025 regular-season hit rates. Not betting advice. "
+    "Preseason cannot be hard or lock. Betting_ready=false until forward CLV validates edge."
 )
 DEMO_DATE = "2025-09-07"
 
@@ -76,6 +77,9 @@ def _slate_rows(schedule_games, preds, *, min_edge: float) -> list[dict[str, Any
                 "model_prob_away": pred.get("model_prob_away"),
                 "model_pick": pred.get("model_pick"),
                 "model_pick_side": pred.get("model_pick_side"),
+                "model_category": pred.get("model_category"),
+                "model_category_label": pred.get("model_category_label"),
+                "model_confidence": pred.get("model_confidence") or pred.get("model_category_label"),
                 "market_prob_home": pred.get("market_prob_home"),
                 "market_prob_away": pred.get("market_prob_away"),
                 "edge_home": edge_home,

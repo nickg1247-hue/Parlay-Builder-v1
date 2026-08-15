@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from app.features.nfl_pregame import FEATURE_COLUMNS, build_features_for_history
+from app.features.nfl_pregame import FEATURE_COLUMNS, FEATURE_COLUMNS_V2, build_features_for_history
 from app.models.nfl_baseline import (
     BASE_TRAIN_SEASONS,
     HOLDOUT_SEASON,
@@ -69,7 +69,7 @@ def tiny_parquet(tmp_path, monkeypatch):
 
 def test_feature_columns_shape(tiny_parquet):
     feat = build_features_for_history(tiny_parquet)
-    for col in FEATURE_COLUMNS:
+    for col in FEATURE_COLUMNS + FEATURE_COLUMNS_V2:
         assert col in feat.columns
     assert len(feat) == len(tiny_parquet)
 
