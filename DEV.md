@@ -66,7 +66,7 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 
 **Recommend score (ERVA engine):** modular `app/services/fantasy_draft/` — hard eligibility via `can_team_draft_player` / `get_eligible_players` before scoring. Score blends projected points (rank→pts curve until `proj_pts_*` exists), VORP (WRT demand included), scarcity, tier drop, roster need, starting-lineup impact, ADP value, next-pick availability urgency, upside, risk, roster-imbalance, bye, and a light look-ahead. Recommendations attach `projected_role` (STARTER / WRT / BENCH). Weights live in `DEFAULT_DRAFT_WEIGHTS`.
 
-**League rules:** setup configures **slot counts** (`QB/RB/WR/TE/WRT/Superflex/K/DST/BENCH/IR`) separately from per-team **position maxes**. WRT = WR/RB/TE (default 2). `optimize_starting_lineup` builds the strongest legal starters; leftovers are bench. Eligibility enforces position max + roster capacity. `POST /api/fantasy/nfl/apply-pick` re-validates (duplicate + max + capacity). CPU/mock: `simulate_full_draft` / `cpu_select_player`.
+**League rules:** setup configures **slot counts** (`QB/RB/WR/TE/WRT/Superflex/K/DST/BENCH/IR`) separately from per-team **position maxes**. WRT = WR/RB/TE (default 2). `optimize_starting_lineup` builds the strongest legal starters; leftovers are bench. Eligibility enforces position max + roster capacity. `POST /api/fantasy/nfl/apply-pick` re-validates (duplicate + max + capacity). CPU/mock: `simulate_full_draft` / `cpu_select_player` / `POST /api/fantasy/nfl/mock-advance` (`until_user` | `one` | `finish`). Draft room can auto-advance AI opponents between your picks.
 
 **Verify:** `pytest tests/test_nfl_fantasy_draft.py tests/test_fantasy_draft_engine.py -q`
 
@@ -91,6 +91,54 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 **Verify:** open `/nba` on an off-day (e.g. Finals gap) — banner + next game day; `pytest tests/test_schedule_nba.py tests/test_scores_nba.py tests/test_nba_summer.py -q`
 
 **Game detail:** Slate cards link to `/nba/game/{id}?date={resolved_date}` so detail lookup hits the same ESPN day as the slate. Stale empty schedule cache is bypassed on game fetch.
+
+---
+
+## NFL slate (Phases N1–N5)
+
+`/nfl` shows the weekly NFL slate from the **ESPN scoreboard API** (no API key). Historical training data uses the **same ESPN scoreboard** with week-level pulls for **preseason + regular season**. Fantasy draft at `/nfl/draft` is unchanged and separate.
+
+| Endpoint | Behavior |
+|----------|----------|
+| `GET /api/schedule/nfl` | No `date` → auto look-ahead (+7 days); `?date=` → exact date; `?refresh=true` → bypass saved snapshot |
+| `GET /api/scores/today?sport=nfl` | Same auto look-ahead when `date` omitted; live mode refreshes today from ESPN |
+| `GET /api/nfl/predictions?date=` | Moneyline + spread + totals per ESPN `game_id` (requires trained models) |
+| `GET /api/nfl/daily?date=` | Weekly board: slate, +EV singles, cross-game parlays |
+| `GET /api/games/nfl/{game_id}` | Schedule payload for one game |
+| `GET /api/games/nfl/{game_id}/insights` | Full game insights (ML / spread / O/U / features / parlays) |
+| `/nfl/board` | Predictions board UI |
+| `/nfl/game/{id}` | Game insights UI |
+
+**Date picker (`/nfl`):** Choose any date. **Past dates** load from `nfl_games.parquet` ingest (no ESPN). **Today/future** use ESPN once, then save to `data/processed/nfl_schedule_{date}.json`. Badge shows source: `Saved ingest`, `Saved snapshot`, or `ESPN API`.
+
+**Auto look-ahead:** If the requested day has **zero** games, the backend tries **+1..+7** days (NFL is weekly). Disabled when `?date=` is set.
+
+**Data sources:**
+
+| Purpose | URL / key |
+|---------|-----------|
+| Live slate | `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=YYYYMMDD` |
+| Historical ingest | same URL with `dates={season}&seasontype=1\|2&week={n}` (preseason weeks 1–4 + regular 1–18, seasons 2019–2025) |
+| Odds API | `americanfootball_nfl` + `americanfootball_nfl_preseason` (live/today only) |
+| ESPN games API key | none |
+
+**API usage (chunky, not chatty):** Bootstrap ingest makes one ESPN request per week (~22 × 7 seasons). Live slate uses one day request. No per-game loops. Odds API is live-only and quota-gated.
+
+**Bootstrap:**
+
+```powershell
+python scripts/bootstrap_nfl.py
+```
+
+Writes `data/processed/nfl_games.parquet`, trains moneyline, spread, and totals models.
+
+**Verify:** open `/nfl` (preseason slate in August) and `/nfl/board`.
+
+```powershell
+pytest tests/test_schedule_nfl.py tests/test_nfl_ingest.py tests/test_nfl_pregame.py tests/test_nfl_baseline.py tests/test_nfl_margin.py tests/test_nfl_totals.py tests/test_nfl_predictions.py tests/test_nfl_daily_board.py tests/test_nfl_game_insights.py tests/test_nfl_odds_repository.py tests/test_nfl_fantasy_draft.py -q
+```
+
+See `NFL_MODEL.md` and `MARKET_NFL.md`.
 
 ---
 

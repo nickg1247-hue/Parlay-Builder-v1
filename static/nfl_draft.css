@@ -1123,6 +1123,31 @@
   }
 }
 
+.draft-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.draft-check input {
+  margin-top: 0.2rem;
+}
+
+.draft-room.is-ai-busy {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.draft-room.is-ai-busy .draft-clock-title::after {
+  content: " · AI drafting…";
+  color: #94a3b8;
+  font-weight: 500;
+}
+
 @media (max-width: 640px) {
   .draft-setup-form {
     grid-template-columns: 1fr 1fr;

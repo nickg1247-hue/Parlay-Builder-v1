@@ -1,6 +1,7 @@
 """Fantasy draft engine package — eligibility-first, ERVA-style recommendations."""
 
 from app.services.fantasy_draft.engine import (
+    advance_mock_draft,
     apply_pick,
     cpu_select_player,
     recommend_for_team,
@@ -28,6 +29,7 @@ __all__ = [
     "DEFAULT_SLOT_COUNTS",
     "DEFAULT_STARTER_TEMPLATE",
     "LeagueSettings",
+    "advance_mock_draft",
     "apply_pick",
     "can_team_draft_player",
     "cpu_select_player",

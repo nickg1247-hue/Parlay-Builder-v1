@@ -27,6 +27,10 @@
     slotCounts: { ...DEFAULT_SLOT_COUNTS },
     rosterSize: 16,
     positionMaxes: { ...DEFAULT_MAXES },
+    mockMode: true,
+    mockSeed: null,
+    mockPersonalities: null,
+    aiBusy: false,
     picks: [],
     players: [],
     playersById: {},
@@ -259,6 +263,9 @@
           slotCounts: state.slotCounts,
           rosterSize: rosterCapacity(),
           positionMaxes: state.positionMaxes,
+          mockMode: state.mockMode,
+          mockSeed: state.mockSeed,
+          mockPersonalities: state.mockPersonalities,
           picks: state.picks,
           queue: state.queue,
           inRoom: state.inRoom,
@@ -344,6 +351,81 @@
       throw new Error(err.detail || "Insight failed");
     }
     return res.json();
+  }
+
+  function setAiBusy(busy) {
+    state.aiBusy = Boolean(busy);
+    if (els.roomPanel) {
+      els.roomPanel.classList.toggle("is-ai-busy", state.aiBusy);
+    }
+    if (els.btnAiToMe) els.btnAiToMe.disabled = state.aiBusy;
+    if (els.btnAiFinish) els.btnAiFinish.disabled = state.aiBusy;
+    if (els.btnDraftRec) els.btnDraftRec.disabled = state.aiBusy;
+  }
+
+  function stampPicksMeta(picks) {
+    return (picks || []).map((p) => {
+      const pl = state.playersById[p.player_id];
+      if (!pl) return p;
+      return {
+        ...p,
+        name: p.name || pl.name,
+        position: p.position || pl.position,
+      };
+    });
+  }
+
+  async function mockAdvance(mode) {
+    if (state.aiBusy) return null;
+    if (nextOverall() > totalPicks()) return null;
+    setAiBusy(true);
+    try {
+      const body = {
+        ...apiLeaguePayload(),
+        user_slot: state.userSlot,
+        picks: state.picks,
+        mode: mode || "until_user",
+        seed: state.mockSeed,
+        personalities: state.mockPersonalities || undefined,
+      };
+      const res = await fetch("/api/fantasy/nfl/mock-advance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        const detail = data.detail || data.error || "AI advance failed";
+        throw new Error(
+          typeof detail === "string" ? detail : detail.detail || JSON.stringify(detail)
+        );
+      }
+      state.picks = stampPicksMeta(data.picks || state.picks);
+      if (data.personalities) state.mockPersonalities = data.personalities;
+      if (state.mockSeed == null) {
+        state.mockSeed = Math.floor(Math.random() * 1e9);
+      }
+      const n = (data.cpu_picks || []).length;
+      if (n && els.clockAutopick) {
+        const last = data.cpu_picks[n - 1];
+        els.clockAutopick.textContent = n === 1
+          ? `AI: ${last.name} (${last.position}) → Team ${last.team_slot}`
+          : `AI made ${n} picks · last ${last.name} (${last.position})`;
+      }
+      return data;
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function maybeAutoAdvanceMock() {
+    if (!state.mockMode || state.aiBusy) return;
+    const overall = nextOverall();
+    if (overall > totalPicks()) return;
+    const onClock = teamSlotForOverall(overall, state.leagueSize);
+    if (onClock === state.userSlot) return;
+    await mockAdvance("until_user");
+    await refreshBoard();
   }
 
   function projPts(player) {
@@ -932,27 +1014,44 @@
     state.queue = state.queue.filter((id) => id !== playerId);
     resetTimer();
     closeModal();
-    refreshBoard().catch(showError);
+    await refreshBoard();
+    if (state.mockMode) {
+      await maybeAutoAdvanceMock();
+    }
   }
 
   function undo() {
-    if (!state.picks.length) return;
+    if (!state.picks.length || state.aiBusy) return;
+    // Undo back through consecutive CPU picks until (and including) the last user pick,
+    // or a single pick if undoing a CPU-only stretch.
     const maxO = Math.max(...state.picks.map((p) => p.overall));
-    for (let i = state.picks.length - 1; i >= 0; i--) {
-      if (state.picks[i].overall === maxO) {
-        state.picks.splice(i, 1);
-        break;
+    let cut = maxO;
+    const last = state.picks.find((p) => p.overall === maxO);
+    if (last && last.team_slot !== state.userSlot) {
+      // Peel CPU picks until we hit a user pick (remove that too) or nothing left
+      for (let o = maxO; o >= 1; o--) {
+        const p = state.picks.find((x) => x.overall === o);
+        if (!p) continue;
+        cut = o;
+        if (p.team_slot === state.userSlot) break;
       }
     }
+    state.picks = state.picks.filter((p) => p.overall < cut);
     resetTimer();
-    refreshBoard().catch(showError);
+    refreshBoard()
+      .then(() => (state.mockMode ? maybeAutoAdvanceMock() : null))
+      .catch(showError);
   }
 
   function resetDraft() {
     if (!confirm("Reset the entire draft? This clears all picks.")) return;
     state.picks = [];
+    state.mockPersonalities = null;
+    state.mockSeed = Math.floor(Math.random() * 1e9);
     resetTimer();
-    refreshBoard().catch(showError);
+    refreshBoard()
+      .then(() => (state.mockMode ? maybeAutoAdvanceMock() : null))
+      .catch(showError);
   }
 
   function showError(err) {
@@ -976,13 +1075,24 @@
     state.slotCounts = readSlotCountsFromForm();
     state.rosterSize = rosterCapacity();
     state.positionMaxes = readMaxesFromForm();
+    const mockEl = $("mock-mode");
+    state.mockMode = mockEl ? mockEl.checked : true;
+    if (!fromSaved) {
+      state.picks = [];
+      state.mockPersonalities = null;
+      state.mockSeed = Math.floor(Math.random() * 1e9);
+    } else if (state.mockSeed == null) {
+      state.mockSeed = Math.floor(Math.random() * 1e9);
+    }
     if (state.userSlot > state.leagueSize) state.userSlot = state.leagueSize;
-    if (!fromSaved) state.picks = [];
     showSetup(false);
     setTab(state.tab || "players");
     resetTimer();
     await fetchPlayers();
     await refreshBoard();
+    if (state.mockMode) {
+      await maybeAutoAdvanceMock();
+    }
   }
 
   function onInsightClick(e) {
@@ -1012,6 +1122,8 @@
     els.recChips = $("rec-chips");
     els.recAlts = $("rec-alts");
     els.btnDraftRec = $("btn-draft-rec");
+    els.btnAiToMe = $("btn-ai-to-me");
+    els.btnAiFinish = $("btn-ai-finish");
     els.btnUndo = $("btn-undo");
     els.btnReset = $("btn-reset");
     els.btnBack = $("btn-back-setup");
@@ -1064,6 +1176,27 @@
       const id = state.rec?.primary?.player_id;
       if (id) draftPlayer(id).catch(showError);
     });
+    if (els.btnAiToMe) {
+      els.btnAiToMe.addEventListener("click", () => {
+        mockAdvance("until_user")
+          .then(() => refreshBoard())
+          .catch(showError);
+      });
+    }
+    if (els.btnAiFinish) {
+      els.btnAiFinish.addEventListener("click", () => {
+        if (
+          !confirm(
+            "Let AI finish the entire draft (including your remaining picks)?"
+          )
+        ) {
+          return;
+        }
+        mockAdvance("finish")
+          .then(() => refreshBoard())
+          .catch(showError);
+      });
+    }
     els.btnUndo.addEventListener("click", undo);
     els.btnReset.addEventListener("click", resetDraft);
     els.btnBack.addEventListener("click", () => {
@@ -1165,6 +1298,11 @@
       els.scoring.value = saved.scoring || "half_ppr";
       writeSlotCountsToForm(saved.slotCounts || DEFAULT_SLOT_COUNTS);
       writeMaxesToForm(saved.positionMaxes || DEFAULT_MAXES);
+      const mockEl = $("mock-mode");
+      if (mockEl) mockEl.checked = saved.mockMode !== false;
+      state.mockMode = saved.mockMode !== false;
+      state.mockSeed = saved.mockSeed ?? null;
+      state.mockPersonalities = saved.mockPersonalities || null;
       state.slotCounts = {
         ...DEFAULT_SLOT_COUNTS,
         ...(saved.slotCounts || {}),

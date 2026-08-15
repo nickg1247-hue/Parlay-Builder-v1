@@ -133,7 +133,7 @@ function gameDetailHref(game, options = {}) {
   const base = `/${sport}/game/${game.game_id}`;
   const slateDate = options.gameDate || game.slate_date;
   const params = new URLSearchParams();
-  if ((sport === "nba" || sport === "nba-summer" || sport === "cfb" || sport === "ufc") && slateDate) {
+  if ((sport === "nba" || sport === "nba-summer" || sport === "cfb" || sport === "nfl" || sport === "ufc") && slateDate) {
     params.set("date", slateDate);
   }
   if (options.useCache) {
@@ -266,6 +266,8 @@ function ntgShowLiveTicker() {
     path.startsWith("/nba/game/") ||
     path === "/cfb" ||
     path.startsWith("/cfb/game/") ||
+    path === "/nfl" ||
+    path.startsWith("/nfl/game/") ||
     path === "/ufc" ||
     path.startsWith("/ufc/game/") ||
     path.startsWith("/ufc/fighter/")
@@ -993,6 +995,8 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-cfb-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nfl-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-ufc-fights":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8 8l8 8"/><path d="M16 8l-8 8"/></svg>',
   "no-odds":
@@ -1043,6 +1047,11 @@ function renderEmptyState(el, kind, extraHtml = "") {
       title: "No games on the slate",
       body: "No FBS games in the next week. Try a Saturday during the season.",
       cta: '<a href="/cfb">Refresh slate</a>',
+    },
+    "no-nfl-games": {
+      title: "No games on the slate",
+      body: "No NFL games in the next week. Try a Sunday during the season.",
+      cta: '<a href="/nfl">Refresh slate</a>',
     },
     "no-ufc-fights": {
       title: "No fights on the card",
@@ -1319,6 +1328,9 @@ async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
     cfb: date
       ? `/api/cfb/predictions?date=${encodeURIComponent(date)}`
       : "/api/cfb/predictions",
+    nfl: date
+      ? `/api/nfl/predictions?date=${encodeURIComponent(date)}`
+      : "/api/nfl/predictions",
     ufc: date
       ? `/api/ufc/predictions?date=${encodeURIComponent(date)}`
       : "/api/ufc/predictions",
@@ -3240,6 +3252,9 @@ function sportPillIsActive(href, path) {
   if (href === "/ufc") {
     return path === "/ufc" || (path.startsWith("/ufc/") && !path.startsWith("/ufc/board"));
   }
+  if (href === "/nfl") {
+    return path === "/nfl" || (path.startsWith("/nfl/") && !path.startsWith("/nfl/draft"));
+  }
   if (href === "/mlb/props") {
     return path === "/mlb/props" || path.startsWith("/mlb/props/");
   }
@@ -3352,8 +3367,8 @@ function renderSportPills(container, path) {
     { href: "/nba", label: "NBA", sport: "nba" },
     { href: "/cfb", label: "CFB", sport: "cfb" },
     { href: "/ufc", label: "UFC", sport: "ufc" },
+    { href: "/nfl", label: "NFL", sport: "nfl" },
     { href: "/mlb/props", label: "Props" },
-    { disabled: true, label: "NFL", sport: "nfl", title: "Coming soon" },
     { disabled: true, label: "NHL", sport: "nhl", title: "Coming soon" },
   ];
   container.replaceChildren();

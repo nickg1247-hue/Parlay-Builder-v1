@@ -21,6 +21,7 @@ from app.services.fantasy_draft.eligibility import (
     validate_pick,
 )
 from app.services.fantasy_draft.engine import (
+    advance_mock_draft,
     apply_pick,
     recommend_from_request,
 )
@@ -440,6 +441,42 @@ def apply_pick_from_board(
     )
 
 
+def mock_advance_from_board(
+    *,
+    league_size: int,
+    scoring: str,
+    user_slot: int,
+    picks: list[dict[str, Any]],
+    mode: str = "until_user",
+    seed: int | None = None,
+    personalities: dict[int, str] | None = None,
+    roster_template: list[str] | None = None,
+    roster_size: int | None = None,
+    slot_counts: dict[str, Any] | None = None,
+    position_maxes: dict[str, Any] | None = None,
+    superflex: bool = False,
+) -> dict[str, Any]:
+    settings = league_settings_from_request(
+        league_size=league_size,
+        scoring=scoring,
+        roster_size=roster_size,
+        roster_template=roster_template,
+        slot_counts=slot_counts,
+        position_maxes=position_maxes,
+        superflex=superflex,
+    )
+    data = load_rankings()
+    return advance_mock_draft(
+        list(data.get("players") or []),
+        settings=settings,
+        picks=picks,
+        user_slot=user_slot,
+        mode=mode,
+        seed=seed,
+        personalities=personalities,
+    )
+
+
 # Re-exports for engine consumers / tests
 __all__ = [
     "DEFAULT_POSITION_MAXES",
@@ -462,6 +499,7 @@ __all__ = [
     "league_settings_from_request",
     "list_players_for_api",
     "load_rankings",
+    "mock_advance_from_board",
     "next_overall_after",
     "normalize_position_maxes",
     "normalize_scoring",

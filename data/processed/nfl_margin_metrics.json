@@ -1,0 +1,22 @@
+{
+  "train_seasons": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "holdout_season": 2025,
+  "train_rows": 1834,
+  "holdout_rows": 317,
+  "holdout_mae_margin": 10.6162,
+  "holdout_margin_std": 13.5332,
+  "proxy_cover_log_loss_home": 0.6189,
+  "proxy_cover_log_loss_away": 0.651,
+  "margin_production_gate_passes": true,
+  "proxy_lines": {
+    "home_spread_point": -3.0,
+    "away_spread_point": 3.0
+  }
+}

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
-  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260809e">
+  <link rel="stylesheet" href="/static/nfl_draft.css?v=20260814a">
 </head>
 <body class="ntg-shell home-v2 draft-room-page">
   <div class="app-shell draft-shell">
@@ -88,6 +88,14 @@
               </div>
             </fieldset>
 
+            <fieldset class="draft-rules">
+              <legend>Mock draft</legend>
+              <label class="draft-check">
+                <input id="mock-mode" type="checkbox" checked />
+                <span>AI fills other teams — after your pick (and on enter), CPU advances until you’re on the clock</span>
+              </label>
+            </fieldset>
+
             <button type="submit" class="draft-cta">Enter draft room</button>
           </form>
 
@@ -110,6 +118,8 @@
           </div>
           <div class="draft-clock-actions">
             <button type="button" id="btn-draft-rec" class="draft-cta draft-cta--clock">Draft recommended</button>
+            <button type="button" id="btn-ai-to-me" class="draft-btn-ghost" title="CPU drafts until your turn">AI to my pick</button>
+            <button type="button" id="btn-ai-finish" class="draft-btn-ghost" title="CPU fills the rest of the draft (including you)">AI finish</button>
             <button type="button" id="btn-undo" class="draft-btn-ghost">Undo</button>
             <button type="button" id="btn-reset" class="draft-btn-ghost">Reset</button>
             <button type="button" id="btn-back-setup" class="draft-btn-ghost">Setup</button>
@@ -215,7 +225,7 @@
   </div>
 
   <script src="/static/app.js?v=20260725"></script>
-  <script src="/static/nfl_draft.js?v=20260809e"></script>
+  <script src="/static/nfl_draft.js?v=20260814a"></script>
   <script>
     if (typeof initSiteChrome === "function") initSiteChrome();
   </script>

@@ -17,6 +17,8 @@ SPORT_MLB = "baseball_mlb"
 SPORT_NBA = "basketball_nba"
 SPORT_NBA_SUMMER = "basketball_nba_summer_league"
 SPORT_CFB = "americanfootball_ncaaf"
+SPORT_NFL = "americanfootball_nfl"
+SPORT_NFL_PRESEASON = "americanfootball_nfl_preseason"
 SPORT_UFC = "mma_mixed_martial_arts"
 MARKET_H2H = "h2h"
 MARKET_TOTALS = "totals"
@@ -250,6 +252,36 @@ def fetch_live_cfb_odds(
     if include_totals:
         markets.append(MARKET_TOTALS)
     return _fetch_live_odds(key, ",".join(markets), regions, sport=SPORT_CFB)
+
+
+def fetch_live_nfl_odds(
+    api_key: str | None = None,
+    regions: str = "us",
+    include_spreads: bool = True,
+    include_totals: bool = True,
+    *,
+    include_preseason: bool = True,
+) -> list[dict[str, Any]] | None:
+    """Live NFL odds — regular + optional preseason sport keys, merged."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    markets = [MARKET_H2H]
+    if include_spreads:
+        markets.append(MARKET_SPREADS)
+    if include_totals:
+        markets.append(MARKET_TOTALS)
+    market_str = ",".join(markets)
+    events = _fetch_live_odds(key, market_str, regions, sport=SPORT_NFL) or []
+    if include_preseason:
+        try:
+            pre = _fetch_live_odds(key, market_str, regions, sport=SPORT_NFL_PRESEASON) or []
+            events = list(events) + list(pre)
+        except Exception:
+            logger.warning("NFL preseason Odds API pull failed; using regular-season events only")
+    return events
 
 
 def fetch_live_ufc_odds(

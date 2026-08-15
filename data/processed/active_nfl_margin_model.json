@@ -1,0 +1,8 @@
+{
+  "track": "nfl_spread",
+  "model_version": "v1_margin_gbr_normal",
+  "path": "data/processed/nfl_margin_model.joblib",
+  "feature_set": "nfl_margin_v1",
+  "production_ready": true,
+  "promoted_at": "2026-08-15T01:52:16.424539+00:00"
+}

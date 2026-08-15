@@ -1,0 +1,7 @@
+{
+  "track": "nfl_totals",
+  "model_version": "v1_gbr_normal",
+  "path": "data/processed/nfl_totals_model.joblib",
+  "production_ready": true,
+  "promoted_at": "2026-08-15T01:52:16.899932+00:00"
+}

@@ -95,6 +95,7 @@ from app.services.nfl_fantasy_draft import (
     apply_pick_from_board,
     evaluate_player_from_board,
     list_players_for_api,
+    mock_advance_from_board,
     recommend_from_board,
 )
 from app.services.cfb_daily_board import build_cfb_daily_board
@@ -104,6 +105,9 @@ from app.services.cfb_backtest_report import (
     run_cfb_walk_forward_backtest,
 )
 from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
+from app.services.schedule_nfl import get_nfl_game, get_nfl_schedule
+from app.services.nfl_slate_predictions import predict_slate as predict_nfl_slate
+from app.services.nfl_daily_board import build_nfl_daily_board
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
 from app.services.ufc_slate_predictions import predict_slate, _clean_json_value
@@ -441,6 +445,24 @@ class NflFantasyApplyPickRequest(BaseModel):
     league_size: int = Field(..., ge=8, le=14)
     scoring: str = Field("half_ppr")
     picks: list[NflFantasyPick] = Field(default_factory=list)
+    roster_template: list[str] | None = None
+    roster_size: int | None = Field(None, ge=9, le=20)
+    slot_counts: dict[str, int] | None = None
+    position_maxes: dict[str, int] | None = None
+    superflex: bool = False
+
+
+class NflFantasyMockAdvanceRequest(BaseModel):
+    league_size: int = Field(..., ge=8, le=14)
+    scoring: str = Field("half_ppr")
+    user_slot: int = Field(..., ge=1)
+    picks: list[NflFantasyPick] = Field(default_factory=list)
+    mode: str = Field(
+        "until_user",
+        description="until_user | one | finish",
+    )
+    seed: int | None = None
+    personalities: dict[int, str] | None = None
     roster_template: list[str] | None = None
     roster_size: int | None = Field(None, ge=9, le=20)
     slot_counts: dict[str, int] | None = None
@@ -891,6 +913,41 @@ async def cfb_schedule(
     return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
 
 
+@app.get("/api/schedule/nfl")
+async def nfl_schedule(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Bypass saved cache; re-fetch ingest or ESPN"),
+):
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_nfl_schedule(game_date, auto_resolve=False, force_live=refresh)
+    return get_nfl_schedule(None, auto_resolve=True, force_live=refresh)
+
+
+@app.get("/api/nfl/predictions")
+async def nfl_predictions(
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    return predict_nfl_slate(game_date)
+
+
+@app.get("/api/nfl/daily")
+async def nfl_daily(
+    date_param: str | None = Query(None, alias="date"),
+    min_edge: float = Query(DEFAULT_MIN_EDGE, ge=0.0, le=0.5),
+    refresh: bool = Query(False),
+    use_cache: bool = Query(False),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else date_type.today()
+    return build_nfl_daily_board(
+        game_date=game_date,
+        min_edge=min_edge,
+        use_cache=use_cache,
+        force_refresh=refresh and not use_cache,
+    )
+
+
 @app.get("/api/schedule/ufc")
 async def ufc_schedule(
     date_param: str | None = Query(None, alias="date"),
@@ -1027,7 +1084,7 @@ async def cfb_backtest_saved():
 
 @app.get("/api/scores/today")
 async def scores_today(
-    sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|ufc|all)$"),
+    sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|nfl|ufc|all)$"),
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
@@ -1035,6 +1092,7 @@ async def scores_today(
         "nba",
         "nba-summer",
         "cfb",
+        "nfl",
         "ufc",
         "all",
     )
@@ -1832,6 +1890,38 @@ async def fantasy_nfl_apply_pick(body: NflFantasyApplyPickRequest):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@app.post("/api/fantasy/nfl/mock-advance")
+async def fantasy_nfl_mock_advance(body: NflFantasyMockAdvanceRequest):
+    """CPU/AI advances a mock draft (until user turn, one pick, or finish)."""
+    try:
+        picks = [p.model_dump() for p in body.picks]
+        result = mock_advance_from_board(
+            league_size=body.league_size,
+            scoring=body.scoring,
+            user_slot=body.user_slot,
+            picks=picks,
+            mode=body.mode,
+            seed=body.seed,
+            personalities=body.personalities,
+            roster_template=body.roster_template,
+            roster_size=body.roster_size,
+            slot_counts=body.slot_counts,
+            position_maxes=body.position_maxes,
+            superflex=body.superflex,
+        )
+        if not result.get("ok"):
+            raise HTTPException(
+                status_code=400, detail=result.get("error") or "Mock advance failed"
+            )
+        return result
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.get("/mlb")
 async def mlb_slate(date_param: str | None = Query(None, alias="date")):
     game_date = (
@@ -1902,6 +1992,51 @@ async def nba_summer_game_insights(
     if insights is None:
         raise HTTPException(status_code=404, detail="Game not found")
     return insights
+
+
+@app.get("/nfl")
+async def nfl_slate():
+    return FileResponse(STATIC_DIR / "nfl_slate.html")
+
+
+@app.get("/nfl/board")
+async def nfl_board():
+    return FileResponse(STATIC_DIR / "nfl_board.html")
+
+
+@app.get("/nfl/game/{game_id}")
+async def nfl_game_page(game_id: str):
+    return FileResponse(STATIC_DIR / "nfl_game.html")
+
+
+@app.get("/api/games/nfl/{game_id}/insights")
+async def nfl_game_insights(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False),
+    use_cache: bool = Query(False),
+):
+    from app.services.nfl_game_insights import build_nfl_game_insights
+
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    insights = build_nfl_game_insights(
+        game_id, game_date=game_date, refresh=refresh, use_cache=use_cache
+    )
+    if insights is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return insights
+
+
+@app.get("/api/games/nfl/{game_id}")
+async def nfl_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    detail = get_nfl_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
 
 
 @app.get("/cfb")

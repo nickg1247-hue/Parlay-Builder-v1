@@ -501,6 +501,142 @@ def cpu_select_player(
     return {**applied, "choice": pick_row, "personality": personality}
 
 
+def advance_mock_draft(
+    players: list[dict[str, Any]],
+    *,
+    settings: LeagueSettings,
+    picks: list[dict[str, Any]],
+    user_slot: int,
+    mode: str = "until_user",
+    seed: int | None = None,
+    personalities: dict[int, str] | None = None,
+) -> dict[str, Any]:
+    """
+    Advance a mock draft with CPU picks.
+
+    Modes:
+      - until_user: CPU picks until the user's team is on the clock (or draft ends)
+      - one: make a single CPU pick for whoever is on the clock (skips if user)
+      - finish: CPU fills every remaining pick (including the user's)
+    """
+    mode_l = (mode or "until_user").strip().lower()
+    if mode_l not in ("until_user", "one", "finish"):
+        raise ValueError("mode must be until_user | one | finish")
+    if user_slot < 1 or user_slot > settings.league_size:
+        raise ValueError("user_slot out of range")
+
+    rng = random.Random(seed if seed is not None else random.randrange(1 << 30))
+    personalities = personalities or {}
+    # Stable personality per team for this session seed (JSON may stringify keys)
+    team_pers: dict[int, str] = {}
+    for k, v in personalities.items():
+        try:
+            team_pers[int(k)] = str(v)
+        except (TypeError, ValueError):
+            continue
+    for slot in range(1, settings.league_size + 1):
+        if slot not in team_pers:
+            team_pers[slot] = rng.choice(list(CPU_PERSONALITIES))
+
+    cur_picks = list(picks)
+    made: list[dict[str, Any]] = []
+    players_by_id = {str(p["player_id"]): p for p in players}
+
+    def _enrich(pick: dict[str, Any], choice: dict[str, Any] | None) -> dict[str, Any]:
+        pid = str(pick.get("player_id") or "")
+        pl = players_by_id.get(pid) or {}
+        return {
+            "overall": pick["overall"],
+            "team_slot": pick["team_slot"],
+            "player_id": pid,
+            "name": (choice or {}).get("name") or pl.get("name"),
+            "position": (choice or {}).get("position") or pl.get("position"),
+            "team": pl.get("team"),
+            "personality": (choice or {}).get("personality")
+            if choice
+            else None,
+        }
+
+    while len(cur_picks) < settings.total_picks:
+        overall = _next_overall(cur_picks)
+        if overall > settings.total_picks:
+            break
+        slot = team_slot_for_overall(overall, settings.league_size)
+
+        if mode_l == "until_user" and slot == user_slot:
+            break
+        if mode_l == "one" and slot == user_slot:
+            return {
+                "ok": True,
+                "picks": cur_picks,
+                "cpu_picks": made,
+                "stopped_reason": "user_on_clock",
+                "done": False,
+                "on_clock_slot": slot,
+                "current_overall": overall,
+            }
+
+        # finish mode: CPU drafts for everyone including user
+        # until_user / one: only non-user slots
+        if mode_l != "finish" and slot == user_slot:
+            break
+
+        pers = team_pers[slot]
+        result = cpu_select_player(
+            players,
+            settings=settings,
+            team_slot=slot,
+            picks=cur_picks,
+            personality=pers,
+            rng=rng,
+        )
+        if not result.get("ok"):
+            return {
+                "ok": False,
+                "picks": cur_picks,
+                "cpu_picks": made,
+                "error": result.get("error"),
+                "done": False,
+                "on_clock_slot": slot,
+                "current_overall": overall,
+            }
+        cur_picks = result["picks"]
+        choice = result.get("choice") or {}
+        if isinstance(choice, dict):
+            choice = {**choice, "personality": pers}
+        last = cur_picks[-1]
+        made.append(_enrich(last, choice if isinstance(choice, dict) else None))
+
+        if mode_l == "one":
+            break
+
+    overall_next = _next_overall(cur_picks)
+    done = len(cur_picks) >= settings.total_picks
+    on_clock = (
+        None
+        if done
+        else team_slot_for_overall(overall_next, settings.league_size)
+    )
+    return {
+        "ok": True,
+        "picks": cur_picks,
+        "cpu_picks": made,
+        "stopped_reason": (
+            "complete"
+            if done
+            else "user_on_clock"
+            if on_clock == user_slot
+            else "one_pick"
+            if mode_l == "one"
+            else "stopped"
+        ),
+        "done": done,
+        "on_clock_slot": on_clock,
+        "current_overall": None if done else overall_next,
+        "personalities": team_pers,
+    }
+
+
 def simulate_full_draft(
     players: list[dict[str, Any]],
     *,

@@ -1,0 +1,6 @@
+{
+  "holdout_season": 2025,
+  "matched_games": 0,
+  "note": "No ESPN ingest lines or Odds API repository snapshots for holdout.",
+  "model_beats_market_log_loss": null
+}

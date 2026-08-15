@@ -1,0 +1,47 @@
+{
+  "base_train_seasons": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "platt_season": 2024,
+  "holdout_season": 2025,
+  "train_rows": 1834,
+  "holdout_rows": 317,
+  "feature_set": "nfl_v1",
+  "production_model": "v1_logistic_platt",
+  "active_model": "v1_logistic_platt",
+  "imputation": {
+    "rest_days": 7.0
+  },
+  "metrics": {
+    "logistic_regression_v1": {
+      "log_loss": 0.6514505409708329,
+      "brier": 0.22969725563148913,
+      "accuracy": 0.6214511041009464
+    },
+    "naive_home_win_rate": {
+      "log_loss": 0.6913666193327124,
+      "brier": 0.2491102315599077,
+      "accuracy": 0.5299684542586751
+    },
+    "elo_baseline": {
+      "log_loss": 0.6660889667595101,
+      "brier": 0.235136815830418,
+      "accuracy": 0.61198738170347
+    }
+  },
+  "phase_gate": {
+    "rule": "Holdout log loss must beat min(naive home-win-rate, Elo).",
+    "best_naive_log_loss": 0.6660889667595101,
+    "passes": true,
+    "active_model": "v1_logistic_platt"
+  },
+  "active_holdout": {
+    "log_loss": 0.6514505409708329,
+    "brier": 0.22969725563148913,
+    "accuracy": 0.6214511041009464
+  }
+}

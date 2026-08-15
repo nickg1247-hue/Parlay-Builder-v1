@@ -260,6 +260,94 @@ def test_recommend_includes_projected_role():
     assert "lineup" in rec["board_meta"]
 
 
+def test_mock_advance_until_user_stops_on_user_slot():
+    from app.services.fantasy_draft.engine import advance_mock_draft
+    from app.services.fantasy_draft.availability import team_slot_for_overall
+
+    players = _mini_board()
+    # Expand board so 8-team draft has enough players
+    extra = []
+    for i in range(40):
+        extra.append(
+            {
+                "player_id": f"extra_{i}",
+                "name": f"Extra {i}",
+                "position": ["RB", "WR", "QB", "TE"][i % 4],
+                "team": "XX",
+                "bye": 7,
+                "adp": 50 + i,
+                "rank_std": 50 + i,
+                "rank_half": 50 + i,
+                "rank_ppr": 50 + i,
+                "tier": 3,
+                "proj_pts_half": 150 - i,
+            }
+        )
+    players = players + extra
+    settings = league_settings_from_request(
+        league_size=8,
+        slot_counts={
+            "QB": 1,
+            "RB": 1,
+            "WR": 1,
+            "TE": 0,
+            "WRT": 0,
+            "K": 0,
+            "DST": 0,
+            "BENCH": 1,
+        },
+        position_maxes={"QB": 3, "RB": 5, "WR": 5, "TE": 2, "DST": 1, "K": 1},
+    )
+    user_slot = 3
+    result = advance_mock_draft(
+        players,
+        settings=settings,
+        picks=[],
+        user_slot=user_slot,
+        mode="until_user",
+        seed=42,
+    )
+    assert result["ok"] is True
+    assert result["on_clock_slot"] == user_slot
+    assert len(result["cpu_picks"]) == user_slot - 1
+    # Next overall belongs to user
+    nxt = max(p["overall"] for p in result["picks"]) + 1 if result["picks"] else 1
+    assert team_slot_for_overall(nxt, settings.league_size) == user_slot
+
+
+def test_mock_advance_finish_completes_draft():
+    from app.services.fantasy_draft.engine import advance_mock_draft
+
+    data = load_rankings()
+    players = list(data["players"])
+    settings = league_settings_from_request(
+        league_size=8,
+        scoring="half_ppr",
+        slot_counts={
+            "QB": 1,
+            "RB": 1,
+            "WR": 1,
+            "TE": 0,
+            "WRT": 0,
+            "K": 0,
+            "DST": 0,
+            "BENCH": 1,
+        },
+        position_maxes={"QB": 3, "RB": 5, "WR": 5, "TE": 2, "DST": 1, "K": 1},
+    )
+    result = advance_mock_draft(
+        players,
+        settings=settings,
+        picks=[],
+        user_slot=1,
+        mode="finish",
+        seed=3,
+    )
+    assert result["ok"] is True
+    assert result["done"] is True
+    assert len(result["picks"]) == settings.total_picks
+
+
 def test_position_max_overrides_flex():
     players = _mini_board()
     settings = league_settings_from_request(
