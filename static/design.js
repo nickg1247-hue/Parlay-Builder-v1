@@ -235,10 +235,15 @@
 
     const awayShort = (game.away_team || "Away").split(" ").pop();
     const homeShort = (game.home_team || "Home").split(" ").pop();
+    const blend = Math.max(10, Math.min(18, Math.round(Math.min(pcts.awayPct, pcts.homePct) * 0.45)));
     return `
       <div class="${bandClass}"
-           style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;"
+           style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;--home-pct:${pcts.homePct}%;--blend:${blend}%;"
            aria-label="Model win probability ${pcts.awayPct} percent ${awayShort}, ${pcts.homePct} percent ${homeShort}">
+        <span class="win-prob-band-fill win-prob-band-fill-away" aria-hidden="true"></span>
+        <span class="win-prob-band-fill win-prob-band-fill-home" aria-hidden="true"></span>
+        <span class="win-prob-band-mix" aria-hidden="true"></span>
+        <span class="win-prob-band-sheen" aria-hidden="true"></span>
         <span class="win-prob-band-label win-prob-band-away">${awayShort} ${pcts.awayPct}%</span>
         <span class="win-prob-band-label win-prob-band-home">${homeShort} ${pcts.homePct}%</span>
       </div>`;

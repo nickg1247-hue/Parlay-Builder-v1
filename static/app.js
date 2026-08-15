@@ -691,18 +691,40 @@ let _teamColors = null;
 
 async function loadTeamColors() {
   if (_teamColors) return _teamColors;
-  try {
-    _teamColors = await fetchJSON("/static/mlb_team_colors.json");
-  } catch {
-    _teamColors = {};
-  }
+  const files = [
+    "/static/mlb_team_colors.json",
+    "/static/nfl_team_colors.json",
+    "/static/nba_team_colors.json",
+    "/static/cfb_team_colors.json",
+  ];
+  const merged = {};
+  await Promise.all(
+    files.map(async (url) => {
+      try {
+        Object.assign(merged, await fetchJSON(url));
+      } catch {
+        /* optional palette */
+      }
+    })
+  );
+  _teamColors = merged;
   return _teamColors;
 }
 
 function teamPrimaryColor(teamName, colors) {
   if (!teamName) return "#2f3336";
   const map = colors || _teamColors || {};
-  return map[teamName] || "#2f3336";
+  if (map[teamName]) return map[teamName];
+  const raw = String(teamName).trim();
+  if (map[raw]) return map[raw];
+  const lower = raw.toLowerCase();
+  if (map[raw.toUpperCase()]) return map[raw.toUpperCase()];
+  for (const [key, val] of Object.entries(map)) {
+    const k = String(key).toLowerCase();
+    if (k === lower) return val;
+    if (k.startsWith(`${lower} `) || lower.startsWith(`${k} `)) return val;
+  }
+  return "#2f3336";
 }
 
 /** UFC corner colors — away=blue, home=red (no per-fighter branding). */
@@ -1245,20 +1267,15 @@ function resolveTeamColorsForBand(game, colors) {
   if (game && (game.sport === "ufc" || String(game.sport || "").toLowerCase() === "ufc")) {
     return { away: "#2563eb", home: "#dc2626" };
   }
-  const map = colors || _teamColors || {};
   return {
     away:
       game?.away_color ||
       game?.away_team_color ||
-      map[game?.away_team] ||
-      map[game?.away_team_abbr] ||
-      "#64748b",
+      teamPrimaryColor(game?.away_team_abbr || game?.away_team, colors),
     home:
       game?.home_color ||
       game?.home_team_color ||
-      map[game?.home_team] ||
-      map[game?.home_team_abbr] ||
-      "#2563eb",
+      teamPrimaryColor(game?.home_team_abbr || game?.home_team, colors),
   };
 }
 
@@ -1300,10 +1317,15 @@ function winProbBandHtml(boardRow, game, colors, extraClass) {
   const awayShort = (game?.away_team || "Away").split(" ").pop();
   const homeShort = (game?.home_team || "Home").split(" ").pop();
   const favSide = pcts.homePct >= pcts.awayPct ? "home" : "away";
+  const blend = Math.max(10, Math.min(18, Math.round(Math.min(pcts.awayPct, pcts.homePct) * 0.45)));
   return `
       <div class="${bandClass} win-prob-band--${favSide}"
-           style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;--home-pct:${pcts.homePct}%;"
+           style="--away-color:${awayColor};--home-color:${homeColor};--away-pct:${pcts.awayPct}%;--home-pct:${pcts.homePct}%;--blend:${blend}%;"
            aria-label="Model win probability ${pcts.awayPct} percent ${awayShort}, ${pcts.homePct} percent ${homeShort}">
+        <span class="win-prob-band-fill win-prob-band-fill-away" aria-hidden="true"></span>
+        <span class="win-prob-band-fill win-prob-band-fill-home" aria-hidden="true"></span>
+        <span class="win-prob-band-mix" aria-hidden="true"></span>
+        <span class="win-prob-band-sheen" aria-hidden="true"></span>
         <span class="win-prob-band-label win-prob-band-away">${awayShort} ${pcts.awayPct}%</span>
         <span class="win-prob-band-label win-prob-band-home">${homeShort} ${pcts.homePct}%</span>
       </div>`;
@@ -1346,6 +1368,18 @@ async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
     else if (Array.isArray(data.slate)) map = boardMapFromSlate(data.slate);
     else if (data.slate_by_game_id && typeof data.slate_by_game_id === "object") {
       map = { ...data.slate_by_game_id };
+    } else if (data && typeof data === "object") {
+      const values = Object.values(data).filter(
+        (v) => v && typeof v === "object" && (v.game_id != null || v.model_prob_home != null)
+      );
+      if (values.length) {
+        map = boardMapFromSlate(values);
+        for (const [key, row] of Object.entries(data)) {
+          if (row && typeof row === "object" && (row.game_id != null || row.model_prob_home != null)) {
+            map[String(key)] = row;
+          }
+        }
+      }
     }
     // UFC fights often key as fight_id — mirror onto game_id for slate cards.
     if (sport === "ufc") {
