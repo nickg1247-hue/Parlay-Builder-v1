@@ -83,6 +83,7 @@ def test_build_cfb_game_insights_success(mock_game, mock_board, _mock_feats, _mo
     assert result["game"]["game_id"] == "401635000"
     assert result["moneyline"]["home_ml"] == -350
     assert result["moneyline"]["model_pick"] == "Georgia"
+    assert result["board_row"]["model_prob_home"] == 0.78
     assert result["spread"]["spread_pick"] == "Georgia -7"
     assert result["spread"]["model_prob_home_cover"] == 0.62
     assert result["totals"]["totals_pick"] == "Over 51.5"

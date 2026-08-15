@@ -3064,6 +3064,12 @@ body.slate-mlb .app-main > * {
   text-align: center;
 }
 
+.matchup-model-pct {
+  font-size: 1.15rem;
+  min-width: 0;
+  text-align: center;
+}
+
 .matchup-score {
   font-size: 1.5rem;
   font-weight: 700;

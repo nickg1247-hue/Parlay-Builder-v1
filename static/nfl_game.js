@@ -34,6 +34,7 @@
     : "/api/scores/today?sport=nfl";
 
   let scorePollerStarted = false;
+  let lastBoardRow = null;
 
   function insightsUrl(refresh) {
     const params = new URLSearchParams();
@@ -249,8 +250,15 @@
     });
   }
 
+  function headerGame(game, boardRow) {
+    return { ...game, sport: "nfl", ...(boardRow || {}) };
+  }
+
   function renderInsights(data) {
-    renderMatchupHeader(header, { ...data.game, sport: "nfl" });
+    lastBoardRow = (typeof boardRowFromInsights === "function"
+      ? boardRowFromInsights(data)
+      : data.board_row || data.moneyline) || lastBoardRow;
+    renderMatchupHeader(header, headerGame(data.game, lastBoardRow), lastBoardRow);
     renderMatchupBoard(data);
     renderFeatureSnapshot(data.feature_snapshot);
     renderParlays(data.parlays);
@@ -273,7 +281,7 @@
       const live = (data.games || []).find(
         (g) => String(g.game_id) === String(gameId)
       );
-      if (live) renderMatchupHeader(header, { ...live, sport: "nfl" });
+      if (live) renderMatchupHeader(header, headerGame(live, lastBoardRow), lastBoardRow);
     } catch (_) {
       /* keep last header */
     }

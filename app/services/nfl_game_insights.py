@@ -219,6 +219,7 @@ def build_nfl_game_insights(
             if any(str(leg.get("game_id")) == str(game_id) for leg in p.get("legs") or [])
         ],
         "active_model": board.get("active_moneyline_model") or {},
+        "board_row": row,
         "moneyline": moneyline,
         "spread": spread,
         "totals": totals,

@@ -6,7 +6,7 @@
   <link rel="icon" href="/static/assets/ntg-logo.png?v=20260814" type="image/png">
   <title>NFL — NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260814">
-  <link rel="stylesheet" href="/static/app.css?v=20260815">
+  <link rel="stylesheet" href="/static/app.css?v=20260816">
   <link rel="stylesheet" href="/static/brand.css?v=20260814">
   <link rel="stylesheet" href="/static/design.css?v=20260814">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260814">
@@ -62,7 +62,7 @@
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260815"></script>
+  <script src="/static/app.js?v=20260816"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -160,12 +160,14 @@
           return;
         }
 
+        await loadTeamColors().catch(() => {});
         let boardMap = {};
         try {
           boardMap = await fetchSportBoardMap("nfl", slateDate);
         } catch (_) { /* model optional */ }
+        const gamesWithPreds = attachBoardMapToGames(games, boardMap);
 
-        renderGameList(list, games, {
+        renderGameList(list, gamesWithPreds, {
           boardMap,
           gameDate: slateDate,
           useCache: true,
@@ -183,7 +185,12 @@
               const slateDate = live.resolved_date || live.date || "";
               dateEl.textContent = slateDate;
               showSource(live);
-              updateGameCards(list, mapGames(live));
+              const opts = list._renderOptions || {};
+              updateGameCards(
+                list,
+                attachBoardMapToGames(mapGames(live), opts.boardMap || {}),
+                { boardMap: opts.boardMap || {}, colors: _teamColors }
+              );
             } catch (_) { /* keep last good state */ }
           }, 60000);
         }

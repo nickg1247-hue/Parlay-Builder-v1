@@ -32,6 +32,7 @@
     : "/api/scores/today?sport=cfb";
 
   let scorePollerStarted = false;
+  let lastBoardRow = null;
 
   function insightsUrl(refresh) {
     const params = new URLSearchParams();
@@ -220,8 +221,15 @@
     });
   }
 
+  function headerGame(game, boardRow) {
+    return { ...game, sport: "cfb", ...(boardRow || {}) };
+  }
+
   function renderInsights(data) {
-    renderMatchupHeader(header, { ...data.game, sport: "cfb" });
+    lastBoardRow = (typeof boardRowFromInsights === "function"
+      ? boardRowFromInsights(data)
+      : data.board_row || data.moneyline) || lastBoardRow;
+    renderMatchupHeader(header, headerGame(data.game, lastBoardRow), lastBoardRow);
     renderMatchupBoard(data);
     renderFeatureSnapshot(data.feature_snapshot);
     renderWarnings(data.warnings);
@@ -243,7 +251,7 @@
       const live = (data.games || []).find(
         (g) => String(g.game_id) === String(gameId)
       );
-      if (live) renderMatchupHeader(header, { ...live, sport: "cfb" });
+      if (live) renderMatchupHeader(header, headerGame(live, lastBoardRow), lastBoardRow);
     } catch (_) {
       /* keep last header */
     }

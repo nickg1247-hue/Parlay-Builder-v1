@@ -6,7 +6,7 @@
   <link rel="icon" href="/static/assets/ntg-logo.png?v=20260742" type="image/png">
   <title>NBA — NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260742">
-  <link rel="stylesheet" href="/static/app.css?v=20260815">
+  <link rel="stylesheet" href="/static/app.css?v=20260816">
   <link rel="stylesheet" href="/static/brand.css?v=20260742">
   <link rel="stylesheet" href="/static/design.css?v=20260742">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260742">
@@ -50,7 +50,7 @@
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260815"></script>
+  <script src="/static/app.js?v=20260816"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -103,7 +103,7 @@
 
         await loadTeamColors().catch(() => {});
         const boardMap = await fetchSportBoardMap("nba", slateDate);
-        renderGameList(list, games, {
+        renderGameList(list, attachBoardMapToGames(games, boardMap), {
           boardMap,
           gameDate: slateDate,
           useCache: !!dateParam,
@@ -127,7 +127,10 @@
                 return;
               }
               const liveBoard = await fetchSportBoardMap("nba", liveDate);
-              updateGameCards(list, mapped, { boardMap: liveBoard, colors: _teamColors });
+              updateGameCards(list, attachBoardMapToGames(mapped, liveBoard), {
+                boardMap: liveBoard,
+                colors: _teamColors,
+              });
             } catch (_) { /* keep last good state */ }
           }, 60000);
         }

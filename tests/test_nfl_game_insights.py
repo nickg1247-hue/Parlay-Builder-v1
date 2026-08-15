@@ -84,6 +84,7 @@ def test_build_nfl_game_insights_success(mock_game, mock_board, _mock_feats, _mo
     assert result["game"]["game_id"] == "401671617"
     assert result["moneyline"]["home_ml"] == -140
     assert result["moneyline"]["model_pick"] == "Kansas City Chiefs"
+    assert result["board_row"]["model_prob_home"] == 0.62
     assert result["spread"]["spread_pick"] == "Kansas City Chiefs -3"
     assert result["spread"]["model_prob_home_cover"] == 0.55
     assert result["totals"]["totals_pick"] == "Over 44.5"

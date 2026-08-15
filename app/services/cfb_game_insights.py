@@ -343,6 +343,7 @@ def build_cfb_game_insights(
             "model_version": active.get("model_version"),
             "feature_set": active.get("feature_set"),
         },
+        "board_row": row,
         "moneyline": moneyline,
         "spread": spread,
         "totals": totals,

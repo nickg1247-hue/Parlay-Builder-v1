@@ -1243,6 +1243,27 @@ function initLiveTicker(elementId, options = {}) {
   };
 }
 
+function americanToWinProb(american) {
+  const n = Number(american);
+  if (!Number.isFinite(n) || n === 0) return null;
+  return n > 0 ? 100 / (n + 100) : Math.abs(n) / (Math.abs(n) + 100);
+}
+
+function impliedMarketRowFromGame(game) {
+  if (!game) return null;
+  const homeMl = game.home_ml ?? game.espn_home_ml;
+  const awayMl = game.away_ml ?? game.espn_away_ml;
+  const home = americanToWinProb(homeMl);
+  const away = americanToWinProb(awayMl);
+  if (home == null || away == null) return null;
+  const total = home + away;
+  if (total <= 0) return null;
+  return {
+    market_prob_home: home / total,
+    market_prob_away: away / total,
+  };
+}
+
 function resolveBoardRow(game, boardRow) {
   if (boardRow && (boardRow.model_prob_home != null || boardRow.market_prob_home != null)) {
     return boardRow;
@@ -1260,7 +1281,52 @@ function resolveBoardRow(game, boardRow) {
       model_confidence: game.model_confidence,
     };
   }
-  return boardRow;
+  return impliedMarketRowFromGame(game) || boardRow;
+}
+
+/** Pull a win-% row from MLB/NBA board_row or NFL/CFB/UFC moneyline payloads. */
+function boardRowFromInsights(data) {
+  if (!data) return null;
+  const row = data.board_row;
+  if (row && (row.model_prob_home != null || row.market_prob_home != null)) {
+    return row;
+  }
+  const ml = data.moneyline || data.model || {};
+  const home =
+    ml.model_prob_home ??
+    ml.home_win_pct ??
+    data.prediction?.model_prob_home ??
+    data.game?.model_prob_home;
+  if (home == null) return impliedMarketRowFromGame(data.game);
+  return {
+    model_prob_home: home,
+    model_prob_away: ml.model_prob_away ?? (1 - Number(home)),
+    market_prob_home: ml.market_prob_home,
+    market_prob_away: ml.market_prob_away,
+    model_pick: ml.model_pick || ml.pick,
+    model_pick_side: ml.model_pick_side || ml.pick_side,
+    ml_confidence: ml.ml_confidence || ml.confidence,
+  };
+}
+
+function teamMatchKey(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\b(the|university|univ|of)\b/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function teamsMatchName(a, b) {
+  const x = teamMatchKey(a);
+  const y = teamMatchKey(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  if (x.startsWith(`${y} `) || y.startsWith(`${x} `)) return true;
+  const x0 = x.split(" ")[0];
+  const y0 = y.split(" ")[0];
+  return Boolean(x0 && x0 === y0 && x0.length >= 4);
 }
 
 function resolveTeamColorsForBand(game, colors) {
@@ -1389,6 +1455,20 @@ async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
         }
       }
     }
+    if (!Object.keys(map).length && (sport === "nfl" || sport === "cfb" || sport === "nba")) {
+      try {
+        const dailyUrl = date
+          ? `/api/${sport}/daily?date=${encodeURIComponent(date)}`
+          : `/api/${sport}/daily`;
+        const daily = await fetchJSON(dailyUrl);
+        if (Array.isArray(daily?.slate)) map = boardMapFromSlate(daily.slate);
+        else if (daily?.slate_by_game_id && typeof daily.slate_by_game_id === "object") {
+          map = { ...daily.slate_by_game_id };
+        }
+      } catch {
+        /* daily board optional */
+      }
+    }
     return map;
   } catch (err) {
     if (!soft) throw err;
@@ -1401,6 +1481,7 @@ window.winProbPcts = winProbPcts;
 window.winProbBandHtml = winProbBandHtml;
 window.fetchSportBoardMap = fetchSportBoardMap;
 window.boardMapFromSlate = boardMapFromSlate;
+window.boardRowFromInsights = boardRowFromInsights;
 
 function gameCardHtml(game, options = {}) {
   const showScores = shouldShowScores(game);
@@ -1495,25 +1576,47 @@ function attachWatchHandlers(listEl) {
 
 function lookupBoardRow(boardMap, game) {
   if (!boardMap || !game) return null;
-  const byId = boardMap[String(game.game_id)];
-  if (byId && (byId.model_prob_home != null || byId.market_prob_home != null)) {
-    return byId;
+  const ids = [game.game_id, game.fight_id, game.event_id]
+    .filter((id) => id != null && id !== "")
+    .map((id) => String(id));
+  for (const id of ids) {
+    const byId = boardMap[id];
+    if (byId && (byId.model_prob_home != null || byId.market_prob_home != null)) {
+      return byId;
+    }
   }
-  const away = String(game.away_team || "").toLowerCase();
-  const home = String(game.home_team || "").toLowerCase();
-  if (!away || !home) return byId || null;
+  const awayAbbr = String(game.away_team_abbr || "").toLowerCase();
+  const homeAbbr = String(game.home_team_abbr || "").toLowerCase();
   for (const row of Object.values(boardMap)) {
     if (!row) continue;
     if (
-      String(row.away_team || "").toLowerCase() === away &&
-      String(row.home_team || "").toLowerCase() === home
+      awayAbbr &&
+      homeAbbr &&
+      String(row.away_team_abbr || "").toLowerCase() === awayAbbr &&
+      String(row.home_team_abbr || "").toLowerCase() === homeAbbr
+    ) {
+      return row;
+    }
+    if (
+      teamsMatchName(row.away_team, game.away_team) &&
+      teamsMatchName(row.home_team, game.home_team)
     ) {
       return row;
     }
   }
-  return byId || null;
+  return ids.length ? boardMap[ids[0]] || null : null;
 }
+
+function attachBoardMapToGames(games, boardMap) {
+  return (games || []).map((game) => {
+    const row = lookupBoardRow(boardMap, game);
+    if (!row) return game;
+    return { ...game, ...row, sport: game.sport || row.sport };
+  });
+}
+
 window.lookupBoardRow = lookupBoardRow;
+window.attachBoardMapToGames = attachBoardMapToGames;
 
 function renderGameList(listEl, games, options = {}) {
   if (!listEl) return;
@@ -2781,6 +2884,13 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
     : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="${game.home_team}" width="56" height="56">`;
   const awayNameHtml = isUfc ? ufcFighterNameHtml(game.away_team) : game.away_team;
   const homeNameHtml = isUfc ? ufcFighterNameHtml(game.home_team) : game.home_team;
+  const pcts = typeof winProbPcts === "function" ? winProbPcts(resolvedRow) : null;
+  const awayPctHtml = pcts
+    ? `<span class="team-model-pct matchup-model-pct${pcts.awayPct >= pcts.homePct ? " team-model-pct--fav" : ""}">${pcts.awayPct}%</span>`
+    : "";
+  const homePctHtml = pcts
+    ? `<span class="team-model-pct matchup-model-pct${pcts.homePct >= pcts.awayPct ? " team-model-pct--fav" : ""}">${pcts.homePct}%</span>`
+    : "";
   return `
     <div class="matchup-header-wrap ${isUfc ? "matchup-header-ufc" : ""}" style="${gameCardColorStyle(game)}">
     ${bandHtml}
@@ -2791,6 +2901,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
         ${awayVisual}
         <h2>${awayNameHtml}</h2>
         ${teamRecordHtml(game.away_record)}
+        ${awayPctHtml}
         ${isUfc && game.away_country ? `<p class="ufc-fighter-country">${game.away_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.away_score ?? 0}</span>` : ""}
       </div>
@@ -2802,6 +2913,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
         ${homeVisual}
         <h2>${homeNameHtml}</h2>
         ${teamRecordHtml(game.home_record)}
+        ${homePctHtml}
         ${isUfc && game.home_country ? `<p class="ufc-fighter-country">${game.home_country}</p>` : ""}
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}
       </div>

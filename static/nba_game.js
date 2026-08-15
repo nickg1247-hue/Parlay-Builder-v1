@@ -31,6 +31,7 @@
     : "/api/scores/today?sport=nba";
 
   let scorePollerStarted = false;
+  let lastBoardRow = null;
   let lastManualInsightsRefreshAt = 0;
   const INSIGHTS_REFRESH_COOLDOWN_MS = 300000;
 
@@ -261,7 +262,10 @@
   }
 
   function renderInsights(data) {
-    renderMatchupHeader(header, data.game);
+    lastBoardRow = (typeof boardRowFromInsights === "function"
+      ? boardRowFromInsights(data)
+      : data.board_row) || lastBoardRow;
+    renderMatchupHeader(header, { ...data.game, ...(lastBoardRow || {}) }, lastBoardRow);
     renderMatchupBoard(data);
     renderPredictionDetail(data);
     renderWarnings(data.warnings);
@@ -295,7 +299,7 @@
       const live = (data.games || []).find(
         (g) => String(g.game_id) === String(gameId)
       );
-      if (live) renderMatchupHeader(header, live);
+      if (live) renderMatchupHeader(header, { ...live, ...(lastBoardRow || {}) }, lastBoardRow);
     } catch (_) {
       /* keep last good header */
     }
