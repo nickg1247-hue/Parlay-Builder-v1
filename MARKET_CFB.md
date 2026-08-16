@@ -57,23 +57,23 @@ Outputs (gitignored): `data/processed/cfb_market_metrics.json`, `data/processed/
 
 Paper-trade ROI on matched holdout is **not betting-ready**. Forward CLV capture during live season required before any real-money claim (`betting_ready: false`).
 
-## Latest holdout eval (2025, CFBD lines cache)
+## Latest holdout eval (2025, CFBD lines cache, **v4**)
 
 | Metric | Value |
 |--------|-------|
 | Holdout games | 888 |
 | Matched (any line) | 888 (100%) |
 | Matched ML | 543 (61.15%) |
-| Log loss — model / market | 0.6749 / 0.6206 |
-| Brier / accuracy | 0.2377 / 61.51% |
-| +EV picks (8% edge) | 353 |
-| Paper ROI | +2.95% (10.41 units) |
-| Spread cover log loss | 1.18 |
+| Log loss — model / market | **0.5323 / 0.6206** (model beats market) |
+| Brier / accuracy | 0.1783 / 73.66% |
+| +EV picks (8% edge) | 414 |
+| Paper ROI | +41.66% (172.46 units) |
+| Spread cover log loss | 1.17 |
 | Totals over log loss | 0.73 |
 
 Reproduce: `python scripts/fetch_cfb_holdout_lines.py --season 2025` then `python scripts/evaluate_cfb_market.py`.
 
-**Note:** Market beats model on log loss; paper ROI on +EV picks is not betting-ready without forward CLV.
+**Note:** v4 beats the market on moneyline log loss. Paper ROI is still not betting-ready without forward CLV.
 
 ## Scripts
 

@@ -32,8 +32,8 @@ def main() -> None:
     parser.add_argument(
         "--sports",
         type=str,
-        default="mlb",
-        help="Comma-separated sports to refresh (default: mlb). Example: mlb,nba",
+        default="mlb,cfb",
+        help="Comma-separated sports to refresh (default: mlb,cfb). Example: mlb,nba,cfb",
     )
     args = parser.parse_args()
     game_date = date.fromisoformat(args.date) if args.date else None

@@ -69,6 +69,7 @@ def test_cfb_daily_api(mock_logos, mock_schedule, mock_predict):
     assert row["model_prob_home"] == 0.78
     assert row["spread_pick"] == "Georgia -7"
     assert row["totals_pick"] == "Over 51.5"
+    assert "parlays" in data
 
 
 def test_cfb_board_page():
@@ -77,3 +78,4 @@ def test_cfb_board_page():
     assert "CFB Daily Board" in resp.text
     assert "cfb_board.js" in resp.text
     assert "Run live" in resp.text
+    assert "Cross-game parlays" in resp.text

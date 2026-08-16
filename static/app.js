@@ -121,6 +121,12 @@ function teamLogoUrl(teamId, sport = "mlb", abbr) {
     }
     return "";
   }
+  if (sport === "nfl") {
+    if (abbr) {
+      return `https://a.espncdn.com/i/teamlogos/nfl/500/${String(abbr).toLowerCase()}.png`;
+    }
+    return "";
+  }
   return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
 }
 
@@ -287,10 +293,25 @@ function sportNavContext(path) {
     return { key: "nba", label: "NBA", slate: "/nba", board: "/nba/board" };
   }
   if (p.startsWith("/cfb")) {
-    return { key: "cfb", label: "CFB", slate: "/cfb", board: "/cfb/board" };
+    return {
+      key: "cfb",
+      label: "CFB",
+      slate: "/cfb",
+      board: "/cfb/board",
+      futures: "/cfb/futures",
+    };
   }
   if (p.startsWith("/ufc")) {
     return { key: "ufc", label: "UFC", slate: "/ufc", board: "/ufc/board" };
+  }
+  if (p.startsWith("/nfl")) {
+    return {
+      key: "nfl",
+      label: "NFL",
+      slate: "/nfl",
+      board: "/nfl/board",
+      futures: "/nfl/futures",
+    };
   }
   return { key: "mlb", label: "MLB", slate: "/mlb", board: "/mlb/board" };
 }
@@ -3415,7 +3436,12 @@ function sportPillIsActive(href, path) {
     return path === "/nba-summer" || path.startsWith("/nba-summer/");
   }
   if (href === "/cfb") {
-    return path === "/cfb" || (path.startsWith("/cfb/") && !path.startsWith("/cfb/board"));
+    return (
+      path === "/cfb" ||
+      (path.startsWith("/cfb/") &&
+        !path.startsWith("/cfb/board") &&
+        !path.startsWith("/cfb/futures"))
+    );
   }
   if (href === "/ufc") {
     return path === "/ufc" || (path.startsWith("/ufc/") && !path.startsWith("/ufc/board"));
@@ -3449,14 +3475,25 @@ function renderDashboardPrimaryNav(container, path) {
         p.startsWith(`${sport.slate}/game`) ||
         (sport.key === "ufc" && p.startsWith("/ufc/fighter")),
     },
+  ];
+  if (sport.futures) {
+    specs.push({
+      href: sport.futures,
+      label: "Futures",
+      isActive: (p) => p === sport.futures || p.startsWith(`${sport.futures}/`),
+    });
+  }
+  specs.push(
     {
       href: sport.board,
       label: "Board",
       isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
     },
+  ];
+  specs.push(
     { href: "/mlb/props", label: "Props" },
     { href: "/performance", label: "Performance" },
-  ];
+  );
   container.replaceChildren();
   container.setAttribute("aria-label", "Primary");
   specs.forEach((spec) => {

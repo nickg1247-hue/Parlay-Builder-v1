@@ -12,6 +12,7 @@ const els = {
   boardDate: document.getElementById("board-date"),
   slateBody: document.querySelector("#slate-table tbody"),
   singles: document.getElementById("singles-list"),
+  parlays: document.getElementById("parlays-list"),
   footer: document.getElementById("status-footer"),
   refresh: document.getElementById("refresh-btn"),
   runLive: document.getElementById("run-live-btn"),
@@ -61,6 +62,14 @@ function fmtSpread(point) {
 
 function confidenceClass(label) {
   switch (label) {
+    case "Toss-up":
+      return "conf-low";
+    case "Soft":
+      return "conf-medium";
+    case "Hard":
+      return "conf-high";
+    case "Lock":
+      return "conf-extreme";
     case "Low":
       return "conf-low";
     case "Medium":
@@ -101,7 +110,7 @@ function renderSlate(slate, edgeFraction = 0.08) {
       tr.classList.add("plus-ev");
     }
     const edge = game.ml_edge_best ?? game.edge_home;
-    const mlConf = game.ml_confidence || "—";
+    const mlConf = game.model_category_label || game.ml_confidence || "—";
     let bestPick = "—";
     if (game.best_pick) {
       const bp = game.best_pick;
@@ -114,12 +123,15 @@ function renderSlate(slate, edgeFraction = 0.08) {
       bestPick = prob != null ? `${game.model_pick} (${pct(prob)})` : game.model_pick;
     }
     const evFlag = game.plus_ev_single ? "Yes" : "—";
+    const matchup = game.game_id
+      ? `<a href="/cfb/game/${encodeURIComponent(game.game_id)}">${game.matchup}</a>`
+      : game.matchup;
     const spreadLine =
       game.home_spread_point != null
         ? `${game.home_team} ${fmtSpread(game.home_spread_point)}`
         : "—";
     tr.innerHTML = `
-      <td>${game.matchup}</td>
+      <td>${matchup}</td>
       <td>${pct(game.model_prob_home)}</td>
       <td>${pct(game.market_prob_home)}</td>
       <td class="${edge != null && edge >= edgeFraction ? "edge-pos" : ""}">${fmtEdge(edge)}</td>
@@ -149,6 +161,27 @@ function renderSingles(slate, edgeFraction = 0.08) {
       <div class="card">
         <strong>${g.matchup}</strong>
         <p>${bp.team} ${fmtAmerican(bp.american_odds)} — edge ${fmtEdge(bp.edge)}</p>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderParlays(parlays) {
+  if (!els.parlays) return;
+  if (!parlays?.length) {
+    els.parlays.innerHTML =
+      `<p class="empty">No cross-game parlays met the edge threshold.</p>`;
+    return;
+  }
+  els.parlays.innerHTML = parlays
+    .map((p) => {
+      const legs = (p.legs || [])
+        .map((leg) => `${leg.team || leg.side} (${leg.matchup || ""})`)
+        .join(" · ");
+      return `
+      <div class="card">
+        <strong>${p.num_legs}-leg parlay</strong> — EV ${p.ev_pct || fmtEdge(p.ev)}
+        <p>${legs}</p>
       </div>`;
     })
     .join("");
@@ -210,6 +243,7 @@ async function loadBoard(refresh = false) {
 
     renderSlate(data.slate || [], edgeFraction);
     renderSingles(data.slate || [], edgeFraction);
+    renderParlays(data.parlays || []);
     renderFooter(data);
   } catch (err) {
     els.loading.classList.add("hidden");

@@ -1,6 +1,8 @@
 # CFB moneyline model
 
-## Active production model: **v3** (`cfb_v3`)
+## Active production model: **v4** (`cfb_v4`) when it beats v3
+
+College football is not an NFL clone. v4 blends **offseason priors** (returning production, talent, last-year FPI, preseason SP+, coach change) with **in-season** Elo + rolling SRS. Priors dominate Weeks 1–3 and fade to 30% by Week 8 — they never turn off.
 
 | Item | Value |
 |------|-------|
@@ -8,10 +10,11 @@
 | Train | Logistic regression on **2022–2023** |
 | Calibration | Platt sigmoid fit on **2024** |
 | Holdout | **2025** regular season |
-| **Active** | **v3_logistic_platt** — Elo, form, conference, **SP+** |
+| **Active** | **v4_logistic_platt** if holdout log loss beats v3 + naive; else stay on v3 |
 | Artifact | `data/processed/cfb_baseline_model.joblib` |
 | Metrics | `data/processed/cfb_baseline_metrics.json` |
 | Manifest | `data/processed/active_cfb_model.json` |
+| Confidence | `data/processed/cfb_confidence_cuts.json` — toss-up / soft / hard / lock fit on CFB walk-forward, not NFL cuts |
 
 ### Holdout comparison (2025)
 
@@ -19,9 +22,20 @@
 |-------|----------|----------|
 | v1 (Elo + rest) | 0.555 | 72.4% |
 | v2 (+ form/conf) | 0.547 | 73.1% |
-| **v3 (+ SP+)** | **0.538** | **73.9%** |
+| v3 (+ SP+ all year) | 0.427 | 82.3% |
+| **v4 (priors + SRS + week blend)** | **0.414** | **82.0%** |
 
 Promotion rule: highest tier that beats the prior tier on holdout log loss **and** beats naive Elo/home-rate baseline. Market eval is advisory (does not block promotion).
+
+### v4 features (college-native)
+
+- v3 columns, plus talent / returning PPA / returning passing PPA / prior-year FPI / coach-change flags
+- Rolling opponent-adjusted SRS (from our results, not CFBD weekly SP+)
+- P4 / G5 / FCS matchup tier, conference game, program home margin
+- `prior_weight` and `blended_quality_diff` (Week 1–3 ≈ 70% prior, Week 8+ ≈ 30% prior)
+- Preseason SP+ is used **all year** when CFBD weekly SP+ is flat (no Week 2+ zeros)
+
+Priors cache (season-level CFBD only): `python scripts/fetch_cfb_priors.py` → `data/processed/cfb_priors_cache/`. Current-year FPI is stored but **not** used as a feature (leakage).
 
 ## v1 baseline (legacy)
 
@@ -48,11 +62,9 @@ passes = model_log_loss < min(naive_home_rate_log_loss, elo_log_loss)
 
 Slate API: `GET /api/cfb/predictions?date=YYYY-MM-DD`
 
-## Odds sport key (Phase 3+)
+## Odds sport key
 
-Document only — not wired in Phase 1:
-
-`americanfootball_ncaaf`
+`americanfootball_ncaaf` — live repository + CFBD lines. Board includes cross-game parlays. Futures: `/cfb/futures` (Sunday conference 1-through-last + 12-team playoff). Morning refresh: `python scripts/morning_refresh.py --sports mlb,cfb`.
 
 ## Train / bootstrap
 
@@ -98,6 +110,6 @@ Output: `data/processed/cfb_backtest_report.json`
 | `feature_effects.logistic_importance_avg` | Which inputs moved the moneyline model most |
 | `proof_summary.verdict` | `passes_walk_forward` if ML beats naive baseline every fold |
 
-**Current data:** 4 seasons ingested (2022–2025). Re-run `python scripts/bootstrap_cfb.py` to pull **2021** for a 5-season backtest.
+**Current v4 walk-forward (2023–2025, 2,629 games):** 78.4% accuracy, log loss 0.454, **beats naive every fold** (2024 now passes). Confidence: toss-up 50–55%, soft 55–62.5%, hard 62.5–88.5% (75.2%), lock 88.5%+ (95.5%).
 
-Spread/totals folds use proxy lines (-7, train-median O/U) — not sportsbook closes. Market proof: see **`MARKET_CFB.md`** (Phase C3 — CFBD lines + Odds API live repository).
+Spread/totals folds use proxy lines (-7, train-median O/U) — not sportsbook closes. Market proof: see **`MARKET_CFB.md`**.

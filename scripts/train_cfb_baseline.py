@@ -17,7 +17,11 @@ def main() -> None:
     gate = results.get("phase_gate", {})
     print(f"\nActive model: {results.get('active_model')} ({results.get('feature_set')})")
     print(f"Holdout log loss: {holdout.get('log_loss')}")
-    print(f"Promoted v2: {results.get('promoted_v2')} · Promoted v3: {results.get('promoted_v3')}")
+    print(
+        f"Promoted v2: {results.get('promoted_v2')} · "
+        f"Promoted v3: {results.get('promoted_v3')} · "
+        f"Promoted v4: {results.get('promoted_v4')}"
+    )
     print(f"Gate passes: {gate.get('passes')}")
     print(f"Artifact: {MODEL_ARTIFACT}")
     print(f"Metrics: {METRICS_JSON}")

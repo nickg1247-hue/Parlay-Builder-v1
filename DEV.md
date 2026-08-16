@@ -107,6 +107,8 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 | `GET /api/games/nfl/{game_id}` | Schedule payload for one game |
 | `GET /api/games/nfl/{game_id}/insights` | Full game insights (ML / spread / O/U / features / parlays) |
 | `/nfl/board` | Predictions board UI |
+| `/nfl/futures` | Year-end division standings (Wednesday snapshot) |
+| `GET /api/nfl/futures` | Projected 1st–4th in each division; `?refresh=true` rebuilds |
 | `/nfl/game/{id}` | Game insights UI |
 
 **Date picker (`/nfl`):** Choose any date. **Past dates** load from `nfl_games.parquet` ingest (no ESPN). **Today/future** use ESPN once, then save to `data/processed/nfl_schedule_{date}.json`. Badge shows source: `Saved ingest`, `Saved snapshot`, or `ESPN API`.
@@ -119,6 +121,7 @@ Internal snake-draft assistant (not linked from sport nav). Route: `/nfl/draft`.
 |---------|-----------|
 | Live slate | `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=YYYYMMDD` |
 | Historical ingest | same URL with `dates={season}&seasontype=1\|2&week={n}` (preseason weeks 1–4 + regular 1–18, seasons 2019–2025) |
+| Futures schedule | same week scoreboard, regular season only (`seasontype=2`, weeks 1–18), including unplayed games |
 | Odds API | `americanfootball_nfl` + `americanfootball_nfl_preseason` (live/today only) |
 | ESPN games API key | none |
 
@@ -132,10 +135,12 @@ python scripts/bootstrap_nfl.py
 
 Writes `data/processed/nfl_games.parquet`, trains moneyline, spread, and totals models.
 
-**Verify:** open `/nfl` (preseason slate in August) and `/nfl/board`.
+**Futures (division standings):** `/nfl/futures` and `GET /api/nfl/futures`. Wednesday snapshot of projected 1st–4th in all eight divisions from the v2 moneyline model. Before Week 1 every remaining regular-season game is projected; after the season starts, completed results lock in and the rest are re-simulated. Cache: `data/processed/nfl_futures.json`. Season schedule (completed + remaining): `data/processed/nfl_season_schedule_{year}.json` from 18 ESPN week pulls. Rebuild: `python scripts/refresh_nfl_futures.py`. Morning refresh rebuilds the snapshot on Wednesday (or when `--sports` includes `nfl`).
+
+**Verify:** open `/nfl` (preseason slate in August), `/nfl/futures`, and `/nfl/board`.
 
 ```powershell
-pytest tests/test_schedule_nfl.py tests/test_nfl_ingest.py tests/test_nfl_pregame.py tests/test_nfl_baseline.py tests/test_nfl_margin.py tests/test_nfl_totals.py tests/test_nfl_predictions.py tests/test_nfl_daily_board.py tests/test_nfl_game_insights.py tests/test_nfl_odds_repository.py tests/test_nfl_fantasy_draft.py -q
+pytest tests/test_schedule_nfl.py tests/test_nfl_ingest.py tests/test_nfl_pregame.py tests/test_nfl_baseline.py tests/test_nfl_margin.py tests/test_nfl_totals.py tests/test_nfl_predictions.py tests/test_nfl_daily_board.py tests/test_nfl_game_insights.py tests/test_nfl_odds_repository.py tests/test_nfl_fantasy_draft.py tests/test_nfl_futures.py -q
 ```
 
 See `NFL_MODEL.md` and `MARKET_NFL.md`.
@@ -180,7 +185,11 @@ python scripts/evaluate_cfb_market.py
 
 Uses **16 week-level CFBD `/lines` calls** (not per-game). Cache: `data/processed/cfb_lines_cache/YYYY-MM-DD.json`.
 
-**SP+ ratings (cfb_v3):** CFBD `/ratings/sp` does **not** vary by `week` (audit: `python scripts/audit_cfb_sp_leakage.py`). When weekly files are flat, production uses a **preseason snapshot** (fetch without `week`) for **week-1 games only**; weeks 2+ zero SP+ features. When weeks differ, use pregame week **W−1**. Cache: `cfb_sp_plus_cache/{season}_week_{N}.json`, `{season}_preseason.json`, `{season}_meta.json`.
+**SP+ ratings (cfb_v3/v4):** CFBD `/ratings/sp` does **not** vary by `week` (audit: `python scripts/audit_cfb_sp_leakage.py`). When weekly files are flat, production uses the **preseason snapshot for the whole season** (not week 1 only). When weeks differ, use pregame week **W−1**. Cache: `cfb_sp_plus_cache/{season}_week_{N}.json`, `{season}_preseason.json`, `{season}_meta.json`.
+
+**v4 priors (college-native):** season-level CFBD only — `/talent`, `/player/returning`, `/ratings/fpi` (prior year only in features), `/coaches`. Cache: `data/processed/cfb_priors_cache/`. Warm with `python scripts/fetch_cfb_priors.py`. Confidence cuts: `cfb_confidence_cuts.json` from walk-forward. Board parlays: `GET /api/cfb/daily`. Morning job: `--sports mlb,cfb`.
+
+**Futures (conference placement + playoff):** `/cfb/futures` and `GET /api/cfb/futures`. Sunday snapshot of every Power and Group of 5 standings (1st through last) plus a projected 12-team CFP field. Cache: `data/processed/cfb_futures.json`. Season schedule (completed + remaining): `data/processed/cfb_season_schedule_{year}.json` from one CFBD `/games` call. Rebuild: `python scripts/refresh_cfb_futures.py`. Morning CFB refresh rebuilds the snapshot when the Sunday week rolls over.
 
 ```powershell
 python -c "from app.ingest.cfb_sp_plus import ensure_sp_plus_cache; ensure_sp_plus_cache(force=True)"

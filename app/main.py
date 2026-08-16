@@ -108,6 +108,7 @@ from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
 from app.services.schedule_nfl import get_nfl_game, get_nfl_schedule
 from app.services.nfl_slate_predictions import predict_slate as predict_nfl_slate
 from app.services.nfl_daily_board import build_nfl_daily_board
+from app.services.nfl_futures import build_nfl_futures
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
 from app.services.ufc_slate_predictions import predict_slate, _clean_json_value
@@ -948,6 +949,11 @@ async def nfl_daily(
     )
 
 
+@app.get("/api/nfl/futures")
+async def nfl_futures(refresh: bool = Query(False)):
+    return build_nfl_futures(refresh=refresh)
+
+
 @app.get("/api/schedule/ufc")
 async def ufc_schedule(
     date_param: str | None = Query(None, alias="date"),
@@ -986,6 +992,16 @@ async def cfb_predictions(
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
     return predict_slate(game_date)
+
+
+@app.get("/api/cfb/futures")
+async def cfb_futures(
+    season: int | None = Query(None),
+    refresh: bool = Query(False, description="Rebuild the Sunday futures snapshot"),
+):
+    from app.services.cfb_futures import build_cfb_futures
+
+    return build_cfb_futures(season=season, refresh=refresh)
 
 
 @app.get("/api/ufc/daily")
@@ -2004,6 +2020,11 @@ async def nfl_board():
     return FileResponse(STATIC_DIR / "nfl_board.html")
 
 
+@app.get("/nfl/futures")
+async def nfl_futures_page():
+    return FileResponse(STATIC_DIR / "nfl_futures.html")
+
+
 @app.get("/nfl/game/{game_id}")
 async def nfl_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "nfl_game.html")
@@ -2047,6 +2068,11 @@ async def cfb_slate():
 @app.get("/cfb/board")
 async def cfb_board():
     return FileResponse(STATIC_DIR / "cfb_board.html")
+
+
+@app.get("/cfb/futures")
+async def cfb_futures_page():
+    return FileResponse(STATIC_DIR / "cfb_futures.html")
 
 
 @app.get("/cfb/game/{game_id}")

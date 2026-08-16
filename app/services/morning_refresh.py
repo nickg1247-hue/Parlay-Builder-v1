@@ -246,6 +246,61 @@ def run_morning_refresh(
             if games_on_slate is None:
                 games_on_slate = nba_payload.get("games_count", 0)
 
+        if "cfb" in sport_list:
+            from app.odds.cfb_odds_repository import get_cfb_odds_for_date
+            from app.services.cfb_daily_board import build_cfb_daily_board
+            from app.services.schedule_cfb import refresh_schedule_cache as refresh_cfb
+
+            cfb_payload = refresh_cfb(game_date)
+            if live_odds_enabled():
+                try:
+                    cfb_odds, cfb_odds_src = get_cfb_odds_for_date(
+                        game_date, force_refresh=True
+                    )
+                    logger.info(
+                        "Morning refresh: CFB odds snapshot (%s games, %s)",
+                        len(cfb_odds or []),
+                        cfb_odds_src,
+                    )
+                    if odds_source is None:
+                        odds_source = cfb_odds_src
+                except Exception as exc:
+                    logger.warning("Morning CFB odds snapshot failed: %s", exc)
+            try:
+                cfb_board = build_cfb_daily_board(game_date, use_cache=False)
+                cfb_games = len(cfb_board.get("slate") or [])
+                logger.info("Morning refresh: CFB board %s games", cfb_games)
+                if games_on_slate is None:
+                    games_on_slate = cfb_games or cfb_payload.get("games_count", 0)
+            except Exception as exc:
+                logger.warning("Morning CFB board build failed: %s", exc)
+                if games_on_slate is None:
+                    games_on_slate = cfb_payload.get("games_count", 0)
+            try:
+                from app.services.cfb_futures import refresh_cfb_futures_if_due
+
+                futures = refresh_cfb_futures_if_due(as_of=game_date)
+                logger.info(
+                    "Morning refresh: CFB futures week %s (%s conferences)",
+                    futures.get("week_id"),
+                    len(futures.get("conferences") or []),
+                )
+            except Exception as exc:
+                logger.warning("Morning CFB futures refresh failed: %s", exc)
+
+        if "nfl" in sport_list or game_date.weekday() == 2:
+            try:
+                from app.services.nfl_futures import refresh_nfl_futures_if_due
+
+                nfl_futures = refresh_nfl_futures_if_due(as_of=game_date)
+                logger.info(
+                    "Morning refresh: NFL futures week %s (%s divisions)",
+                    nfl_futures.get("week_id"),
+                    len(nfl_futures.get("divisions") or []),
+                )
+            except Exception as exc:
+                logger.warning("Morning NFL futures refresh failed: %s", exc)
+
         _write_status(
             ok=True,
             game_date=game_date,

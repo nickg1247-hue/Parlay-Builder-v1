@@ -8,13 +8,15 @@ from typing import Any
 
 from app.models.cfb_baseline import ACTIVE_CFB_MANIFEST, load_model_artifact
 from app.models.constants import DEFAULT_MIN_EDGE
-from app.services.cfb_slate_predictions import cfb_season_end_year, predict_slate
+from app.parlay.cfb_parlay import top_parlays_payload
+from app.services.cfb_slate_predictions import predict_slate
 from app.services.cfb_team_logos import enrich_games_logos
 from app.services.schedule_cfb import get_cfb_schedule
 
 CFB_DISCLAIMER = (
-    "CFB logistic model with Elo, form, conference, and SP+ features — not betting advice. "
-    "Spread/totals use proxy lines when sportsbook data is unavailable."
+    "CFB v4 prior + in-season blend (returning production, talent, last-year FPI, "
+    "preseason SP+, rolling SRS). Toss-up / soft / hard / lock from CFB hit rates. "
+    "Not betting advice. Spread/totals use proxy lines when sportsbook data is unavailable."
 )
 
 DEMO_DATE = "2024-11-30"
@@ -81,6 +83,7 @@ def _slate_rows(
 
         row: dict[str, Any] = {
             "game_id": gid,
+            "date": str(game.get("start_time_utc") or "")[:10],
             "matchup": matchup,
             "away_team": away,
             "home_team": home,
@@ -92,6 +95,9 @@ def _slate_rows(
             "model_prob_away": prob_away,
             "model_pick": pred.get("model_pick"),
             "model_pick_side": pred.get("model_pick_side"),
+            "model_category": pred.get("model_category"),
+            "model_category_label": pred.get("model_category_label"),
+            "model_confidence": pred.get("model_confidence") or pred.get("model_category_label"),
             "market_prob_home": pred.get("market_prob_home"),
             "market_prob_away": pred.get("market_prob_away"),
             "edge_home": edge_home,
@@ -153,6 +159,7 @@ def build_cfb_daily_board(
         "betting_ready": False,
         "active_moneyline_model": _active_cfb_model_info(),
         "slate": [],
+        "parlays": [],
         "plus_ev_count": 0,
         "board_spread_enabled": True,
         "board_totals_enabled": True,
@@ -193,8 +200,12 @@ def build_cfb_daily_board(
             f"Demo board — {slate_day.isoformat()} rivalry slate with CFBD cached lines."
         )
 
+    for row in slate:
+        if not row.get("date"):
+            row["date"] = slate_day.isoformat()
     base["slate"] = slate
     base["plus_ev_count"] = sum(1 for g in slate if g.get("plus_ev_single"))
     base["games_with_odds"] = sum(1 for g in slate if g.get("home_ml") is not None)
+    base["parlays"] = top_parlays_payload(slate, min_edge=min_edge)
     base["warnings"] = warnings
     return base

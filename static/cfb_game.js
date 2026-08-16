@@ -10,6 +10,7 @@
   const disclaimerEl = document.getElementById("game-disclaimer");
   const modelBadge = document.getElementById("model-badge");
   const featuresEl = document.getElementById("feature-snapshot");
+  const parlaysEl = document.getElementById("game-parlays");
 
   const parts = window.location.pathname.split("/").filter(Boolean);
   const gameIdx = parts.indexOf("game");
@@ -176,7 +177,7 @@
         ${totalsBlock}
         ${marginBlock}
         ${spreadPickBlock}
-        <p class="model-edge">Edge ${edgeStr} · ${ml.ml_confidence || "—"}</p>
+        <p class="model-edge">Edge ${edgeStr} · ${ml.model_category_label || ml.ml_confidence || "—"}</p>
         ${evBadge}
       </div>
     `;
@@ -210,6 +211,27 @@
       </table>`;
   }
 
+  function renderParlays(parlays) {
+    if (!parlaysEl) return;
+    if (!parlays || !parlays.length) {
+      parlaysEl.innerHTML =
+        `<p class="empty">No board parlays currently include this game.</p>`;
+      return;
+    }
+    parlaysEl.innerHTML = parlays
+      .map((p) => {
+        const legs = (p.legs || [])
+          .map((leg) => `${leg.team || leg.side} (${leg.matchup || ""})`)
+          .join(" · ");
+        return `
+        <div class="card">
+          <strong>${p.num_legs}-leg parlay</strong> — EV ${p.ev_pct || ""}
+          <p>${legs}</p>
+        </div>`;
+      })
+      .join("");
+  }
+
   function renderWarnings(warnings) {
     if (!warningsEl) return;
     warningsEl.innerHTML = "";
@@ -232,6 +254,7 @@
     renderMatchupHeader(header, headerGame(data.game, lastBoardRow), lastBoardRow);
     renderMatchupBoard(data);
     renderFeatureSnapshot(data.feature_snapshot);
+    renderParlays(data.parlays);
     renderWarnings(data.warnings);
 
     if (disclaimerEl && data.disclaimer) {

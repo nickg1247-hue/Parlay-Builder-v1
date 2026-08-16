@@ -34,6 +34,20 @@ FEATURE_NOTES: dict[str, str] = {
     "sp_plus_diff": "SP+ rating diff (home − away)",
     "sp_offense_diff": "SP+ offense diff (home − away)",
     "sp_defense_diff": "SP+ defense diff (home − away)",
+    "talent_diff": "247 talent composite (home − away)",
+    "returning_pct_diff": "Returning production PPA % (home − away)",
+    "returning_pass_pct_diff": "Returning passing PPA % — QB proxy",
+    "prior_fpi_diff": "Prior-year FPI (home − away)",
+    "coach_change_home": "1 if home has a new head coach",
+    "coach_change_away": "1 if away has a new head coach",
+    "srs_diff": "Rolling opponent-adjusted margin (home − away)",
+    "program_home_margin": "Home team's historical home-field margin",
+    "matchup_tier_diff": "P4/G5/FCS tier gap (home − away)",
+    "is_fcs_away": "1 if away is FCS / unknown conference",
+    "conference_game": "1 if same-conference game",
+    "week_norm": "Season week / 15",
+    "prior_weight": "How much the model trusts offseason priors this week",
+    "blended_quality_diff": "Week-weighted prior + in-season quality gap",
 }
 
 
@@ -107,7 +121,10 @@ def _build_moneyline(row: dict[str, Any]) -> dict[str, Any]:
         "ev_home": edge_home,
         "ev_away": edge_away,
         "plus_ev_ml": bool(row.get("plus_ev_ml") or row.get("plus_ev_single")),
-        "ml_confidence": row.get("ml_confidence"),
+        "ml_confidence": row.get("ml_confidence") or row.get("model_category_label"),
+        "model_category": row.get("model_category"),
+        "model_category_label": row.get("model_category_label"),
+        "model_confidence": row.get("model_confidence") or row.get("model_category_label"),
         "model_pick": row.get("model_pick"),
         "best_pick": best_pick,
     }
@@ -167,7 +184,11 @@ def _build_highlights(row: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "moneyline_side": ml_side,
-        "moneyline_tier": _confidence_tier(row.get("ml_confidence")) if ml_side else None,
+        "moneyline_tier": _confidence_tier(
+            row.get("model_category_label") or row.get("ml_confidence")
+        )
+        if ml_side
+        else None,
         "spread_side": spread_side,
         "spread_tier": (
             _confidence_tier(row.get("spread_confidence")) if spread_side else None
@@ -339,6 +360,11 @@ def build_cfb_game_insights(
         "betting_ready": False,
         "warnings": warnings,
         "odds_source": source,
+        "parlays": [
+            p
+            for p in (board.get("parlays") or [])
+            if any(str(leg.get("game_id")) == str(game_id) for leg in p.get("legs") or [])
+        ],
         "active_model": {
             "model_version": active.get("model_version"),
             "feature_set": active.get("feature_set"),

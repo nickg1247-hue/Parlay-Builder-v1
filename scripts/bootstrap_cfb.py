@@ -14,22 +14,27 @@ from app.models.cfb_totals import METRICS_JSON as TOTALS_METRICS, MODEL_ARTIFACT
 
 
 def main() -> None:
-    print("Step 1/5: Ingest CFB games (CFBD API, requires CFBD_API_KEY)...")
+    print("Step 1/6: Ingest CFB games (CFBD API, requires CFBD_API_KEY)...")
     run_ingest()
-    print("Step 2/5: Cache ESPN FBS team logos...")
+    print("Step 2/6: Cache ESPN FBS team logos...")
     from app.services.cfb_team_logos import refresh_cfb_logo_map
 
     logos = refresh_cfb_logo_map(force=True)
     print(f"  Logo lookup keys: {len(logos)}")
-    print("Step 3/5: Train baseline moneyline model...")
+    print("Step 3/6: Cache CFB priors (talent, returning, FPI, coaches)...")
+    from app.ingest.cfb_priors import ensure_priors_cache
+
+    prior_count = ensure_priors_cache()
+    print(f"  Prior cache calls: {prior_count}")
+    print("Step 4/6: Train baseline moneyline model...")
     ml = train_baseline()
     holdout = ml.get("active_holdout", {})
     print(f"  ML model: {ml.get('production_model')} -> {MODEL_ARTIFACT}")
     print(f"  Holdout log loss: {holdout.get('log_loss', 'n/a')}")
-    print("Step 4/5: Train margin / spread model...")
+    print("Step 5/6: Train margin / spread model...")
     margin = train_margin()
     print(f"  Spread gate: {margin.get('margin_production_gate_passes')} -> {MARGIN_ARTIFACT}")
-    print("Step 5/5: Train totals (O/U points) model...")
+    print("Step 6/6: Train totals (O/U points) model...")
     totals = train_totals()
     print(f"  Totals gate: {totals.get('totals_production_gate_passes')} -> {TOTALS_ARTIFACT}")
     print(f"  Metrics: {ML_METRICS}, {MARGIN_METRICS}, {TOTALS_METRICS}")

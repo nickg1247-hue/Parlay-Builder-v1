@@ -230,6 +230,83 @@ def parse_espn_event(
     )
 
 
+def parse_espn_schedule_event(
+    event: dict[str, Any],
+    *,
+    season: int | None = None,
+    week: int | None = None,
+) -> dict[str, Any] | None:
+    """Parse a regular-season ESPN event, including games that have not been played."""
+    game_id = str(event.get("id") or "")
+    if not game_id:
+        return None
+    competition = (event.get("competitions") or [{}])[0]
+    season_type = _season_type(event, competition)
+    if season_type is not None and season_type != REGULAR_SEASON_TYPE:
+        return None
+    status = competition.get("status") or event.get("status") or {}
+    status_type = status.get("type") or {}
+    completed = bool(status_type.get("completed")) or status_type.get("state") == "post"
+    home = _competitor(competition, "home")
+    away = _competitor(competition, "away")
+    home_team = home.get("team") or {}
+    away_team = away.get("team") or {}
+    home_name = str(home_team.get("displayName") or home_team.get("name") or "").strip()
+    away_name = str(away_team.get("displayName") or away_team.get("name") or "").strip()
+    if not home_name or not away_name:
+        return None
+    home_abbr = normalize_abbr(home_team.get("abbreviation"))
+    away_abbr = normalize_abbr(away_team.get("abbreviation"))
+    if not home_abbr or not away_abbr:
+        return None
+    game_date = _parse_game_date(str(event.get("date") or competition.get("date") or ""))
+    if not game_date:
+        return None
+    season_year = _event_season_year(
+        event, season if season is not None else int(game_date[:4])
+    )
+    week_num = _event_week(event, week or 0)
+    home_score = None
+    away_score = None
+    home_win = None
+    tie = False
+    if completed:
+        try:
+            home_score = int(home.get("score"))
+            away_score = int(away.get("score"))
+        except (TypeError, ValueError):
+            completed = False
+            home_score = None
+            away_score = None
+        else:
+            if home_score == away_score:
+                tie = True
+            else:
+                home_win = int(home_score > away_score)
+    return {
+        "game_id": game_id,
+        "date": game_date,
+        "season": season_year,
+        "week": week_num,
+        "game_type": "regular",
+        "home_team": home_name,
+        "away_team": away_name,
+        "home_team_id": str(home_team.get("id") or ""),
+        "away_team_id": str(away_team.get("id") or ""),
+        "home_team_abbr": home_abbr,
+        "away_team_abbr": away_abbr,
+        "home_logo_url": home_team.get("logo"),
+        "away_logo_url": away_team.get("logo"),
+        "divisional": is_divisional(home_abbr, away_abbr),
+        "neutral_site": 1 if competition.get("neutralSite") else 0,
+        "completed": completed,
+        "home_score": home_score,
+        "away_score": away_score,
+        "home_win": home_win,
+        "tie": tie,
+    }
+
+
 def _parse_espn_odds(competition: dict[str, Any]) -> dict[str, Any]:
     """Best-effort ESPN BET lines from the same scoreboard payload (no extra request)."""
     odds_list = competition.get("odds") or []

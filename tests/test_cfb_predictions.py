@@ -39,6 +39,8 @@ def test_predictions_include_spread_and_totals(
     import pandas as pd
     import numpy as np
 
+    from app.services.cfb_slate_predictions import predict_slate
+
     mock_schedule.return_value = {
         "date": "2024-11-30",
         "resolved_date": "2024-11-30",
@@ -75,13 +77,12 @@ def test_predictions_include_spread_and_totals(
         ]
     )
 
-    resp = client.get("/api/cfb/predictions", params={"date": "2024-11-30"})
-    assert resp.status_code == 200
-    data = resp.json()
-    row = data["401635000"] if isinstance(data, dict) else data[0]
+    data = predict_slate(date(2024, 11, 30))
+    row = data["401635000"]
     assert row["model_prob_home"] == 0.72
     assert row["model_pick"] == "Georgia"
     assert row["model_pick_side"] == "home"
+    assert row["model_category_label"] in ("Toss-up", "Soft", "Hard", "Lock")
     assert row["spread_pick"] is not None
     assert row["spread_line_source"] == "proxy"
     assert row["totals_pick"] == "Over 51.5"

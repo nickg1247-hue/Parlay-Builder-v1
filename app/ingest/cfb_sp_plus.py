@@ -1,4 +1,4 @@
-"""CFBD SP+ cache — weekly when API differs; preseason-only for week 1 when flat."""
+"""CFBD SP+ cache — weekly when API differs; preseason all year when flat."""
 
 from __future__ import annotations
 
@@ -488,7 +488,7 @@ def sp_plus_diffs_for_game(
     away_team: str,
     lookup: SPPlusStore,
 ) -> tuple[float, float, float]:
-    """Safe SP+ diffs — never uses end-of-season ratings for early-season games when flat."""
+    """Safe SP+ diffs — preseason snapshot all year when weekly files are flat."""
     home = normalize_team_name(home_team)
     away = normalize_team_name(away_team)
     pg_week = pregame_sp_week(game_week)
@@ -500,14 +500,14 @@ def sp_plus_diffs_for_game(
     if mode == "ok":
         home_sp = _lookup_team_sp(lookup, season, pg_week, home)
         away_sp = _lookup_team_sp(lookup, season, pg_week, away)
-    elif int(game_week) == 1:
+    else:
         home_sp = lookup.preseason.get((season, home))
         away_sp = lookup.preseason.get((season, away))
-    else:
-        last_w = lookup.last_confirmed_week.get(season)
-        if last_w is not None and pg_week > 0 and pg_week <= last_w:
-            home_sp = _lookup_team_sp(lookup, season, pg_week, home)
-            away_sp = _lookup_team_sp(lookup, season, pg_week, away)
+        if home_sp is None or away_sp is None:
+            last_w = lookup.last_confirmed_week.get(season)
+            if last_w is not None and pg_week > 0 and pg_week <= last_w:
+                home_sp = home_sp or _lookup_team_sp(lookup, season, pg_week, home)
+                away_sp = away_sp or _lookup_team_sp(lookup, season, pg_week, away)
 
     if home_sp is None or away_sp is None:
         return 0.0, 0.0, 0.0

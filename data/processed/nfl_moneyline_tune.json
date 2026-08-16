@@ -1,0 +1,429 @@
+{
+  "candidates": [
+    {
+      "name": "v1_platt",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5517,
+          "accuracy_pct": 55.2,
+          "log_loss": 0.6786,
+          "regular_pct": 57.0
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.625,
+          "accuracy_pct": 62.5,
+          "log_loss": 0.6542,
+          "regular_pct": 64.0
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6215,
+          "accuracy_pct": 62.1,
+          "log_loss": 0.6515,
+          "regular_pct": 64.2
+        }
+      ],
+      "aggregate_pct": 59.9,
+      "min_season_pct": 55.2
+    },
+    {
+      "name": "v2_platt",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5799,
+          "accuracy_pct": 58.0,
+          "log_loss": 0.676,
+          "regular_pct": 61.0
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6312,
+          "accuracy_pct": 63.1,
+          "log_loss": 0.6522,
+          "regular_pct": 64.7
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6151,
+          "accuracy_pct": 61.5,
+          "log_loss": 0.6533,
+          "regular_pct": 63.5
+        }
+      ],
+      "aggregate_pct": 60.9,
+      "min_season_pct": 58.0
+    },
+    {
+      "name": "v2_raw",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5611,
+          "accuracy_pct": 56.1,
+          "log_loss": 0.6907,
+          "regular_pct": 58.5
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6438,
+          "accuracy_pct": 64.4,
+          "log_loss": 0.6425,
+          "regular_pct": 65.8
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6151,
+          "accuracy_pct": 61.5,
+          "log_loss": 0.6514,
+          "regular_pct": 63.5
+        }
+      ],
+      "aggregate_pct": 60.7,
+      "min_season_pct": 56.1
+    },
+    {
+      "name": "v2_regular_train",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5893,
+          "accuracy_pct": 58.9,
+          "log_loss": 0.6762,
+          "regular_pct": 60.7
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6094,
+          "accuracy_pct": 60.9,
+          "log_loss": 0.6528,
+          "regular_pct": 62.5
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.5994,
+          "accuracy_pct": 59.9,
+          "log_loss": 0.6556,
+          "regular_pct": 62.0
+        }
+      ],
+      "aggregate_pct": 59.9,
+      "min_season_pct": 58.9
+    },
+    {
+      "name": "v2_blend_elo",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5831,
+          "accuracy_pct": 58.3,
+          "log_loss": 0.6738,
+          "regular_pct": 60.3,
+          "blend_w": 0.3
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6344,
+          "accuracy_pct": 63.4,
+          "log_loss": 0.648,
+          "regular_pct": 65.4,
+          "blend_w": 0.55
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6151,
+          "accuracy_pct": 61.5,
+          "log_loss": 0.6593,
+          "regular_pct": 62.4,
+          "blend_w": 0.15
+        }
+      ],
+      "aggregate_pct": 61.1,
+      "min_season_pct": 58.3
+    },
+    {
+      "name": "v2_tossup_elo",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5925,
+          "accuracy_pct": 59.2,
+          "log_loss": 0.6741,
+          "regular_pct": 61.0,
+          "tossup_cut": 0.12
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6469,
+          "accuracy_pct": 64.7,
+          "log_loss": 0.6584,
+          "regular_pct": 66.9,
+          "tossup_cut": 0.05
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6183,
+          "accuracy_pct": 61.8,
+          "log_loss": 0.6561,
+          "regular_pct": 63.1,
+          "tossup_cut": 0.12
+        }
+      ],
+      "aggregate_pct": 61.9,
+      "min_season_pct": 59.2
+    },
+    {
+      "name": "v2_preseason_downweight",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5705,
+          "accuracy_pct": 57.1,
+          "log_loss": 0.6762,
+          "regular_pct": 59.9
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6156,
+          "accuracy_pct": 61.6,
+          "log_loss": 0.6534,
+          "regular_pct": 63.2
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.5962,
+          "accuracy_pct": 59.6,
+          "log_loss": 0.6516,
+          "regular_pct": 61.6
+        }
+      ],
+      "aggregate_pct": 59.4,
+      "min_season_pct": 57.1
+    },
+    {
+      "name": "v2_gbr",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5862,
+          "accuracy_pct": 58.6,
+          "log_loss": 0.6869,
+          "regular_pct": 61.4
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6219,
+          "accuracy_pct": 62.2,
+          "log_loss": 0.6556,
+          "regular_pct": 65.1
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6183,
+          "accuracy_pct": 61.8,
+          "log_loss": 0.6304,
+          "regular_pct": 63.8
+        }
+      ],
+      "aggregate_pct": 60.9,
+      "min_season_pct": 58.6
+    },
+    {
+      "name": "v2_regular_blend_elo",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5925,
+          "accuracy_pct": 59.2,
+          "log_loss": 0.6762,
+          "regular_pct": 61.4,
+          "blend_w": 0.15
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6312,
+          "accuracy_pct": 63.1,
+          "log_loss": 0.6509,
+          "regular_pct": 64.7,
+          "blend_w": 0.85
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6183,
+          "accuracy_pct": 61.8,
+          "log_loss": 0.6575,
+          "regular_pct": 63.1,
+          "blend_w": 0.25
+        }
+      ],
+      "aggregate_pct": 61.4,
+      "min_season_pct": 59.2
+    },
+    {
+      "name": "v2_adaptive",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5925,
+          "accuracy_pct": 59.2,
+          "log_loss": 0.6764,
+          "regular_pct": 61.0,
+          "blend_w": 0.3,
+          "tossup_cut": 0.12
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6531,
+          "accuracy_pct": 65.3,
+          "log_loss": 0.6537,
+          "regular_pct": 67.6,
+          "blend_w": 0.45,
+          "tossup_cut": 0.08
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6183,
+          "accuracy_pct": 61.8,
+          "log_loss": 0.6612,
+          "regular_pct": 62.7,
+          "blend_w": 0.15,
+          "tossup_cut": 0.12
+        }
+      ],
+      "aggregate_pct": 62.1,
+      "min_season_pct": 59.2
+    },
+    {
+      "name": "v2_vote",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.6176,
+          "accuracy_pct": 61.8,
+          "log_loss": 0.6701,
+          "regular_pct": 64.3
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6375,
+          "accuracy_pct": 63.7,
+          "log_loss": 0.6461,
+          "regular_pct": 66.9
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6215,
+          "accuracy_pct": 62.1,
+          "log_loss": 0.6404,
+          "regular_pct": 64.2
+        }
+      ],
+      "aggregate_pct": 62.6,
+      "min_season_pct": 61.8
+    },
+    {
+      "name": "v2_raw_tossup",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.5987,
+          "accuracy_pct": 59.9,
+          "log_loss": 0.69,
+          "regular_pct": 61.8,
+          "tossup_cut": 0.12
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6438,
+          "accuracy_pct": 64.4,
+          "log_loss": 0.6459,
+          "regular_pct": 66.9,
+          "tossup_cut": 0.05
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6246,
+          "accuracy_pct": 62.5,
+          "log_loss": 0.6512,
+          "regular_pct": 63.5,
+          "tossup_cut": 0.12
+        }
+      ],
+      "aggregate_pct": 62.2,
+      "min_season_pct": 59.9
+    },
+    {
+      "name": "v2_gbr_tossup",
+      "folds": [
+        {
+          "season": 2023,
+          "games": 319,
+          "accuracy": 0.6082,
+          "accuracy_pct": 60.8,
+          "log_loss": 0.6789,
+          "regular_pct": 64.0,
+          "tossup_cut": 0.07
+        },
+        {
+          "season": 2024,
+          "games": 320,
+          "accuracy": 0.6406,
+          "accuracy_pct": 64.1,
+          "log_loss": 0.6497,
+          "regular_pct": 67.3,
+          "tossup_cut": 0.07
+        },
+        {
+          "season": 2025,
+          "games": 317,
+          "accuracy": 0.6498,
+          "accuracy_pct": 65.0,
+          "log_loss": 0.6369,
+          "regular_pct": 65.7,
+          "tossup_cut": 0.1
+        }
+      ],
+      "aggregate_pct": 63.3,
+      "min_season_pct": 60.8
+    }
+  ],
+  "best": "v2_vote"
+}

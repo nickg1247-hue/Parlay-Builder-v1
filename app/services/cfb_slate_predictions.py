@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 
 from app.models.cfb_baseline import predict_home_win_proba
+from app.models.cfb_confidence import category_for_proba, category_label
 from app.models.cfb_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD, predict_spread_covers
 from app.models.cfb_totals import enrich_totals_columns
 from app.models.constants import DEFAULT_MIN_EDGE
@@ -180,6 +181,8 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
         prob = float(probs[i])
         pick_side = "home" if prob >= 0.5 else "away"
         model_pick = row["home_team"] if pick_side == "home" else row["away_team"]
+        category = category_for_proba(prob)
+        cat_label = category_label(category)
 
         ml_fields = _ml_market_fields(
             prob,
@@ -195,7 +198,10 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
             "model_prob_away": round(1.0 - prob, 4),
             "model_pick": model_pick,
             "model_pick_side": pick_side,
-            "ml_confidence": confidence_label(ml_fields["model_edge_ml"]),
+            "model_category": category,
+            "model_category_label": cat_label,
+            "model_confidence": cat_label,
+            "ml_confidence": cat_label,
             **ml_fields,
         }
 

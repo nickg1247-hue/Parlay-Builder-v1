@@ -128,6 +128,17 @@ def _moneyline_fold(
     naive_ll = min(home_m.log_loss, elo_m.log_loss)
 
     importance = _logistic_feature_importance(train, cols)
+    labeled = []
+    for row, prob, won in zip(test.itertuples(index=False), probs, y_test):
+        labeled.append(
+            {
+                "game_id": str(getattr(row, "game_id", "")),
+                "season": int(getattr(row, "season", 0) or 0),
+                "home_pct": float(prob) * 100.0,
+                "away_pct": (1.0 - float(prob)) * 100.0,
+                "correct": int(int(prob >= 0.5) == int(won)),
+            }
+        )
 
     return (
         {
@@ -144,6 +155,7 @@ def _moneyline_fold(
         },
         importance,
         pipe,
+        labeled,
     )
 
 
@@ -315,6 +327,7 @@ def run_cfb_walk_forward_backtest(
 
     folds: list[dict[str, Any]] = []
     fold_importances: list[dict[str, float]] = []
+    labeled_games: list[dict[str, Any]] = []
 
     for holdout in seasons:
         train_seasons = [s for s in seasons if s < holdout]
@@ -329,8 +342,9 @@ def run_cfb_walk_forward_backtest(
         if train.empty or test.empty:
             continue
 
-        ml_metrics, importance, _ = _moneyline_fold(train, test)
+        ml_metrics, importance, _, fold_games = _moneyline_fold(train, test)
         fold_importances.append(importance)
+        labeled_games.extend(fold_games)
         spread_metrics = _spread_fold(train_raw, test_raw)
         totals_metrics = _totals_fold(train_raw, test_raw)
 
@@ -370,6 +384,26 @@ def run_cfb_walk_forward_backtest(
     feature_rank = _aggregate_importance(fold_importances)
     univariate = _univariate_feature_effects(feat_all, FEATURE_COLUMNS)
 
+    confidence_block: dict[str, Any] = {}
+    fit_games = [g for g in labeled_games if int(g.get("season") or 0) >= 2024]
+    if fit_games:
+        from app.models.cfb_confidence import (
+            apply_categories,
+            category_proof,
+            fit_cfb_category_cuts,
+            save_category_cuts,
+        )
+
+        cuts = fit_cfb_category_cuts(fit_games)
+        save_category_cuts(cuts)
+        stamped = apply_categories(fit_games, cuts)
+        confidence_block = {
+            "fit_seasons": [2024, 2025],
+            "games": len(fit_games),
+            "cuts": cuts.get("cuts"),
+            "proof": category_proof(stamped, cuts),
+        }
+
     report: dict[str, Any] = {
         "generated_at": _iso_now(),
         "status": "ok",
@@ -402,6 +436,7 @@ def run_cfb_walk_forward_backtest(
                 2,
             ),
         },
+        "confidence": confidence_block,
         "feature_effects": {
             "logistic_importance_avg": feature_rank,
             "univariate_correlation": univariate[:15],
@@ -417,7 +452,7 @@ def run_cfb_walk_forward_backtest(
             "aggregate_winner_accuracy": f"{round(weighted_acc, 1)}%",
             "note": (
                 "Spread/totals scored at proxy lines (-7, train-median O/U) — "
-                "not sportsbook closes. Add historical odds for market proof (Phase 3)."
+                "not sportsbook closes. Confidence cuts fit on walk-forward favorites."
             ),
         },
         "report_path": "data/processed/cfb_backtest_report.json",

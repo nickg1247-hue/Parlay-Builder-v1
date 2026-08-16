@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260816" type="image/png">
+  <title>NFL Futures — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260816">
+  <link rel="stylesheet" href="/static/app.css?v=20260816">
+  <link rel="stylesheet" href="/static/brand.css?v=20260816">
+  <link rel="stylesheet" href="/static/design.css?v=20260816">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260816">
+  <link rel="stylesheet" href="/static/cfb_futures.css?v=20260816">
+  <link rel="stylesheet" href="/static/nfl_futures.css?v=20260816">
+</head>
+<body class="ntg-shell home-v2 board-nfl" data-sport="nfl">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260816" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main dash-main board-main">
+      <header class="dash-page-header">
+        <div>
+          <h1>NFL futures</h1>
+          <p class="dash-page-kicker"><a href="/nfl">← Slate</a> · year-end division standings</p>
+        </div>
+        <span class="dash-page-kicker" id="futures-meta">Loading Wednesday snapshot…</span>
+      </header>
+
+      <div class="slate-toolbar dash-toolbar">
+        <button type="button" class="dash-btn dash-btn-ghost" id="refresh-btn">Rebuild snapshot</button>
+      </div>
+
+      <div class="banner hidden" id="disclaimer"></div>
+      <div class="error error-state hidden" id="error"></div>
+      <div class="loading empty-state" id="loading">
+        <div class="spinner" id="loading-spinner"></div>
+        <p>Projecting division races for the regular season…</p>
+      </div>
+
+      <div class="content hidden" id="content">
+        <section class="board-section ntg-card">
+          <h2>Projected division winners</h2>
+          <p class="simple-note">Who the model has finishing first in each division at year end.</p>
+          <ol class="cfp-seeds" id="division-winners"></ol>
+        </section>
+
+        <section class="board-section ntg-card">
+          <h2>Division standings</h2>
+          <p class="simple-note">Predicted 1st through 4th. Rebuilds every Wednesday after the previous week’s games.</p>
+          <div class="conf-pills" id="div-pills" role="tablist" aria-label="Divisions"></div>
+          <div class="table-wrap">
+            <table id="standings-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Team</th>
+                  <th>Record</th>
+                  <th>Proj. wins</th>
+                  <th>Div win %</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260816"></script>
+  <script src="/static/nfl_futures.js?v=20260816"></script>
+</body>
+</html>

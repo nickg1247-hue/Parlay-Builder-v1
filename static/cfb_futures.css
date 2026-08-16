@@ -1,0 +1,108 @@
+.conf-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.conf-pill {
+  border: 1px solid var(--border, #2a3344);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.conf-pill-active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.futures-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.futures-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.champ-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #b45309;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.champ-row td {
+  font-weight: 600;
+}
+
+.cfp-seeds {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.65rem;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.cfp-seed {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid var(--border, #2a3344);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+
+.cfp-seed-bye {
+  border-color: #1d4ed8;
+}
+
+.cfp-seed-num {
+  font-weight: 700;
+  width: 1.4rem;
+}
+
+.cfp-seed-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.futures-subhead {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.cfp-first-round {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.cfp-matchup {
+  border: 1px solid var(--border, #2a3344);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cfp-vs {
+  opacity: 0.6;
+  font-size: 0.8rem;
+}

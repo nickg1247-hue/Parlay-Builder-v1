@@ -38,7 +38,7 @@
       <header class="dash-page-header">
         <div>
           <h1>CFB predictions board</h1>
-          <p class="dash-page-kicker"><a href="/cfb">← Slate</a> · moneyline · spread · totals</p>
+          <p class="dash-page-kicker"><a href="/cfb">← Slate</a> · <a href="/cfb/futures">Futures</a> · moneyline · spread · totals</p>
         </div>
         <span class="dash-page-kicker" id="board-date">Click Run live or Demo to load the board.</span>
       </header>
@@ -91,6 +91,11 @@
         <section class="board-section ntg-card">
           <h2>+EV singles <span class="sub" id="singles-threshold-label">(≥8% edge)</span></h2>
           <div id="singles-list" class="card-list"></div>
+        </section>
+
+        <section class="board-section ntg-card">
+          <h2>Cross-game parlays</h2>
+          <div id="parlays-list" class="card-list"></div>
         </section>
       </div>
 

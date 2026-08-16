@@ -1,0 +1,33 @@
+{
+  "method": "CFB walk-forward 2024–2025 favorite %. Toss-up is 50–55% (58.9%). Soft fills 55–62.5%. Hard 62.5–88.5% hits 75.2%. Lock 88.5%+ hits 95.5%.",
+  "floors": {
+    "soft": 60,
+    "hard": 75,
+    "lock": 95
+  },
+  "min_games": {
+    "soft": 25,
+    "hard": 15,
+    "lock": 8
+  },
+  "cuts": {
+    "toss-up": {
+      "lo": 50.0,
+      "hi": 55.0
+    },
+    "soft": {
+      "lo": 55.0,
+      "hi": 62.5
+    },
+    "hard": {
+      "lo": 62.5,
+      "hi": 88.5
+    },
+    "lock": {
+      "lo": 88.5,
+      "hi": 100.01
+    },
+    "hard_tail": null
+  },
+  "sport": "cfb"
+}

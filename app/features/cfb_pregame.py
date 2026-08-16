@@ -51,7 +51,73 @@ FEATURE_COLUMNS_V3 = FEATURE_COLUMNS_V2 + [
     "sp_defense_diff",
 ]
 
-FEATURE_COLUMNS = list(FEATURE_COLUMNS_V3)
+FEATURE_COLUMNS_V4 = FEATURE_COLUMNS_V3 + [
+    "talent_diff",
+    "returning_pct_diff",
+    "returning_pass_pct_diff",
+    "prior_fpi_diff",
+    "coach_change_home",
+    "coach_change_away",
+    "srs_diff",
+    "program_home_margin",
+    "matchup_tier_diff",
+    "is_fcs_away",
+    "conference_game",
+    "week_norm",
+    "prior_weight",
+    "blended_quality_diff",
+]
+
+FEATURE_COLUMNS = list(FEATURE_COLUMNS_V4)
+
+P4_CONF_KEYS = (
+    "sec",
+    "southeastern",
+    "big ten",
+    "big 12",
+    "acc",
+    "atlantic coast",
+    "pac-12",
+    "pac 12",
+)
+G5_CONF_KEYS = (
+    "american athletic",
+    "aac",
+    "sun belt",
+    "mid-american",
+    "mac",
+    "mountain west",
+    "conference usa",
+    "cusa",
+)
+SRS_LEARN_RATE = 0.20
+SRS_MARGIN_CAP = 28.0
+
+
+def conference_tier(name: str | None) -> int:
+    """3 = P4 / Notre Dame, 2 = G5 / FBS independent, 1 = FCS / unknown."""
+    raw = str(name or "").strip().lower()
+    if not raw:
+        return 1
+    if "notre dame" in raw:
+        return 3
+    if any(key in raw for key in P4_CONF_KEYS):
+        return 3
+    if "independent" in raw:
+        return 2
+    if any(key in raw for key in G5_CONF_KEYS):
+        return 2
+    return 1
+
+
+def prior_blend_weight(week: int) -> float:
+    """Weeks 1–3 mostly priors; fade to 30% by week 8. Never zero."""
+    wk = max(1, int(week or 1))
+    if wk <= 3:
+        return 0.70
+    if wk >= 8:
+        return 0.30
+    return 0.70 - (wk - 3) * (0.40 / 5.0)
 
 MARGIN_FEATURE_COLUMNS = [
     "elo_diff",
@@ -115,6 +181,34 @@ class _ConferenceTracker:
             key = (season, c)
             self._wins[key] += int(won)
             self._games[key] += 1
+
+
+class _SrsTracker:
+    def __init__(self, learn_rate: float = SRS_LEARN_RATE, cap: float = SRS_MARGIN_CAP) -> None:
+        self.ratings: dict[str, float] = {}
+        self.learn_rate = learn_rate
+        self.cap = cap
+
+    def pre(self, team: str) -> float:
+        return float(self.ratings.get(normalize_team_name(team), 0.0))
+
+    def update(
+        self,
+        home_team: str,
+        away_team: str,
+        home_score: int | None,
+        away_score: int | None,
+    ) -> None:
+        if home_score is None or away_score is None:
+            return
+        home = normalize_team_name(home_team)
+        away = normalize_team_name(away_team)
+        home_pre = self.pre(home)
+        away_pre = self.pre(away)
+        margin = max(-self.cap, min(self.cap, float(home_score - away_score)))
+        resid = margin - (home_pre - away_pre)
+        self.ratings[home] = home_pre + self.learn_rate * resid
+        self.ratings[away] = away_pre - self.learn_rate * resid
 
 
 class _TeamTracker:
@@ -228,6 +322,10 @@ def _margin_avg(games: list[_GameRecord]) -> float:
     return sum(margins) / len(margins)
 
 
+def _home_program_margin(games: list[_GameRecord]) -> float:
+    return _margin_avg([g for g in games if g.was_home])
+
+
 def _neutral_site(row) -> int:
     if hasattr(row, "neutral_site") and pd.notna(row.neutral_site):
         return int(row.neutral_site)
@@ -242,11 +340,14 @@ def _game_week(row) -> int:
                 return wk
         except (TypeError, ValueError):
             pass
-    from app.ingest.cfb_sp_plus import resolve_game_week
+    try:
+        from app.ingest.cfb_sp_plus import resolve_game_week
 
-    season = int(row.season)
-    game_date = str(getattr(row, "date", ""))[:10]
-    return resolve_game_week(game_date, season)
+        season = int(row.season)
+        game_date = str(getattr(row, "date", ""))[:10]
+        return resolve_game_week(game_date, season)
+    except Exception:
+        return 1
 
 
 def _row_features(
@@ -258,6 +359,8 @@ def _row_features(
     pts_fill: float = DEFAULT_PTS_FILL,
     include_scoring: bool = False,
     sp_lookup: dict | None = None,
+    priors_store: object | None = None,
+    srs_tracker: _SrsTracker | None = None,
 ) -> dict[str, float | str | int]:
     game_date = pd.to_datetime(row.date)
     before = game_date
@@ -353,6 +456,52 @@ def _row_features(
         feats["sp_offense_diff"] = 0.0
         feats["sp_defense_diff"] = 0.0
 
+    game_week = _game_week(row)
+    weight = prior_blend_weight(game_week)
+    home_tier = conference_tier(home_conf)
+    away_tier = conference_tier(away_conf)
+    srs_home = srs_tracker.pre(home_team) if srs_tracker is not None else 0.0
+    srs_away = srs_tracker.pre(away_team) if srs_tracker is not None else 0.0
+    srs_diff = srs_home - srs_away
+    prior_diffs = {
+        "talent_diff": 0.0,
+        "returning_pct_diff": 0.0,
+        "returning_pass_pct_diff": 0.0,
+        "prior_fpi_diff": 0.0,
+        "coach_change_home": 0.0,
+        "coach_change_away": 0.0,
+    }
+    if priors_store is not None:
+        from app.ingest.cfb_priors import prior_feature_diffs
+
+        prior_diffs = prior_feature_diffs(
+            season=season,
+            home_team=home_team,
+            away_team=away_team,
+            store=priors_store,
+        )
+    prior_points = (
+        0.40 * float(feats.get("sp_plus_diff") or 0.0)
+        + 0.25 * float(prior_diffs["prior_fpi_diff"])
+        + 0.15 * (float(prior_diffs["talent_diff"]) / 50.0)
+        + 0.12 * (float(prior_diffs["returning_pct_diff"]) * 10.0)
+        + 0.08 * (float(prior_diffs["returning_pass_pct_diff"]) * 10.0)
+    )
+    in_season_points = 0.60 * (float(feats["elo_diff"]) / 25.0) + 0.40 * srs_diff
+    feats.update(prior_diffs)
+    feats["srs_diff"] = srs_diff
+    feats["program_home_margin"] = _home_program_margin(home_prior)
+    feats["matchup_tier_diff"] = float(home_tier - away_tier)
+    feats["is_fcs_away"] = 1.0 if away_tier == 1 else 0.0
+    feats["conference_game"] = (
+        int(row.conference_game)
+        if hasattr(row, "conference_game") and pd.notna(row.conference_game)
+        else 0
+    )
+    feats["week_norm"] = min(1.0, max(0.0, game_week / 15.0))
+    feats["prior_weight"] = weight
+    feats["blended_quality_diff"] = weight * prior_points + (1.0 - weight) * in_season_points
+
     if include_scoring:
         feats["home_season_pts_for"] = (
             _avg_pts_for(home_season_g, pts_fill) if home_season_g else pts_fill
@@ -383,12 +532,15 @@ def build_features(
     attach_elo: bool = True,
     include_scoring: bool = False,
     sp_lookup: dict | None = None,
+    priors_store: object | None = None,
+    srs_tracker: _SrsTracker | None = None,
 ) -> pd.DataFrame:
     df = games_df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values(["date", "game_id"]).reset_index(drop=True)
     state = tracker if tracker is not None else _TeamTracker()
     conf_state = conf_tracker if conf_tracker is not None else _ConferenceTracker()
+    srs_state = srs_tracker if srs_tracker is not None else _SrsTracker()
     rows: list[dict] = []
 
     for row in df.itertuples(index=False):
@@ -400,6 +552,8 @@ def build_features(
             pts_fill=pts_fill,
             include_scoring=include_scoring,
             sp_lookup=sp_lookup,
+            priors_store=priors_store,
+            srs_tracker=srs_state,
         )
         if hasattr(row, "home_win") and pd.notna(getattr(row, "home_win", None)):
             feats["home_win"] = int(row.home_win)
@@ -430,6 +584,12 @@ def build_features(
                 str(getattr(row, "home_conference", "") or ""),
                 str(getattr(row, "away_conference", "") or ""),
                 int(row.home_win),
+            )
+            srs_state.update(
+                normalize_team_name(str(row.home_team)),
+                normalize_team_name(str(row.away_team)),
+                home_score,
+                away_score,
             )
 
     out = pd.DataFrame(rows)
@@ -481,10 +641,18 @@ def _train_imputation_fills(games: pd.DataFrame) -> tuple[float, float]:
     return rest_fill, pts_fill
 
 
+def _load_priors_store(games: pd.DataFrame):
+    from app.ingest.cfb_priors import load_priors_store
+
+    seasons = tuple(sorted(int(s) for s in games["season"].unique()))
+    return load_priors_store(seasons)
+
+
 def build_features_for_history(
     games_df: pd.DataFrame | None = None,
     *,
     sp_lookup: dict | None = None,
+    priors_store: object | None = None,
 ) -> pd.DataFrame:
     from app.models.cfb_baseline import load_games
 
@@ -495,7 +663,8 @@ def build_features_for_history(
         from app.ingest.cfb_sp_plus import load_sp_plus_lookup
 
         lookup = load_sp_plus_lookup(tuple(sorted(games["season"].unique())))
-    return build_features(games, rest_fill=rest_fill, sp_lookup=lookup)
+    priors = priors_store if priors_store is not None else _load_priors_store(games)
+    return build_features(games, rest_fill=rest_fill, sp_lookup=lookup, priors_store=priors)
 
 
 def _build_slate_features(
@@ -554,6 +723,7 @@ def _build_slate_features(
     from app.ingest.cfb_sp_plus import load_sp_plus_lookup
 
     sp_lookup = load_sp_plus_lookup(tuple(sorted(combined["season"].unique())))
+    priors_store = _load_priors_store(combined)
     full = build_features(
         combined,
         rest_fill=rest_fill,
@@ -563,6 +733,7 @@ def _build_slate_features(
         attach_elo=True,
         include_scoring=include_scoring,
         sp_lookup=sp_lookup,
+        priors_store=priors_store,
     )
     return full[full["game_id"].astype(str).isin(slate_ids)].drop_duplicates(
         subset=["game_id"], keep="last"

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-11T08:50:09.543614+00:00",
+  "generated_at": "2026-08-16T03:25:57.455074+00:00",
   "status": "ok",
   "method": "walk_forward_expanding_window",
   "description": "Each holdout season: train on all prior seasons only; features built chronologically with no same-day leakage; compare predictions to actual results.",
@@ -17,11 +17,11 @@
       ],
       "moneyline": {
         "games": 868,
-        "correct_picks": 634,
-        "wrong_picks": 234,
-        "accuracy_pct": 73.04,
-        "log_loss": 0.548,
-        "brier": 0.1821,
+        "correct_picks": 644,
+        "wrong_picks": 224,
+        "accuracy_pct": 74.19,
+        "log_loss": 0.5183,
+        "brier": 0.1726,
         "beats_naive": true,
         "naive_log_loss": 0.5946,
         "home_rate_log_loss": 0.657,
@@ -30,16 +30,16 @@
       "spread": {
         "games": 868,
         "proxy_spread": -7.0,
-        "margin_mae": 14.513,
+        "margin_mae": 14.688,
         "spread_picks_made": 868,
-        "spread_pick_accuracy_pct": 67.97
+        "spread_pick_accuracy_pct": 67.28
       },
       "totals": {
         "games": 868,
         "proxy_ou_line": 55.5,
-        "total_mae": 13.856,
+        "total_mae": 13.759,
         "ou_picks_made": 868,
-        "ou_pick_accuracy_pct": 57.6
+        "ou_pick_accuracy_pct": 58.76
       }
     },
     {
@@ -50,12 +50,12 @@
       ],
       "moneyline": {
         "games": 873,
-        "correct_picks": 594,
-        "wrong_picks": 279,
-        "accuracy_pct": 68.04,
-        "log_loss": 0.6068,
-        "brier": 0.2068,
-        "beats_naive": false,
+        "correct_picks": 689,
+        "wrong_picks": 184,
+        "accuracy_pct": 78.92,
+        "log_loss": 0.4454,
+        "brier": 0.1448,
+        "beats_naive": true,
         "naive_log_loss": 0.6059,
         "home_rate_log_loss": 0.6546,
         "elo_log_loss": 0.6059
@@ -63,16 +63,16 @@
       "spread": {
         "games": 873,
         "proxy_spread": -7.0,
-        "margin_mae": 14.761,
+        "margin_mae": 14.543,
         "spread_picks_made": 873,
-        "spread_pick_accuracy_pct": 67.93
+        "spread_pick_accuracy_pct": 68.61
       },
       "totals": {
         "games": 873,
         "proxy_ou_line": 54.5,
-        "total_mae": 13.509,
+        "total_mae": 13.379,
         "ou_picks_made": 873,
-        "ou_pick_accuracy_pct": 53.72
+        "ou_pick_accuracy_pct": 54.87
       }
     },
     {
@@ -84,11 +84,11 @@
       ],
       "moneyline": {
         "games": 888,
-        "correct_picks": 645,
-        "wrong_picks": 243,
-        "accuracy_pct": 72.64,
-        "log_loss": 0.5404,
-        "brier": 0.1822,
+        "correct_picks": 729,
+        "wrong_picks": 159,
+        "accuracy_pct": 82.09,
+        "log_loss": 0.3989,
+        "brier": 0.1269,
         "beats_naive": true,
         "naive_log_loss": 0.5776,
         "home_rate_log_loss": 0.6506,
@@ -97,61 +97,242 @@
       "spread": {
         "games": 888,
         "proxy_spread": -7.0,
-        "margin_mae": 14.129,
+        "margin_mae": 14.036,
         "spread_picks_made": 888,
-        "spread_pick_accuracy_pct": 68.92
+        "spread_pick_accuracy_pct": 69.71
       },
       "totals": {
         "games": 888,
         "proxy_ou_line": 54.5,
-        "total_mae": 12.892,
+        "total_mae": 12.847,
         "ou_picks_made": 888,
-        "ou_pick_accuracy_pct": 56.53
+        "ou_pick_accuracy_pct": 56.64
       }
     }
   ],
   "aggregate": {
     "holdout_games_scored": 2629,
-    "moneyline_accuracy_pct": 71.24,
-    "moneyline_log_loss": 0.565,
-    "beats_naive_every_fold": false,
-    "spread_pick_accuracy_pct": 68.28,
-    "ou_pick_accuracy_pct": 55.95
+    "moneyline_accuracy_pct": 78.43,
+    "moneyline_log_loss": 0.4538,
+    "beats_naive_every_fold": true,
+    "spread_pick_accuracy_pct": 68.54,
+    "ou_pick_accuracy_pct": 56.75
+  },
+  "confidence": {
+    "fit_seasons": [
+      2024,
+      2025
+    ],
+    "games": 1761,
+    "cuts": {
+      "toss-up": {
+        "lo": 50.0,
+        "hi": 55.0
+      },
+      "soft": null,
+      "hard": {
+        "lo": 62.5,
+        "hi": 88.5
+      },
+      "lock": {
+        "lo": 88.5,
+        "hi": 100.01
+      },
+      "hard_tail": null
+    },
+    "proof": [
+      {
+        "category": "toss-up",
+        "favorite_range": "50\u201355%",
+        "lo": 50.0,
+        "hi": 55.0,
+        "games": 112,
+        "correct": 66,
+        "wrong": 46,
+        "hit_pct": 58.9,
+        "floor_pct": null,
+        "meets_floor": true,
+        "note": "Favorites from 50% up to 55% went 66/112 (58.9%) \u2014 treated as a coin flip."
+      },
+      {
+        "category": "soft",
+        "favorite_range": null,
+        "games": 0,
+        "correct": 0,
+        "wrong": 0,
+        "hit_pct": null,
+        "floor_pct": 60,
+        "meets_floor": false,
+        "note": "No favorite-% band with at least 25 games hit the 60% floor. Best tail: favorites >=98.5% went 86/87 (98.9%).",
+        "best_tail": {
+          "lo": 98.5,
+          "games": 87,
+          "correct": 86,
+          "hit_pct": 98.9
+        }
+      },
+      {
+        "category": "hard",
+        "favorite_range": "62.5\u201388.5%",
+        "lo": 62.5,
+        "hi": 88.5,
+        "games": 771,
+        "correct": 580,
+        "wrong": 191,
+        "hit_pct": 75.2,
+        "floor_pct": 75,
+        "meets_floor": true,
+        "note": "Favorites 62.5\u201388.5% went 580/771 (75.2%). Floor is 75%."
+      },
+      {
+        "category": "lock",
+        "favorite_range": "88.5\u2013100%",
+        "lo": 88.5,
+        "hi": 100.01,
+        "games": 710,
+        "correct": 678,
+        "wrong": 32,
+        "hit_pct": 95.5,
+        "floor_pct": 95,
+        "meets_floor": true,
+        "note": "Favorites 88.5\u2013100% went 678/710 (95.5%). Floor is 95%."
+      }
+    ]
   },
   "feature_effects": {
     "logistic_importance_avg": [
       {
+        "feature": "talent_diff",
+        "avg_abs_logistic_coef": 129.3601,
+        "folds": 3
+      },
+      {
+        "feature": "sp_plus_diff",
+        "avg_abs_logistic_coef": 16.8445,
+        "folds": 3
+      },
+      {
         "feature": "elo_diff",
-        "avg_abs_logistic_coef": 35.2948,
+        "avg_abs_logistic_coef": 14.3672,
         "folds": 3
       },
       {
-        "feature": "away_season_win_pct",
-        "avg_abs_logistic_coef": 0.0751,
+        "feature": "sp_defense_diff",
+        "avg_abs_logistic_coef": 9.4211,
         "folds": 3
       },
       {
-        "feature": "rest_diff",
-        "avg_abs_logistic_coef": 0.0432,
+        "feature": "sp_offense_diff",
+        "avg_abs_logistic_coef": 8.9502,
         "folds": 3
       },
       {
-        "feature": "home_season_win_pct",
-        "avg_abs_logistic_coef": 0.0418,
+        "feature": "blended_quality_diff",
+        "avg_abs_logistic_coef": 4.3138,
         "folds": 3
       },
       {
-        "feature": "away_rest_days",
-        "avg_abs_logistic_coef": 0.0336,
+        "feature": "program_home_margin",
+        "avg_abs_logistic_coef": 3.2144,
+        "folds": 3
+      },
+      {
+        "feature": "srs_diff",
+        "avg_abs_logistic_coef": 1.8745,
+        "folds": 3
+      },
+      {
+        "feature": "prior_fpi_diff",
+        "avg_abs_logistic_coef": 1.2049,
         "folds": 3
       },
       {
         "feature": "home_rest_days",
-        "avg_abs_logistic_coef": 0.0265,
+        "avg_abs_logistic_coef": 0.1905,
+        "folds": 3
+      },
+      {
+        "feature": "rest_diff",
+        "avg_abs_logistic_coef": 0.1635,
+        "folds": 3
+      },
+      {
+        "feature": "returning_pass_pct_diff",
+        "avg_abs_logistic_coef": 0.1116,
+        "folds": 3
+      },
+      {
+        "feature": "returning_pct_diff",
+        "avg_abs_logistic_coef": 0.0764,
+        "folds": 3
+      },
+      {
+        "feature": "home_home_win_pct",
+        "avg_abs_logistic_coef": 0.0645,
+        "folds": 3
+      },
+      {
+        "feature": "week_norm",
+        "avg_abs_logistic_coef": 0.051,
+        "folds": 3
+      },
+      {
+        "feature": "home_season_win_pct",
+        "avg_abs_logistic_coef": 0.0396,
+        "folds": 3
+      },
+      {
+        "feature": "away_season_win_pct",
+        "avg_abs_logistic_coef": 0.0392,
+        "folds": 3
+      },
+      {
+        "feature": "last5_win_pct_diff",
+        "avg_abs_logistic_coef": 0.0351,
+        "folds": 3
+      },
+      {
+        "feature": "away_rest_days",
+        "avg_abs_logistic_coef": 0.027,
+        "folds": 3
+      },
+      {
+        "feature": "away_last5_win_pct",
+        "avg_abs_logistic_coef": 0.0216,
+        "folds": 3
+      },
+      {
+        "feature": "coach_change_away",
+        "avg_abs_logistic_coef": 0.0155,
+        "folds": 3
+      },
+      {
+        "feature": "home_last5_win_pct",
+        "avg_abs_logistic_coef": 0.0135,
+        "folds": 3
+      },
+      {
+        "feature": "prior_weight",
+        "avg_abs_logistic_coef": 0.0121,
+        "folds": 3
+      },
+      {
+        "feature": "coach_change_home",
+        "avg_abs_logistic_coef": 0.0064,
         "folds": 3
       },
       {
         "feature": "away_b2b",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "conf_win_pct_diff",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "conference_game",
         "avg_abs_logistic_coef": 0.0,
         "folds": 3
       },
@@ -161,44 +342,95 @@
         "folds": 3
       },
       {
-        "feature": "home_field",
+        "feature": "home_field_active",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "is_fcs_away",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "matchup_tier_diff",
+        "avg_abs_logistic_coef": 0.0,
+        "folds": 3
+      },
+      {
+        "feature": "neutral_site",
         "avg_abs_logistic_coef": 0.0,
         "folds": 3
       }
     ],
     "univariate_correlation": [
       {
+        "feature": "sp_plus_diff",
+        "correlation_with_home_win": 0.5615
+      },
+      {
+        "feature": "blended_quality_diff",
+        "correlation_with_home_win": 0.5362
+      },
+      {
+        "feature": "srs_diff",
+        "correlation_with_home_win": 0.4708
+      },
+      {
+        "feature": "sp_offense_diff",
+        "correlation_with_home_win": 0.4678
+      },
+      {
+        "feature": "sp_defense_diff",
+        "correlation_with_home_win": -0.4436
+      },
+      {
+        "feature": "last5_win_pct_diff",
+        "correlation_with_home_win": 0.3674
+      },
+      {
         "feature": "elo_diff",
         "correlation_with_home_win": 0.357
+      },
+      {
+        "feature": "talent_diff",
+        "correlation_with_home_win": 0.3397
+      },
+      {
+        "feature": "prior_fpi_diff",
+        "correlation_with_home_win": 0.3287
+      },
+      {
+        "feature": "away_last5_win_pct",
+        "correlation_with_home_win": -0.2955
       },
       {
         "feature": "away_season_win_pct",
         "correlation_with_home_win": -0.2429
       },
       {
+        "feature": "returning_pct_diff",
+        "correlation_with_home_win": 0.2196
+      },
+      {
+        "feature": "home_last5_win_pct",
+        "correlation_with_home_win": 0.1901
+      },
+      {
+        "feature": "program_home_margin",
+        "correlation_with_home_win": 0.1793
+      },
+      {
         "feature": "home_season_win_pct",
         "correlation_with_home_win": 0.1704
-      },
-      {
-        "feature": "home_rest_days",
-        "correlation_with_home_win": -0.0262
-      },
-      {
-        "feature": "rest_diff",
-        "correlation_with_home_win": -0.0238
-      },
-      {
-        "feature": "away_rest_days",
-        "correlation_with_home_win": 0.0027
       }
     ],
     "interpretation": "logistic_importance_avg: larger avg_abs_logistic_coef across folds means the feature moved the moneyline model more. univariate_correlation: exploratory |r| with home_win (not causal)."
   },
   "proof_summary": {
-    "verdict": "mixed_vs_naive",
-    "moneyline_beats_naive_all_folds": false,
-    "aggregate_winner_accuracy": "71.2%",
-    "note": "Spread/totals scored at proxy lines (-7, train-median O/U) \u2014 not sportsbook closes. Add historical odds for market proof (Phase 3)."
+    "verdict": "passes_walk_forward",
+    "moneyline_beats_naive_all_folds": true,
+    "aggregate_winner_accuracy": "78.4%",
+    "note": "Spread/totals scored at proxy lines (-7, train-median O/U) \u2014 not sportsbook closes. Confidence cuts fit on walk-forward favorites."
   },
   "report_path": "data/processed/cfb_backtest_report.json"
 }

@@ -16,6 +16,10 @@ def test_walk_forward_backtest_smoke(tmp_path, monkeypatch):
 
     monkeypatch.setattr("app.models.cfb_baseline.PARQUET_PATH", path)
     monkeypatch.setattr("app.services.cfb_backtest_report.REPORT_JSON", out)
+    monkeypatch.setattr(
+        "app.models.cfb_confidence.CUTS_JSON",
+        tmp_path / "cfb_confidence_cuts.json",
+    )
 
     report = run_cfb_walk_forward_backtest(write_cache=True)
 

@@ -24,6 +24,7 @@ from app.features.cfb_pregame import (
     FEATURE_COLUMNS_V1,
     FEATURE_COLUMNS_V2,
     FEATURE_COLUMNS_V3,
+    FEATURE_COLUMNS_V4,
     build_features_for_history,
 )
 from app.models.platt_calibration import PlattCalibrator
@@ -41,7 +42,8 @@ REGRESSION_TRAIN_SEASONS = (2022, 2023, 2024)
 FEATURE_SET_V1 = "cfb_v1"
 FEATURE_SET_V2 = "cfb_v2"
 FEATURE_SET_V3 = "cfb_v3"
-FEATURE_SET = FEATURE_SET_V3
+FEATURE_SET_V4 = "cfb_v4"
+FEATURE_SET = FEATURE_SET_V4
 
 DEFAULT_REST_FILL = 7.0
 
@@ -345,16 +347,18 @@ def _train_calibrated_holdout(
 def run_training() -> dict[str, Any]:
     raw = load_games()
     try:
+        from app.ingest.cfb_priors import ensure_priors_cache
         from app.ingest.cfb_sp_plus import ensure_sp_plus_cache
 
         seasons = tuple(sorted(int(s) for s in raw["season"].unique()))
         ensure_sp_plus_cache(seasons)
+        ensure_priors_cache(seasons)
     except SystemExit:
         raise
     except Exception as exc:
         import logging
 
-        logging.getLogger(__name__).warning("SP+ cache warm skipped: %s", exc)
+        logging.getLogger(__name__).warning("CFB cache warm skipped: %s", exc)
 
     feat_all = build_features_for_history(raw)
     base, platt_df, holdout = time_split_base_platt_holdout(feat_all)
@@ -378,12 +382,17 @@ def run_training() -> dict[str, Any]:
     v3_model, v3_platt, v3_cal_holdout, v3_raw_holdout = _train_calibrated_holdout(
         base, platt_df, holdout, FEATURE_COLUMNS_V3
     )
+    v4_model, v4_platt, v4_cal_holdout, v4_raw_holdout = _train_calibrated_holdout(
+        base, platt_df, holdout, FEATURE_COLUMNS_V4
+    )
 
     v1_metrics = compute_metrics("logistic_regression_v1", y_holdout, v1_cal_holdout)
     v2_metrics = compute_metrics("logistic_regression_v2", y_holdout, v2_cal_holdout)
     v3_metrics = compute_metrics("logistic_regression_v3", y_holdout, v3_cal_holdout)
+    v4_metrics = compute_metrics("logistic_regression_v4", y_holdout, v4_cal_holdout)
     raw_v2_metrics = compute_metrics("v2_uncalibrated", y_holdout, v2_raw_holdout)
     raw_v3_metrics = compute_metrics("v3_uncalibrated", y_holdout, v3_raw_holdout)
+    raw_v4_metrics = compute_metrics("v4_uncalibrated", y_holdout, v4_raw_holdout)
 
     full_for_elo = feat_all.copy()
     n_before_holdout = len(feat_all[feat_all["season"] != HOLDOUT_SEASON])
@@ -398,19 +407,22 @@ def run_training() -> dict[str, Any]:
     v2_gate = production_gate_passes(v2_metrics.log_loss, naive_ll)
     v3_beats_v2 = v3_metrics.log_loss < v2_metrics.log_loss
     v3_gate = production_gate_passes(v3_metrics.log_loss, naive_ll)
-    promote_v3 = v3_beats_v2 and v3_gate
-    promote_v2 = v2_beats_v1 and v2_gate and not promote_v3
+    v4_beats_v3 = v4_metrics.log_loss < v3_metrics.log_loss
+    v4_gate = production_gate_passes(v4_metrics.log_loss, naive_ll)
+    promote_v4 = v4_beats_v3 and v4_gate
+    promote_v3 = v3_beats_v2 and v3_gate and not promote_v4
+    promote_v2 = v2_beats_v1 and v2_gate and not promote_v3 and not promote_v4
 
     market_eval_summary: dict[str, Any] | None = None
     market_v3_advisory: bool | None = None
-    if promote_v3:
+    if promote_v4 or promote_v3:
         try:
-            temp_v3_artifact = {
-                "model": v3_model,
-                "platt_calibrator": v3_platt,
-                "model_version": "v3_logistic_platt",
-                "feature_set": FEATURE_SET_V3,
-                "feature_columns": list(FEATURE_COLUMNS_V3),
+            temp_artifact = {
+                "model": v4_model if promote_v4 else v3_model,
+                "platt_calibrator": v4_platt if promote_v4 else v3_platt,
+                "model_version": "v4_logistic_platt" if promote_v4 else "v3_logistic_platt",
+                "feature_set": FEATURE_SET_V4 if promote_v4 else FEATURE_SET_V3,
+                "feature_columns": list(FEATURE_COLUMNS_V4 if promote_v4 else FEATURE_COLUMNS_V3),
                 "rest_fill": rest_fill,
                 "base_train_seasons": list(BASE_TRAIN_SEASONS),
                 "platt_season": PLATT_SEASON,
@@ -418,7 +430,7 @@ def run_training() -> dict[str, Any]:
                 "train_home_win_rate": home_rate,
             }
             MODEL_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-            joblib.dump(temp_v3_artifact, MODEL_ARTIFACT)
+            joblib.dump(temp_artifact, MODEL_ARTIFACT)
             from app.odds.cfb_market_eval import run_market_evaluation
 
             market_eval_summary = run_market_evaluation()
@@ -426,9 +438,21 @@ def run_training() -> dict[str, Any]:
         except Exception as exc:
             import logging
 
-            logging.getLogger(__name__).warning("v3 market eval skipped: %s", exc)
+            logging.getLogger(__name__).warning("CFB market eval skipped: %s", exc)
 
-    if promote_v3:
+    if promote_v4:
+        prod_model = v4_model
+        prod_platt = v4_platt
+        prod_version = "v4_logistic_platt"
+        prod_set = FEATURE_SET_V4
+        prod_cols = list(FEATURE_COLUMNS_V4)
+        prod_metrics = v4_metrics
+        active_model = "v4_logistic_platt"
+        gate_passes = v4_gate
+        promoted_v2 = v2_beats_v1 and v2_gate
+        promoted_v3 = v3_beats_v2 and v3_gate
+        promoted_v4 = True
+    elif promote_v3:
         prod_model = v3_model
         prod_platt = v3_platt
         prod_version = "v3_logistic_platt"
@@ -439,6 +463,7 @@ def run_training() -> dict[str, Any]:
         gate_passes = v3_gate
         promoted_v2 = v2_beats_v1 and v2_gate
         promoted_v3 = True
+        promoted_v4 = False
     elif promote_v2:
         prod_model = v2_model
         prod_platt = v2_platt
@@ -450,6 +475,7 @@ def run_training() -> dict[str, Any]:
         gate_passes = v2_gate
         promoted_v2 = True
         promoted_v3 = False
+        promoted_v4 = False
     else:
         prod_model = v1_model
         prod_platt = v1_platt
@@ -461,6 +487,7 @@ def run_training() -> dict[str, Any]:
         gate_passes = v1_gate
         promoted_v2 = False
         promoted_v3 = False
+        promoted_v4 = False
 
     artifact = {
         "model": prod_model,
@@ -485,11 +512,18 @@ def run_training() -> dict[str, Any]:
             v2_fail_reason = f"v2 log loss {v2_metrics.log_loss:.4f} >= naive {naive_ll:.4f}"
 
     v3_fail_reason = None
-    if not promote_v3:
+    if not promote_v3 and not promote_v4:
         if not v3_beats_v2:
             v3_fail_reason = f"v3 log loss {v3_metrics.log_loss:.4f} >= v2 {v2_metrics.log_loss:.4f}"
         elif not v3_gate:
             v3_fail_reason = f"v3 log loss {v3_metrics.log_loss:.4f} >= naive {naive_ll:.4f}"
+
+    v4_fail_reason = None
+    if not promote_v4:
+        if not v4_beats_v3:
+            v4_fail_reason = f"v4 log loss {v4_metrics.log_loss:.4f} >= v3 {v3_metrics.log_loss:.4f}"
+        elif not v4_gate:
+            v4_fail_reason = f"v4 log loss {v4_metrics.log_loss:.4f} >= naive {naive_ll:.4f}"
 
     results: dict[str, Any] = {
         "base_train_seasons": list(BASE_TRAIN_SEASONS),
@@ -501,6 +535,7 @@ def run_training() -> dict[str, Any]:
         "production_model": prod_version,
         "promoted_v2": promoted_v2,
         "promoted_v3": promoted_v3,
+        "promoted_v4": promoted_v4,
         "active_model": active_model,
         "imputation": {"rest_days": rest_fill},
         "v1_comparison": {
@@ -522,20 +557,29 @@ def run_training() -> dict[str, Any]:
             "beats_v2": v3_beats_v2,
             "fail_reason": v3_fail_reason,
         },
+        "v4_comparison": {
+            "feature_set": FEATURE_SET_V4,
+            "holdout": _metrics_dict(v4_metrics),
+            "gate_passes": v4_gate,
+            "beats_v3": v4_beats_v3,
+            "fail_reason": v4_fail_reason,
+        },
         "metrics": {
             m.name: _metrics_dict(m)
             for m in (
                 v1_metrics,
                 v2_metrics,
                 v3_metrics,
+                v4_metrics,
                 raw_v2_metrics,
                 raw_v3_metrics,
+                raw_v4_metrics,
                 home_rate_metrics,
                 elo_metrics,
             )
         },
         "phase_gate": {
-            "rule": "Promote v3 if holdout LL beats v2 and naive; else v2 if beats v1; else v1. Market eval is advisory only.",
+            "rule": "Promote v4 if holdout LL beats v3 and naive; else v3 if beats v2; else v2 if beats v1; else v1. Market eval is advisory only.",
             "best_naive_log_loss": naive_ll,
             "passes": gate_passes,
             "active_model": active_model,

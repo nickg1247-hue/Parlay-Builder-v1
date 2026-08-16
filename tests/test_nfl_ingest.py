@@ -9,6 +9,7 @@ from app.ingest.nfl import (
     is_divisional,
     normalize_abbr,
     parse_espn_event,
+    parse_espn_schedule_event,
 )
 
 SAMPLE_EVENT = {
@@ -122,6 +123,46 @@ def test_parse_espn_event_reads_scoreboard_odds():
 
 def test_parse_espn_event_skips_ties():
     assert parse_espn_event(TIE_EVENT, season=2024, week=1) is None
+
+
+def test_parse_espn_schedule_event_keeps_unplayed():
+    scheduled = {
+        **SAMPLE_EVENT,
+        "id": "401772001",
+        "competitions": [
+            {
+                **SAMPLE_EVENT["competitions"][0],
+                "status": {"type": {"state": "pre", "completed": False}},
+                "competitors": [
+                    {
+                        **SAMPLE_EVENT["competitions"][0]["competitors"][0],
+                        "score": "0",
+                        "team": {
+                            **SAMPLE_EVENT["competitions"][0]["competitors"][0]["team"],
+                            "logo": "https://example.com/kc.png",
+                        },
+                    },
+                    {
+                        **SAMPLE_EVENT["competitions"][0]["competitors"][1],
+                        "score": "0",
+                    },
+                ],
+            }
+        ],
+    }
+    assert parse_espn_event(scheduled, season=2024, week=1) is None
+    parsed = parse_espn_schedule_event(scheduled, season=2024, week=1)
+    assert parsed is not None
+    assert parsed["game_id"] == "401772001"
+    assert parsed["completed"] is False
+    assert parsed["home_win"] is None
+    assert parsed["home_team_abbr"] == "KC"
+    assert parsed["away_team_abbr"] == "BAL"
+    assert parsed["home_logo_url"] == "https://example.com/kc.png"
+
+
+def test_parse_espn_schedule_event_skips_preseason():
+    assert parse_espn_schedule_event(PRESEASON_EVENT, season=2024, week=1) is None
 
 
 def test_espn_game_id_stable_across_week_and_day_payloads():

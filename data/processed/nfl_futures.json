@@ -1,0 +1,759 @@
+{
+  "sport": "nfl",
+  "season": 2026,
+  "week_id": "2026-08-12",
+  "as_of": "2026-08-12",
+  "generated_at": "2026-08-16T03:44:49.871591+00:00",
+  "model": "v2_gbr_elo_tossup",
+  "n_sims": 800,
+  "games_completed": 0,
+  "games_remaining": 272,
+  "disclaimer": "Wednesday snapshot from the NFL v2 moneyline model. Tables are the projected 1st-through-4th finish in each division. Expected wins add completed results to the model's remaining-game win probabilities. Rebuilds every Wednesday after the previous week's games.",
+  "divisions": [
+    {
+      "key": "AFC_EAST",
+      "name": "AFC East",
+      "conference": "AFC",
+      "champion": "Buffalo Bills",
+      "champion_abbr": "BUF",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Buffalo Bills",
+          "abbr": "BUF",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/buf.png",
+          "division_key": "AFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.78,
+          "mean_finish": 1.29,
+          "division_win_pct": 0.7638,
+          "place_pct": {
+            "1": 0.7638,
+            "2": 0.185,
+            "3": 0.045,
+            "4": 0.0063
+          },
+          "strength": 1639.5
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "New England Patriots",
+          "abbr": "NE",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/ne.png",
+          "division_key": "AFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 8.33,
+          "mean_finish": 2.32,
+          "division_win_pct": 0.14,
+          "place_pct": {
+            "1": 0.14,
+            "2": 0.475,
+            "3": 0.31,
+            "4": 0.075
+          },
+          "strength": 1522.7
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Miami Dolphins",
+          "abbr": "MIA",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/mia.png",
+          "division_key": "AFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 7.87,
+          "mean_finish": 2.63,
+          "division_win_pct": 0.09,
+          "place_pct": {
+            "1": 0.09,
+            "2": 0.3088,
+            "3": 0.48,
+            "4": 0.1212
+          },
+          "strength": 1497.4
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "New York Jets",
+          "abbr": "NYJ",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/nyj.png",
+          "division_key": "AFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 5.15,
+          "mean_finish": 3.75,
+          "division_win_pct": 0.0063,
+          "place_pct": {
+            "1": 0.0063,
+            "2": 0.0312,
+            "3": 0.165,
+            "4": 0.7975
+          },
+          "strength": 1361.5
+        }
+      ]
+    },
+    {
+      "key": "AFC_NORTH",
+      "name": "AFC North",
+      "conference": "AFC",
+      "champion": "Baltimore Ravens",
+      "champion_abbr": "BAL",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Baltimore Ravens",
+          "abbr": "BAL",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/bal.png",
+          "division_key": "AFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 11.0,
+          "mean_finish": 1.51,
+          "division_win_pct": 0.625,
+          "place_pct": {
+            "1": 0.625,
+            "2": 0.2462,
+            "3": 0.1175,
+            "4": 0.0112
+          },
+          "strength": 1593.6
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Pittsburgh Steelers",
+          "abbr": "PIT",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/pit.png",
+          "division_key": "AFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.03,
+          "mean_finish": 2.08,
+          "division_win_pct": 0.2762,
+          "place_pct": {
+            "1": 0.2762,
+            "2": 0.4487,
+            "3": 0.195,
+            "4": 0.08
+          },
+          "strength": 1570.3
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Cincinnati Bengals",
+          "abbr": "CIN",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/cin.png",
+          "division_key": "AFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 8.29,
+          "mean_finish": 2.98,
+          "division_win_pct": 0.0688,
+          "place_pct": {
+            "1": 0.0688,
+            "2": 0.1862,
+            "3": 0.445,
+            "4": 0.3
+          },
+          "strength": 1471.2
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Cleveland Browns",
+          "abbr": "CLE",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/cle.png",
+          "division_key": "AFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 7.55,
+          "mean_finish": 3.43,
+          "division_win_pct": 0.03,
+          "place_pct": {
+            "1": 0.03,
+            "2": 0.1187,
+            "3": 0.2425,
+            "4": 0.6088
+          },
+          "strength": 1426.7
+        }
+      ]
+    },
+    {
+      "key": "AFC_SOUTH",
+      "name": "AFC South",
+      "conference": "AFC",
+      "champion": "Houston Texans",
+      "champion_abbr": "HOU",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Houston Texans",
+          "abbr": "HOU",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/hou.png",
+          "division_key": "AFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.17,
+          "mean_finish": 1.49,
+          "division_win_pct": 0.66,
+          "place_pct": {
+            "1": 0.66,
+            "2": 0.2137,
+            "3": 0.1025,
+            "4": 0.0238
+          },
+          "strength": 1586.5
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Jacksonville Jaguars",
+          "abbr": "JAX",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/jax.png",
+          "division_key": "AFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 8.79,
+          "mean_finish": 2.17,
+          "division_win_pct": 0.2238,
+          "place_pct": {
+            "1": 0.2238,
+            "2": 0.4625,
+            "3": 0.2288,
+            "4": 0.085
+          },
+          "strength": 1515.6
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Indianapolis Colts",
+          "abbr": "IND",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/ind.png",
+          "division_key": "AFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 7.82,
+          "mean_finish": 2.74,
+          "division_win_pct": 0.0988,
+          "place_pct": {
+            "1": 0.0988,
+            "2": 0.2562,
+            "3": 0.45,
+            "4": 0.195
+          },
+          "strength": 1469.5
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Tennessee Titans",
+          "abbr": "TEN",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/ten.png",
+          "division_key": "AFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 5.94,
+          "mean_finish": 3.59,
+          "division_win_pct": 0.0175,
+          "place_pct": {
+            "1": 0.0175,
+            "2": 0.0675,
+            "3": 0.2188,
+            "4": 0.6963
+          },
+          "strength": 1367.2
+        }
+      ]
+    },
+    {
+      "key": "AFC_WEST",
+      "name": "AFC West",
+      "conference": "AFC",
+      "champion": "Denver Broncos",
+      "champion_abbr": "DEN",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Denver Broncos",
+          "abbr": "DEN",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/den.png",
+          "division_key": "AFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.68,
+          "mean_finish": 1.52,
+          "division_win_pct": 0.64,
+          "place_pct": {
+            "1": 0.64,
+            "2": 0.2087,
+            "3": 0.1375,
+            "4": 0.0138
+          },
+          "strength": 1614.4
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Los Angeles Chargers",
+          "abbr": "LAC",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/lac.png",
+          "division_key": "AFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.2,
+          "mean_finish": 2.22,
+          "division_win_pct": 0.2062,
+          "place_pct": {
+            "1": 0.2062,
+            "2": 0.4263,
+            "3": 0.31,
+            "4": 0.0575
+          },
+          "strength": 1547.5
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Kansas City Chiefs",
+          "abbr": "KC",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/kc.png",
+          "division_key": "AFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.03,
+          "mean_finish": 2.45,
+          "division_win_pct": 0.1487,
+          "place_pct": {
+            "1": 0.1487,
+            "2": 0.3287,
+            "3": 0.45,
+            "4": 0.0725
+          },
+          "strength": 1536.4
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Las Vegas Raiders",
+          "abbr": "LV",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/lv.png",
+          "division_key": "AFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 5.78,
+          "mean_finish": 3.81,
+          "division_win_pct": 0.005,
+          "place_pct": {
+            "1": 0.005,
+            "2": 0.0362,
+            "3": 0.1025,
+            "4": 0.8562
+          },
+          "strength": 1345.4
+        }
+      ]
+    },
+    {
+      "key": "NFC_EAST",
+      "name": "NFC East",
+      "conference": "NFC",
+      "champion": "Philadelphia Eagles",
+      "champion_abbr": "PHI",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Philadelphia Eagles",
+          "abbr": "PHI",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/phi.png",
+          "division_key": "NFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 12.0,
+          "mean_finish": 1.12,
+          "division_win_pct": 0.9025,
+          "place_pct": {
+            "1": 0.9025,
+            "2": 0.0813,
+            "3": 0.0138,
+            "4": 0.0025
+          },
+          "strength": 1618.2
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Dallas Cowboys",
+          "abbr": "DAL",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/dal.png",
+          "division_key": "NFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 8.01,
+          "mean_finish": 2.43,
+          "division_win_pct": 0.0675,
+          "place_pct": {
+            "1": 0.0675,
+            "2": 0.5413,
+            "3": 0.2888,
+            "4": 0.1025
+          },
+          "strength": 1477.3
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Washington Commanders",
+          "abbr": "WSH",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/wsh.png",
+          "division_key": "NFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 7.25,
+          "mean_finish": 2.87,
+          "division_win_pct": 0.0225,
+          "place_pct": {
+            "1": 0.0225,
+            "2": 0.2963,
+            "3": 0.4662,
+            "4": 0.215
+          },
+          "strength": 1423.4
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "New York Giants",
+          "abbr": "NYG",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/nyg.png",
+          "division_key": "NFC_EAST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 5.77,
+          "mean_finish": 3.58,
+          "division_win_pct": 0.0075,
+          "place_pct": {
+            "1": 0.0075,
+            "2": 0.0813,
+            "3": 0.2313,
+            "4": 0.68
+          },
+          "strength": 1365.3
+        }
+      ]
+    },
+    {
+      "key": "NFC_NORTH",
+      "name": "NFC North",
+      "conference": "NFC",
+      "champion": "Detroit Lions",
+      "champion_abbr": "DET",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Detroit Lions",
+          "abbr": "DET",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/det.png",
+          "division_key": "NFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.74,
+          "mean_finish": 1.85,
+          "division_win_pct": 0.4925,
+          "place_pct": {
+            "1": 0.4925,
+            "2": 0.2487,
+            "3": 0.17,
+            "4": 0.0887
+          },
+          "strength": 1577.4
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Green Bay Packers",
+          "abbr": "GB",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/gb.png",
+          "division_key": "NFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 10.0,
+          "mean_finish": 2.34,
+          "division_win_pct": 0.2512,
+          "place_pct": {
+            "1": 0.2512,
+            "2": 0.3125,
+            "3": 0.2812,
+            "4": 0.155
+          },
+          "strength": 1569.3
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Minnesota Vikings",
+          "abbr": "MIN",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/min.png",
+          "division_key": "NFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.93,
+          "mean_finish": 2.49,
+          "division_win_pct": 0.2,
+          "place_pct": {
+            "1": 0.2,
+            "2": 0.3013,
+            "3": 0.3088,
+            "4": 0.19
+          },
+          "strength": 1565.3
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Chicago Bears",
+          "abbr": "CHI",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/chi.png",
+          "division_key": "NFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 8.42,
+          "mean_finish": 3.32,
+          "division_win_pct": 0.0563,
+          "place_pct": {
+            "1": 0.0563,
+            "2": 0.1375,
+            "3": 0.24,
+            "4": 0.5663
+          },
+          "strength": 1522.2
+        }
+      ]
+    },
+    {
+      "key": "NFC_SOUTH",
+      "name": "NFC South",
+      "conference": "NFC",
+      "champion": "Tampa Bay Buccaneers",
+      "champion_abbr": "TB",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Tampa Bay Buccaneers",
+          "abbr": "TB",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/tb.png",
+          "division_key": "NFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.01,
+          "mean_finish": 1.45,
+          "division_win_pct": 0.6837,
+          "place_pct": {
+            "1": 0.6837,
+            "2": 0.2062,
+            "3": 0.0838,
+            "4": 0.0262
+          },
+          "strength": 1504.3
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Atlanta Falcons",
+          "abbr": "ATL",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/atl.png",
+          "division_key": "NFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 6.68,
+          "mean_finish": 2.55,
+          "division_win_pct": 0.1425,
+          "place_pct": {
+            "1": 0.1425,
+            "2": 0.3488,
+            "3": 0.3225,
+            "4": 0.1862
+          },
+          "strength": 1418.7
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "New Orleans Saints",
+          "abbr": "NO",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/no.png",
+          "division_key": "NFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 7.02,
+          "mean_finish": 2.58,
+          "division_win_pct": 0.1462,
+          "place_pct": {
+            "1": 0.1462,
+            "2": 0.3225,
+            "3": 0.3362,
+            "4": 0.195
+          },
+          "strength": 1399.0
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Carolina Panthers",
+          "abbr": "CAR",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/car.png",
+          "division_key": "NFC_SOUTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 5.54,
+          "mean_finish": 3.42,
+          "division_win_pct": 0.0275,
+          "place_pct": {
+            "1": 0.0275,
+            "2": 0.1225,
+            "3": 0.2575,
+            "4": 0.5925
+          },
+          "strength": 1364.1
+        }
+      ]
+    },
+    {
+      "key": "NFC_WEST",
+      "name": "NFC West",
+      "conference": "NFC",
+      "champion": "Seattle Seahawks",
+      "champion_abbr": "SEA",
+      "teams": [
+        {
+          "place": 1,
+          "place_label": "1st",
+          "team": "Seattle Seahawks",
+          "abbr": "SEA",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/sea.png",
+          "division_key": "NFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 11.09,
+          "mean_finish": 1.55,
+          "division_win_pct": 0.5863,
+          "place_pct": {
+            "1": 0.5863,
+            "2": 0.2875,
+            "3": 0.12,
+            "4": 0.0063
+          },
+          "strength": 1619.1
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Los Angeles Rams",
+          "abbr": "LAR",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/lar.png",
+          "division_key": "NFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.77,
+          "mean_finish": 2.19,
+          "division_win_pct": 0.2238,
+          "place_pct": {
+            "1": 0.2238,
+            "2": 0.3912,
+            "3": 0.3613,
+            "4": 0.0238
+          },
+          "strength": 1580.0
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "San Francisco 49ers",
+          "abbr": "SF",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/sf.png",
+          "division_key": "NFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.82,
+          "mean_finish": 2.33,
+          "division_win_pct": 0.19,
+          "place_pct": {
+            "1": 0.19,
+            "2": 0.3113,
+            "3": 0.4738,
+            "4": 0.025
+          },
+          "strength": 1569.5
+        },
+        {
+          "place": 4,
+          "place_label": "4th",
+          "team": "Arizona Cardinals",
+          "abbr": "ARI",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/ari.png",
+          "division_key": "NFC_WEST",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 4.56,
+          "mean_finish": 3.94,
+          "division_win_pct": 0.0,
+          "place_pct": {
+            "1": 0.0,
+            "2": 0.01,
+            "3": 0.045,
+            "4": 0.945
+          },
+          "strength": 1361.6
+        }
+      ]
+    }
+  ],
+  "error": null
+}
