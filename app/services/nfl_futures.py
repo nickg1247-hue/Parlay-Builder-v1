@@ -17,6 +17,7 @@ import pandas as pd
 
 from app.config import PROJECT_ROOT
 from app.ingest.nfl import NFL_DIVISIONS, normalize_abbr, team_division
+from app.services.nfl_division_priors import annotate_division, annotate_futures_payload
 from app.services.nfl_slate_predictions import nfl_season_year
 
 logger = logging.getLogger(__name__)
@@ -37,10 +38,10 @@ DIVISION_SPECS: tuple[dict[str, str], ...] = (
 
 PLACE_LABELS = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 DISCLAIMER = (
-    "Wednesday snapshot from the NFL v2 moneyline model. Tables are the "
-    "projected 1st-through-4th finish in each division. Expected wins add "
-    "completed results to the model's remaining-game win probabilities. "
-    "Rebuilds every Wednesday after the previous week's games."
+    "Wednesday snapshot. A named winner is only a pick when the race is "
+    "Clear or a Lean — toss-up divisions are too close to fade or follow. "
+    "Preseason ranks use a three-year win prior plus the upcoming schedule. "
+    "After Week 1, completed results lock and the live model blends in."
 )
 
 
@@ -65,13 +66,6 @@ def nfl_logo_url(abbr: str | None, espn_logo: str | None = None) -> str:
 
 def _clip_prob(value: float) -> float:
     return float(min(0.97, max(0.03, value)))
-
-
-def elo_win_prob(home_elo: float, away_elo: float, *, neutral: bool = False) -> float:
-    from app.models.nfl_baseline import ELO_HOME_ADV
-
-    adv = 0.0 if neutral else ELO_HOME_ADV
-    return 1.0 / (1.0 + 10 ** ((away_elo - home_elo - adv) / 400.0))
 
 
 def split_completed_remaining(
@@ -347,32 +341,46 @@ def _slate_frame(games: list[dict[str, Any]]) -> pd.DataFrame:
 
 def predict_remaining_probs(
     remaining: list[dict[str, Any]],
+    completed: list[dict[str, Any]] | None = None,
+    *,
+    season: int | None = None,
 ) -> tuple[dict[str, float], dict[str, float], str]:
-    """v2 moneyline probs for remaining games; Elo fallback if the model fails."""
-    from app.models.nfl_baseline import current_elo_ratings, load_games, predict_home_win_proba
+    """Offseason prior, blended with the live model after games start."""
+    from app.models.nfl_baseline import load_games, predict_home_win_proba
+    from app.services.nfl_division_priors import (
+        prior_game_probs,
+        prior_mix_weight,
+        projected_wins_from_history,
+        wins_to_elo,
+    )
+
+    completed = completed or []
+    if season is None:
+        if remaining:
+            season = int(remaining[0]["season"])
+        elif completed:
+            season = int(completed[0]["season"])
+        else:
+            season = current_nfl_season()
 
     try:
         hist = load_games()
-        ratings = current_elo_ratings(hist[hist["home_win"].notna()]) if not hist.empty else {}
     except FileNotFoundError:
         hist = pd.DataFrame()
-        ratings = {}
-    strength = {normalize_abbr(str(k)): float(v) for k, v in ratings.items()}
-    elo_probs: dict[str, float] = {}
-    for game in remaining:
-        home = normalize_abbr(game.get("home_team_abbr"))
-        away = normalize_abbr(game.get("away_team_abbr"))
-        elo_probs[str(game["game_id"])] = elo_win_prob(
-            strength.get(home, 1500.0),
-            strength.get(away, 1500.0),
-            neutral=bool(game.get("neutral_site")),
-        )
-        strength.setdefault(home, 1500.0)
-        strength.setdefault(away, 1500.0)
 
+    prior_wins = projected_wins_from_history(hist, int(season)) if not hist.empty else {}
+    prior_elo = wins_to_elo(prior_wins) if prior_wins else {}
+    prior_probs = prior_game_probs(remaining, prior_elo) if remaining else {}
+    mix = prior_mix_weight(len(completed), len(remaining))
     if not remaining:
-        return {}, strength, "none"
+        return {}, prior_elo, "none"
+    if mix >= 0.999 or not prior_probs:
+        if prior_probs:
+            return prior_probs, prior_elo, "offseason_prior_3y"
+        return prior_probs, prior_elo, "none"
 
+    model_probs: dict[str, float] = {}
+    model_name = "elo_fallback"
     try:
         slate = _slate_frame(remaining)
         raw = predict_home_win_proba(slate)
@@ -380,10 +388,19 @@ def predict_remaining_probs(
             str(gid): _clip_prob(float(p))
             for gid, p in zip(slate["game_id"].astype(str), raw)
         }
-        return model_probs, strength, "v2_gbr_elo_tossup"
+        model_name = "v2_gbr_elo_tossup"
     except Exception as exc:
-        logger.warning("NFL futures model probs failed, using Elo: %s", exc)
-        return elo_probs, strength, "elo_fallback"
+        logger.warning("NFL futures model probs failed, using prior: %s", exc)
+        return prior_probs, prior_elo, "offseason_prior_3y"
+
+    blended = {}
+    for game in remaining:
+        gid = str(game["game_id"])
+        blended[gid] = _clip_prob(
+            mix * float(prior_probs.get(gid, 0.5))
+            + (1.0 - mix) * float(model_probs.get(gid, 0.5))
+        )
+    return blended, prior_elo, f"offseason_prior_3y+{model_name}"
 
 
 def load_saved_nfl_futures() -> dict[str, Any] | None:
@@ -430,14 +447,16 @@ def _division_payloads(standings: dict[str, list[dict[str, Any]]]) -> list[dict[
         if not rows:
             continue
         out.append(
-            {
-                "key": spec["key"],
-                "name": spec["name"],
-                "conference": spec["conference"],
-                "champion": rows[0]["team"],
-                "champion_abbr": rows[0]["abbr"],
-                "teams": rows,
-            }
+            annotate_division(
+                {
+                    "key": spec["key"],
+                    "name": spec["name"],
+                    "conference": spec["conference"],
+                    "champion": rows[0]["team"],
+                    "champion_abbr": rows[0]["abbr"],
+                    "teams": rows,
+                }
+            )
         )
     return out
 
@@ -460,7 +479,7 @@ def build_nfl_futures(
     if not refresh:
         saved = load_saved_nfl_futures()
         if cache_is_current(saved, as_of=week_id, season=season_year):
-            return saved  # type: ignore[return-value]
+            return annotate_futures_payload(saved)  # type: ignore[return-value]
 
     if games is None:
         from app.ingest.nfl_season_schedule import ensure_season_schedule
@@ -494,7 +513,9 @@ def build_nfl_futures(
 
     model_name = "injected"
     if probs is None or strength is None:
-        probs, strength, model_name = predict_remaining_probs(remaining)
+        probs, strength, model_name = predict_remaining_probs(
+            remaining, completed, season=season_year
+        )
     assert probs is not None
     assert strength is not None
 
@@ -535,5 +556,5 @@ def refresh_nfl_futures_if_due(*, as_of: date | None = None) -> dict[str, Any]:
     season_year = current_nfl_season(today)
     saved = load_saved_nfl_futures()
     if cache_is_current(saved, as_of=week_id, season=season_year):
-        return saved  # type: ignore[return-value]
+        return annotate_futures_payload(saved)  # type: ignore[return-value]
     return build_nfl_futures(season=season_year, as_of=today, refresh=True)

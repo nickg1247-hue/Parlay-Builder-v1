@@ -126,6 +126,7 @@ def test_projected_order_follows_win_probability():
         strength=strength,
         n_sims=200,
         seed=20260816,
+        season_progress=1.0,
     )
     order = [row["team"] for row in out["conferences"]["big_ten"]]
     assert order[0] == "Ohio State"

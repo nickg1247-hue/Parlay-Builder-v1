@@ -135,7 +135,7 @@ python scripts/bootstrap_nfl.py
 
 Writes `data/processed/nfl_games.parquet`, trains moneyline, spread, and totals models.
 
-**Futures (division standings):** `/nfl/futures` and `GET /api/nfl/futures`. Wednesday snapshot of projected 1st–4th in all eight divisions from the v2 moneyline model. Before Week 1 every remaining regular-season game is projected; after the season starts, completed results lock in and the rest are re-simulated. Cache: `data/processed/nfl_futures.json`. Season schedule (completed + remaining): `data/processed/nfl_season_schedule_{year}.json` from 18 ESPN week pulls. Rebuild: `python scripts/refresh_nfl_futures.py`. Morning refresh rebuilds the snapshot on Wednesday (or when `--sports` includes `nfl`).
+**Futures (division standings):** `/nfl/futures` and `GET /api/nfl/futures`. Wednesday snapshot of projected 1st–4th in all eight divisions. Preseason ranks use a three-year offseason prior (recent wins + last year’s finish) plus the upcoming schedule — not sticky in-season Elo — then Monte Carlo the remaining games. After Week 1, completed results lock and the live moneyline model blends in. Walk-forward 2023–2025: `python scripts/backtest_nfl_futures.py` (target: ≥75% of teams within one place of final finish). Cache: `data/processed/nfl_futures.json`. Season schedule: `data/processed/nfl_season_schedule_{year}.json`. Rebuild: `python scripts/refresh_nfl_futures.py`.
 
 **Verify:** open `/nfl` (preseason slate in August), `/nfl/futures`, and `/nfl/board`.
 
@@ -189,7 +189,7 @@ Uses **16 week-level CFBD `/lines` calls** (not per-game). Cache: `data/processe
 
 **v4 priors (college-native):** season-level CFBD only — `/talent`, `/player/returning`, `/ratings/fpi` (prior year only in features), `/coaches`. Cache: `data/processed/cfb_priors_cache/`. Warm with `python scripts/fetch_cfb_priors.py`. Confidence cuts: `cfb_confidence_cuts.json` from walk-forward. Board parlays: `GET /api/cfb/daily`. Morning job: `--sports mlb,cfb`.
 
-**Futures (conference placement + playoff):** `/cfb/futures` and `GET /api/cfb/futures`. Sunday snapshot of every Power and Group of 5 standings (1st through last) plus a projected 12-team CFP field. Cache: `data/processed/cfb_futures.json`. Season schedule (completed + remaining): `data/processed/cfb_season_schedule_{year}.json` from one CFBD `/games` call. Rebuild: `python scripts/refresh_cfb_futures.py`. Morning CFB refresh rebuilds the snapshot when the Sunday week rolls over.
+**Futures (conference placement + playoff):** `/cfb/futures` and `GET /api/cfb/futures`. Sunday snapshot of every Power and Group of 5 standings (1st through last) plus a projected 12-team CFP field. Preseason (weeks 0–2) conference favorites use `app/services/cfb_preseason.py` — SP+ / prior-year FPI / talent / leftover Elo, with an SP+ ≥ 28 outlier and a close-race returning-production tie-break — then fade into live ratings by week 6. Target: ≥50% title-game conference winners from the August snapshot on 2024–2025. Cache: `data/processed/cfb_futures.json`. Season schedule (completed + remaining): `data/processed/cfb_season_schedule_{year}.json` from one CFBD `/games` call. Rebuild: `python scripts/refresh_cfb_futures.py`. Backtest: `python scripts/backtest_cfb_conference.py`. Morning CFB refresh rebuilds the snapshot when the Sunday week rolls over.
 
 ```powershell
 python -c "from app.ingest.cfb_sp_plus import ensure_sp_plus_cache; ensure_sp_plus_cache(force=True)"

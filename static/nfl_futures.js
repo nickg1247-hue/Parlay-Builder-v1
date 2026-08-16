@@ -24,25 +24,37 @@ function record(row) {
   return ties ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
 }
 
-function teamCell(row) {
+function teamCell(row, race) {
   const logo = row.logo_url
     ? `<img class="futures-logo" src="${row.logo_url}" alt="" width="28" height="28" />`
     : "";
-  const badge = row.place === 1 ? '<span class="champ-badge">1st</span>' : "";
+  const showBadge = row.place === 1 && race && race !== "toss_up";
+  const badge = showBadge ? '<span class="champ-badge">Pick</span>' : "";
   return `<span class="futures-team">${logo}<span>${row.team}</span>${badge}</span>`;
 }
 
 function winnerCard(div) {
-  const champ = (div.teams || [])[0] || {};
-  const logo = champ.logo_url
-    ? `<img class="futures-logo" src="${champ.logo_url}" alt="" width="32" height="32" />`
+  const race = div.race || "toss_up";
+  const names = (div.contenders || div.teams || [])
+    .slice(0, race === "toss_up" ? 3 : 1)
+    .map((row) => row.team)
+    .filter(Boolean);
+  const lead = (div.contenders || div.teams || [])[0] || {};
+  const logo = lead.logo_url
+    ? `<img class="futures-logo" src="${lead.logo_url}" alt="" width="32" height="32" />`
     : "";
-  return `<li class="cfp-seed">
+  const title =
+    race === "toss_up" ? names.join(" / ") || "Too close" : names[0] || div.champion || "—";
+  const detail =
+    race === "toss_up"
+      ? `${div.name} · toss-up, no pick`
+      : `${div.name} · ${div.race_label || race} · ${pct(lead.division_win_pct)} to win`;
+  return `<li class="cfp-seed${race === "toss_up" ? " race-tossup" : ""}">
     <span class="cfp-seed-num">${div.conference}</span>
     ${logo}
     <span class="cfp-seed-copy">
-      <strong>${champ.team || div.champion || "—"}</strong>
-      <span>${div.name} · ${pct(champ.division_win_pct)} to win</span>
+      <strong>${title}</strong>
+      <span>${detail}</span>
     </span>
   </li>`;
 }
@@ -81,11 +93,13 @@ function renderStandings(divisions) {
       '<tr><td colspan="5" class="empty">No division projection yet.</td></tr>';
     return;
   }
+  const race = div.race || "toss_up";
   els.standingsBody.innerHTML = rows
     .map((row) => {
-      return `<tr class="${row.place === 1 ? "champ-row" : ""}">
+      const pickRow = row.place === 1 && race !== "toss_up";
+      return `<tr class="${pickRow ? "champ-row" : ""}">
         <td>${row.place_label || row.place}</td>
-        <td>${teamCell(row)}</td>
+        <td>${teamCell(row, race)}</td>
         <td>${record(row)}</td>
         <td>${Number(row.expected_wins).toFixed(1)}</td>
         <td>${pct(row.division_win_pct)}</td>

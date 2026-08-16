@@ -3,12 +3,12 @@
   "season": 2026,
   "week_id": "2026-08-12",
   "as_of": "2026-08-12",
-  "generated_at": "2026-08-16T03:44:49.871591+00:00",
-  "model": "v2_gbr_elo_tossup",
+  "generated_at": "2026-08-16T04:15:17.106270+00:00",
+  "model": "offseason_prior_3y",
   "n_sims": 800,
   "games_completed": 0,
   "games_remaining": 272,
-  "disclaimer": "Wednesday snapshot from the NFL v2 moneyline model. Tables are the projected 1st-through-4th finish in each division. Expected wins add completed results to the model's remaining-game win probabilities. Rebuilds every Wednesday after the previous week's games.",
+  "disclaimer": "Wednesday snapshot of projected 1st-through-4th in each division. Before the season, rankings use a three-year offseason prior (recent wins, Pythagorean wins, last year's finish) plus the upcoming schedule. After Week 1, completed results lock and the live moneyline model blends in. Rebuilds every Wednesday.",
   "divisions": [
     {
       "key": "AFC_EAST",
@@ -27,16 +27,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 10.78,
-          "mean_finish": 1.29,
-          "division_win_pct": 0.7638,
+          "expected_wins": 10.59,
+          "mean_finish": 1.43,
+          "division_win_pct": 0.66,
           "place_pct": {
-            "1": 0.7638,
-            "2": 0.185,
-            "3": 0.045,
-            "4": 0.0063
+            "1": 0.66,
+            "2": 0.2625,
+            "3": 0.0638,
+            "4": 0.0138
           },
-          "strength": 1639.5
+          "strength": 1605.0
         },
         {
           "place": 2,
@@ -48,16 +48,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 8.33,
-          "mean_finish": 2.32,
-          "division_win_pct": 0.14,
+          "expected_wins": 9.34,
+          "mean_finish": 2.01,
+          "division_win_pct": 0.2662,
           "place_pct": {
-            "1": 0.14,
-            "2": 0.475,
-            "3": 0.31,
-            "4": 0.075
+            "1": 0.2662,
+            "2": 0.495,
+            "3": 0.205,
+            "4": 0.0338
           },
-          "strength": 1522.7
+          "strength": 1556.0
         },
         {
           "place": 3,
@@ -69,16 +69,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 7.87,
-          "mean_finish": 2.63,
-          "division_win_pct": 0.09,
+          "expected_wins": 7.57,
+          "mean_finish": 2.82,
+          "division_win_pct": 0.07,
           "place_pct": {
-            "1": 0.09,
-            "2": 0.3088,
-            "3": 0.48,
-            "4": 0.1212
+            "1": 0.07,
+            "2": 0.2075,
+            "3": 0.5525,
+            "4": 0.17
           },
-          "strength": 1497.4
+          "strength": 1477.6
         },
         {
           "place": 4,
@@ -90,16 +90,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 5.15,
-          "mean_finish": 3.75,
-          "division_win_pct": 0.0063,
+          "expected_wins": 5.35,
+          "mean_finish": 3.74,
+          "division_win_pct": 0.0037,
           "place_pct": {
-            "1": 0.0063,
-            "2": 0.0312,
-            "3": 0.165,
-            "4": 0.7975
+            "1": 0.0037,
+            "2": 0.035,
+            "3": 0.1787,
+            "4": 0.7825
           },
-          "strength": 1361.5
+          "strength": 1362.8
         }
       ]
     },
@@ -107,33 +107,12 @@
       "key": "AFC_NORTH",
       "name": "AFC North",
       "conference": "AFC",
-      "champion": "Baltimore Ravens",
-      "champion_abbr": "BAL",
+      "champion": "Pittsburgh Steelers",
+      "champion_abbr": "PIT",
       "teams": [
         {
           "place": 1,
           "place_label": "1st",
-          "team": "Baltimore Ravens",
-          "abbr": "BAL",
-          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/bal.png",
-          "division_key": "AFC_NORTH",
-          "actual_wins": 0,
-          "actual_losses": 0,
-          "actual_ties": 0,
-          "expected_wins": 11.0,
-          "mean_finish": 1.51,
-          "division_win_pct": 0.625,
-          "place_pct": {
-            "1": 0.625,
-            "2": 0.2462,
-            "3": 0.1175,
-            "4": 0.0112
-          },
-          "strength": 1593.6
-        },
-        {
-          "place": 2,
-          "place_label": "2nd",
           "team": "Pittsburgh Steelers",
           "abbr": "PIT",
           "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/pit.png",
@@ -141,16 +120,37 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 10.03,
-          "mean_finish": 2.08,
-          "division_win_pct": 0.2762,
+          "expected_wins": 9.83,
+          "mean_finish": 1.78,
+          "division_win_pct": 0.4838,
           "place_pct": {
-            "1": 0.2762,
-            "2": 0.4487,
-            "3": 0.195,
-            "4": 0.08
+            "1": 0.4838,
+            "2": 0.3137,
+            "3": 0.1425,
+            "4": 0.06
           },
-          "strength": 1570.3
+          "strength": 1556.0
+        },
+        {
+          "place": 2,
+          "place_label": "2nd",
+          "team": "Baltimore Ravens",
+          "abbr": "BAL",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/bal.png",
+          "division_key": "AFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.72,
+          "mean_finish": 1.92,
+          "division_win_pct": 0.3825,
+          "place_pct": {
+            "1": 0.3825,
+            "2": 0.3675,
+            "3": 0.2025,
+            "4": 0.0475
+          },
+          "strength": 1539.2
         },
         {
           "place": 3,
@@ -162,16 +162,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 8.29,
-          "mean_finish": 2.98,
-          "division_win_pct": 0.0688,
+          "expected_wins": 8.04,
+          "mean_finish": 2.8,
+          "division_win_pct": 0.1013,
           "place_pct": {
-            "1": 0.0688,
-            "2": 0.1862,
-            "3": 0.445,
-            "4": 0.3
+            "1": 0.1013,
+            "2": 0.2275,
+            "3": 0.4437,
+            "4": 0.2275
           },
-          "strength": 1471.2
+          "strength": 1459.4
         },
         {
           "place": 4,
@@ -183,16 +183,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 7.55,
-          "mean_finish": 3.43,
-          "division_win_pct": 0.03,
+          "expected_wins": 6.66,
+          "mean_finish": 3.51,
+          "division_win_pct": 0.0325,
           "place_pct": {
-            "1": 0.03,
-            "2": 0.1187,
-            "3": 0.2425,
-            "4": 0.6088
+            "1": 0.0325,
+            "2": 0.0912,
+            "3": 0.2112,
+            "4": 0.665
           },
-          "strength": 1426.7
+          "strength": 1399.2
         }
       ]
     },
@@ -213,16 +213,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 10.17,
-          "mean_finish": 1.49,
-          "division_win_pct": 0.66,
+          "expected_wins": 10.32,
+          "mean_finish": 1.56,
+          "division_win_pct": 0.5887,
           "place_pct": {
-            "1": 0.66,
-            "2": 0.2137,
-            "3": 0.1025,
-            "4": 0.0238
+            "1": 0.5887,
+            "2": 0.275,
+            "3": 0.1187,
+            "4": 0.0175
           },
-          "strength": 1586.5
+          "strength": 1579.8
         },
         {
           "place": 2,
@@ -234,16 +234,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 8.79,
-          "mean_finish": 2.17,
-          "division_win_pct": 0.2238,
+          "expected_wins": 9.66,
+          "mean_finish": 2.0,
+          "division_win_pct": 0.3025,
           "place_pct": {
-            "1": 0.2238,
-            "2": 0.4625,
-            "3": 0.2288,
-            "4": 0.085
+            "1": 0.3025,
+            "2": 0.4325,
+            "3": 0.23,
+            "4": 0.035
           },
-          "strength": 1515.6
+          "strength": 1560.2
         },
         {
           "place": 3,
@@ -255,16 +255,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 7.82,
-          "mean_finish": 2.74,
-          "division_win_pct": 0.0988,
+          "expected_wins": 8.45,
+          "mean_finish": 2.62,
+          "division_win_pct": 0.105,
           "place_pct": {
-            "1": 0.0988,
-            "2": 0.2562,
-            "3": 0.45,
-            "4": 0.195
+            "1": 0.105,
+            "2": 0.275,
+            "3": 0.5188,
+            "4": 0.1013
           },
-          "strength": 1469.5
+          "strength": 1486.0
         },
         {
           "place": 4,
@@ -276,16 +276,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 5.94,
-          "mean_finish": 3.59,
-          "division_win_pct": 0.0175,
+          "expected_wins": 5.3,
+          "mean_finish": 3.82,
+          "division_win_pct": 0.0037,
           "place_pct": {
-            "1": 0.0175,
-            "2": 0.0675,
-            "3": 0.2188,
-            "4": 0.6963
+            "1": 0.0037,
+            "2": 0.0175,
+            "3": 0.1325,
+            "4": 0.8462
           },
-          "strength": 1367.2
+          "strength": 1344.6
         }
       ]
     },
@@ -306,16 +306,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 10.68,
-          "mean_finish": 1.52,
-          "division_win_pct": 0.64,
+          "expected_wins": 11.05,
+          "mean_finish": 1.35,
+          "division_win_pct": 0.7238,
           "place_pct": {
-            "1": 0.64,
-            "2": 0.2087,
-            "3": 0.1375,
-            "4": 0.0138
+            "1": 0.7238,
+            "2": 0.2037,
+            "3": 0.0663,
+            "4": 0.0063
           },
-          "strength": 1614.4
+          "strength": 1614.8
         },
         {
           "place": 2,
@@ -328,15 +328,15 @@
           "actual_losses": 0,
           "actual_ties": 0,
           "expected_wins": 9.2,
-          "mean_finish": 2.22,
-          "division_win_pct": 0.2062,
+          "mean_finish": 2.14,
+          "division_win_pct": 0.19,
           "place_pct": {
-            "1": 0.2062,
-            "2": 0.4263,
-            "3": 0.31,
-            "4": 0.0575
+            "1": 0.19,
+            "2": 0.5112,
+            "3": 0.2675,
+            "4": 0.0312
           },
-          "strength": 1547.5
+          "strength": 1549.0
         },
         {
           "place": 3,
@@ -348,16 +348,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 9.03,
-          "mean_finish": 2.45,
-          "division_win_pct": 0.1487,
+          "expected_wins": 8.38,
+          "mean_finish": 2.65,
+          "division_win_pct": 0.0862,
           "place_pct": {
-            "1": 0.1487,
-            "2": 0.3287,
-            "3": 0.45,
-            "4": 0.0725
+            "1": 0.0862,
+            "2": 0.2625,
+            "3": 0.5675,
+            "4": 0.0838
           },
-          "strength": 1536.4
+          "strength": 1509.8
         },
         {
           "place": 4,
@@ -369,16 +369,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 5.78,
-          "mean_finish": 3.81,
-          "division_win_pct": 0.005,
+          "expected_wins": 5.15,
+          "mean_finish": 3.86,
+          "division_win_pct": 0.0,
           "place_pct": {
-            "1": 0.005,
-            "2": 0.0362,
-            "3": 0.1025,
-            "4": 0.8562
+            "1": 0.0,
+            "2": 0.0225,
+            "3": 0.0988,
+            "4": 0.8788
           },
-          "strength": 1345.4
+          "strength": 1360.0
         }
       ]
     },
@@ -399,16 +399,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 12.0,
-          "mean_finish": 1.12,
-          "division_win_pct": 0.9025,
+          "expected_wins": 11.48,
+          "mean_finish": 1.17,
+          "division_win_pct": 0.8662,
           "place_pct": {
-            "1": 0.9025,
-            "2": 0.0813,
-            "3": 0.0138,
-            "4": 0.0025
+            "1": 0.8662,
+            "2": 0.1062,
+            "3": 0.0238,
+            "4": 0.0037
           },
-          "strength": 1618.2
+          "strength": 1605.0
         },
         {
           "place": 2,
@@ -420,16 +420,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 8.01,
-          "mean_finish": 2.43,
-          "division_win_pct": 0.0675,
+          "expected_wins": 8.07,
+          "mean_finish": 2.39,
+          "division_win_pct": 0.0862,
           "place_pct": {
-            "1": 0.0675,
-            "2": 0.5413,
-            "3": 0.2888,
-            "4": 0.1025
+            "1": 0.0862,
+            "2": 0.53,
+            "3": 0.29,
+            "4": 0.0938
           },
-          "strength": 1477.3
+          "strength": 1483.2
         },
         {
           "place": 3,
@@ -441,16 +441,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 7.25,
-          "mean_finish": 2.87,
-          "division_win_pct": 0.0225,
+          "expected_wins": 7.38,
+          "mean_finish": 2.83,
+          "division_win_pct": 0.0413,
           "place_pct": {
-            "1": 0.0225,
-            "2": 0.2963,
-            "3": 0.4662,
-            "4": 0.215
+            "1": 0.0413,
+            "2": 0.2888,
+            "3": 0.4713,
+            "4": 0.1988
           },
-          "strength": 1423.4
+          "strength": 1442.6
         },
         {
           "place": 4,
@@ -462,16 +462,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 5.77,
-          "mean_finish": 3.58,
-          "division_win_pct": 0.0075,
+          "expected_wins": 5.57,
+          "mean_finish": 3.62,
+          "division_win_pct": 0.0063,
           "place_pct": {
-            "1": 0.0075,
-            "2": 0.0813,
-            "3": 0.2313,
-            "4": 0.68
+            "1": 0.0063,
+            "2": 0.075,
+            "3": 0.215,
+            "4": 0.7037
           },
-          "strength": 1365.3
+          "strength": 1361.4
         }
       ]
     },
@@ -492,41 +492,20 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 10.74,
-          "mean_finish": 1.85,
-          "division_win_pct": 0.4925,
+          "expected_wins": 10.31,
+          "mean_finish": 1.83,
+          "division_win_pct": 0.4875,
           "place_pct": {
-            "1": 0.4925,
-            "2": 0.2487,
-            "3": 0.17,
-            "4": 0.0887
+            "1": 0.4875,
+            "2": 0.27,
+            "3": 0.1638,
+            "4": 0.0788
           },
-          "strength": 1577.4
+          "strength": 1554.6
         },
         {
           "place": 2,
           "place_label": "2nd",
-          "team": "Green Bay Packers",
-          "abbr": "GB",
-          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/gb.png",
-          "division_key": "NFC_NORTH",
-          "actual_wins": 0,
-          "actual_losses": 0,
-          "actual_ties": 0,
-          "expected_wins": 10.0,
-          "mean_finish": 2.34,
-          "division_win_pct": 0.2512,
-          "place_pct": {
-            "1": 0.2512,
-            "2": 0.3125,
-            "3": 0.2812,
-            "4": 0.155
-          },
-          "strength": 1569.3
-        },
-        {
-          "place": 3,
-          "place_label": "3rd",
           "team": "Minnesota Vikings",
           "abbr": "MIN",
           "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/min.png",
@@ -534,16 +513,37 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 9.93,
-          "mean_finish": 2.49,
-          "division_win_pct": 0.2,
+          "expected_wins": 9.5,
+          "mean_finish": 2.34,
+          "division_win_pct": 0.26,
           "place_pct": {
-            "1": 0.2,
-            "2": 0.3013,
-            "3": 0.3088,
-            "4": 0.19
+            "1": 0.26,
+            "2": 0.315,
+            "3": 0.2462,
+            "4": 0.1787
           },
-          "strength": 1565.3
+          "strength": 1536.4
+        },
+        {
+          "place": 3,
+          "place_label": "3rd",
+          "team": "Green Bay Packers",
+          "abbr": "GB",
+          "logo_url": "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/gb.png",
+          "division_key": "NFC_NORTH",
+          "actual_wins": 0,
+          "actual_losses": 0,
+          "actual_ties": 0,
+          "expected_wins": 9.1,
+          "mean_finish": 2.69,
+          "division_win_pct": 0.1663,
+          "place_pct": {
+            "1": 0.1663,
+            "2": 0.2487,
+            "3": 0.315,
+            "4": 0.27
+          },
+          "strength": 1532.2
         },
         {
           "place": 4,
@@ -555,16 +555,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 8.42,
-          "mean_finish": 3.32,
-          "division_win_pct": 0.0563,
+          "expected_wins": 8.45,
+          "mean_finish": 3.13,
+          "division_win_pct": 0.0862,
           "place_pct": {
-            "1": 0.0563,
-            "2": 0.1375,
-            "3": 0.24,
-            "4": 0.5663
+            "1": 0.0862,
+            "2": 0.1663,
+            "3": 0.275,
+            "4": 0.4725
           },
-          "strength": 1522.2
+          "strength": 1525.2
         }
       ]
     },
@@ -585,16 +585,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 9.01,
-          "mean_finish": 1.45,
-          "division_win_pct": 0.6837,
+          "expected_wins": 9.17,
+          "mean_finish": 1.65,
+          "division_win_pct": 0.5737,
           "place_pct": {
-            "1": 0.6837,
-            "2": 0.2062,
-            "3": 0.0838,
-            "4": 0.0262
+            "1": 0.5737,
+            "2": 0.2525,
+            "3": 0.1225,
+            "4": 0.0512
           },
-          "strength": 1504.3
+          "strength": 1518.2
         },
         {
           "place": 2,
@@ -606,16 +606,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 6.68,
-          "mean_finish": 2.55,
-          "division_win_pct": 0.1425,
+          "expected_wins": 8.22,
+          "mean_finish": 2.27,
+          "division_win_pct": 0.2575,
           "place_pct": {
-            "1": 0.1425,
-            "2": 0.3488,
-            "3": 0.3225,
-            "4": 0.1862
+            "1": 0.2575,
+            "2": 0.3525,
+            "3": 0.2562,
+            "4": 0.1338
           },
-          "strength": 1418.7
+          "strength": 1486.0
         },
         {
           "place": 3,
@@ -627,16 +627,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 7.02,
-          "mean_finish": 2.58,
-          "division_win_pct": 0.1462,
+          "expected_wins": 7.3,
+          "mean_finish": 2.94,
+          "division_win_pct": 0.1113,
           "place_pct": {
-            "1": 0.1462,
-            "2": 0.3225,
-            "3": 0.3362,
-            "4": 0.195
+            "1": 0.1113,
+            "2": 0.2225,
+            "3": 0.285,
+            "4": 0.3812
           },
-          "strength": 1399.0
+          "strength": 1421.6
         },
         {
           "place": 4,
@@ -648,16 +648,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 5.54,
-          "mean_finish": 3.42,
-          "division_win_pct": 0.0275,
+          "expected_wins": 6.65,
+          "mean_finish": 3.15,
+          "division_win_pct": 0.0575,
           "place_pct": {
-            "1": 0.0275,
-            "2": 0.1225,
-            "3": 0.2575,
-            "4": 0.5925
+            "1": 0.0575,
+            "2": 0.1725,
+            "3": 0.3362,
+            "4": 0.4338
           },
-          "strength": 1364.1
+          "strength": 1435.6
         }
       ]
     },
@@ -678,16 +678,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 11.09,
-          "mean_finish": 1.55,
-          "division_win_pct": 0.5863,
+          "expected_wins": 11.21,
+          "mean_finish": 1.52,
+          "division_win_pct": 0.605,
           "place_pct": {
-            "1": 0.5863,
-            "2": 0.2875,
-            "3": 0.12,
-            "4": 0.0063
+            "1": 0.605,
+            "2": 0.2737,
+            "3": 0.1125,
+            "4": 0.0088
           },
-          "strength": 1619.1
+          "strength": 1619.0
         },
         {
           "place": 2,
@@ -699,16 +699,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 9.77,
-          "mean_finish": 2.19,
-          "division_win_pct": 0.2238,
+          "expected_wins": 10.09,
+          "mean_finish": 2.1,
+          "division_win_pct": 0.2487,
           "place_pct": {
-            "1": 0.2238,
-            "2": 0.3912,
-            "3": 0.3613,
-            "4": 0.0238
+            "1": 0.2487,
+            "2": 0.425,
+            "3": 0.3,
+            "4": 0.0262
           },
-          "strength": 1580.0
+          "strength": 1579.8
         },
         {
           "place": 3,
@@ -720,16 +720,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 9.82,
-          "mean_finish": 2.33,
-          "division_win_pct": 0.19,
+          "expected_wins": 9.55,
+          "mean_finish": 2.47,
+          "division_win_pct": 0.1437,
           "place_pct": {
-            "1": 0.19,
-            "2": 0.3113,
-            "3": 0.4738,
-            "4": 0.025
+            "1": 0.1437,
+            "2": 0.2913,
+            "3": 0.52,
+            "4": 0.045
           },
-          "strength": 1569.5
+          "strength": 1551.8
         },
         {
           "place": 4,
@@ -741,16 +741,16 @@
           "actual_wins": 0,
           "actual_losses": 0,
           "actual_ties": 0,
-          "expected_wins": 4.56,
-          "mean_finish": 3.94,
-          "division_win_pct": 0.0,
+          "expected_wins": 5.33,
+          "mean_finish": 3.9,
+          "division_win_pct": 0.0025,
           "place_pct": {
-            "1": 0.0,
+            "1": 0.0025,
             "2": 0.01,
-            "3": 0.045,
-            "4": 0.945
+            "3": 0.0675,
+            "4": 0.92
           },
-          "strength": 1361.6
+          "strength": 1371.2
         }
       ]
     }

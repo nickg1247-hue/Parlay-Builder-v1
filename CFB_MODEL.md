@@ -64,7 +64,7 @@ Slate API: `GET /api/cfb/predictions?date=YYYY-MM-DD`
 
 ## Odds sport key
 
-`americanfootball_ncaaf` — live repository + CFBD lines. Board includes cross-game parlays. Futures: `/cfb/futures` (Sunday conference 1-through-last + 12-team playoff). Morning refresh: `python scripts/morning_refresh.py --sports mlb,cfb`.
+`americanfootball_ncaaf` — live repository + CFBD lines. Board includes cross-game parlays. Futures: `/cfb/futures` (Sunday conference 1-through-last + 12-team playoff). Playoff uses **2026 CFP rules** (Power 4 champs + top G6 + 7 at-large). Backtest vs 2024–2025 official fields: **11/12 at selection day**, 75%+ from week 12; week 3 is still ~50% because of mid-season risers. `python scripts/backtest_cfb_playoff.py`. Preseason conference **title winners** use a prior blend (SP+ / prior FPI / talent / Elo) plus two tie-breaks (SP+ ≥ 28 outlier, close-race returning production); target ≥50% on 2024–2025 (`python scripts/backtest_cfb_conference.py`). Morning refresh: `python scripts/morning_refresh.py --sports mlb,cfb`.
 
 ## Train / bootstrap
 

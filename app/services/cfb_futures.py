@@ -18,6 +18,7 @@ import pandas as pd
 
 from app.config import PROJECT_ROOT
 from app.odds.cfb_team_aliases import normalize_team_name
+from app.services.cfb_playoff import regress_offseason, select_playoff_indices
 from app.services.cfb_slate_predictions import cfb_season_end_year
 from app.services.cfb_team_logos import lookup_team_logo
 
@@ -155,23 +156,33 @@ def assign_team_conferences(games: list[dict[str, Any]]) -> dict[str, str]:
 
 
 def mark_title_games(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Flag the last single-game conference week (week 13+) as the title game."""
+    """Flag conference championships.
+
+    CFBD marks most title games as conferenceGame, but 2025 left that flag
+    off. Week 15 same-conference FBS games are title games. Army–Navy (week
+    16) is not.
+    """
     by_conf_week: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
     for game in games:
-        if not int(game.get("conference_game") or 0):
-            game["title_game"] = False
-            continue
+        game["title_game"] = False
         home_spec = match_conference(str(game.get("home_conference") or ""))
         away_spec = match_conference(str(game.get("away_conference") or ""))
         if home_spec is None or away_spec is None or home_spec["key"] != away_spec["key"]:
-            game["title_game"] = False
             continue
         week = int(game.get("week") or 0)
-        by_conf_week[(home_spec["key"], week)].append(game)
-        game["title_game"] = False
+        same = home_spec["key"]
+        if week == 15:
+            game["title_game"] = True
+            continue
+        if not int(game.get("conference_game") or 0):
+            continue
+        if week >= TITLE_GAME_MIN_WEEK:
+            by_conf_week[(same, week)].append(game)
 
     for (conf_key, week), rows in by_conf_week.items():
         del conf_key
+        if week == 16:
+            continue
         if week >= TITLE_GAME_MIN_WEEK and len(rows) == 1:
             rows[0]["title_game"] = True
     return games
@@ -234,6 +245,8 @@ def project_from_probs(
     strength: dict[str, float],
     n_sims: int = N_SIMS,
     seed: int = 0,
+    season: int = 2026,
+    season_progress: float = 0.0,
 ) -> dict[str, Any]:
     """Seeded Monte Carlo of remaining games → standings + playoff field."""
     teams = sorted(team_conf)
@@ -287,6 +300,7 @@ def project_from_probs(
         teams_by_conf[conf_key].append(team_index[team])
 
     strength_arr = np.array([float(strength.get(team, 1500.0)) for team in teams])
+    sos_arr, qwin_arr = _resume_arrays(teams, team_index, records, remaining, probs, strength)
 
     for sim in range(n_sims):
         champs: dict[str, int] = {}
@@ -317,6 +331,11 @@ def project_from_probs(
             overall=overall_wins[sim],
             strength=strength_arr,
             teams=teams,
+            team_conf=team_conf,
+            sos=sos_arr,
+            quality_wins=qwin_arr,
+            season=season,
+            season_progress=season_progress,
         )
         for seed_num, idx in enumerate(field, start=1):
             playoff_counts[idx] += 1
@@ -339,16 +358,28 @@ def project_from_probs(
         idxs = teams_by_conf.get(conf_key) or []
         if not idxs:
             continue
-        ranked = sorted(
-            idxs,
-            key=lambda i: (
-                mean_finish[i],
-                -title_pct[i],
-                -expected_conf[i],
-                -strength_arr[i],
-                teams[i],
-            ),
-        )
+        if season_progress < 0.25:
+            ranked = sorted(
+                idxs,
+                key=lambda i: (
+                    -title_pct[i],
+                    mean_finish[i],
+                    -expected_conf[i],
+                    -strength_arr[i],
+                    teams[i],
+                ),
+            )
+        else:
+            ranked = sorted(
+                idxs,
+                key=lambda i: (
+                    mean_finish[i],
+                    -title_pct[i],
+                    -expected_conf[i],
+                    -strength_arr[i],
+                    teams[i],
+                ),
+            )
         rows = []
         for place, idx in enumerate(ranked, start=1):
             team = teams[idx]
@@ -385,6 +416,11 @@ def project_from_probs(
         overall=expected_overall,
         strength=strength_arr,
         teams=teams,
+        team_conf=team_conf,
+        sos=sos_arr,
+        quality_wins=qwin_arr,
+        season=season,
+        season_progress=season_progress,
     )
     playoff = _playoff_payload(
         field=published_field,
@@ -402,30 +438,60 @@ def project_from_probs(
     }
 
 
+def _resume_arrays(
+    teams: list[str],
+    team_index: dict[str, int],
+    records: dict[str, dict[str, int]],
+    remaining: list[dict[str, Any]],
+    probs: dict[str, float],
+    strength: dict[str, float],
+) -> tuple[np.ndarray, np.ndarray]:
+    sos_sum = np.zeros(len(teams), dtype=np.float64)
+    sos_n = np.zeros(len(teams), dtype=np.float64)
+    qwins = np.zeros(len(teams), dtype=np.float64)
+    for game in remaining:
+        home = normalize_team_name(str(game["home_team"]))
+        away = normalize_team_name(str(game["away_team"]))
+        if home not in team_index or away not in team_index:
+            continue
+        hi, ai = team_index[home], team_index[away]
+        hs, aws = strength.get(home, 1500.0), strength.get(away, 1500.0)
+        p_home = _clip_prob(float(probs.get(str(game["game_id"]), 0.5)))
+        sos_sum[hi] += aws
+        sos_sum[ai] += hs
+        sos_n[hi] += 1
+        sos_n[ai] += 1
+        if aws >= 1600:
+            qwins[hi] += p_home
+        if hs >= 1600:
+            qwins[ai] += 1.0 - p_home
+    sos = np.where(sos_n > 0, sos_sum / np.maximum(sos_n, 1.0), 1500.0)
+    return sos, qwins
+
+
 def _select_playoff_indices(
     *,
     champs: dict[str, int],
     overall: np.ndarray,
     strength: np.ndarray,
     teams: list[str],
+    team_conf: dict[str, str] | None = None,
+    sos: np.ndarray | None = None,
+    quality_wins: np.ndarray | None = None,
+    season: int = 2026,
+    season_progress: float = 1.0,
 ) -> tuple[list[int], set[int]]:
-    """5 highest-ranked conference champs + 7 at-large, then seed 1–12."""
-    champ_idxs = list(champs.values())
-    def _resume(idx: int) -> tuple:
-        # Elo leftover + simulated wins. ~35 Elo per win so a 10-win
-        # league champ outranks a 7-win blue blood with stale rating.
-        score = float(strength[idx]) + 35.0 * float(overall[idx])
-        return (-score, -float(overall[idx]), teams[idx])
-
-    champ_ranked = sorted(champ_idxs, key=_resume)
-    auto = champ_ranked[:AUTO_BIDS]
-    auto_set = set(auto)
-    leftover = [i for i in range(len(teams)) if i not in auto_set]
-    leftover_ranked = sorted(leftover, key=_resume)
-    at_large = leftover_ranked[: PLAYOFF_FIELD - len(auto)]
-    field = auto + at_large
-    field.sort(key=_resume)
-    return field[:PLAYOFF_FIELD], auto_set
+    return select_playoff_indices(
+        champs=champs,
+        wins=overall,
+        strength=strength,
+        teams=teams,
+        team_conf=team_conf or {},
+        sos=sos,
+        quality_wins=quality_wins,
+        season=season,
+        season_progress=season_progress,
+    )
 
 
 def _playoff_payload(
@@ -705,11 +771,29 @@ def build_cfb_futures(
     completed, remaining = split_completed_remaining(games, as_of=week_id)
     records = actual_records(completed, team_conf)
 
+    injected = probs is not None and strength is not None
     model_name = "injected"
-    if probs is None or strength is None:
+    if not injected:
         probs, strength, model_name = predict_remaining_probs(remaining, completed)
     assert probs is not None
     assert strength is not None
+    done_weeks = [int(g.get("week") or 0) for g in completed]
+    through_week = max(done_weeks) if done_weeks else 0
+    season_progress = min(1.0, through_week / 12.0)
+    if not injected:
+        from app.services.cfb_preseason import mix_preseason_strength, rebuild_probs_from_strength
+
+        if season_progress < 0.45:
+            strength = regress_offseason(strength)
+        strength = mix_preseason_strength(
+            season=season_year,
+            team_conf=team_conf,
+            live=strength,
+            through_week=through_week,
+        )
+        if through_week < 3:
+            probs = rebuild_probs_from_strength(remaining, strength, win_prob=elo_win_prob)
+            model_name = "preseason_prior_blend"
 
     seed = int(week_id.strftime("%Y%m%d"))
     projected = project_from_probs(
@@ -720,6 +804,8 @@ def build_cfb_futures(
         strength=strength,
         n_sims=n_sims,
         seed=seed,
+        season=season_year,
+        season_progress=season_progress,
     )
     payload = {
         "sport": "cfb",
@@ -733,9 +819,9 @@ def build_cfb_futures(
         "games_remaining": len(remaining),
         "disclaimer": (
             "Sunday snapshot from the CFB v4 model. Conference tables are the "
-            "projected 1-through-last finish. Playoff uses the 12-team CFP "
-            "rules (5 conference champs + 7 at-large, top 4 byes). Resets "
-            "each Sunday after Saturday results."
+            "projected 1-through-last finish. Playoff uses 2026 CFP rules "
+            "(Power 4 champs + top Group of 6 team + 7 at-large; top 4 byes). "
+            "Resets each Sunday after Saturday results."
         ),
         "conferences": _conference_payloads(projected["conferences"]),
         "playoff": projected["playoff"],

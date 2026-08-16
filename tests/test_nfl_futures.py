@@ -3,6 +3,11 @@
 from datetime import date
 
 from app.ingest.nfl import NFL_DIVISIONS
+from app.services.nfl_division_priors import (
+    classify_division_race,
+    prior_mix_weight,
+    projected_wins_from_history,
+)
 from app.services.nfl_futures import (
     actual_records,
     build_nfl_futures,
@@ -147,6 +152,110 @@ def test_build_nfl_futures_uses_injected_schedule(tmp_path, monkeypatch):
     north = next(d for d in payload["divisions"] if d["key"] == "AFC_NORTH")
     assert len(north["teams"]) == 4
     assert north["champion_abbr"] in {"PIT", "BAL", "CIN", "CLE"}
+    assert north["race"] in {"clear", "lean", "toss_up"}
+    assert "race_label" in north
     saved = nf.load_saved_nfl_futures()
     assert saved is not None
     assert cache_is_current(saved, as_of=date(2026, 8, 12), season=2026)
+
+
+def test_prior_mix_is_full_before_week_one():
+    assert prior_mix_weight(0, 272) == 1.0
+    assert prior_mix_weight(136, 136) < 0.5
+    assert prior_mix_weight(200, 72) == 0.25
+
+
+def test_offseason_prior_keeps_recent_division_winner_ahead_of_last_place():
+    import pandas as pd
+
+    rows = []
+    for season, wins in ((2025, 11), (2024, 5), (2023, 7)):
+        for i in range(wins):
+            rows.append(
+                {
+                    "game_id": f"{season}-chi-w{i}",
+                    "date": f"{season}-09-10",
+                    "season": season,
+                    "week": i + 1,
+                    "game_type": "regular",
+                    "home_team_abbr": "CHI",
+                    "away_team_abbr": "NYG",
+                    "home_score": 24,
+                    "away_score": 17,
+                    "home_win": 1,
+                    "divisional": 0,
+                }
+            )
+        for i in range(17 - wins):
+            rows.append(
+                {
+                    "game_id": f"{season}-chi-l{i}",
+                    "date": f"{season}-11-10",
+                    "season": season,
+                    "week": wins + i + 1,
+                    "game_type": "regular",
+                    "home_team_abbr": "CHI",
+                    "away_team_abbr": "NYG",
+                    "home_score": 10,
+                    "away_score": 27,
+                    "home_win": 0,
+                    "divisional": 0,
+                }
+            )
+    for season, wins in ((2025, 9), (2024, 15), (2023, 12)):
+        for i in range(wins):
+            rows.append(
+                {
+                    "game_id": f"{season}-det-w{i}",
+                    "date": f"{season}-09-11",
+                    "season": season,
+                    "week": i + 1,
+                    "game_type": "regular",
+                    "home_team_abbr": "DET",
+                    "away_team_abbr": "NYG",
+                    "home_score": 28,
+                    "away_score": 14,
+                    "home_win": 1,
+                    "divisional": 0,
+                }
+            )
+        for i in range(17 - wins):
+            rows.append(
+                {
+                    "game_id": f"{season}-det-l{i}",
+                    "date": f"{season}-11-11",
+                    "season": season,
+                    "week": wins + i + 1,
+                    "game_type": "regular",
+                    "home_team_abbr": "DET",
+                    "away_team_abbr": "NYG",
+                    "home_score": 13,
+                    "away_score": 24,
+                    "home_win": 0,
+                    "divisional": 0,
+                }
+            )
+    hist = pd.DataFrame(rows)
+    prior = projected_wins_from_history(hist, 2026)
+    assert prior["CHI"] > 8.3
+    assert abs(prior["CHI"] - prior["DET"]) < 3.5
+
+
+def test_close_division_is_tossup_not_a_pick():
+    teams = [
+        {"team": "Lions", "abbr": "DET", "expected_wins": 10.3, "division_win_pct": 0.49},
+        {"team": "Vikings", "abbr": "MIN", "expected_wins": 9.5, "division_win_pct": 0.26},
+        {"team": "Packers", "abbr": "GB", "expected_wins": 9.1, "division_win_pct": 0.17},
+        {"team": "Bears", "abbr": "CHI", "expected_wins": 8.5, "division_win_pct": 0.09},
+    ]
+    assert classify_division_race(teams) == "toss_up"
+
+
+def test_wide_gap_is_a_clear_favorite():
+    teams = [
+        {"team": "Eagles", "abbr": "PHI", "expected_wins": 11.6, "division_win_pct": 0.87},
+        {"team": "Cowboys", "abbr": "DAL", "expected_wins": 8.1, "division_win_pct": 0.08},
+        {"team": "Commanders", "abbr": "WSH", "expected_wins": 7.7, "division_win_pct": 0.05},
+        {"team": "Giants", "abbr": "NYG", "expected_wins": 5.6, "division_win_pct": 0.00},
+    ]
+    assert classify_division_race(teams) == "clear"
