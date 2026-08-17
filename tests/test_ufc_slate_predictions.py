@@ -21,7 +21,7 @@ def test_clean_json_value_strips_nan():
     assert out["ok"] == 1
 
 
-@patch("app.main.predict_slate")
+@patch("app.main.predict_ufc_slate")
 def test_ufc_predictions_api_json_serializable(mock_preds):
     mock_preds.return_value = {
         "401867788": {

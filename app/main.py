@@ -99,7 +99,7 @@ from app.services.nfl_fantasy_draft import (
     recommend_from_board,
 )
 from app.services.cfb_daily_board import build_cfb_daily_board
-from app.services.cfb_slate_predictions import predict_slate
+from app.services.cfb_slate_predictions import predict_slate as predict_cfb_slate
 from app.services.cfb_backtest_report import (
     load_saved_cfb_backtest_report,
     run_cfb_walk_forward_backtest,
@@ -111,7 +111,7 @@ from app.services.nfl_daily_board import build_nfl_daily_board
 from app.services.nfl_futures import build_nfl_futures
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
-from app.services.ufc_slate_predictions import predict_slate, _clean_json_value
+from app.services.ufc_slate_predictions import predict_slate as predict_ufc_slate, _clean_json_value
 from app.services.ufc_model_comparison import load_model_comparison
 from app.services.ufc_backtest_report import (
     load_saved_ufc_backtest_report,
@@ -991,7 +991,7 @@ async def cfb_predictions(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    return predict_slate(game_date)
+    return predict_cfb_slate(game_date)
 
 
 @app.get("/api/cfb/futures")
@@ -1029,7 +1029,7 @@ async def ufc_daily(
 async def ufc_predictions(
     date_param: str | None = Query(None, alias="date"),
 ):
-    preds = _clean_json_value(predict_slate(date_type.fromisoformat(date_param) if date_param else None))
+    preds = _clean_json_value(predict_ufc_slate(date_type.fromisoformat(date_param) if date_param else None))
     comparison = load_model_comparison()
     return {
         "model_label": comparison.get("active_model_label"),

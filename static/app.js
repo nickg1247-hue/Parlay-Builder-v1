@@ -3489,8 +3489,6 @@ function renderDashboardPrimaryNav(container, path) {
       label: "Board",
       isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
     },
-  ];
-  specs.push(
     { href: "/mlb/props", label: "Props" },
     { href: "/performance", label: "Performance" },
   );

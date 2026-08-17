@@ -89,3 +89,22 @@ def test_predictions_include_spread_and_totals(
     assert row["ou_line"] == 51.5
     assert row["ou_line_source"] == "book"
     assert "expected_total_pts" in row
+
+
+@patch("app.main.predict_cfb_slate")
+def test_cfb_predictions_api_does_not_use_ufc_predictor(mock_cfb):
+    mock_cfb.return_value = {
+        "401635000": {
+            "game_id": "401635000",
+            "home_team": "Georgia",
+            "away_team": "Alabama",
+            "model_prob_home": 0.61,
+        }
+    }
+    resp = client.get("/api/cfb/predictions?date=2024-11-30")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "401635000" in body
+    assert body["401635000"]["home_team"] == "Georgia"
+    assert "event_name" not in body["401635000"]
+    mock_cfb.assert_called_once()
