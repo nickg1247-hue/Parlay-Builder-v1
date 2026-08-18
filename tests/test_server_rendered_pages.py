@@ -57,6 +57,16 @@ def test_render_static_page_injects_json():
     assert 'id="ntg-page-data"' in html
     assert "page-data.js" in html
     assert '"kind": "test"' in html or '"kind":"test"' in html.replace(" ", "")
+    assert "hydrateHomeFromEmbeddedData" not in html
+
+
+def test_home_page_injects_hydrate_fallback():
+    html = render_static_page(
+        STATIC_DIR,
+        "index.html",
+        {"kind": "home", "summary": {}, "scores": {"games": []}},
+    ).body.decode("utf-8")
+    assert "hydrateHomeFromEmbeddedData" in html
 
 
 def test_public_api_gate_blocks_home_today():

@@ -64,4 +64,15 @@ def render_static_page(
         html = html.replace("</head>", inject + "</head>", 1)
     else:
         html = inject + html
+    if page_data and page_data.get("kind") == "home":
+        html = html.replace(
+            "</body>",
+            (
+                "<script>setTimeout(function(){if(typeof hydrateHomeFromEmbeddedData"
+                "==='function'){var g=document.getElementById('today-glance');"
+                "if(g&&g.querySelector('.skeleton-card'))hydrateHomeFromEmbeddedData();}"
+                "},400);</script>\n</body>"
+            ),
+            1,
+        )
     return HTMLResponse(content=html, headers=_HTML_NO_CACHE)

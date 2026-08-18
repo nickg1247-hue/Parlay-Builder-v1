@@ -1488,6 +1488,83 @@
 
   window.updateDashboardLiveBadge = updateDashboardLiveBadge;
 
+  function hydrateHomeFromEmbeddedData() {
+    const read = window.getPageData || window.readNTGPageData;
+    const data = typeof read === "function" ? read() : null;
+    if (!data || data.kind !== "home" || !data.summary || !data.scores) return false;
+    const glance = document.getElementById("today-glance");
+    if (!glance) return false;
+    const games = data.scores.games || [];
+    const singles = data.summary.top_singles || [];
+    const counts = data.scores.sports || {};
+    try {
+      if (typeof renderDashboardMetrics === "function") {
+        renderDashboardMetrics(glance, data.summary, counts, {});
+      }
+      if (typeof renderDashboardHeroWidgets === "function") {
+        renderDashboardHeroWidgets(document.getElementById("hero-bento"), {
+          games,
+          summary: data.summary,
+          propsData: data.propsData || null,
+        });
+      }
+      if (typeof renderDashboardBestBets === "function") {
+        renderDashboardBestBets(document.getElementById("best-bets"), singles, games);
+      }
+      if (typeof renderDashboardLiveBoard === "function") {
+        renderDashboardLiveBoard(document.getElementById("home-scores-rail"), games);
+      }
+      if (typeof renderDashboardParlayPreview === "function") {
+        renderDashboardParlayPreview(
+          document.getElementById("home-parlay-preview"),
+          data.propsData || null,
+          games
+        );
+      }
+      if (typeof renderDashboardPerformance === "function") {
+        renderDashboardPerformance(
+          document.getElementById("home-performance"),
+          data.trackerSummary,
+          data.perfSummary,
+          data.perfSummary && data.perfSummary.charts
+        );
+      }
+      if (typeof renderDashboardEdgeScroll === "function") {
+        renderDashboardEdgeScroll(document.getElementById("edge-scroll"), singles, [], games);
+      }
+      const sync = document.getElementById("site-refresh-bar");
+      if (sync && data.status && data.status.ran_at) {
+        sync.textContent = "Synced";
+      } else if (sync && sync.textContent === "Checking sync…") {
+        sync.textContent = "Live";
+      }
+      return true;
+    } catch (err) {
+      console.error("Home dashboard fallback hydrate failed", err);
+      return false;
+    }
+  }
+
+  window.hydrateHomeFromEmbeddedData = hydrateHomeFromEmbeddedData;
+
+  function scheduleHomeFallback() {
+    if (!document.getElementById("today-glance")) return;
+    const run = function () {
+      const glance = document.getElementById("today-glance");
+      if (glance && glance.querySelector(".skeleton-card")) {
+        hydrateHomeFromEmbeddedData();
+      }
+    };
+    setTimeout(run, 250);
+    setTimeout(run, 1200);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleHomeFallback);
+  } else {
+    scheduleHomeFallback();
+  }
+
 })();
 
 
