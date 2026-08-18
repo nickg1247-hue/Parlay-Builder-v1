@@ -108,7 +108,6 @@ from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
 from app.services.schedule_nfl import get_nfl_game, get_nfl_schedule
 from app.services.nfl_slate_predictions import predict_slate as predict_nfl_slate
 from app.services.nfl_daily_board import build_nfl_daily_board
-from app.services.nfl_futures import build_nfl_futures
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
 from app.services.ufc_slate_predictions import predict_slate as predict_ufc_slate, _clean_json_value
@@ -242,32 +241,42 @@ async def _maintenance_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    wiped = ensure_props_cache_generation()
-    if wiped:
-        logger.info(
-            "Props cache wiped on startup (generation=%s, removed=%s files)",
-            wiped.get("generation"),
-            wiped.get("removed_files"),
-        )
-    maintenance_task: asyncio.Task | None = None
     try:
-        import pandas as pd
-
-        from app.features.mlb_pregame import get_team_tracker_before
-        from app.features.mlb_totals_pregame import get_runs_tracker_before
-
-        today = pd.Timestamp(date_type.today())
-        get_team_tracker_before(today)
-        get_runs_tracker_before(today)
-    except Exception:
-        pass
-    try:
-        from app.services.daily_board import ensure_today_daily_board
-
-        await asyncio.to_thread(ensure_today_daily_board)
+        init_db()
     except Exception as exc:
-        logger.warning("Startup daily board ensure failed: %s", exc)
+        logger.error("Startup init_db failed: %s", exc)
+    try:
+        wiped = ensure_props_cache_generation()
+        if wiped:
+            logger.info(
+                "Props cache wiped on startup (generation=%s, removed=%s files)",
+                wiped.get("generation"),
+                wiped.get("removed_files"),
+            )
+    except Exception as exc:
+        logger.warning("Startup props cache check failed: %s", exc)
+
+    async def _warmup() -> None:
+        try:
+            import pandas as pd
+
+            from app.features.mlb_pregame import get_team_tracker_before
+            from app.features.mlb_totals_pregame import get_runs_tracker_before
+
+            today = pd.Timestamp(date_type.today())
+            get_team_tracker_before(today)
+            get_runs_tracker_before(today)
+        except Exception:
+            pass
+        try:
+            from app.services.daily_board import ensure_today_daily_board
+
+            await asyncio.to_thread(ensure_today_daily_board)
+        except Exception as exc:
+            logger.warning("Startup daily board ensure failed: %s", exc)
+
+    warmup_task = asyncio.create_task(_warmup())
+    maintenance_task: asyncio.Task | None = None
     if (
         (hourly_refresh_enabled() and live_odds_enabled())
         or periodic_refresh_enabled()
@@ -289,12 +298,17 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("Admin auth enabled for boards and model lab")
     yield
+    warmup_task.cancel()
     if maintenance_task is not None:
         maintenance_task.cancel()
         try:
             await maintenance_task
         except asyncio.CancelledError:
             pass
+    try:
+        await warmup_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title="NTG Sports", lifespan=lifespan)
@@ -951,6 +965,8 @@ async def nfl_daily(
 
 @app.get("/api/nfl/futures")
 async def nfl_futures(refresh: bool = Query(False)):
+    from app.services.nfl_futures import build_nfl_futures
+
     return build_nfl_futures(refresh=refresh)
 
 
@@ -1814,10 +1830,14 @@ async def home(date_param: str | None = Query(None, alias="date")):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    page_data = await _ssr_page_data(
-        f"home:{game_date.isoformat()}",
-        lambda: build_home_page_data(game_date),
-    )
+    try:
+        page_data = await _ssr_page_data(
+            f"home:{game_date.isoformat()}",
+            lambda: build_home_page_data(game_date),
+        )
+    except Exception as exc:
+        logger.warning("Home SSR skipped: %s", exc)
+        page_data = None
     return render_static_page(STATIC_DIR, "index.html", page_data)
 
 
