@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import date as date_type
+from datetime import date as date_type, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +44,7 @@ from app.services.mlb_page_data import (
 )
 from app.services.page_data_cache import get_or_build
 from app.services.page_render import render_static_page
-from app.db.database import get_connection, init_db
+from app.db.database import get_connection, get_sqlite_path, init_db
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
@@ -243,6 +243,8 @@ async def _maintenance_loop() -> None:
 async def lifespan(app: FastAPI):
     try:
         init_db()
+        db_path = get_sqlite_path()
+        logger.info("SQLite ready at %s exists=%s", db_path, db_path.exists())
     except Exception as exc:
         logger.error("Startup init_db failed: %s", exc)
     try:
@@ -638,6 +640,29 @@ async def user_resend_verification(body: ResendVerificationRequest):
         payload["dev_verification_url"] = build_verification_url(token)
         payload["message"] = "Local dev mode — no email sent. Use the verification link below."
     return payload
+
+
+@app.get("/api/health")
+async def api_health():
+    """Lightweight liveness — no sports-provider calls."""
+    db_ok = False
+    try:
+        conn = get_connection()
+        try:
+            conn.execute("SELECT 1")
+            db_ok = True
+        finally:
+            conn.close()
+    except Exception:
+        db_ok = False
+    build_path = PROJECT_ROOT / "BUILD"
+    version = build_path.read_text(encoding="utf-8").strip() if build_path.exists() else "unknown"
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "database": "connected" if db_ok else "error",
+        "version": version,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @app.get("/health")

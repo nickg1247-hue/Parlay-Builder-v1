@@ -64,6 +64,20 @@ def render_static_page(
         html = html.replace("</head>", inject + "</head>", 1)
     else:
         html = inject + html
+    watchdog = (
+        "<script>(function(){function mark(el,msg){if(!el)return;"
+        "var t=el.textContent||'';if(/Loading|Checking sync/.test(t))"
+        "{el.textContent=msg;}}setTimeout(function(){"
+        "if(typeof fetchJSON==='function')return;"
+        "var m='Unable to load. Refresh the page.';"
+        "['slate-loading','perf-ml-clv','perf-summary','props-search-meta',"
+        "'props-tracker-stats','site-refresh-bar','edge-scroll','home-performance']"
+        ".forEach(function(id){mark(document.getElementById(id),m);});"
+        "document.querySelectorAll('.dash-perf-loading,.dash-edge-empty')"
+        ".forEach(function(el){mark(el,m);});},4000);})();</script>\n"
+    )
+    if "</body>" in html:
+        html = html.replace("</body>", watchdog + "</body>", 1)
     if page_data and page_data.get("kind") == "home":
         html = html.replace(
             "</body>",

@@ -49,11 +49,17 @@ async function fetchJSON(url, options = {}) {
     const hit = window.__ntgFetchCache.get(url);
     if (Date.now() - hit.at < hit.ttl) return hit.data;
   }
-  const timeoutMs = options.timeoutMs || 0;
-  const controller = timeoutMs > 0 ? new AbortController() : null;
-  const timer =
-    controller &&
-    window.setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutMs = options.timeoutMs || 20000;
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  const started = performance.now();
+  const isDev =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  if (isDev && !window.__ntgApiBaseLogged) {
+    window.__ntgApiBaseLogged = true;
+    console.debug("[ntg-api] base", `${window.location.origin}/api`);
+  }
   let res;
   try {
     const headers = {
@@ -63,19 +69,33 @@ async function fetchJSON(url, options = {}) {
     const fetchOpts = {
       credentials: options.credentials || "same-origin",
       headers,
-      ...(controller ? { signal: controller.signal } : {}),
+      signal: controller.signal,
     };
     if (options.method) fetchOpts.method = options.method;
     if (options.body != null) fetchOpts.body = options.body;
     if (options.cache) fetchOpts.cache = options.cache;
     res = await fetch(url, fetchOpts);
+    if (isDev) {
+      console.debug("[ntg-api]", {
+        url,
+        status: res.status,
+        ms: Math.round(performance.now() - started),
+      });
+    }
   } catch (err) {
+    if (isDev) {
+      console.debug("[ntg-api]", {
+        url,
+        error: String(err?.message || err),
+        ms: Math.round(performance.now() - started),
+      });
+    }
     if (err?.name === "AbortError") {
       throw new Error("Request timed out — the server may be busy. Try again.");
     }
     throw err;
   } finally {
-    if (timer) window.clearTimeout(timer);
+    window.clearTimeout(timer);
   }
   if (!res.ok) {
     const text = await res.text();
@@ -1870,13 +1890,21 @@ function renderHomeNews(list, data) {
 async function fetchDailyPropsForHome(options = {}) {
   const cacheOnly = options.cacheOnly !== false;
   const url = `/api/daily/props?limit=50&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 25000);
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      headers: { "X-NTG-Client": "site" },
+      signal: controller.signal,
+    });
     if (res.status === 401) return null;
     if (!res.ok) return null;
     return await res.json();
   } catch (_) {
     return null;
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 
@@ -3345,6 +3373,22 @@ async function loadHomePageCritical(progress) {
       kind: "no-bets",
     });
     if (els.refreshEl) els.refreshEl.textContent = "Could not load refresh status";
+    if (els.edgeScroll) {
+      brandedErrorState(els.edgeScroll, {
+        title: "Unable to load today's picks",
+        message: "The model slate did not load. Try again.",
+        kind: "no-bets",
+        onRetry: () => loadHomePageCritical(progress),
+      });
+    }
+    if (els.performance) {
+      brandedErrorState(els.performance, {
+        title: "Unable to load performance",
+        message: "Try again in a moment.",
+        kind: "no-board",
+        onRetry: () => loadHomePageCritical(progress),
+      });
+    }
     setHomeLoadProgress(progress, 1, "Ready");
     return null;
   }

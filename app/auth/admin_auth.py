@@ -202,7 +202,7 @@ class AdminAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         path = request.url.path
-        if path in {"/login", "/health"} or path.startswith("/api/auth/"):
+        if path in {"/login", "/health", "/api/health"} or path.startswith("/api/auth/"):
             return await call_next(request)
 
         if not is_protected_path(path):

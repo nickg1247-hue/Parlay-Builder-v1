@@ -55,8 +55,7 @@
         <p>Loading ML CLV…</p>
       </div>
       <p class="text-muted" style="font-size:0.82rem;margin-bottom:1.25rem;">
-        Actionable +EV singles from the daily board. Afternoon:
-        <code>python scripts/backfill_forward_clv.py</code>
+        Actionable +EV singles from the daily board. Closing lines fill in after games start.
       </p>
 
       <h2 class="app-section-title">Player props tracker</h2>
@@ -101,8 +100,23 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260740"></script>
-  <script src="/static/performance.js?v=20260740"></script>
-  <script>loadPublicFeatures().then(() => { initSiteChrome(); bootPerformancePage(); });</script>
+  <script src="/static/app.js?v=20260819"></script>
+  <script src="/static/performance.js?v=20260819"></script>
+  <script>
+    Promise.resolve()
+      .then(() => (typeof loadPublicFeatures === "function" ? loadPublicFeatures() : null))
+      .then(() => {
+        if (typeof initSiteChrome === "function") initSiteChrome();
+        if (typeof bootPerformancePage === "function") return bootPerformancePage();
+        throw new Error("performance page failed to load");
+      })
+      .catch(() => {
+        const summary = document.getElementById("perf-summary");
+        const clv = document.getElementById("perf-ml-clv");
+        const msg = "Unable to load performance. Retry";
+        if (summary) summary.innerHTML = `<p>${msg}</p><button type="button" class="dash-btn dash-btn-primary" onclick="location.reload()">Retry</button>`;
+        if (clv) clv.innerHTML = `<p class="text-muted">${msg}</p>`;
+      });
+  </script>
 </body>
 </html>

@@ -67,6 +67,7 @@ def test_home_page_injects_hydrate_fallback():
         {"kind": "home", "summary": {}, "scores": {"games": []}},
     ).body.decode("utf-8")
     assert "hydrateHomeFromEmbeddedData" in html
+    assert "Unable to load. Refresh the page." in html
 
 
 def test_public_api_gate_blocks_home_today():

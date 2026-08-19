@@ -304,6 +304,14 @@
   }
 
   init().catch(() => {
-    renderPropExplorerList(resultsEl, [], { emptyMessage: "Could not initialize props page." });
+    if (metaEl) metaEl.textContent = "Unable to load props.";
+    if (typeof renderPropExplorerList === "function") {
+      renderPropExplorerList(resultsEl, [], { emptyMessage: "Could not initialize props page." });
+      return;
+    }
+    if (resultsEl) {
+      resultsEl.innerHTML =
+        '<p class="empty-state">Unable to load props. <button type="button" class="empty-state-retry dash-btn dash-btn-primary" onclick="location.reload()">Retry</button></p>';
+    }
   });
 })();

@@ -16,26 +16,44 @@ async function bootPerformancePage() {
     if (strength) qs.set("line_strength", strength);
 
     try {
-      const [mlClv, summary, picksData, modelCmp] = await Promise.all([
-        fetchJSON(`/api/clv/summary?days=${days}&sport=${encodeURIComponent(mlSport)}`),
+      const [summary, picksData, modelCmp] = await Promise.all([
         fetchJSON(`/api/performance/summary?days=${days}`),
         fetchJSON(`/api/performance/picks?${qs}`),
         mlSport === "ufc"
           ? fetchJSON("/api/ufc/model-comparison").catch(() => null)
           : Promise.resolve(null),
       ]);
-      renderMlClv(mlClvEl, mlClv, days, mlSport, modelCmp);
+      let mlClv = null;
+      try {
+        mlClv = await fetchJSON(
+          `/api/clv/summary?days=${days}&sport=${encodeURIComponent(mlSport)}`
+        );
+      } catch (clvErr) {
+        const msg = String(clvErr?.message || "");
+        const needsAuth = /authentication required/i.test(msg);
+        if (mlClvEl) {
+          mlClvEl.innerHTML = needsAuth
+            ? "<p class=\"text-muted\">ML CLV is available after signing in on the board.</p>"
+            : `<p class="text-muted">Unable to load ML CLV. <button type="button" class="dash-link-more" id="perf-clv-retry">Retry</button></p>`;
+          document.getElementById("perf-clv-retry")?.addEventListener("click", load);
+        }
+      }
+      if (mlClv) renderMlClv(mlClvEl, mlClv, days, mlSport, modelCmp);
       renderSummary(summaryEl, summary, days);
       renderBuckets(bucketsEl, summary.prop_tracker);
       renderClv(clvEl, summary.clv);
       renderPicks(picksEl, picksData.picks || []);
-    } catch {
+    } catch (err) {
       brandedErrorState(summaryEl, {
-        title: "Performance data unavailable",
-        message: "Could not load performance summaries.",
+        title: "Unable to load performance",
+        message: err?.message || "Could not load performance summaries.",
         onRetry: load,
       });
-      if (mlClvEl) mlClvEl.innerHTML = "<p class=\"text-muted\">ML CLV unavailable.</p>";
+      if (mlClvEl) {
+        mlClvEl.innerHTML =
+          "<p class=\"text-muted\">Unable to load ML CLV. <button type=\"button\" class=\"dash-link-more\" id=\"perf-clv-retry\">Retry</button></p>";
+        document.getElementById("perf-clv-retry")?.addEventListener("click", load);
+      }
       if (bucketsEl) bucketsEl.innerHTML = "";
       if (clvEl) clvEl.innerHTML = "";
       if (picksEl) picksEl.innerHTML = "";
