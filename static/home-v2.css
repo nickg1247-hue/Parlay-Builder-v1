@@ -1697,10 +1697,11 @@ body.ntg-shell .dash-page-header a:hover {
 }
 
 body.ntg-shell .game-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: 0.75rem;
   margin-top: 0.75rem;
+  width: 100%;
 }
 
 body.ntg-shell .slate-source-badge {

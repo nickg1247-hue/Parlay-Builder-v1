@@ -890,7 +890,7 @@
 
       .slice(0, 5)
 
-      .map((p) => {
+      .map((p, i) => {
 
         const isProp = p.bet_type === "prop" || Boolean(p.player);
 
@@ -1483,20 +1483,24 @@
     const href = `/mlb/game/${encodeURIComponent(pick.game_id)}`;
     el.classList.remove("hidden");
     if (game && typeof gameCardHtml === "function") {
-      let modelProbHome = slate && slate.model_prob_home != null ? slate.model_prob_home : null;
-      if (modelProbHome == null && pick.model_prob != null) {
-        modelProbHome = pick.side === "home" ? pick.model_prob : 1 - Number(pick.model_prob);
+      try {
+        let modelProbHome = slate && slate.model_prob_home != null ? slate.model_prob_home : null;
+        if (modelProbHome == null && pick.model_prob != null) {
+          modelProbHome = pick.side === "home" ? pick.model_prob : 1 - Number(pick.model_prob);
+        }
+        const boardRow = {
+          ...(slate || {}),
+          best_pick: (slate && slate.best_pick) || pick,
+          model_prob_home: modelProbHome,
+          model_confidence: (slate && slate.model_confidence) || pick.confidence || pick.tier,
+        };
+        el.innerHTML = `
+          <p class="ntg-featured-kicker">Featured edge</p>
+          <a class="game-card ntg-card ntg-card--featured" href="${href}">${gameCardHtml(game, { boardRow, showWatch: false })}</a>`;
+        return;
+      } catch (err) {
+        console.error(err);
       }
-      const boardRow = {
-        ...(slate || {}),
-        best_pick: (slate && slate.best_pick) || pick,
-        model_prob_home: modelProbHome,
-        model_confidence: (slate && slate.model_confidence) || pick.confidence || pick.tier,
-      };
-      el.innerHTML = `
-        <p class="ntg-featured-kicker">Featured edge</p>
-        <a class="game-card ntg-card ntg-card--featured" href="${href}">${gameCardHtml(game, { boardRow, showWatch: false })}</a>`;
-      return;
     }
     const awayName = (pick.matchup || "").split(/@|vs/i)[0] || "Away";
     const homeName = (pick.matchup || "").split(/@|vs/i)[1] || "Home";
@@ -1540,43 +1544,26 @@
     const singles = data.summary.top_singles || [];
     const counts = data.scores.sports || {};
     try {
-      if (typeof renderDashboardMetrics === "function") {
-        renderDashboardMetrics(glance, data.summary, counts, {});
-      }
-      if (typeof renderDashboardHeroWidgets === "function") {
-        renderDashboardHeroWidgets(document.getElementById("hero-bento"), {
-          games,
-          summary: data.summary,
-          propsData: data.propsData || null,
-        });
-      }
-      if (typeof renderDashboardBestBets === "function") {
-        renderDashboardBestBets(document.getElementById("best-bets"), singles, games);
-      }
-      if (typeof renderDashboardLiveBoard === "function") {
-        renderDashboardLiveBoard(document.getElementById("home-scores-rail"), games);
-      }
-      if (typeof renderDashboardParlayPreview === "function") {
-        renderDashboardParlayPreview(
-          document.getElementById("home-parlay-preview"),
-          data.propsData || null,
-          games
-        );
-      }
-      if (typeof renderDashboardPerformance === "function") {
-        renderDashboardPerformance(
-          document.getElementById("home-performance"),
-          data.trackerSummary,
-          data.perfSummary,
-          data.perfSummary && data.perfSummary.charts
-        );
-      }
-      if (typeof renderFeaturedEdge === "function") {
-        renderFeaturedEdge(document.getElementById("featured-edge"), singles, games, data.summary);
-      }
-      if (typeof renderDashboardEdgeScroll === "function") {
-        renderDashboardEdgeScroll(document.getElementById("edge-scroll"), singles, [], games);
-      }
+      const safe = (fn, ...args) => {
+        if (typeof fn !== "function") return;
+        try {
+          fn(...args);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      safe(renderDashboardMetrics, glance, data.summary, counts, {});
+      safe(renderDashboardHeroWidgets, document.getElementById("hero-bento"), {
+        games,
+        summary: data.summary,
+        propsData: data.propsData || null,
+      });
+      safe(renderDashboardBestBets, document.getElementById("best-bets"), singles, games);
+      safe(renderDashboardLiveBoard, document.getElementById("home-scores-rail"), games);
+      safe(renderDashboardParlayPreview, document.getElementById("home-parlay-preview"), data.propsData || null, games);
+      safe(renderDashboardPerformance, document.getElementById("home-performance"), data.trackerSummary, data.perfSummary, data.perfSummary && data.perfSummary.charts);
+      safe(renderFeaturedEdge, document.getElementById("featured-edge"), singles, games, data.summary);
+      safe(renderDashboardEdgeScroll, document.getElementById("edge-scroll"), singles, [], games);
       const sync = document.getElementById("site-refresh-bar");
       if (sync && data.status && data.status.ran_at) {
         sync.textContent = "Synced";

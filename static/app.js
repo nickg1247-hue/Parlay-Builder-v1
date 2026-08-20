@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260821";
+const NTG_ASSET_V = "20260822";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -20,10 +20,17 @@ window.getPageData = getPageData;
 
 (function ensureChromeStylesEarly() {
   for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
-    if (document.querySelector(`link[href*="${file}"]`)) continue;
+    const existing = document.querySelector(`link[href*="${file}"]`);
+    const href = `/static/${file}?v=${NTG_ASSET_V}`;
+    if (existing) {
+      if (!String(existing.href || existing.getAttribute("href") || "").includes(`v=${NTG_ASSET_V}`)) {
+        existing.href = href;
+      }
+      continue;
+    }
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = `/static/${file}?v=${NTG_ASSET_V}`;
+    link.href = href;
     document.head.appendChild(link);
   }
 })();
@@ -257,10 +264,17 @@ function formatRefreshStrip(status) {
 function ensureSiteStyles() {
   const v = NTG_ASSET_V;
   for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
-    if (document.querySelector(`link[href*="${file}"]`)) continue;
+    const existing = document.querySelector(`link[href*="${file}"]`);
+    const href = `/static/${file}?v=${v}`;
+    if (existing) {
+      if (!String(existing.href || existing.getAttribute("href") || "").includes(`v=${v}`)) {
+        existing.href = href;
+      }
+      continue;
+    }
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = `/static/${file}?v=${v}`;
+    link.href = href;
     document.head.appendChild(link);
   }
   if (!document.querySelector('link[rel="icon"][href*="ntg"]')) {
@@ -3206,27 +3220,21 @@ function renderHomePageCore(summary, scores, odds, status) {
   const counts = scoreCountsFromScores(scores);
 
   if (isDashboardHome()) {
-    if (typeof renderDashboardHeroWidgets === "function") {
-      renderDashboardHeroWidgets(els.heroBento, { games: scores.games, summary, propsData: null });
-    }
-    if (typeof renderDashboardMetrics === "function") {
-      renderDashboardMetrics(els.glance, summary, counts, {});
-    }
-    if (typeof renderDashboardBestBets === "function") {
-      renderDashboardBestBets(els.bets, summary.top_singles, scores.games);
-    }
-    if (typeof renderDashboardLiveBoard === "function") {
-      renderDashboardLiveBoard(els.scoresRail, scores.games);
-    }
-    if (typeof renderDashboardParlayPreview === "function") {
-      renderDashboardParlayPreview(els.parlayPreview, null, scores.games);
-    }
-    if (typeof renderFeaturedEdge === "function") {
-      renderFeaturedEdge(document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
-    }
-    if (typeof renderDashboardEdgeScroll === "function") {
-      renderDashboardEdgeScroll(els.edgeScroll, summary.top_singles, [], scores.games);
-    }
+    const run = (fn, ...args) => {
+      if (typeof fn !== "function") return;
+      try {
+        fn(...args);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    run(renderDashboardHeroWidgets, els.heroBento, { games: scores.games, summary, propsData: null });
+    run(renderDashboardMetrics, els.glance, summary, counts, {});
+    run(renderDashboardBestBets, els.bets, summary.top_singles, scores.games);
+    run(renderDashboardLiveBoard, els.scoresRail, scores.games);
+    run(renderDashboardParlayPreview, els.parlayPreview, null, scores.games);
+    run(renderFeaturedEdge, document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
+    run(renderDashboardEdgeScroll, els.edgeScroll, summary.top_singles, [], scores.games);
     if (els.performance) {
       els.performance.innerHTML = `<p class="dash-perf-loading">Loading performance…</p>`;
     }
@@ -3262,54 +3270,48 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
   const veryStrong = (propsData?.very_strong_props || []).slice(0, 3);
 
   if (isDashboardHome()) {
-    if (typeof renderDashboardMetrics === "function") {
-      renderDashboardMetrics(els.glance, summary, counts, { veryStrongCount, hitRate });
-    }
-    if (typeof renderDashboardHeroWidgets === "function") {
-      renderDashboardHeroWidgets(els.heroBento, {
-        games: scores.games,
-        summary,
-        propsData,
-        charts: perfSummary?.charts,
-      });
-    }
+    const run = (fn, ...args) => {
+      if (typeof fn !== "function") return;
+      try {
+        fn(...args);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    run(renderDashboardMetrics, els.glance, summary, counts, { veryStrongCount, hitRate });
+    run(renderDashboardHeroWidgets, els.heroBento, {
+      games: scores.games,
+      summary,
+      propsData,
+      charts: perfSummary?.charts,
+    });
     if (els.veryStrongWrap && els.veryStrongEl) {
       if (veryStrong.length) {
         els.veryStrongWrap.classList.remove("hidden");
-        if (typeof renderDashboardGoldBand === "function") {
-          renderDashboardGoldBand(els.veryStrongEl, veryStrong, scores.games);
-        }
+        run(renderDashboardGoldBand, els.veryStrongEl, veryStrong, scores.games);
       } else {
         els.veryStrongWrap.classList.add("hidden");
         els.veryStrongEl.innerHTML = "";
       }
     }
-    applyHomeProps(propsData, els.propsEl, null, null);
-    if (typeof renderFeaturedEdge === "function") {
-      renderFeaturedEdge(document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
+    try {
+      applyHomeProps(propsData, els.propsEl, null, null);
+    } catch (err) {
+      console.error(err);
     }
-    if (typeof renderDashboardEdgeScroll === "function") {
-      renderDashboardEdgeScroll(
-        els.edgeScroll,
-        summary.top_singles,
-        dedupePropsForEdge([
-          ...(propsData?.very_strong_props || []),
-          ...(propsData?.top_props || []),
-        ]),
-        scores.games
-      );
-    }
-    if (typeof renderDashboardPerformance === "function") {
-      renderDashboardPerformance(
-        els.performance,
-        trackerSummary,
-        perfSummary,
-        perfSummary?.charts
-      );
-    }
-    if (typeof renderDashboardParlayPreview === "function") {
-      renderDashboardParlayPreview(els.parlayPreview, propsData, scores.games);
-    }
+    run(renderFeaturedEdge, document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
+    run(
+      renderDashboardEdgeScroll,
+      els.edgeScroll,
+      summary.top_singles,
+      dedupePropsForEdge([
+        ...(propsData?.very_strong_props || []),
+        ...(propsData?.top_props || []),
+      ]),
+      scores.games
+    );
+    run(renderDashboardPerformance, els.performance, trackerSummary, perfSummary, perfSummary?.charts);
+    run(renderDashboardParlayPreview, els.parlayPreview, propsData, scores.games);
     return;
   }
 

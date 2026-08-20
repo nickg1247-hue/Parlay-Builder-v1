@@ -882,31 +882,17 @@ body.home-dashboard .dash-main {
 
 /* --- Continuity: layout, headers, interaction, states --- */
 
-body.ntg-shell .dash-topbar .dash-nav-row,
-body.home-dashboard .dash-topbar .dash-nav-row,
-body.ntg-shell .dash-subnav,
-body.home-dashboard .dash-subnav,
-body.ntg-shell .dash-sync-wrap,
-body.home-dashboard .dash-sync-wrap {
-  width: min(var(--ntg-content), 100%);
-  margin-inline: auto;
-}
-
 body.ntg-shell .dash-main,
 body.home-dashboard .dash-main,
 body.ntg-shell .app-main {
-  width: min(var(--ntg-content), calc(100% - 2rem));
-  max-width: var(--ntg-content);
-  margin-inline: auto;
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: var(--ntg-space-5);
+  width: 100%;
+  max-width: none;
   animation: ntg-page-in 180ms ease;
 }
 
 body.home-dashboard .dash-hero-inner {
-  width: min(var(--ntg-content), calc(100% - 2rem));
-  margin-inline: auto;
+  width: 100%;
+  max-width: none;
 }
 
 @keyframes ntg-page-in {
