@@ -37,7 +37,7 @@ def _cookie_secure() -> bool:
 
 
 def maintenance_flag_paths() -> list[Path]:
-    """Locations Hostinger File Manager can toggle without a deploy."""
+    """Locations Hostinger File Manager or the CLI can toggle without a deploy."""
     explicit = os.getenv("MAINTENANCE_FLAG_PATH", "").strip()
     if explicit:
         return [Path(explicit)]
@@ -47,8 +47,28 @@ def maintenance_flag_paths() -> list[Path]:
     ]
 
 
+def primary_flag_path() -> Path:
+    return maintenance_flag_paths()[0]
+
+
 def maintenance_enabled() -> bool:
     return any(path.is_file() for path in maintenance_flag_paths())
+
+
+def turn_maintenance_on() -> Path:
+    path = primary_flag_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("ON\n", encoding="utf-8")
+    return path
+
+
+def turn_maintenance_off() -> list[Path]:
+    removed: list[Path] = []
+    for path in maintenance_flag_paths():
+        if path.is_file():
+            path.unlink()
+            removed.append(path)
+    return removed
 
 
 def has_preview_cookie(request: Request) -> bool:

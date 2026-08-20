@@ -145,3 +145,21 @@ def test_admin_auth_still_required_during_preview(maintenance_on, auth_env):
     )
     assert login.status_code == 200
     assert client.get("/mlb/board").status_code == 200
+
+
+def test_cli_toggles_flag_file(tmp_path: Path, monkeypatch):
+    from app.auth.maintenance import (
+        maintenance_enabled,
+        turn_maintenance_off,
+        turn_maintenance_on,
+    )
+
+    flag = tmp_path / "maintenance.on"
+    monkeypatch.setenv("MAINTENANCE_FLAG_PATH", str(flag))
+    assert not maintenance_enabled()
+    assert turn_maintenance_on() == flag
+    assert flag.read_text(encoding="utf-8").strip() == "ON"
+    assert maintenance_enabled()
+    turn_maintenance_off()
+    assert not flag.is_file()
+    assert not maintenance_enabled()
