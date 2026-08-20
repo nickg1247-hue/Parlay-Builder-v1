@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260742";
+const NTG_ASSET_V = "20260820";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -19,7 +19,7 @@ function getPageData() {
 window.getPageData = getPageData;
 
 (function ensureChromeStylesEarly() {
-  for (const file of ["brand.css", "design.css", "home-v2.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
     if (document.querySelector(`link[href*="${file}"]`)) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -256,7 +256,7 @@ function formatRefreshStrip(status) {
 
 function ensureSiteStyles() {
   const v = NTG_ASSET_V;
-  for (const file of ["brand.css", "design.css", "home-v2.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
     if (document.querySelector(`link[href*="${file}"]`)) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -368,9 +368,9 @@ function brandedErrorState(el, { title, message, kind = "no-board", onRetry = nu
   el.innerHTML = `
     <div class="empty-state-card branded-error-state">
       ${emptyStateIcon(kind)}
-      <h3>${title || "Something went wrong"}</h3>
-      <p>${message || "Please try again in a moment."}</p>
-      ${onRetry ? '<button type="button" class="empty-state-retry">Try again</button>' : ""}
+      <h3>${title || "We couldn't load this view"}</h3>
+      <p>${message || "The data service did not respond. Try again in a moment."}</p>
+      ${onRetry ? '<button type="button" class="empty-state-retry ntg-btn ntg-btn-primary">Retry</button>' : ""}
     </div>`;
   el.querySelector(".empty-state-retry")?.addEventListener("click", onRetry);
 }
@@ -1099,8 +1099,8 @@ function renderEmptyState(el, kind, extraHtml = "") {
   if (!el) return;
   const copy = {
     "no-games": {
-      title: "No games on the slate",
-      body: "Check back later or pick another date.",
+      title: "No games scheduled",
+      body: "There are currently no games available for this date.",
       cta: '<a href="/mlb">MLB slate</a>',
     },
     "no-nba-games": {
@@ -1584,41 +1584,53 @@ function gameCardHtml(game, options = {}) {
     : `<img class="team-logo" src="${logoForGame(game, "home")}" alt="" width="40" height="40" loading="lazy">`;
   const pcts = typeof winProbPcts === "function" ? winProbPcts(boardRow) : null;
   const awayPctHtml = pcts
-    ? `<span class="team-model-pct${pcts.awayPct >= pcts.homePct ? " team-model-pct--fav" : ""}">${pcts.awayPct}%</span>`
+    ? `<span class="game-card-pct${pcts.awayPct >= pcts.homePct ? " game-card-pct--fav" : ""}">${pcts.awayPct}%</span>`
     : "";
   const homePctHtml = pcts
-    ? `<span class="team-model-pct${pcts.homePct >= pcts.awayPct ? " team-model-pct--fav" : ""}">${pcts.homePct}%</span>`
+    ? `<span class="game-card-pct${pcts.homePct >= pcts.awayPct ? " game-card-pct--fav" : ""}">${pcts.homePct}%</span>`
     : "";
+  const league = String(game.sport || "mlb").toUpperCase();
+  const statusLabel = isGameLive(game.status)
+    ? (game.period_label || "Live")
+    : isGameFinal(game.status)
+      ? "Final"
+      : formatLocalTimeShort(game.start_time_utc);
+  const rawEdge = boardRow?.best_pick?.edge ?? boardRow?.ev_pick_edge ?? boardRow?.edge;
+  let edgeLabel = "";
+  if (rawEdge != null && Number.isFinite(Number(rawEdge))) {
+    const n = Number(rawEdge);
+    const pct = Math.abs(n) <= 1 ? n * 100 : n;
+    edgeLabel = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`;
+  }
+  const confLabel =
+    (boardRow && (boardRow.model_confidence || boardRow.ml_confidence || lean?.tier)) || "";
   return `
-    ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
-    <div class="game-card-top">
-      <span class="game-card-time">${isGameLive(game.status) && game.period_label ? game.period_label : isGameFinal(game.status) ? "Final" : formatLocalTimeShort(game.start_time_utc)}</span>
-      ${isGameLive(game.status) ? `<span class="status-badge badge-live badge-pulse">Live</span>` : isGameFinal(game.status) ? `<span class="status-badge badge-final">Final</span>` : ""}
+    <div class="game-card-kicker">
+      <span>${league}</span>
+      <span>${statusLabel}${isGameLive(game.status) ? ' · <span class="status-badge badge-live">Live</span>' : ""}</span>
     </div>
     ${seriesHtml}
-    ${vizHtml}
-    ${leanHtml}
-    <div class="game-card-matchup">
-      <div class="team-side away">
+    <div class="game-card-row">
+      <div class="game-card-team">
         ${awayLogoHtml}
-        <div class="team-name-block">
-          <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
-          ${teamRecordHtml(game.away_record)}
-        </div>
-        ${awayPctHtml}
+        <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
         ${showScores ? `<span class="team-score">${game.away_score ?? 0}</span>` : ""}
       </div>
-      <span class="game-card-at">${matchupSep}</span>
-      <div class="team-side home">
+      ${awayPctHtml}
+    </div>
+    <div class="game-card-row">
+      <div class="game-card-team">
         ${homeLogoHtml}
-        <div class="team-name-block">
-          <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
-          ${teamRecordHtml(game.home_record)}
-        </div>
-        ${homePctHtml}
+        <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
         ${showScores ? `<span class="team-score">${game.home_score ?? 0}</span>` : ""}
       </div>
+      ${homePctHtml}
+    </div>
+    ${leanHtml}
+    <div class="game-card-foot">
+      <span>${edgeLabel ? `Model edge ${edgeLabel}` : confLabel ? confLabel : "View matchup"}</span>
+      <span class="game-card-cta">View matchup →</span>
     </div>
     ${preview ? `<p class="game-card-preview">${preview}</p>` : ""}
   `;
@@ -2387,7 +2399,7 @@ function renderPropExplorerList(el, props, options = {}) {
     el.innerHTML = `
       <div class="best-bets-empty-card">
         ${emptyStateIcon("no-bets")}
-        <p>${options.emptyMessage || "No props match your filters."}</p>
+        <p>${options.emptyMessage || "No props match your filters. Try removing one or more filters."}</p>
       </div>`;
     return;
   }
@@ -3182,6 +3194,9 @@ function renderHomePageCore(summary, scores, odds, status) {
     if (typeof renderDashboardParlayPreview === "function") {
       renderDashboardParlayPreview(els.parlayPreview, null, scores.games);
     }
+    if (typeof renderFeaturedEdge === "function") {
+      renderFeaturedEdge(document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
+    }
     if (typeof renderDashboardEdgeScroll === "function") {
       renderDashboardEdgeScroll(els.edgeScroll, summary.top_singles, [], scores.games);
     }
@@ -3243,6 +3258,9 @@ function renderHomePageSecondary(summary, scores, propsData, trackerSummary, per
       }
     }
     applyHomeProps(propsData, els.propsEl, null, null);
+    if (typeof renderFeaturedEdge === "function") {
+      renderFeaturedEdge(document.getElementById("featured-edge"), summary.top_singles, scores.games, summary);
+    }
     if (typeof renderDashboardEdgeScroll === "function") {
       renderDashboardEdgeScroll(
         els.edgeScroll,
@@ -3507,35 +3525,25 @@ function mainNavIsActive(href, path) {
   return path === href || path.startsWith(`${href}/`);
 }
 
+function sportPrimaryIsActive(href, path) {
+  if (href === "/") return path === "/";
+  if (href === "/mlb") return path === "/mlb" || path.startsWith("/mlb/");
+  if (href === "/nba") return path === "/nba" || path.startsWith("/nba/");
+  if (href === "/nfl") return path === "/nfl" || path.startsWith("/nfl/");
+  if (href === "/cfb") return path === "/cfb" || path.startsWith("/cfb/");
+  if (href === "/ufc") return path === "/ufc" || path.startsWith("/ufc/");
+  return path === href || path.startsWith(`${href}/`);
+}
+
 function renderDashboardPrimaryNav(container, path) {
-  const sport = sportNavContext(path);
   const specs = [
     { href: "/", label: "Dashboard" },
-    {
-      href: sport.slate,
-      label: "Slate",
-      isActive: (p) =>
-        p === sport.slate ||
-        p.startsWith(`${sport.slate}/game`) ||
-        (sport.key === "ufc" && p.startsWith("/ufc/fighter")),
-    },
+    { href: "/mlb", label: "MLB" },
+    { href: "/nfl", label: "NFL" },
+    { href: "/nba", label: "NBA" },
+    { href: "/cfb", label: "CFB" },
+    { href: "/ufc", label: "UFC" },
   ];
-  if (sport.futures) {
-    specs.push({
-      href: sport.futures,
-      label: "Futures",
-      isActive: (p) => p === sport.futures || p.startsWith(`${sport.futures}/`),
-    });
-  }
-  specs.push(
-    {
-      href: sport.board,
-      label: "Board",
-      isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
-    },
-    { href: "/mlb/props", label: "Props" },
-    { href: "/performance", label: "Performance" },
-  );
   container.replaceChildren();
   container.setAttribute("aria-label", "Primary");
   specs.forEach((spec) => {
@@ -3543,8 +3551,7 @@ function renderDashboardPrimaryNav(container, path) {
     link.className = "main-nav-link";
     link.href = spec.href;
     link.textContent = spec.label;
-    const active = spec.isActive ? spec.isActive(path) : mainNavIsActive(spec.href, path);
-    if (active) link.classList.add("main-nav-link-active");
+    if (sportPrimaryIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
     container.appendChild(link);
   });
 }
@@ -3609,32 +3616,39 @@ function sportPillLabel(spec) {
 }
 
 function renderSportPills(container, path) {
+  const sport = sportNavContext(path);
   const specs = [
-    { href: "/mlb", label: "MLB", sport: "mlb" },
-    { href: "/nba", label: "NBA", sport: "nba" },
-    { href: "/cfb", label: "CFB", sport: "cfb" },
-    { href: "/ufc", label: "UFC", sport: "ufc" },
-    { href: "/nfl", label: "NFL", sport: "nfl" },
-    { href: "/mlb/props", label: "Props" },
-    { disabled: true, label: "NHL", sport: "nhl", title: "Coming soon" },
+    {
+      href: sport.slate,
+      label: "Slate",
+      isActive: (p) =>
+        p === sport.slate ||
+        p.startsWith(`${sport.slate}/game`) ||
+        (sport.key === "ufc" && p.startsWith("/ufc/fighter")),
+    },
+    {
+      href: sport.board,
+      label: "Board",
+      isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
+    },
   ];
+  if (sport.futures) {
+    specs.push({
+      href: sport.futures,
+      label: "Futures",
+      isActive: (p) => p === sport.futures || p.startsWith(`${sport.futures}/`),
+    });
+  }
+  specs.push({ href: "/mlb/props", label: "Props" }, { href: "/performance", label: "Performance" });
   container.replaceChildren();
+  container.setAttribute("aria-label", "Section");
   specs.forEach((spec) => {
-    if (spec.disabled) {
-      const span = document.createElement("span");
-      span.className = "sport-pill sport-pill-disabled";
-      span.title = spec.title || "Coming soon";
-      span.innerHTML = sportPillLabel(spec);
-      container.appendChild(span);
-      return;
-    }
     const link = document.createElement("a");
     link.className = "sport-pill";
     link.href = spec.href;
-    link.innerHTML = sportPillLabel(spec);
-    if (sportPillIsActive(spec.href, path)) {
-      link.classList.add("sport-pill-active");
-    }
+    link.textContent = spec.label;
+    const active = spec.isActive ? spec.isActive(path) : mainNavIsActive(spec.href, path);
+    if (active) link.classList.add("sport-pill-active");
     container.appendChild(link);
   });
 }
@@ -3670,13 +3684,11 @@ function initUtilityNav(nav, path) {
   if (path === "/updates") updatesLink.classList.add("active");
   nav.appendChild(updatesLink);
 
-  const densityBtn = document.createElement("button");
-  densityBtn.type = "button";
-  densityBtn.className = "density-toggle";
-  densityBtn.setAttribute("aria-label", "Toggle display density");
-  nav.appendChild(densityBtn);
-  if (typeof initDensityMode === "function") {
-    window.setTimeout(() => initDensityMode(), 0);
+  if (!nav.querySelector('a[href="/signin"]') && !nav.querySelector(".app-nav-user")) {
+    const accountLink = document.createElement("a");
+    accountLink.href = "/signin";
+    accountLink.textContent = "Account";
+    nav.appendChild(accountLink);
   }
 
   const themeBtn = document.createElement("button");
@@ -3898,6 +3910,34 @@ function initSiteChrome() {
     if (shellEl.querySelector(".site-footer")) return;
     shellEl.insertAdjacentHTML("beforeend", renderSiteFooter());
   });
+  renderMobileBottomNav(path);
+}
+
+function renderMobileBottomNav(path) {
+  if (!isNtgShellPage()) return;
+  let nav = document.getElementById("ntg-bottom-nav");
+  if (!nav) {
+    nav = document.createElement("nav");
+    nav.id = "ntg-bottom-nav";
+    nav.className = "ntg-bottom-nav";
+    nav.setAttribute("aria-label", "Mobile");
+    document.body.appendChild(nav);
+  }
+  const sport = sportNavContext(path);
+  const signedIn = Boolean((window.pbUserAuth || {}).signed_in);
+  const items = [
+    { href: "/", label: "Home", match: (p) => p === "/" },
+    { href: sport.slate, label: "Games", match: (p) => p === sport.slate || p.startsWith(`${sport.slate}/game`) },
+    { href: "/mlb/props", label: "Props", match: (p) => p.startsWith("/mlb/props") },
+    { href: "/performance", label: "Picks", match: (p) => p.startsWith("/performance") },
+    { href: signedIn ? "/my-team" : "/signin", label: "Account", match: (p) => p.startsWith("/signin") || p.startsWith("/signup") || p.startsWith("/my-team") },
+  ];
+  nav.innerHTML = items
+    .map(
+      (item) =>
+        `<a href="${item.href}" class="${item.match(path) ? "is-active" : ""}">${item.label}</a>`
+    )
+    .join("");
 }
 
 function closeUpdatesModal(overlay) {

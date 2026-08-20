@@ -283,6 +283,60 @@
     }
   }
 
+  function countActiveFilters() {
+    if (!form) return 0;
+    const data = new FormData(form);
+    let n = 0;
+    for (const [key, value] of data.entries()) {
+      if (!value) continue;
+      if (key === "sort" && value === "score") continue;
+      if (key === "side" && value === "both") continue;
+      if (key === "line_kind" && value === "main") continue;
+      if (key === "min_score" && value === "65") continue;
+      if (key === "min_hit_l10" && value === "55") continue;
+      n += 1;
+    }
+    return n;
+  }
+
+  function initPropsFilterDrawer() {
+    const drawer = document.getElementById("props-filter-drawer");
+    const scrim = document.getElementById("props-filter-scrim");
+    const openBtn = document.getElementById("props-open-filters");
+    const closeBtn = document.getElementById("props-close-filters");
+    const clearBtn = document.getElementById("props-clear-filters");
+    function setOpen(open) {
+      drawer?.classList.toggle("is-open", open);
+      scrim?.classList.toggle("is-open", open);
+      if (scrim) scrim.hidden = !open;
+      document.body.classList.toggle("ntg-filters-open", open);
+    }
+    function refreshCount() {
+      if (!openBtn) return;
+      const n = countActiveFilters();
+      openBtn.textContent = n ? `Filters (${n})` : "Filters";
+    }
+    openBtn?.addEventListener("click", () => setOpen(true));
+    closeBtn?.addEventListener("click", () => setOpen(false));
+    scrim?.addEventListener("click", () => setOpen(false));
+    clearBtn?.addEventListener("click", () => {
+      window.location.href = "/mlb/props";
+    });
+    refreshCount();
+  }
+
+  function initPropsPlayerSearch() {
+    const input = document.getElementById("props-player-search");
+    if (!input || !resultsEl) return;
+    input.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      resultsEl.querySelectorAll(".prop-explorer-card").forEach((card) => {
+        const name = (card.querySelector(".prop-explorer-player")?.textContent || "").toLowerCase();
+        card.hidden = Boolean(q) && !name.includes(q);
+      });
+    });
+  }
+
   async function init() {
     if (typeof window.ensureAppReady === "function") {
       await window.ensureAppReady();
@@ -294,6 +348,8 @@
     initLiveTicker("live-ticker", { sport: "all" });
 
     renderFromPageData(pageData());
+    initPropsFilterDrawer();
+    initPropsPlayerSearch();
 
     refreshBtn?.addEventListener("click", () => {
       if (!form) return;

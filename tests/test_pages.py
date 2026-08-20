@@ -40,10 +40,12 @@ def test_home_page():
     assert 'id="home-scores-rail"' in text
     assert 'id="news-list"' not in text
     assert "home-v2.css" in text
+    assert "ntg-system.css" in text
     assert "home-dashboard.js" in text
     assert "See the edge before the line moves" in text
-    assert "Very Strong Props" in text
+    assert "View today's slate" in text
     assert "Prop Parlay Builder" in text
+    assert 'id="featured-edge"' in text
 
 
 def test_mlb_slate_page():

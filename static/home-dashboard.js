@@ -1470,6 +1470,67 @@
 
 
 
+  function renderFeaturedEdge(el, singles, games, summary) {
+    if (!el) return;
+    const pick = (singles || []).find((row) => row && (row.model_prob != null || row.bet_type === "ml")) || (singles || [])[0];
+    if (!pick || !pick.game_id) {
+      el.classList.add("hidden");
+      el.innerHTML = "";
+      return;
+    }
+    const game = findGameById(games, pick.game_id);
+    const slate = summary && summary.slate_by_game_id ? summary.slate_by_game_id[pick.game_id] : null;
+    let homePct = null;
+    let awayPct = null;
+    if (slate && slate.model_prob_home != null) {
+      homePct = Math.round(Number(slate.model_prob_home) * 100);
+      awayPct = 100 - homePct;
+    } else if (pick.model_prob != null) {
+      const pct = Math.round(Number(pick.model_prob) * 100);
+      if (pick.side === "home") {
+        homePct = pct;
+        awayPct = 100 - pct;
+      } else {
+        awayPct = pct;
+        homePct = 100 - pct;
+      }
+    }
+    const edge = pick.edge;
+    let edgeLabel = "";
+    if (edge != null && Number.isFinite(Number(edge))) {
+      const n = Number(edge);
+      const pct = Math.abs(n) <= 1 ? n * 100 : n;
+      edgeLabel = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`;
+    }
+    const awayName = game?.away_team || (pick.matchup || "").split(/@|vs/i)[0] || "Away";
+    const homeName = game?.home_team || (pick.matchup || "").split(/@|vs/i)[1] || "Home";
+    const href = `/mlb/game/${encodeURIComponent(pick.game_id)}`;
+    el.classList.remove("hidden");
+    el.innerHTML = `
+      <div class="ntg-featured-teams">
+        <div class="ntg-featured-team">
+          <span class="ntg-featured-abbr">${teamAbbr(game, "away")}</span>
+          <strong>${awayName}</strong>
+          <span class="ntg-featured-pct">${awayPct != null ? awayPct + "%" : "—"}</span>
+        </div>
+        <div class="ntg-prob-bar" aria-hidden="true">
+          <span style="width:${awayPct || 50}%"></span>
+          <span style="width:${homePct || 50}%"></span>
+        </div>
+        <div class="ntg-featured-team ntg-featured-team--home">
+          <span class="ntg-featured-abbr">${teamAbbr(game, "home")}</span>
+          <strong>${homeName}</strong>
+          <span class="ntg-featured-pct">${homePct != null ? homePct + "%" : "—"}</span>
+        </div>
+      </div>
+      <div class="ntg-featured-meta">
+        <span class="ntg-badge">Model win probability</span>
+        ${edgeLabel ? `<div>Model edge <span class="ntg-featured-edge">${edgeLabel}</span></div>` : ""}
+        <div>${pick.team || "Model lean"}</div>
+        <a class="ntg-btn ntg-btn-ghost" href="${href}">View analysis →</a>
+      </div>`;
+  }
+
   window.renderDashboardMetrics = renderDashboardMetrics;
 
   window.renderDashboardHeroWidgets = renderDashboardHeroWidgets;
@@ -1485,6 +1546,7 @@
   window.renderDashboardGoldBand = renderDashboardGoldBand;
 
   window.renderDashboardEdgeScroll = renderDashboardEdgeScroll;
+  window.renderFeaturedEdge = renderFeaturedEdge;
 
   window.updateDashboardLiveBadge = updateDashboardLiveBadge;
 
@@ -1528,6 +1590,9 @@
           data.perfSummary,
           data.perfSummary && data.perfSummary.charts
         );
+      }
+      if (typeof renderFeaturedEdge === "function") {
+        renderFeaturedEdge(document.getElementById("featured-edge"), singles, games, data.summary);
       }
       if (typeof renderDashboardEdgeScroll === "function") {
         renderDashboardEdgeScroll(document.getElementById("edge-scroll"), singles, [], games);

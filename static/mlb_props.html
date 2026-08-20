@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="/static/app.css?v=20260624b">
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260820">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
@@ -36,10 +37,17 @@
       <header class="dash-page-header props-explorer-head">
         <div>
           <h1>MLB player props</h1>
-          <p class="section-sub dash-page-kicker">Filter by sportsbook, risk, score, and hit rate. Sort by model score, form, or risk.</p>
+          <p class="section-sub dash-page-kicker" id="props-page-kicker">Model-scored player props for today's slate.</p>
         </div>
-        <button type="button" id="props-search-refresh" class="home-props-fill-btn dash-btn dash-btn-primary">Refresh lines</button>
+        <button type="button" id="props-search-refresh" class="dash-btn dash-btn-primary">Refresh lines</button>
       </header>
+
+      <div class="ntg-toolbar">
+        <input id="props-player-search" class="ntg-search" type="search" placeholder="Search player..." autocomplete="off" />
+        <button type="button" id="props-open-filters" class="ntg-btn ntg-btn-ghost">Filters</button>
+        <button type="button" id="props-clear-filters" class="ntg-btn ntg-btn-ghost">Clear all</button>
+      </div>
+      <div id="props-filter-scrim" class="ntg-filter-scrim" hidden></div>
 
       <section id="parlay-builder-panel" class="parlay-builder-panel dash-panel" aria-label="Auto parlay builder">
         <div class="dash-panel-head parlay-builder-head">
@@ -63,6 +71,11 @@
         <div id="parlay-builder-results" class="parlay-builder-results"></div>
       </section>
 
+      <aside id="props-filter-drawer" class="ntg-filter-drawer" aria-label="Prop filters">
+        <div class="dash-panel-head">
+          <h2>Filters</h2>
+          <button type="button" id="props-close-filters" class="ntg-btn ntg-btn-ghost">Done</button>
+        </div>
       <form id="props-search-form" class="props-search-filters dash-panel" method="get" action="/mlb/props" aria-label="Prop search filters">
         <label class="props-filter-field">
           <span>Sportsbook</span>
@@ -167,6 +180,7 @@
           <span class="props-filter-hint text-muted">Filters reload this page with server-side results. Use <strong>Refresh lines</strong> above to pull new odds.</span>
         </div>
       </form>
+      </aside>
 
       <p id="props-search-meta" class="props-search-meta">Loading props…</p>
 
@@ -182,7 +196,7 @@
     </main>
   </div>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260819"></script>
-  <script src="/static/mlb_props.js?v=20260819"></script>
+  <script src="/static/app.js?v=20260820"></script>
+  <script src="/static/mlb_props.js?v=20260820"></script>
 </body>
 </html>

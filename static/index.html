@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="/static/app.css?v=20260816">
   <link rel="stylesheet" href="/static/brand.css?v=20260740">
   <link rel="stylesheet" href="/static/design.css?v=20260740">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260740">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260820">
 </head>
 <body data-ntg-splash="1" class="ntg-shell home-v2 home-dashboard">
   <div class="app-shell">
@@ -43,15 +44,11 @@
       </div>
       <div class="dash-hero-inner">
         <div class="dash-hero-copy">
-          <h1>See the edge before the line moves</h1>
-          <p class="dash-hero-kicker">Model • Markets • Edge</p>
-          <div class="dash-hero-actions">
-            <a class="dash-btn dash-btn-primary" href="/mlb">
-              <span class="dash-btn-icon" aria-hidden="true">▦</span> View Slate
-            </a>
-            <a class="dash-btn dash-btn-gold" href="/mlb/props">
-              <span class="dash-btn-icon" aria-hidden="true">★</span> Very Strong Props
-            </a>
+          <h1>See the edge before the line moves.</h1>
+          <p class="dash-hero-kicker ntg-hero-kicker">Data-driven sports intelligence built to identify where our model sees an advantage.</p>
+          <div class="dash-hero-actions ntg-hero-actions">
+            <a class="dash-btn dash-btn-primary" href="/mlb">View today's slate</a>
+            <a class="dash-btn dash-btn-ghost" href="#edge-scroll">View top edges</a>
           </div>
           <div id="hero-chips" class="hero-chips dash-hero-chips hidden" aria-hidden="true"></div>
         </div>
@@ -66,6 +63,8 @@
 
     <main class="app-main dash-main">
       <p class="refresh-line hidden" id="refresh-line" aria-hidden="true">Checking last update…</p>
+
+      <section id="featured-edge" class="ntg-featured hidden" aria-label="Featured model edge"></section>
 
       <section class="dash-metrics" aria-label="Today's metrics">
         <div id="today-glance">
@@ -155,15 +154,13 @@
 
       <div id="best-props" class="hidden" aria-hidden="true"></div>
       <div id="watched-section" class="hidden"></div>
-      <p id="pb-build-badge" class="pb-build-badge" aria-label="Deploy build"></p>
-      <p class="home-quiet-link"><a href="/nfl/draft">link</a></p>
     </main>
   </div>
   <script src="/static/ntg-intro.js?v=20260740"></script>
   <script src="/static/design.js?v=20260816"></script>
   <script src="/static/player_prop_modal.js?v=20260740"></script>
-  <script src="/static/home-dashboard.js?v=20260817"></script>
-  <script src="/static/app.js?v=20260819"></script>
+  <script src="/static/home-dashboard.js?v=20260820"></script>
+  <script src="/static/app.js?v=20260820"></script>
   <script>
     if (typeof initDesignSystem === "function") initDesignSystem();
     if (typeof hydrateHomeFromEmbeddedData === "function") {
