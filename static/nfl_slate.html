@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260814">
   <link rel="stylesheet" href="/static/design.css?v=20260814">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260814">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
 </head>
 <body class="ntg-shell home-v2 slate-nfl" data-sport="nfl">
   <div class="app-shell">
@@ -39,7 +40,7 @@
       <header class="dash-page-header">
         <div>
           <h1>NFL</h1>
-          <p class="dash-page-kicker">Weekly slate · <a href="/nfl/futures">Futures</a> · <a href="/nfl/board">predictions board</a> · preseason included</p>
+          <p class="dash-page-kicker">Today's model outlook, matchups and market edges.</p>
         </div>
         <span class="dash-page-kicker" id="slate-date"></span>
       </header>
@@ -57,7 +58,11 @@
       </div>
 
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
-      <div id="slate-loading" class="empty-state hidden">Loading NFL slate…</div>
+      <div id="slate-loading" class="ntg-skel-stack hidden" aria-busy="true" aria-label="Loading NFL slate">
+        <div class="ntg-skel ntg-skel--card"></div>
+        <div class="ntg-skel ntg-skel--card"></div>
+        <div class="ntg-skel ntg-skel--card"></div>
+      </div>
       <div id="slate-error" class="error-state hidden"></div>
       <div id="game-list" class="game-list"></div>
     </main>

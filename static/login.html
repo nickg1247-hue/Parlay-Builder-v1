@@ -3,104 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Sign in — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
-  <style>
-    .login-wrap {
-      max-width: 400px;
-      margin: 4rem auto 2rem;
-      padding: 0 1rem;
-    }
-    .login-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.75rem;
-      backdrop-filter: blur(var(--glass-blur));
-    }
-    .login-card h1 {
-      font-size: 1.25rem;
-      margin-bottom: 0.35rem;
-    }
-    .login-card p {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 1.25rem;
-    }
-    .login-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      margin-bottom: 1rem;
-    }
-    .login-field label {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    .login-field input {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 1rem;
-      padding: 0.6rem 0.75rem;
-    }
-    .login-field input:focus {
-      border-color: var(--accent);
-      outline: none;
-    }
-    .login-error {
-      color: #f4212e;
-      font-size: 0.85rem;
-      margin-bottom: 0.75rem;
-      min-height: 1.2em;
-    }
-    .login-submit {
-      width: 100%;
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 0.65rem 1rem;
-    }
-    .login-submit:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-    .login-back {
-      display: inline-block;
-      margin-top: 1.25rem;
-      color: var(--muted);
-      font-size: 0.9rem;
-      text-decoration: none;
-    }
-    .login-back:hover {
-      color: var(--accent);
-    }
-  </style>
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/auth.css?v=20260821">
 </head>
-<body>
-  <div class="login-wrap">
-    <div class="login-card">
-      <h1>NTG Sports</h1>
+<body class="ntg-auth">
+  <div class="auth-wrap login-wrap">
+    <a class="auth-brand" href="/" aria-label="NTG Sports home">
+      <img src="/static/assets/ntg-logo.png?v=20260821" alt="" width="56" height="56" />
+      <span>NTG Sports</span>
+    </a>
+    <div class="auth-card login-card ntg-card">
+      <h1>Sandbox sign in</h1>
       <p>Sign in to access Sandbox — advanced boards, model lab, and factor tuning.</p>
       <form id="login-form" autocomplete="on">
-        <div class="login-field">
+        <div class="auth-field login-field">
           <label for="username">Username</label>
           <input id="username" name="username" type="text" autocomplete="username" required>
         </div>
-        <div class="login-field">
+        <div class="auth-field login-field">
           <label for="password">Password</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required>
         </div>
-        <div id="login-error" class="login-error" role="alert"></div>
-        <button type="submit" class="login-submit" id="login-btn">Sign in</button>
+        <div id="login-error" class="login-error auth-error" role="alert"></div>
+        <button type="submit" class="login-submit auth-submit ntg-btn ntg-btn-primary" id="login-btn">Sign in</button>
       </form>
-      <a class="login-back" href="/">← Back to home</a>
+      <a class="auth-back login-back" href="/">← Back to home</a>
     </div>
   </div>
   <script>

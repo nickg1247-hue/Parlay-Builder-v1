@@ -305,6 +305,7 @@
     const openBtn = document.getElementById("props-open-filters");
     const closeBtn = document.getElementById("props-close-filters");
     const clearBtn = document.getElementById("props-clear-filters");
+    const drawerClear = document.getElementById("props-drawer-clear");
     function setOpen(open) {
       drawer?.classList.toggle("is-open", open);
       scrim?.classList.toggle("is-open", open);
@@ -316,13 +317,33 @@
       const n = countActiveFilters();
       openBtn.textContent = n ? `Filters (${n})` : "Filters";
     }
+    function syncQuickFilters() {
+      const wrap = document.getElementById("props-quick-filters");
+      if (!wrap) return;
+      const mode = veryStrongEl?.checked ? "strong" : actionableEl?.checked ? "edges" : "all";
+      wrap.querySelectorAll("[data-quick]").forEach((btn) => {
+        btn.classList.toggle("sport-pill-active", btn.dataset.quick === mode);
+      });
+    }
     openBtn?.addEventListener("click", () => setOpen(true));
     closeBtn?.addEventListener("click", () => setOpen(false));
     scrim?.addEventListener("click", () => setOpen(false));
     clearBtn?.addEventListener("click", () => {
       window.location.href = "/mlb/props";
     });
+    drawerClear?.addEventListener("click", () => {
+      window.location.href = "/mlb/props";
+    });
+    document.getElementById("props-quick-filters")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-quick]");
+      if (!btn || !form) return;
+      const mode = btn.dataset.quick;
+      if (actionableEl) actionableEl.checked = mode === "edges";
+      if (veryStrongEl) veryStrongEl.checked = mode === "strong";
+      form.submit();
+    });
     refreshCount();
+    syncQuickFilters();
   }
 
   function initPropsPlayerSearch() {

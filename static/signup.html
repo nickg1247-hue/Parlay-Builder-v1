@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Sign up — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
-  <link rel="stylesheet" href="/static/auth.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/auth.css?v=20260821">
 </head>
-<body>
+<body class="ntg-auth">
   <div class="auth-wrap">
-    <div class="auth-card">
+    <a class="auth-brand" href="/" aria-label="NTG Sports home">
+      <img src="/static/assets/ntg-logo.png?v=20260821" alt="" width="56" height="56" />
+      <span>NTG Sports</span>
+    </a>
+    <div class="auth-card ntg-card">
       <h1>Create account</h1>
       <p>Sign up with email to unlock player props. Games and news stay free without an account.</p>
       <form id="signup-form" autocomplete="on">
@@ -35,13 +42,13 @@
               and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
           </label>
         </div>
-        <button type="submit" class="auth-submit" id="signup-btn">Create account</button>
+        <button type="submit" class="auth-submit ntg-btn ntg-btn-primary" id="signup-btn">Create account</button>
       </form>
       <p class="auth-switch">Already have an account? <a href="/signin">Sign in</a></p>
       <a class="auth-back" href="/">← Back to home</a>
     </div>
   </div>
-  <script src="/static/pwa.js?v=20260725"></script>
+  <script src="/static/pwa.js?v=20260821"></script>
   <script src="/static/auth.js?v=2"></script>
   <script>
     initSignUpPage();

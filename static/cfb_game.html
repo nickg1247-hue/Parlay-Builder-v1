@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260740">
   <link rel="stylesheet" href="/static/design.css?v=20260740">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260740">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
 </head>
 <body class="ntg-shell home-v2 game-page-bg" data-sport="cfb">
   <div class="game-page-wash" aria-hidden="true"></div>
@@ -37,7 +38,10 @@
     <div id="headline-ticker" class="headline-ticker hidden" aria-label="League headlines"></div>
 
     <main class="app-main dash-main">
-      <div id="game-loading" class="empty-state">Loading game…</div>
+      <div id="game-loading" class="ntg-skel-stack" aria-busy="true" aria-label="Loading game">
+        <div class="ntg-skel ntg-skel--header"></div>
+        <div class="ntg-skel ntg-skel--card"></div>
+      </div>
       <div id="game-error" class="error-state hidden"></div>
       <div id="game-content" class="hidden">
         <header class="matchup-header" id="matchup-header"></header>

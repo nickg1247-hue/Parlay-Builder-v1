@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260820";
+const NTG_ASSET_V = "20260821";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -986,11 +986,21 @@ function modelLeanChips(boardRow, options = {}) {
 
 function confidenceChipClass(tier) {
   const t = (tier || "").toLowerCase();
-  if (t === "lean only" || t.startsWith("blocked")) return "chip-lean";
-  if (t === "low") return "chip-low";
+  if (t === "lean only" || t.startsWith("blocked") || t === "low") return "chip-lean";
   if (t === "moderate" || t === "medium") return "chip-medium";
-  if (t === "high" || t === "very high" || t === "extremely high") return "chip-high";
+  if (t === "high" || t === "strong") return "chip-high";
+  if (t === "very high" || t === "very strong") return "chip-very";
+  if (t === "extremely high" || t === "elite") return "chip-extreme";
   return "";
+}
+
+function ntgProbabilityBarHtml(pcts) {
+  if (!pcts) return "";
+  const awayFav = pcts.awayPct >= pcts.homePct;
+  return `<div class="ntg-prob-bar" role="img" aria-label="Model win probability ${pcts.awayPct} percent away, ${pcts.homePct} percent home">
+    <span class="${awayFav ? "ntg-prob-fav" : "ntg-prob-dog"}" style="width:${pcts.awayPct}%"></span>
+    <span class="${awayFav ? "ntg-prob-dog" : "ntg-prob-fav"}" style="width:${pcts.homePct}%"></span>
+  </div>`;
 }
 
 function propSlipCorrelationWarnings(legs) {
@@ -1554,7 +1564,8 @@ function gameCardHtml(game, options = {}) {
   const lean = modelLeanLabel(boardRow, { sport: gameSport(game) });
   const leanChips = modelLeanChips(boardRow, { sport: gameSport(game) });
   const preview = matchupPreviewText(boardRow, lineMove);
-  const watched = options.showWatch !== false && isWatched(game.game_id);
+  const showWatch = options.showWatch !== false;
+  const watched = showWatch && isWatched(game.game_id);
   const leanHtml = leanChips.length
     ? leanChips
         .map(
@@ -1604,8 +1615,9 @@ function gameCardHtml(game, options = {}) {
   }
   const confLabel =
     (boardRow && (boardRow.model_confidence || boardRow.ml_confidence || lean?.tier)) || "";
+  const probBar = typeof ntgProbabilityBarHtml === "function" ? ntgProbabilityBarHtml(pcts) : "";
   return `
-    <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
+    ${showWatch ? `<button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>` : ""}
     <div class="game-card-kicker">
       <span>${league}</span>
       <span>${statusLabel}${isGameLive(game.status) ? ' · <span class="status-badge badge-live">Live</span>' : ""}</span>
@@ -1627,6 +1639,7 @@ function gameCardHtml(game, options = {}) {
       </div>
       ${homePctHtml}
     </div>
+    ${probBar}
     ${leanHtml}
     <div class="game-card-foot">
       <span>${edgeLabel ? `Model edge ${edgeLabel}` : confLabel ? confLabel : "View matchup"}</span>
@@ -2397,9 +2410,10 @@ function renderPropExplorerList(el, props, options = {}) {
   const rows = props || [];
   if (!rows.length) {
     el.innerHTML = `
-      <div class="best-bets-empty-card">
-        ${emptyStateIcon("no-bets")}
-        <p>${options.emptyMessage || "No props match your filters. Try removing one or more filters."}</p>
+      <div class="best-bets-empty-card empty-state-card">
+        <h3>No props found</h3>
+        <p>${options.emptyMessage || "No props match your current filters."}</p>
+        <a class="ntg-btn ntg-btn-primary" href="/mlb/props">Clear filters</a>
       </div>`;
     return;
   }
@@ -2467,6 +2481,8 @@ function renderPropExplorerList(el, props, options = {}) {
         <div class="prop-explorer-actions">
           <button type="button" class="btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View stats</button>
           <a class="btn-ghost" href="${gameHref}">Game</a>
+          <span class="game-card-cta prop-card-cta">View analysis →</span>
+        </div>
           ${
             isPropSlipPublic() && p.actionable && p.recommended_odds != null
               ? `<button type="button" class="home-prop-add-btn" data-add-explorer-prop="${i}">+ Add to slip</button>`
@@ -2974,11 +2990,21 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
   const homePctHtml = pcts
     ? `<span class="team-model-pct matchup-model-pct${pcts.homePct >= pcts.awayPct ? " team-model-pct--fav" : ""}">${pcts.homePct}%</span>`
     : "";
+  const league = String(game.sport || "mlb").toUpperCase();
+  const lean = typeof modelLeanLabel === "function" ? modelLeanLabel(resolvedRow, { sport: gameSport(game) }) : null;
+  const leanHtml = lean
+    ? `<div class="matchup-lean-row"><span class="ntg-prob-caption" style="margin:0">Model lean</span><span class="model-lean-chip ${confidenceChipClass(lean.tier)}">${lean.text}</span></div>`
+    : "";
+  const probBar = typeof ntgProbabilityBarHtml === "function" ? ntgProbabilityBarHtml(pcts) : "";
   return `
     <div class="matchup-header-wrap ${isUfc ? "matchup-header-ufc" : ""}" style="${gameCardColorStyle(game)}">
     ${bandHtml}
     <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
     ${seriesHtml}
+    <div class="game-card-kicker matchup-kicker">
+      <span>${league}${game.start_time_utc ? ` · ${formatLocalTimeShort(game.start_time_utc)}` : ""}</span>
+      <span class="status-badge ${statusBadgeClass(game.status)}">${gameStatusText(game)}</span>
+    </div>
     <div class="matchup-grid">
       <div class="matchup-team">
         ${awayVisual}
@@ -2989,7 +3015,6 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
         ${showScores ? `<span class="matchup-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       <div class="matchup-center">
-        <span class="status-badge ${statusBadgeClass(game.status)}">${gameStatusText(game)}</span>
         <p class="matchup-time">${centerText}</p>
       </div>
       <div class="matchup-team">
@@ -3001,6 +3026,8 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}
       </div>
     </div>
+    ${pcts ? `<p class="ntg-prob-caption">Model win probability</p>${probBar}` : ""}
+    ${leanHtml}
     </div>
   `;
 }
@@ -3473,17 +3500,22 @@ function renderUpdatesHistory(el, data) {
   if (!el || !data) return;
   const entries = data.history || [];
   if (!entries.length) {
-    el.innerHTML = "<p class=\"updates-loading\">No updates posted yet.</p>";
+    el.innerHTML = `<div class="empty-state-card"><h3>No updates yet</h3><p>Product changes will appear here.</p></div>`;
     return;
   }
   el.innerHTML = entries
-    .map(
-      (entry) => `
-    <article class="updates-entry">
-      <h2>${entry.title || "Update"} <span class="updates-date">${entry.date || ""}</span></h2>
+    .map((entry, i) => {
+      const badge = i === 0 ? "New" : "Update";
+      return `
+    <article class="updates-entry ntg-card">
+      <div class="game-card-kicker">
+        <span>${entry.date || ""}</span>
+        <span class="ntg-badge">${badge}</span>
+      </div>
+      <h2>${entry.title || "Update"}</h2>
       <ul>${(entry.items || []).map((item) => `<li>${item}</li>`).join("")}</ul>
-    </article>`
-    )
+    </article>`;
+    })
     .join("");
 }
 

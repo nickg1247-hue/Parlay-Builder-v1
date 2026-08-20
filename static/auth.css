@@ -5,11 +5,10 @@
 }
 
 .auth-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--border);
+  background: var(--ntg-bg, #050b16);
+  border: 1px solid var(--ntg-border, var(--border));
   border-radius: 12px;
   padding: 1.75rem;
-  backdrop-filter: blur(var(--glass-blur));
 }
 
 .auth-card h1 {
@@ -69,7 +68,7 @@
 
 .auth-submit {
   width: 100%;
-  background: var(--accent);
+  background: var(--ntg-primary, var(--accent));
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -97,7 +96,7 @@
 }
 
 .auth-switch a {
-  color: var(--accent);
+  color: var(--ntg-primary, var(--accent));
 }
 
 .auth-back {

@@ -3,36 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Updates — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260725">
-  <link rel="stylesheet" href="/static/app.css?v=20260725">
-  <link rel="stylesheet" href="/static/brand.css?v=20260725">
-  <link rel="stylesheet" href="/static/design.css?v=20260725">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260725">
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/design.css?v=20260821">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
 </head>
 <body class="ntg-shell home-v2">
   <div class="app-shell">
-    <header class="app-topbar">
-      <div class="app-nav-row">
-        <a class="app-brand" href="/" aria-label="NTG Sports home">NTG Sports</a>
-        <nav class="app-nav-links" aria-label="Account & tools"></nav>
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260821" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
     </header>
 
     <main class="app-main dash-main updates-main">
       <header class="dash-page-header">
-        <h1>Site updates</h1>
-        <p class="updates-lead dash-page-kicker">Recent changes to NTG Sports — experimental analytics, not betting advice.</p>
+        <div>
+          <h1>Site updates</h1>
+          <p class="updates-lead dash-page-kicker">Product changelog for NTG Sports — experimental analytics, not betting advice.</p>
+        </div>
       </header>
       <div id="updates-list" class="updates-list">
-        <p class="updates-loading">Loading…</p>
+        <div class="ntg-skel-stack" aria-busy="true" aria-label="Loading updates">
+          <div class="ntg-skel ntg-skel--card"></div>
+          <div class="ntg-skel ntg-skel--card"></div>
+        </div>
       </div>
-      <p class="updates-foot"><a href="/">← Back to dashboard</a></p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260819"></script>
+  <script src="/static/app.js?v=20260821"></script>
   <script>
     loadPublicFeatures().then(async () => {
       initSiteChrome();
@@ -41,7 +51,15 @@
         renderUpdatesHistory(document.getElementById("updates-list"), data);
       } catch {
         const list = document.getElementById("updates-list");
-        if (list) list.innerHTML = "<p>Could not load updates.</p>";
+        if (list && typeof brandedErrorState === "function") {
+          brandedErrorState(list, {
+            title: "Updates unavailable",
+            message: "We couldn't load the latest product notes.",
+            onRetry: () => window.location.reload(),
+          });
+        } else if (list) {
+          list.innerHTML = "<div class=\"empty-state-card\"><h3>Updates unavailable</h3><p>We couldn't load the latest product notes.</p></div>";
+        }
       }
     });
   </script>

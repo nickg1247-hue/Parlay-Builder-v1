@@ -3,40 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Sandbox — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/design.css?v=20260821">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
 </head>
-<body>
+<body class="ntg-shell home-v2">
   <div class="app-shell">
-    <header class="app-topbar">
-      <div class="app-nav-row">
-        <a class="app-brand" href="/">NTG <span>Sports</span></a>
-        <nav class="app-nav-links" aria-label="Site tools"></nav>
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260821" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="sport-pills" aria-label="Sports"></div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
     </header>
 
-    <main class="app-main sandbox-main">
-      <section class="sandbox-intro">
-        <h1>Sandbox</h1>
-        <p class="sandbox-lead">Advanced boards, model lab, and factor tuning. Experimental tools — not on the public site.</p>
-        <p class="sandbox-auth-note hidden" id="sandbox-auth-note"></p>
-      </section>
+    <main class="app-main dash-main sandbox-main">
+      <header class="dash-page-header">
+        <div>
+          <h1>Sandbox <span class="ntg-badge ntg-lab-badge">Lab</span></h1>
+          <p class="sandbox-lead dash-page-kicker">Advanced boards, model lab, and factor tuning — same product, deeper tools.</p>
+        </div>
+      </header>
+      <p class="sandbox-auth-note hidden" id="sandbox-auth-note"></p>
 
       <p class="app-section-title">MLB</p>
       <div class="sandbox-hub">
-        <a class="sandbox-card" href="/mlb/board">
+        <a class="sandbox-card ntg-card" href="/mlb/board">
           <span class="sandbox-card-title">Advanced board</span>
           <span class="sandbox-card-desc">Model vs market, +EV singles, spreads &amp; totals</span>
           <span class="arrow">→</span>
         </a>
-        <a class="sandbox-card" href="/mlb/board/demo">
+        <a class="sandbox-card ntg-card" href="/mlb/board/demo">
           <span class="sandbox-card-title">Pick preview (demo)</span>
           <span class="sandbox-card-desc">Model winner vs +EV pick — preview before live slate</span>
           <span class="arrow">→</span>
         </a>
-        <a class="sandbox-card" href="/mlb/lab">
+        <a class="sandbox-card ntg-card" href="/mlb/lab">
           <span class="sandbox-card-title">Model lab</span>
           <span class="sandbox-card-desc">Walk-forward experiments and feature-set search</span>
           <span class="arrow">→</span>
@@ -45,12 +57,12 @@
 
       <p class="app-section-title">NBA</p>
       <div class="sandbox-hub">
-        <a class="sandbox-card" href="/nba/board">
+        <a class="sandbox-card ntg-card" href="/nba/board">
           <span class="sandbox-card-title">Advanced board</span>
           <span class="sandbox-card-desc">Weighted factor model vs market lines</span>
           <span class="arrow">→</span>
         </a>
-        <a class="sandbox-card" href="/nba/board/factors">
+        <a class="sandbox-card ntg-card" href="/nba/board/factors">
           <span class="sandbox-card-title">Factor weights</span>
           <span class="sandbox-card-desc">Global ▲/▼ tuning for all 16 prediction factors</span>
           <span class="arrow">→</span>
@@ -58,13 +70,15 @@
       </div>
 
       <p class="sandbox-actions">
-        <button type="button" class="btn btn-secondary" id="sandbox-logout">Log out</button>
+        <button type="button" class="ntg-btn ntg-btn-ghost" id="sandbox-logout">Log out</button>
       </p>
     </main>
   </div>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260821"></script>
   <script>
     (async function () {
+      if (typeof loadPublicFeatures === "function") await loadPublicFeatures();
+      if (typeof initSiteChrome === "function") initSiteChrome();
       try {
         const res = await fetch("/api/auth/status");
         const data = await res.json();

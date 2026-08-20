@@ -585,7 +585,7 @@
 
       <div class="dash-widget-gold-head">${GOLD_STAR_SVG}<span class="dash-widget-label">Very Strong</span></div>
 
-      <p class="dash-widget-title">Loading props…</p>
+      <p class="dash-widget-title"><span class="ntg-skel" style="display:block;min-height:1.1rem;border:0;"></span></p>
 
     </div>`;
 
@@ -631,7 +631,7 @@
 
       <span class="dash-widget-label">Top Form Pick</span>
 
-      <p class="dash-widget-title">Loading slate…</p>
+      <p class="dash-widget-title"><span class="ntg-skel" style="display:block;min-height:1.1rem;border:0;"></span></p>
 
     </div>`;
 
@@ -1480,55 +1480,35 @@
     }
     const game = findGameById(games, pick.game_id);
     const slate = summary && summary.slate_by_game_id ? summary.slate_by_game_id[pick.game_id] : null;
-    let homePct = null;
-    let awayPct = null;
-    if (slate && slate.model_prob_home != null) {
-      homePct = Math.round(Number(slate.model_prob_home) * 100);
-      awayPct = 100 - homePct;
-    } else if (pick.model_prob != null) {
-      const pct = Math.round(Number(pick.model_prob) * 100);
-      if (pick.side === "home") {
-        homePct = pct;
-        awayPct = 100 - pct;
-      } else {
-        awayPct = pct;
-        homePct = 100 - pct;
-      }
-    }
-    const edge = pick.edge;
-    let edgeLabel = "";
-    if (edge != null && Number.isFinite(Number(edge))) {
-      const n = Number(edge);
-      const pct = Math.abs(n) <= 1 ? n * 100 : n;
-      edgeLabel = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`;
-    }
-    const awayName = game?.away_team || (pick.matchup || "").split(/@|vs/i)[0] || "Away";
-    const homeName = game?.home_team || (pick.matchup || "").split(/@|vs/i)[1] || "Home";
     const href = `/mlb/game/${encodeURIComponent(pick.game_id)}`;
     el.classList.remove("hidden");
+    if (game && typeof gameCardHtml === "function") {
+      let modelProbHome = slate && slate.model_prob_home != null ? slate.model_prob_home : null;
+      if (modelProbHome == null && pick.model_prob != null) {
+        modelProbHome = pick.side === "home" ? pick.model_prob : 1 - Number(pick.model_prob);
+      }
+      const boardRow = {
+        ...(slate || {}),
+        best_pick: (slate && slate.best_pick) || pick,
+        model_prob_home: modelProbHome,
+        model_confidence: (slate && slate.model_confidence) || pick.confidence || pick.tier,
+      };
+      el.innerHTML = `
+        <p class="ntg-featured-kicker">Featured edge</p>
+        <a class="game-card ntg-card ntg-card--featured" href="${href}">${gameCardHtml(game, { boardRow, showWatch: false })}</a>`;
+      return;
+    }
+    const awayName = (pick.matchup || "").split(/@|vs/i)[0] || "Away";
+    const homeName = (pick.matchup || "").split(/@|vs/i)[1] || "Home";
     el.innerHTML = `
-      <div class="ntg-featured-teams">
-        <div class="ntg-featured-team">
-          <span class="ntg-featured-abbr">${teamAbbr(game, "away")}</span>
-          <strong>${awayName}</strong>
-          <span class="ntg-featured-pct">${awayPct != null ? awayPct + "%" : "—"}</span>
+      <p class="ntg-featured-kicker">Featured edge</p>
+      <a class="ntg-card ntg-card--featured" href="${href}" style="display:block;padding:1.1rem 1.2rem;text-decoration:none;color:inherit;">
+        <strong>${awayName} @ ${homeName}</strong>
+        <div class="game-card-foot" style="border:0;padding-top:0.7rem;">
+          <span>${pick.team || "Model lean"}</span>
+          <span class="game-card-cta">View matchup →</span>
         </div>
-        <div class="ntg-prob-bar" aria-hidden="true">
-          <span style="width:${awayPct || 50}%"></span>
-          <span style="width:${homePct || 50}%"></span>
-        </div>
-        <div class="ntg-featured-team ntg-featured-team--home">
-          <span class="ntg-featured-abbr">${teamAbbr(game, "home")}</span>
-          <strong>${homeName}</strong>
-          <span class="ntg-featured-pct">${homePct != null ? homePct + "%" : "—"}</span>
-        </div>
-      </div>
-      <div class="ntg-featured-meta">
-        <span class="ntg-badge">Model win probability</span>
-        ${edgeLabel ? `<div>Model edge <span class="ntg-featured-edge">${edgeLabel}</span></div>` : ""}
-        <div>${pick.team || "Model lean"}</div>
-        <a class="ntg-btn ntg-btn-ghost" href="${href}">View analysis →</a>
-      </div>`;
+      </a>`;
   }
 
   window.renderDashboardMetrics = renderDashboardMetrics;

@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Sign in — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
-  <link rel="stylesheet" href="/static/auth.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/auth.css?v=20260821">
 </head>
-<body>
+<body class="ntg-auth">
   <div class="auth-wrap">
-    <div class="auth-card">
+    <a class="auth-brand" href="/" aria-label="NTG Sports home">
+      <img src="/static/assets/ntg-logo.png?v=20260821" alt="" width="56" height="56" />
+      <span>NTG Sports</span>
+    </a>
+    <div class="auth-card ntg-card">
       <h1>Sign in</h1>
       <p>Player props require a free account. Games and news stay open without signing in.</p>
       <form id="signin-form" autocomplete="on">
@@ -24,13 +31,13 @@
         </div>
         <div id="signin-error" class="auth-error" role="alert"></div>
         <div id="signin-note" class="auth-note hidden" role="status"></div>
-        <button type="submit" class="auth-submit" id="signin-btn">Sign in</button>
+        <button type="submit" class="auth-submit ntg-btn ntg-btn-primary" id="signin-btn">Sign in</button>
       </form>
       <p class="auth-switch">No account? <a href="/signup">Create one</a></p>
       <a class="auth-back" href="/">← Back to home</a>
     </div>
   </div>
-  <script src="/static/pwa.js?v=20260725"></script>
+  <script src="/static/pwa.js?v=20260821"></script>
   <script src="/static/auth.js"></script>
   <script>
     initSignInPage();

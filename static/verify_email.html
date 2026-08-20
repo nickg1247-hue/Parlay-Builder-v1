@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
   <title>Verify email — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/app.css">
-  <link rel="stylesheet" href="/static/auth.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260821">
+  <link rel="stylesheet" href="/static/app.css?v=20260821">
+  <link rel="stylesheet" href="/static/brand.css?v=20260821">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/auth.css?v=20260821">
 </head>
-<body>
+<body class="ntg-auth">
   <div class="auth-wrap">
-    <div class="auth-card">
+    <a class="auth-brand" href="/" aria-label="NTG Sports home">
+      <img src="/static/assets/ntg-logo.png?v=20260821" alt="" width="56" height="56" />
+      <span>NTG Sports</span>
+    </a>
+    <div class="auth-card ntg-card">
       <h1>Verify email</h1>
       <p id="verify-intro">Confirming your account…</p>
       <div id="verify-error" class="auth-error" role="alert"></div>
@@ -20,12 +27,12 @@
           <label for="email">Email</label>
           <input id="email" name="email" type="email" autocomplete="email" required>
         </div>
-        <button type="submit" class="auth-submit auth-submit--ghost" id="resend-btn">Resend verification email</button>
+        <button type="submit" class="auth-submit auth-submit--ghost ntg-btn ntg-btn-ghost" id="resend-btn">Resend verification email</button>
       </form>
       <a class="auth-back" href="/signin">← Sign in</a>
     </div>
   </div>
-  <script src="/static/pwa.js?v=20260725"></script>
+  <script src="/static/pwa.js?v=20260821"></script>
   <script src="/static/auth.js?v=2"></script>
   <script>
     initVerifyEmailPage();

@@ -1199,44 +1199,6 @@
 
     const totals = explanation.totals;
 
-    const factorRows = (explanation.factor_comparison || [])
-
-      .map(
-
-        (row) => `
-
-        <tr>
-
-          <td>${row.factor}</td>
-
-          <td>${row.home}</td>
-
-          <td>${row.away}</td>
-
-          <td class="explain-edge-${row.edge}">${
-
-            row.edge === "home"
-
-              ? explanation.home_team
-
-              : row.edge === "away"
-
-                ? explanation.away_team
-
-                : "Even"
-
-          }</td>
-
-        </tr>`
-
-      )
-
-      .join("");
-
-    const homeCol = explanation.home_team || "Home";
-
-    const awayCol = explanation.away_team || "Away";
-
     const totalsHtml = totals
 
       ? `
@@ -1260,6 +1222,22 @@
     const factorVoteSummary = explanation.factor_majority_team && explanation.factor_votes
       ? `<p class="explain-summary explain-alignment">${explanation.away_team} ${explanation.factor_votes.away} · ${explanation.home_team} ${explanation.factor_votes.home} factor edges${explanation.factor_votes.neutral ? ` (${explanation.factor_votes.neutral} even)` : ""}</p>`
       : "";
+
+    const whyCards = (explanation.factor_comparison || [])
+      .map((row) => {
+        const edgeTeam =
+          row.edge === "home"
+            ? explanation.home_team
+            : row.edge === "away"
+              ? explanation.away_team
+              : "Even";
+        const tone = row.edge === "home" || row.edge === "away" ? "adv" : "even";
+        return `<article class="ntg-why-card"><span class="ntg-why-factor">${row.factor}</span><strong class="ntg-why-${tone}">${edgeTeam}</strong></article>`;
+      })
+      .join("");
+    const whyTitle = explanation.factor_majority_team
+      ? `Why NTG leans ${explanation.factor_majority_team}`
+      : "Matchup factors";
 
     const alignmentHtml = explanation.alignment_note
       ? `<p class="explain-alignment ${explanation.pick_reconciled ? "explain-aligned" : "explain-mismatch"}">${explanation.alignment_note}</p>`
@@ -1292,6 +1270,8 @@
 
       </div>
 
+      ${whyCards ? `<h3 class="ntg-why-title">${whyTitle}</h3><div class="ntg-why-grid">${whyCards}</div>` : ""}
+
       <div class="explain-columns">
 
         ${explanationList(`Why ${explanation.home_team} could win`, explanation.why_home)}
@@ -1301,8 +1281,6 @@
       </div>
 
       ${totalsHtml}
-
-      ${factorRows ? `<div class="explain-block"><h3>Factor snapshot</h3><p class="explain-legend"><strong>${homeCol}</strong> is the home team in this table; <strong>${awayCol}</strong> is the away team.</p><table class="explain-table"><thead><tr><th>Factor</th><th>${homeCol}</th><th>${awayCol}</th><th>Edge</th></tr></thead><tbody>${factorRows}</tbody></table></div>` : ""}
 
       ${ensembleHtml}
 

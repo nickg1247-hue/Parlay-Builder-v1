@@ -57,6 +57,8 @@ def test_mlb_slate_page():
     assert 'id="ntg-page-data"' in text
     assert "mlb_slate" in text
     assert "app.js" in text
+    assert "ntg-system.css" in text
+    assert "Today's model outlook" in text
 
 
 def test_mlb_board_page(auth_env):
@@ -158,6 +160,8 @@ def test_sandbox_hub_page(auth_env):
     assert response.status_code == 200
     text = response.text
     assert "Sandbox" in text
+    assert "ntg-shell" in text
+    assert "ntg-system.css" in text
     assert 'href="/mlb/board"' in text
     assert 'href="/mlb/board/demo"' in text
     assert 'href="/mlb/lab"' in text
@@ -170,6 +174,7 @@ def test_updates_page():
     assert response.status_code == 200
     text = response.text
     assert "Site updates" in text
+    assert "ntg-system.css" in text
     assert "site_updates.json" in text or "updates-list" in text
     assert "app.js" in text
 
@@ -187,6 +192,15 @@ def test_nba_game_page():
     assert response.status_code == 200
     assert "nba_game.js" in response.text
     assert "game-matchup-board" in response.text
+
+
+def test_signin_page():
+    response = client.get("/signin")
+    assert response.status_code == 200
+    text = response.text
+    assert "ntg-auth" in text
+    assert "ntg-system.css" in text
+    assert "Sign in" in text
 
 
 def test_backtest_saved_endpoint(auth_env):
