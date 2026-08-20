@@ -315,45 +315,62 @@
     return n;
   }
 
-  function initPropsFilterDrawer() {
+  function setFilterDrawerOpen(open) {
     const drawer = document.getElementById("props-filter-drawer");
     const scrim = document.getElementById("props-filter-scrim");
     const openBtn = document.getElementById("props-open-filters");
-    const closeBtn = document.getElementById("props-close-filters");
-    const clearBtn = document.getElementById("props-clear-filters");
-    const drawerClear = document.getElementById("props-drawer-clear");
-    function setOpen(open) {
-      if (drawer) {
-        drawer.hidden = !open;
-        drawer.classList.toggle("is-open", open);
-      }
-      if (scrim) {
-        scrim.hidden = !open;
-        scrim.classList.toggle("is-open", open);
-      }
-      document.body.classList.toggle("ntg-filters-open", open);
+    if (drawer) {
+      drawer.classList.toggle("is-open", open);
+      drawer.setAttribute("aria-hidden", open ? "false" : "true");
     }
-    function refreshCount() {
-      if (!openBtn) return;
-      const n = countActiveFilters();
-      openBtn.textContent = n ? `Filters (${n})` : "Filters";
+    if (scrim) {
+      scrim.classList.toggle("is-open", open);
     }
-    function syncQuickFilters() {
-      const wrap = document.getElementById("props-quick-filters");
-      if (!wrap) return;
-      const mode = veryStrongEl?.checked ? "strong" : actionableEl?.checked ? "edges" : "all";
-      wrap.querySelectorAll("[data-quick]").forEach((btn) => {
-        btn.classList.toggle("sport-pill-active", btn.dataset.quick === mode);
-      });
-    }
-    openBtn?.addEventListener("click", () => setOpen(true));
-    closeBtn?.addEventListener("click", () => setOpen(false));
-    scrim?.addEventListener("click", () => setOpen(false));
-    clearBtn?.addEventListener("click", () => {
-      window.location.href = "/mlb/props";
+    document.body.classList.toggle("ntg-filters-open", open);
+    openBtn?.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function refreshFilterCount() {
+    const openBtn = document.getElementById("props-open-filters");
+    if (!openBtn) return;
+    const n = countActiveFilters();
+    openBtn.textContent = n ? `Filters (${n})` : "Filters";
+  }
+
+  function syncQuickFilters() {
+    const wrap = document.getElementById("props-quick-filters");
+    if (!wrap) return;
+    const mode = veryStrongEl?.checked ? "strong" : actionableEl?.checked ? "edges" : "all";
+    wrap.querySelectorAll("[data-quick]").forEach((btn) => {
+      btn.classList.toggle("sport-pill-active", btn.dataset.quick === mode);
     });
-    drawerClear?.addEventListener("click", () => {
-      window.location.href = "/mlb/props";
+  }
+
+  function initPropsFilterDrawer() {
+    if (document.documentElement.dataset.propsFiltersWired === "1") {
+      refreshFilterCount();
+      syncQuickFilters();
+      return;
+    }
+    document.documentElement.dataset.propsFiltersWired = "1";
+
+    document.addEventListener("click", (e) => {
+      const el = e.target instanceof Element ? e.target : e.target.parentElement;
+      if (!el) return;
+      if (el.closest("#props-open-filters")) {
+        e.preventDefault();
+        setFilterDrawerOpen(true);
+        return;
+      }
+      if (el.closest("#props-close-filters") || el.closest("#props-filter-scrim")) {
+        e.preventDefault();
+        setFilterDrawerOpen(false);
+        return;
+      }
+      if (el.closest("#props-clear-filters") || el.closest("#props-drawer-clear")) {
+        e.preventDefault();
+        window.location.href = "/mlb/props";
+      }
     });
     document.getElementById("props-quick-filters")?.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-quick]");
@@ -363,11 +380,14 @@
       if (veryStrongEl) veryStrongEl.checked = mode === "strong";
       applyPropsFilters();
     });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setFilterDrawerOpen(false);
+    });
     form?.addEventListener("submit", (e) => {
       e.preventDefault();
       applyPropsFilters();
     });
-    refreshCount();
+    refreshFilterCount();
     syncQuickFilters();
   }
 
@@ -405,6 +425,7 @@
     document.getElementById("parlay-builder-form")?.addEventListener("submit", buildParlay);
   }
 
+  initPropsFilterDrawer();
   init().catch(() => {
     if (metaEl) metaEl.textContent = "Unable to load props.";
     if (typeof renderPropExplorerList === "function") {

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
-  <link rel="stylesheet" href="/static/ntg-system.css?v=20260823">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260824">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
@@ -49,7 +49,7 @@
           <button type="button" class="sport-pill" data-quick="all">All</button>
         </div>
         <input id="props-player-search" class="ntg-search" type="search" placeholder="Search players..." autocomplete="off" />
-        <button type="button" id="props-open-filters" class="ntg-btn ntg-btn-ghost">Filters</button>
+        <button type="button" id="props-open-filters" class="ntg-btn ntg-btn-ghost" aria-expanded="false" aria-controls="props-filter-drawer">Filters</button>
         <button type="button" id="props-clear-filters" class="ntg-btn ntg-btn-ghost">Clear all</button>
       </div>
 
@@ -89,8 +89,8 @@
       </section>
     </main>
   </div>
-  <div id="props-filter-scrim" class="ntg-filter-scrim" hidden></div>
-  <aside id="props-filter-drawer" class="ntg-filter-drawer" hidden aria-label="Prop filters">
+  <div id="props-filter-scrim" class="ntg-filter-scrim"></div>
+  <aside id="props-filter-drawer" class="ntg-filter-drawer" aria-label="Prop filters" aria-hidden="true">
         <div class="dash-panel-head">
           <h2>Filters</h2>
           <button type="button" id="props-close-filters" class="ntg-btn ntg-btn-ghost">Done</button>
@@ -202,7 +202,7 @@
       </form>
   </aside>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260823"></script>
-  <script src="/static/mlb_props.js?v=20260823"></script>
+  <script src="/static/app.js?v=20260824"></script>
+  <script src="/static/mlb_props.js?v=20260824"></script>
 </body>
 </html>

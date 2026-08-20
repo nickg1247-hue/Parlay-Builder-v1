@@ -215,6 +215,8 @@ def test_mlb_props_empty_filter_query_is_ok(monkeypatch):
     assert response.status_code == 200
     assert "MLB player props" in response.text
     assert 'id="props-filter-drawer"' in response.text
+    assert 'id="props-open-filters"' in response.text
+    assert 'hidden aria-label="Prop filters"' not in response.text
     assert 'id="props-search-results"' in response.text
 
 

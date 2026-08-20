@@ -636,14 +636,18 @@ a.game-card.ntg-card { position: relative; }
   flex-wrap: wrap;
   gap: 0.7rem;
   align-items: center;
-  position: sticky;
-  top: 64px;
-  z-index: 50;
+  position: relative;
+  z-index: 2;
   margin: 0 0 1rem;
   padding: 0.75rem 0;
   background: color-mix(in srgb, var(--ntg-bg) 92%, transparent);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--ntg-border);
+}
+
+#props-open-filters,
+#props-clear-filters {
+  flex-shrink: 0;
 }
 
 .ntg-search {
@@ -662,24 +666,24 @@ a.game-card.ntg-card { position: relative; }
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 140;
-  width: min(420px, 100%);
+  bottom: 0;
+  z-index: 400;
+  width: min(420px, 100vw);
   height: 100%;
   overflow: auto;
   padding: 1.2rem;
   background: var(--ntg-surface-2);
   border-left: 1px solid var(--ntg-border);
-  transform: translateX(110%);
-  transition: transform 220ms ease;
-}
-
-.ntg-filter-drawer[hidden] {
-  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(100%);
+  transition: transform 220ms ease, visibility 220ms ease;
 }
 
 .ntg-filter-drawer.is-open {
-  display: block !important;
-  transform: none;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
 }
 
 .ntg-filter-drawer .props-search-filters,
@@ -694,19 +698,19 @@ a.game-card.ntg-card { position: relative; }
   box-shadow: none !important;
 }
 
-.ntg-filter-drawer.is-open { transform: none; }
-
 .ntg-filter-scrim {
   position: fixed;
   inset: 0;
-  z-index: 130;
+  z-index: 390;
   background: rgba(2, 6, 16, 0.55);
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 200ms ease;
+  transition: opacity 200ms ease, visibility 200ms ease;
 }
 
 .ntg-filter-scrim.is-open {
+  visibility: visible;
   opacity: 1;
   pointer-events: auto;
 }
@@ -892,13 +896,20 @@ body.home-dashboard .dash-main {
   .ntg-bottom-nav a.is-active { color: var(--ntg-primary-hover); }
   .ntg-filter-drawer {
     top: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: min(86vh, 720px);
     border-left: 0;
     border-top: 1px solid var(--ntg-border);
     border-radius: 16px 16px 0 0;
-    transform: translateY(110%);
+    transform: translateY(100%);
   }
-  .ntg-filter-drawer.is-open { transform: none; }
+  .ntg-filter-drawer.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
