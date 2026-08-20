@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#020510">
+  <title>Under Construction — NTG Sports</title>
+  <link rel="icon" href="/static/assets/ntg-logo.png" type="image/png">
+  <style>
+    :root {
+      --navy: #020510;
+      --navy-2: #07111f;
+      --blue: #2563eb;
+      --cyan: #38bdf8;
+      --orange: #f97316;
+      --amber: #fb923c;
+      --gold: #facc15;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: var(--navy);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+      min-height: 100dvh;
+    }
+
+    .site {
+      position: relative;
+      isolation: isolate;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2.5rem) 5.5rem;
+    }
+
+    .sky,
+    .grid,
+    .dust,
+    .sparks,
+    .lights,
+    .horizon {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .sky {
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37, 99, 235, 0.28), transparent 58%),
+        radial-gradient(ellipse 40% 30% at 12% 18%, rgba(249, 115, 22, 0.16), transparent 55%),
+        radial-gradient(ellipse 36% 28% at 88% 14%, rgba(56, 189, 248, 0.12), transparent 50%),
+        linear-gradient(180deg, #020510 0%, #04101c 42%, #071422 100%);
+    }
+
+    .grid {
+      z-index: 1;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.18) 1px, transparent 1px);
+      background-size: 48px 48px;
+      transform: perspective(700px) rotateX(62deg) scale(1.35) translateY(18%);
+      transform-origin: center bottom;
+      mask-image: linear-gradient(180deg, transparent 8%, #000 48%, #000 100%);
+      animation: grid-drift 28s linear infinite;
+    }
+
+    .lights {
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .beam {
+      position: absolute;
+      top: -8%;
+      width: min(38vw, 280px);
+      height: 130%;
+      background: linear-gradient(
+        180deg,
+        rgba(250, 204, 21, 0.16),
+        rgba(249, 115, 22, 0.05) 42%,
+        transparent 78%
+      );
+      filter: blur(12px);
+      transform-origin: top center;
+    }
+
+    .beam-a {
+      left: 8%;
+      animation: sweep-a 11s ease-in-out infinite;
+    }
+
+    .beam-b {
+      right: 10%;
+      animation: sweep-b 13s ease-in-out infinite;
+    }
+
+    .horizon {
+      z-index: 3;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .horizon svg {
+      width: min(1400px, 160vw);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 -20px 40px rgba(37, 99, 235, 0.18));
+    }
+
+    .tape {
+      position: absolute;
+      left: -4%;
+      right: -4%;
+      height: 28px;
+      z-index: 8;
+      background: repeating-linear-gradient(
+        -18deg,
+        #111 0 14px,
+        var(--gold) 14px 28px
+      );
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .tape-top { top: 0; }
+    .tape-bottom { bottom: 0; }
+
+    .dust span,
+    .sparks span {
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .dust { z-index: 4; }
+    .dust span {
+      width: 3px;
+      height: 3px;
+      background: rgba(226, 232, 240, 0.45);
+      animation: float-dust 9s linear infinite;
+    }
+    .dust span:nth-child(1) { left: 12%; top: 28%; animation-delay: -1s; }
+    .dust span:nth-child(2) { left: 28%; top: 62%; animation-delay: -3s; width: 2px; height: 2px; }
+    .dust span:nth-child(3) { left: 51%; top: 18%; animation-delay: -5s; }
+    .dust span:nth-child(4) { left: 73%; top: 44%; animation-delay: -2s; width: 4px; height: 4px; }
+    .dust span:nth-child(5) { left: 86%; top: 70%; animation-delay: -6s; }
+    .dust span:nth-child(6) { left: 41%; top: 78%; animation-delay: -4s; }
+
+    .sparks { z-index: 5; }
+    .sparks span {
+      width: 2px;
+      height: 2px;
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--orange);
+      animation: spark 3.8s ease-in-out infinite;
+    }
+    .sparks span:nth-child(1) { left: 18%; top: 58%; animation-delay: 0s; }
+    .sparks span:nth-child(2) { left: 62%; top: 36%; animation-delay: 1.4s; }
+    .sparks span:nth-child(3) { left: 78%; top: 64%; animation-delay: 2.2s; }
+
+    .panel {
+      position: relative;
+      z-index: 6;
+      width: min(720px, 100%);
+      text-align: center;
+      padding: clamp(1.4rem, 4vw, 2.6rem) clamp(1.1rem, 4vw, 2.4rem);
+      background:
+        linear-gradient(180deg, rgba(7, 17, 31, 0.78), rgba(2, 5, 16, 0.72));
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      box-shadow:
+        0 0 0 1px rgba(249, 115, 22, 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(248, 250, 252, 0.06);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .brand img {
+      width: 88px;
+      height: 88px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 18px rgba(37, 99, 235, 0.45));
+      animation: logo-glow 5.5s ease-in-out infinite;
+    }
+
+    .brand-fallback {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.42em;
+      color: #fff;
+    }
+
+    .brand-fallback span { color: #3b82f6; }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-bottom: 0.85rem;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.08);
+      color: var(--amber);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .beacon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 10px var(--orange);
+      animation: beacon 1.8s ease-in-out infinite;
+    }
+
+    h1 {
+      font-size: clamp(2.05rem, 8vw, 4.4rem);
+      line-height: 0.92;
+      letter-spacing: 0.045em;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 0.9rem;
+    }
+
+    .lead {
+      font-size: clamp(0.92rem, 2.4vw, 1.2rem);
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 0.7rem;
+    }
+
+    .support {
+      max-width: 34rem;
+      margin: 0 auto 1.35rem;
+      color: var(--muted);
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      line-height: 1.55;
+    }
+
+    .scan {
+      height: 3px;
+      margin: 0 auto 1.15rem;
+      width: min(280px, 70%);
+      background: rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .scan::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 38%;
+      background: linear-gradient(90deg, transparent, var(--orange), var(--cyan), transparent);
+      animation: scan 2.8s ease-in-out infinite;
+    }
+
+    .meta {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    @keyframes grid-drift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 48px 48px, 48px 48px; }
+    }
+
+    @keyframes sweep-a {
+      0%, 100% { transform: rotate(-16deg); opacity: 0.55; }
+      50% { transform: rotate(8deg); opacity: 0.9; }
+    }
+
+    @keyframes sweep-b {
+      0%, 100% { transform: rotate(14deg); opacity: 0.45; }
+      50% { transform: rotate(-10deg); opacity: 0.85; }
+    }
+
+    @keyframes float-dust {
+      0% { transform: translateY(0); opacity: 0; }
+      15% { opacity: 0.7; }
+      100% { transform: translateY(-70px); opacity: 0; }
+    }
+
+    @keyframes spark {
+      0%, 70%, 100% { opacity: 0; transform: scale(0.6); }
+      78% { opacity: 1; transform: scale(1.8); }
+      86% { opacity: 0.2; }
+    }
+
+    @keyframes beacon {
+      0%, 100% { opacity: 0.35; box-shadow: 0 0 4px var(--orange); }
+      50% { opacity: 1; box-shadow: 0 0 14px var(--orange); }
+    }
+
+    @keyframes logo-glow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.28)); }
+      50% { filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.7)); }
+    }
+
+    @keyframes scan {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(320%); }
+    }
+
+    @media (max-width: 767px) {
+      .beam { width: 42vw; filter: blur(16px); }
+      .brand img { width: 72px; height: 72px; }
+      .panel { border-width: 1px; }
+      .horizon svg { width: 190vw; }
+    }
+
+    @media (min-width: 1024px) {
+      .panel { padding-top: 2.8rem; padding-bottom: 2.8rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grid,
+      .beam,
+      .dust span,
+      .sparks span,
+      .beacon,
+      .brand img,
+      .scan::after {
+        animation: none !important;
+      }
+      .beacon { opacity: 1; }
+      .scan::after { width: 100%; transform: none; opacity: 0.45; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site">
+    <div class="sky" aria-hidden="true"></div>
+    <div class="grid" aria-hidden="true"></div>
+    <div class="lights" aria-hidden="true">
+      <div class="beam beam-a"></div>
+      <div class="beam beam-b"></div>
+    </div>
+    <div class="dust" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="sparks" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="horizon" aria-hidden="true">
+      <svg viewBox="0 0 1440 280" xmlns="http://www.w3.org/2000/svg" role="presentation">
+        <defs>
+          <linearGradient id="bowl" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0b1a33"/>
+            <stop offset="100%" stop-color="#020510"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#bowl)" d="M0 280h1440V168c-120-18-250-86-430-86H430C250 82 120 150 0 168v112z"/>
+        <path fill="none" stroke="#1d4ed8" stroke-width="2" opacity="0.45" d="M90 168c110-48 250-78 340-78h580c90 0 230 30 340 78"/>
+        <g fill="#071018" stroke="#1e293b" stroke-width="1">
+          <rect x="70" y="96" width="18" height="92"/>
+          <rect x="1350" y="88" width="18" height="100"/>
+          <path d="M88 96h210l-24 18H88z"/>
+          <path d="M1368 88h-220l24 18h196z"/>
+        </g>
+        <g fill="#0b1220" stroke="#334155" stroke-width="1.2">
+          <path d="M1180 40l8 118h18L1192 38z"/>
+          <rect x="1168" y="34" width="92" height="8"/>
+          <rect x="1248" y="28" width="8" height="20"/>
+        </g>
+        <g stroke="#f97316" stroke-width="2" opacity="0.7">
+          <path d="M180 210h90M180 222h70M1260 206h80M1288 218h52"/>
+        </g>
+        <circle cx="88" cy="92" r="5" fill="#f97316"/>
+        <circle cx="1359" cy="84" r="5" fill="#38bdf8"/>
+      </svg>
+    </div>
+    <div class="tape tape-top" aria-hidden="true"></div>
+    <div class="tape tape-bottom" aria-hidden="true"></div>
+
+    <main class="panel">
+      <div class="brand">
+        <img src="/static/assets/ntg-logo.png" width="88" height="88" alt="NTG Sports" onerror="this.style.display='none'; this.nextElementSibling.hidden=false;">
+        <div class="brand-fallback" hidden>N<span>T</span>G SPORTS</div>
+      </div>
+      <div class="kicker"><span class="beacon" aria-hidden="true"></span> System upgrade in progress</div>
+      <h1>Under Construction</h1>
+      <p class="lead">We're building something better.</p>
+      <p class="support">NTG Sports is currently receiving a major upgrade. The prediction platform will return here when the new build is ready.</p>
+      <div class="scan" aria-hidden="true"></div>
+      <p class="meta">Night shift on the stadium · NTG Sports</p>
+    </main>
+  </div>
+</body>
+</html>

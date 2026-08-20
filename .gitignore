@@ -41,6 +41,10 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Hostinger file-flag for public maintenance mode (presence = ON)
+maintenance.on
+static/maintenance.on
+
 # Node (if you add a frontend later)
 node_modules/
 dist/

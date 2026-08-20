@@ -25,6 +25,11 @@ from app.auth.admin_auth import (
     set_session_cookie,
     verify_credentials,
 )
+from app.auth.maintenance import (
+    MaintenanceModeMiddleware,
+    clear_preview_cookie,
+    set_preview_cookie,
+)
 from app.auth.public_api_gate import PublicApiGateMiddleware
 from app.auth.user_auth import (
     UserPropsAuthMiddleware,
@@ -331,6 +336,7 @@ class StaticCacheMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(StaticCacheMiddleware)
+app.add_middleware(MaintenanceModeMiddleware)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 _HTML_NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
@@ -485,6 +491,33 @@ class NflFantasyMockAdvanceRequest(BaseModel):
     slot_counts: dict[str, int] | None = None
     position_maxes: dict[str, int] | None = None
     superflex: bool = False
+
+
+@app.get("/under-construction.html")
+async def under_construction_page():
+    return FileResponse(
+        STATIC_DIR / "under-construction.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "X-Robots-Tag": "noindex, nofollow",
+        },
+    )
+
+
+@app.get("/test")
+async def maintenance_preview_enter():
+    response = RedirectResponse(url="/", status_code=302)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    set_preview_cookie(response)
+    return response
+
+
+@app.get("/test/exit")
+async def maintenance_preview_exit():
+    response = RedirectResponse(url="/", status_code=302)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    clear_preview_cookie(response)
+    return response
 
 
 @app.get("/login")

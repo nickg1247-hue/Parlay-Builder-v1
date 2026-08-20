@@ -32,6 +32,15 @@ def cached_mlb_game() -> tuple[str, str]:
 
 
 @pytest.fixture(autouse=True)
+def _maintenance_off_unless_test_sets_flag(monkeypatch):
+    """Keep page tests isolated from a leftover Hostinger maintenance.on file."""
+    monkeypatch.setenv(
+        "MAINTENANCE_FLAG_PATH",
+        str(PROJECT_ROOT / ".pytest-maintenance-absent.on"),
+    )
+
+
+@pytest.fixture(autouse=True)
 def _no_auto_mlb_ingest_during_board_builds():
     """Prevent live daily board builds from running ingest/odds HTTP mid-test."""
     try:
