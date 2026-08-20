@@ -139,10 +139,26 @@
     renderTracker(data.tracker);
   }
 
+  function propsFilterParams() {
+    const params = new URLSearchParams();
+    if (!form) return params;
+    for (const [key, value] of new FormData(form).entries()) {
+      if (value == null || String(value).trim() === "") continue;
+      params.append(key, String(value));
+    }
+    return params;
+  }
+
   function buildRefreshUrl() {
-    const params = new URLSearchParams(new FormData(form));
+    const params = propsFilterParams();
     params.set("refresh", "true");
     return `/mlb/props?${params.toString()}`;
+  }
+
+  function applyPropsFilters() {
+    const params = propsFilterParams();
+    const qs = params.toString();
+    window.location.href = qs ? `/mlb/props?${qs}` : "/mlb/props";
   }
 
   function fmtOdds(value) {
@@ -307,9 +323,14 @@
     const clearBtn = document.getElementById("props-clear-filters");
     const drawerClear = document.getElementById("props-drawer-clear");
     function setOpen(open) {
-      drawer?.classList.toggle("is-open", open);
-      scrim?.classList.toggle("is-open", open);
-      if (scrim) scrim.hidden = !open;
+      if (drawer) {
+        drawer.hidden = !open;
+        drawer.classList.toggle("is-open", open);
+      }
+      if (scrim) {
+        scrim.hidden = !open;
+        scrim.classList.toggle("is-open", open);
+      }
       document.body.classList.toggle("ntg-filters-open", open);
     }
     function refreshCount() {
@@ -340,7 +361,11 @@
       const mode = btn.dataset.quick;
       if (actionableEl) actionableEl.checked = mode === "edges";
       if (veryStrongEl) veryStrongEl.checked = mode === "strong";
-      form.submit();
+      applyPropsFilters();
+    });
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      applyPropsFilters();
     });
     refreshCount();
     syncQuickFilters();

@@ -636,7 +636,14 @@ a.game-card.ntg-card { position: relative; }
   flex-wrap: wrap;
   gap: 0.7rem;
   align-items: center;
-  margin: 0.4rem 0 1rem;
+  position: sticky;
+  top: 64px;
+  z-index: 50;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0;
+  background: color-mix(in srgb, var(--ntg-bg) 92%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--ntg-border);
 }
 
 .ntg-search {
@@ -666,6 +673,27 @@ a.game-card.ntg-card { position: relative; }
   transition: transform 220ms ease;
 }
 
+.ntg-filter-drawer[hidden] {
+  display: none !important;
+}
+
+.ntg-filter-drawer.is-open {
+  display: block !important;
+  transform: none;
+}
+
+.ntg-filter-drawer .props-search-filters,
+.ntg-filter-drawer .props-search-filters.dash-panel {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
 .ntg-filter-drawer.is-open { transform: none; }
 
 .ntg-filter-scrim {
@@ -685,13 +713,14 @@ a.game-card.ntg-card { position: relative; }
 
 body.ntg-filters-open { overflow: hidden; }
 
-.props-search-filters.dash-panel {
+.props-page .parlay-builder-panel,
+.props-page .props-tracker-panel {
+  margin-top: 1.5rem;
+}
+
+.props-explorer-list {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 0.75rem;
-  background: transparent;
-  border: 0;
-  padding: 0;
 }
 
 .prop-explorer-card {

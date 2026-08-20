@@ -361,6 +361,24 @@ def _bool_query(raw: str | None) -> bool:
     return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _int_query(value: str | None) -> int | None:
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return None
+
+
+def _float_query(value: str | None) -> float | None:
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -2354,16 +2372,16 @@ async def mlb_props_page(
     date_param: str | None = Query(None, alias="date"),
     bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
     market_type: str | None = Query(None),
-    min_odds: int | None = Query(None),
+    min_odds: str | None = Query(None),
     line_kind: str | None = Query(None),
-    line_value: float | None = Query(None),
+    line_value: str | None = Query(None),
     side: str | None = Query(None),
     actionable_only: str | None = Query(None),
     very_strong_only: str | None = Query(None),
     include_alternates: str | None = Query(None),
     sort: str = Query("score"),
     risk: str | None = Query(None),
-    min_score: int | None = Query(None),
+    min_score: str | None = Query(None),
     min_hit_l5: str | None = Query(None),
     min_hit_l10: str | None = Query(None),
     refresh: str | None = Query(None),
@@ -2374,20 +2392,20 @@ async def mlb_props_page(
     qp = request.query_params
     page_data = await build_mlb_props_page_data(
         game_date,
-        bookmaker=bookmaker,
+        bookmaker=bookmaker or None,
         market_type=market_type or None,
-        min_odds=min_odds,
+        min_odds=_int_query(min_odds),
         line_kind=line_kind or "main",
-        line_value=line_value,
+        line_value=_float_query(line_value),
         side=side or "both",
         actionable_only=_bool_query(actionable_only or qp.get("actionable_only")),
         very_strong_only=_bool_query(very_strong_only or qp.get("very_strong_only")),
         include_alternates=_bool_query(
             include_alternates or qp.get("include_alternates")
         ),
-        sort=sort,
+        sort=sort or "score",
         risk=risk or None,
-        min_score=min_score,
+        min_score=_int_query(min_score),
         min_hit_l5=_pct_query(min_hit_l5),
         min_hit_l10=_pct_query(min_hit_l10),
         refresh=_bool_query(refresh),

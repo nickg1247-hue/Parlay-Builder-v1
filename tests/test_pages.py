@@ -194,6 +194,30 @@ def test_nba_game_page():
     assert "game-matchup-board" in response.text
 
 
+def test_mlb_props_empty_filter_query_is_ok(monkeypatch):
+    async def fake_page_data(*args, **kwargs):
+        return {
+            "kind": "mlb_props",
+            "date": "2026-08-19",
+            "propsSearch": {"props": [], "total_matched": 0},
+            "markets": [],
+            "bookmakers": [],
+            "tracker": {},
+            "filters": {},
+            "status": {},
+            "tickerScores": {},
+        }
+
+    monkeypatch.setattr("app.main.build_mlb_props_page_data", fake_page_data)
+    response = client.get(
+        "/mlb/props?min_odds=&line_value=&min_score=&market_type=&min_hit_l5=&min_hit_l10="
+    )
+    assert response.status_code == 200
+    assert "MLB player props" in response.text
+    assert 'id="props-filter-drawer"' in response.text
+    assert 'id="props-search-results"' in response.text
+
+
 def test_signin_page():
     response = client.get("/signin")
     assert response.status_code == 200
