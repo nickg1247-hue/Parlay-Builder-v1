@@ -1187,7 +1187,7 @@
 
           <a class="dash-btn dash-btn-sm dash-btn-ghost" href="/prop_slip.html">Open slip</a>
 
-          <a class="dash-btn dash-btn-sm dash-btn-ghost" href="/mlb/props">All props</a>
+          <a class="dash-btn dash-btn-sm dash-btn-ghost" href="/props">All props</a>
 
         </div>
 

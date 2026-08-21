@@ -164,7 +164,7 @@ function initVerifyEmailPage() {
       intro.textContent = "Email verified";
       showAuthNote(noteEl, "Your account is ready — player props are unlocked.", false);
       window.setTimeout(() => {
-        window.location.href = authNextPath("/mlb/props");
+        window.location.href = authNextPath("/props");
       }, 1200);
     } catch {
       intro.textContent = "Verification failed";

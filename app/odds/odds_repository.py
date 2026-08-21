@@ -19,11 +19,15 @@ from app.odds.live_odds import live_odds_enabled
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
 from app.odds.the_odds_api import (
     DEFAULT_MLB_PROP_MARKETS,
+    DEFAULT_NFL_PROP_MARKETS,
+    SPORT_NFL,
     estimate_odds_api_credits,
     fetch_historical_mlb_odds,
     fetch_live_mlb_odds,
     fetch_mlb_event_odds,
     fetch_mlb_events,
+    fetch_nfl_event_odds,
+    fetch_nfl_events,
     prop_regions,
 )
 
@@ -932,4 +936,72 @@ def fetch_mlb_event_props_if_allowed(
     except Exception as exc:
         _release_quota_slot(credit_cost=credit_cost)
         logger.warning("Odds API event props failed for %s: %s", event_id, exc)
+        return ApiFetchResult(error=str(exc))
+
+
+def fetch_nfl_events_if_allowed() -> ApiFetchResult:
+    """Quota-gated NFL events list (regular + preseason) for event id lookup."""
+    if not live_odds_enabled():
+        return ApiFetchResult(denied=True, denied_reason="live_odds_disabled")
+    allowed, deny_reason = _try_acquire_quota_slot()
+    if not allowed:
+        return ApiFetchResult(denied=True, denied_reason=deny_reason)
+    try:
+        events = fetch_nfl_events()
+        return ApiFetchResult(events=events or [], source="the_odds_api_live")
+    except Exception as exc:
+        _release_quota_slot()
+        logger.warning("Odds API NFL events list failed: %s", exc)
+        return ApiFetchResult(error=str(exc))
+
+
+def fetch_nfl_event_props_if_allowed(
+    event_id: str,
+    markets: str = DEFAULT_NFL_PROP_MARKETS,
+    bookmakers: str | None = None,
+    *,
+    regions: str | None = None,
+    sport: str = SPORT_NFL,
+) -> ApiFetchResult:
+    """Quota-gated player props for one NFL event."""
+    if not live_odds_enabled():
+        return ApiFetchResult(denied=True, denied_reason="live_odds_disabled")
+    region_str = regions if regions is not None else prop_regions()
+    credit_cost = estimate_odds_api_credits(markets, region_str)
+    allowed, deny_reason = _try_acquire_quota_slot(credit_cost=credit_cost)
+    if not allowed:
+        return ApiFetchResult(denied=True, denied_reason=deny_reason)
+    try:
+        event = fetch_nfl_event_odds(
+            event_id,
+            markets=markets,
+            bookmakers=bookmakers,
+            regions=region_str,
+            sport=sport,
+        )
+        if not event:
+            _release_quota_slot(credit_cost=credit_cost)
+            return ApiFetchResult(error="empty_response")
+        return ApiFetchResult(
+            events=[event],
+            source="the_odds_api_live",
+            credit_cost=credit_cost,
+        )
+    except httpx.HTTPStatusError as exc:
+        _release_quota_slot(credit_cost=credit_cost)
+        detail = exc.response.text[:200] if exc.response is not None else str(exc)
+        logger.warning(
+            "Odds API NFL event props HTTP %s for %s: %s",
+            exc.response.status_code if exc.response else "?",
+            event_id,
+            detail,
+        )
+        if exc.response is not None and exc.response.status_code == 422:
+            return ApiFetchResult(
+                error="Invalid sportsbook key for Odds API — pick another book."
+            )
+        return ApiFetchResult(error=f"odds_api_http_{exc.response.status_code}")
+    except Exception as exc:
+        _release_quota_slot(credit_cost=credit_cost)
+        logger.warning("Odds API NFL event props failed for %s: %s", event_id, exc)
         return ApiFetchResult(error=str(exc))

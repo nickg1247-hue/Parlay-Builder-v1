@@ -355,6 +355,68 @@
     }
   }
 
+  function renderNflModalContent(prop) {
+    const side = prop.recommended_side || "over";
+    const sideLabel = side === "under" ? "Under" : "Over";
+    const analysis = prop.analysis || {};
+    const usage = analysis.usage || {};
+    const env = analysis.environment || {};
+    const risks = analysis.risks || prop.risk_flags || [];
+    const sides = (prop.sides || [])
+      .map(
+        (s) =>
+          `<span class="hero-chip">${s.side === "under" ? "Under" : "Over"} ${fmtOdds(s.odds)} · model ${
+            s.model_probability != null ? fmtPct(s.model_probability) : "—"
+          } · edge ${
+            s.edge != null ? `${s.edge >= 0 ? "+" : ""}${Math.round(s.edge * 1000) / 10}%` : "—"
+          }</span>`
+      )
+      .join("");
+    const why = renderWhyPickCard(prop, {});
+    const gameHref = prop.game_id ? `/nfl/game/${encodeURIComponent(prop.game_id)}` : "/nfl";
+    return `
+      <header class="prop-modal-head">
+        <div>
+          <h2 id="player-prop-modal-title">${prop.player}</h2>
+          <p class="prop-modal-market">${prop.team || ""} ${prop.position ? "• " + prop.position : ""} vs ${prop.opponent || ""}</p>
+          <p class="prop-modal-market">${prop.market_label || prop.market_type}: ${sideLabel} ${prop.line}</p>
+          <p class="prop-modal-odds">${fmtOdds(prop.recommended_odds)}</p>
+        </div>
+      </header>
+      ${why}
+      <section class="why-pick-card ntg-card">
+        <h3 class="why-pick-card__title">Projection</h3>
+        <p>Model ${prop.model_projection ?? "—"} · P(${sideLabel}) ${
+          prop.model_probability != null ? fmtPct(prop.model_probability) : "—"
+        } · Market ${prop.market_probability != null ? fmtPct(prop.market_probability) : "—"} · Edge ${
+          prop.edge != null ? `${prop.edge >= 0 ? "+" : ""}${(prop.edge * 100).toFixed(1)}%` : "—"
+        }</p>
+      </section>
+      <section class="why-pick-card ntg-card">
+        <h3 class="why-pick-card__title">Usage</h3>
+        <p>L3 ${usage.l3_avg ?? "—"} · Season ${usage.season_avg ?? "—"} · Sample ${usage.sample_games ?? 0} games${
+          usage.role_shift != null ? ` · Role shift ${(usage.role_shift * 100).toFixed(0)}%` : ""
+        }</p>
+      </section>
+      <section class="why-pick-card ntg-card">
+        <h3 class="why-pick-card__title">Game environment</h3>
+        <p>Spread ${env.team_spread ?? "—"} · Total ${env.game_total ?? "—"} · Implied ${env.team_implied_total ?? "—"}</p>
+      </section>
+      ${
+        risks.length
+          ? `<section class="why-pick-card ntg-card"><h3 class="why-pick-card__title">Risk</h3><p>${risks.join(" · ")}</p>${
+              analysis.injury ? `<p>${analysis.injury}</p>` : ""
+            }</section>`
+          : ""
+      }
+      <div class="prop-modal-rates">${sides}</div>
+      <div class="prop-modal-actions">
+        <a class="ntg-btn ntg-btn-ghost" href="${gameHref}">Open game</a>
+        <button type="button" class="ntg-btn ntg-btn-primary" id="prop-modal-add-slip">Add to slip</button>
+      </div>
+    `;
+  }
+
   async function openPropModal(prop, sport = "mlb") {
     const normalized = normalizePropForModal(prop);
     if (!normalized) return;
@@ -364,6 +426,20 @@
     overlay.classList.remove("hidden");
     document.body.classList.add("player-prop-modal-open");
     const body = overlay.querySelector(".player-prop-modal__body");
+    const resolvedSport = String(prop.sport || sport || "mlb").toLowerCase();
+    if (resolvedSport === "nfl") {
+      body.innerHTML = renderNflModalContent(prop);
+      body.querySelector("#prop-modal-add-slip")?.addEventListener("click", () => {
+        const leg =
+          global.propSlipLegFromProp?.(prop, { requireActionable: false }) ||
+          global.propSlipLegFromProp?.(prop);
+        if (leg && global.addPropToSlip?.(leg)) {
+          body.querySelector("#prop-modal-add-slip").textContent = "Added ✓";
+        }
+      });
+      overlay.querySelector(".player-prop-modal__close")?.focus();
+      return;
+    }
     body.innerHTML = skeletonHtml();
     overlay.querySelector(".player-prop-modal__close")?.focus();
 

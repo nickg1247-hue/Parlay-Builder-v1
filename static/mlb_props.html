@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
-  <title>MLB Player Props — NTG Sports</title>
+  <title>Player Props — NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260725">
   <link rel="stylesheet" href="/static/app.css?v=20260624b">
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
-  <link rel="stylesheet" href="/static/ntg-system.css?v=20260824">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260825">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
@@ -36,11 +36,16 @@
     <main class="app-main dash-main props-page">
       <header class="dash-page-header props-explorer-head">
         <div>
-          <h1>MLB player props</h1>
+          <h1>Player props</h1>
           <p class="section-sub dash-page-kicker" id="props-page-kicker">Model-ranked opportunities across today's slate.</p>
         </div>
         <button type="button" id="props-search-refresh" class="dash-btn dash-btn-primary">Refresh lines</button>
       </header>
+
+      <div id="props-sport-selector" class="ntg-quick-filters props-sport-selector" role="tablist" aria-label="Prop sport">
+        <a class="sport-pill" data-prop-sport="mlb" href="/props?sport=mlb">MLB</a>
+        <a class="sport-pill" data-prop-sport="nfl" href="/props?sport=nfl">NFL</a>
+      </div>
 
       <div class="ntg-toolbar">
         <div id="props-quick-filters" class="ntg-quick-filters" role="group" aria-label="Quick filters">
@@ -56,7 +61,7 @@
       <p id="props-search-meta" class="props-search-meta ntg-updated-time">Updating props…</p>
       <div id="props-search-results" class="props-explorer-list"></div>
 
-      <section id="parlay-builder-panel" class="parlay-builder-panel dash-panel" aria-label="Auto parlay builder">
+      <section id="parlay-builder-panel" class="parlay-builder-panel dash-panel" data-sport-panel="mlb" aria-label="Auto parlay builder">
         <div class="dash-panel-head parlay-builder-head">
           <div>
             <h2>Parlay builder</h2>
@@ -78,7 +83,7 @@
         <div id="parlay-builder-results" class="parlay-builder-results"></div>
       </section>
 
-      <section id="props-tracker-panel" class="props-tracker-panel dash-panel" aria-label="Prop line accuracy">
+      <section id="props-tracker-panel" class="props-tracker-panel dash-panel" data-sport-panel="mlb" aria-label="Prop line accuracy">
         <div class="dash-panel-head">
           <h2>Line accuracy tracker</h2>
         </div>
@@ -95,7 +100,8 @@
           <h2>Filters</h2>
           <button type="button" id="props-close-filters" class="ntg-btn ntg-btn-ghost">Done</button>
         </div>
-      <form id="props-search-form" class="props-search-filters dash-panel" method="get" action="/mlb/props" aria-label="Prop search filters">
+      <form id="props-search-form" class="props-search-filters dash-panel" method="get" action="/props" aria-label="Prop search filters">
+        <input type="hidden" id="filter-sport" name="sport" value="mlb" />
         <label class="props-filter-field">
           <span>Sportsbook</span>
           <select id="filter-book" name="bookmaker" class="home-props-select"></select>
@@ -104,6 +110,16 @@
           <span>Prop type</span>
           <select id="filter-market" name="market_type" class="home-props-select">
             <option value="">All types</option>
+          </select>
+        </label>
+        <label class="props-filter-field" data-sport-filter="nfl">
+          <span>Position</span>
+          <select id="filter-position" name="position" class="home-props-select">
+            <option value="">All positions</option>
+            <option value="QB">QB</option>
+            <option value="RB">RB</option>
+            <option value="WR">WR / TE</option>
+            <option value="TE">TE</option>
           </select>
         </label>
         <label class="props-filter-field">
@@ -146,8 +162,9 @@
           <span>Sort by</span>
           <select id="filter-sort" name="sort" class="home-props-select">
             <option value="score" selected>Best first (model score)</option>
-            <option value="hit_l5">L5 hit rate</option>
-            <option value="hit_l10">L10 hit rate</option>
+            <option value="edge">Model edge</option>
+            <option value="hit_l5" data-sport-filter="mlb">L5 hit rate</option>
+            <option value="hit_l10" data-sport-filter="mlb">L10 hit rate</option>
             <option value="risk_asc">Lowest risk</option>
             <option value="risk_desc">Highest risk</option>
           </select>
@@ -173,7 +190,7 @@
             <option value="65" selected>65+ (recommended)</option>
           </select>
         </label>
-        <label class="props-filter-field">
+        <label class="props-filter-field" data-sport-filter="mlb">
           <span>Min L10 hit rate</span>
           <select id="filter-min-hit-l10" name="min_hit_l10" class="home-props-select">
             <option value="">Any (includes weak)</option>
@@ -183,7 +200,7 @@
             <option value="80">80%+</option>
           </select>
         </label>
-        <label class="props-filter-field">
+        <label class="props-filter-field" data-sport-filter="mlb">
           <span>Min L5 hit rate</span>
           <select id="filter-min-hit-l5" name="min_hit_l5" class="home-props-select">
             <option value="" selected>Any</option>
@@ -202,7 +219,7 @@
       </form>
   </aside>
   <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260824"></script>
-  <script src="/static/mlb_props.js?v=20260824"></script>
+  <script src="/static/app.js?v=20260825"></script>
+  <script src="/static/mlb_props.js?v=20260825"></script>
 </body>
 </html>

@@ -239,6 +239,24 @@ def run_morning_refresh(
                 except Exception as exc:
                     logger.warning("Morning props scan failed: %s", exc)
 
+        # Default job is sports=["mlb"]; still pull the weekly NFL props slate.
+        if live_odds_enabled() and ("mlb" in sport_list or "nfl" in sport_list):
+            try:
+                from app.services.props_nfl import refresh_nfl_props_slate
+
+                nfl_props_out = refresh_nfl_props_slate(
+                    game_date,
+                    force=False,
+                )
+                logger.info(
+                    "Morning NFL props scan: %s/%s games with props (%s fetched this run)",
+                    nfl_props_out.get("games_with_props", 0),
+                    nfl_props_out.get("games_on_slate", 0),
+                    nfl_props_out.get("games_fetched", 0),
+                )
+            except Exception as exc:
+                logger.warning("Morning NFL props scan failed: %s", exc)
+
         if "nba" in sport_list:
             from app.services.schedule_nba import refresh_schedule_cache as refresh_nba
 

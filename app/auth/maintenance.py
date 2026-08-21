@@ -1,8 +1,9 @@
 """File-flag maintenance mode with a temporary /test preview cookie.
 
 Production is FastAPI behind nginx (not Apache/.htaccess). The on/off switch is
-the presence of `maintenance.on` in the project root (or static/). Creating or
-deleting that file takes effect on the next request — no rebuild or restart.
+the presence of `maintenance.on` (prefer `data/processed/`). Creating or deleting
+that file takes effect on the next request — no rebuild or restart. Admins can
+also toggle it from /sandbox.
 """
 
 from __future__ import annotations
@@ -37,11 +38,16 @@ def _cookie_secure() -> bool:
 
 
 def maintenance_flag_paths() -> list[Path]:
-    """Locations Hostinger File Manager or the CLI can toggle without a deploy."""
+    """Locations the app, CLI, or File Manager can toggle without a deploy.
+
+    Prefer ``data/processed/maintenance.on`` so the running web process can
+    create and delete it. Root and ``static/`` copies are still honored.
+    """
     explicit = os.getenv("MAINTENANCE_FLAG_PATH", "").strip()
     if explicit:
         return [Path(explicit)]
     return [
+        PROJECT_ROOT / "data" / "processed" / FLAG_FILENAME,
         PROJECT_ROOT / FLAG_FILENAME,
         PROJECT_ROOT / "static" / FLAG_FILENAME,
     ]
@@ -59,15 +65,27 @@ def turn_maintenance_on() -> Path:
     path = primary_flag_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("ON\n", encoding="utf-8")
+    try:
+        path.chmod(0o666)
+    except OSError:
+        pass
     return path
 
 
 def turn_maintenance_off() -> list[Path]:
     removed: list[Path] = []
+    errors: list[str] = []
     for path in maintenance_flag_paths():
-        if path.is_file():
+        if not path.is_file():
+            continue
+        try:
             path.unlink()
             removed.append(path)
+        except OSError as exc:
+            errors.append(f"{path}: {exc}")
+    if maintenance_enabled():
+        detail = "; ".join(errors) if errors else "maintenance flag still present"
+        raise PermissionError(detail)
     return removed
 
 
@@ -104,6 +122,8 @@ def is_maintenance_bypass_path(path: str) -> bool:
         return True
     if path == "/test" or path.startswith("/test/"):
         return True
+    if path == "/login":
+        return True
     if path.startswith("/api/"):
         return True
     if path in {"/health", "/sw.js", "/manifest.webmanifest"}:
@@ -136,7 +156,13 @@ class MaintenanceModeMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         path = request.url.path
-        if is_maintenance_bypass_path(path) or has_preview_cookie(request):
+        from app.auth.admin_auth import has_admin_session
+
+        if (
+            is_maintenance_bypass_path(path)
+            or has_preview_cookie(request)
+            or has_admin_session(request)
+        ):
             return await call_next(request)
 
         return construction_redirect()

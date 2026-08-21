@@ -1028,6 +1028,23 @@ body.slate-mlb .app-main > * {
   margin-top: 0.5rem;
 }
 
+.sandbox-maintenance {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  margin: 0 0 1.5rem;
+}
+
+.sandbox-maintenance[hidden] {
+  display: none !important;
+}
+
+.sandbox-maintenance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
 .nav-sandbox {
   font-weight: 600;
 }

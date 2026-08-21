@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260821" type="image/png">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260826" type="image/png">
   <title>Sandbox — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260821">
-  <link rel="stylesheet" href="/static/app.css?v=20260821">
-  <link rel="stylesheet" href="/static/brand.css?v=20260821">
-  <link rel="stylesheet" href="/static/design.css?v=20260821">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260821">
-  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/style.css?v=20260826">
+  <link rel="stylesheet" href="/static/app.css?v=20260826">
+  <link rel="stylesheet" href="/static/brand.css?v=20260826">
+  <link rel="stylesheet" href="/static/design.css?v=20260826">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260826">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260826">
 </head>
 <body class="ntg-shell home-v2">
   <div class="app-shell">
     <header class="app-topbar dash-topbar">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260821" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260826" alt="NTG Sports" width="56" height="56" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
@@ -35,6 +35,17 @@
         </div>
       </header>
       <p class="sandbox-auth-note hidden" id="sandbox-auth-note"></p>
+
+      <section class="sandbox-maintenance ntg-card" id="sandbox-maintenance" hidden>
+        <div>
+          <p class="sandbox-card-title">Construction mode</p>
+          <p class="sandbox-card-desc" id="sandbox-maintenance-status">Checking…</p>
+        </div>
+        <div class="sandbox-maintenance-actions">
+          <button type="button" class="ntg-btn ntg-btn-primary" id="sandbox-construction-on">Turn on</button>
+          <button type="button" class="ntg-btn ntg-btn-ghost" id="sandbox-construction-off">Turn off</button>
+        </div>
+      </section>
 
       <p class="app-section-title">MLB</p>
       <div class="sandbox-hub">
@@ -74,20 +85,76 @@
       </p>
     </main>
   </div>
-  <script src="/static/app.js?v=20260821"></script>
+  <script src="/static/app.js?v=20260826"></script>
   <script>
     (async function () {
       if (typeof loadPublicFeatures === "function") await loadPublicFeatures();
       if (typeof initSiteChrome === "function") initSiteChrome();
+      const note = document.getElementById("sandbox-auth-note");
+      const panel = document.getElementById("sandbox-maintenance");
+      const statusEl = document.getElementById("sandbox-maintenance-status");
+      const onBtn = document.getElementById("sandbox-construction-on");
+      const offBtn = document.getElementById("sandbox-construction-off");
+      let canToggle = false;
       try {
         const res = await fetch("/api/auth/status");
         const data = await res.json();
-        const note = document.getElementById("sandbox-auth-note");
         if (note && data.auth_enabled && !data.auth_misconfigured) {
           note.textContent = "This area requires sign-in.";
           note.classList.remove("hidden");
         }
+        canToggle = Boolean(data.authenticated) || !data.auth_enabled;
       } catch (_) { /* ignore */ }
+
+      async function refreshConstruction() {
+        if (!panel || !statusEl) return;
+        if (!canToggle) {
+          panel.hidden = true;
+          return;
+        }
+        panel.hidden = false;
+        try {
+          const res = await fetch("/api/maintenance");
+          if (!res.ok) {
+            statusEl.textContent = "Could not load construction status.";
+            return;
+          }
+          const data = await res.json();
+          const on = Boolean(data.enabled);
+          statusEl.textContent = on
+            ? "ON — visitors see the under-construction page. You still see the live site while signed in."
+            : "OFF — the public site is live.";
+          if (onBtn) onBtn.disabled = on;
+          if (offBtn) offBtn.disabled = !on;
+        } catch (_) {
+          statusEl.textContent = "Could not load construction status.";
+        }
+      }
+
+      async function setConstruction(enabled) {
+        if (!statusEl) return;
+        statusEl.textContent = enabled ? "Turning on…" : "Turning off…";
+        try {
+          const res = await fetch("/api/maintenance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            statusEl.textContent = data.detail || "Could not change construction mode.";
+            return;
+          }
+        } catch (_) {
+          statusEl.textContent = "Could not change construction mode.";
+          return;
+        }
+        await refreshConstruction();
+      }
+
+      onBtn?.addEventListener("click", () => setConstruction(true));
+      offBtn?.addEventListener("click", () => setConstruction(false));
+      await refreshConstruction();
     })();
 
     document.getElementById("sandbox-logout")?.addEventListener("click", async () => {

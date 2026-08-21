@@ -368,6 +368,16 @@ body.ntg-shell .sport-pill-active {
   background: color-mix(in srgb, var(--ntg-primary) 12%, var(--ntg-surface));
 }
 
+.props-sport-selector {
+  margin: 0 0 1rem;
+}
+
+.prop-explorer-model {
+  margin: 0.35rem 0 0;
+  color: var(--ntg-text-2);
+  font-size: 0.88rem;
+}
+
 body.ntg-shell .sport-pill-disabled { display: none; }
 
 body.ntg-shell .dash-sync-wrap {

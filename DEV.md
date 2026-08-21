@@ -145,7 +145,32 @@ pytest tests/test_schedule_nfl.py tests/test_nfl_ingest.py tests/test_nfl_pregam
 
 See `NFL_MODEL.md` and `MARKET_NFL.md`.
 
+## Player props (MLB + NFL)
+
+One Player Props product. Sport is a filter, not a separate app.
+
+| Item | Path |
+|------|------|
+| Page | `/props?sport=mlb` or `/props?sport=nfl` |
+| MLB alias | `/mlb/props` (unchanged URL, same UI) |
+| NFL alias | `/nfl/props` → 307 to `/props?sport=nfl` |
+| Search API | `GET /api/props/search?sport=nfl` |
+| Markets | `GET /api/props/markets?sport=nfl` |
+| Game props | `GET /api/games/nfl/{game_id}/props` |
+| Refresh | `POST /api/props/slate/refresh?sport=nfl` or `python scripts/refresh_props_slate.py --sport nfl`. Morning refresh also scans NFL props (quota-gated, isolated from MLB). |
+
+**Odds:** The Odds API `americanfootball_nfl` / `americanfootball_nfl_preseason` event-odds. Same quota gate as MLB. Cache: `data/processed/props_repository/nfl/{date}/`.
+
+**NFL model:** ESPN game logs (strictly before slate date) + spread/total environment. L3 usage is weighted above season average. Not the MLB L5/L10 formula. Both Over and Under are scored against vig-free market probability when both sides are posted.
+
+**Not fabricated:** snap share / route participation are omitted until we ingest those feeds.
+
+```powershell
+pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py -q
+```
+
 ---
+
 
 ## CFB slate (Phase C1)
 

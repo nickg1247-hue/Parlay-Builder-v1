@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260824";
+const NTG_ASSET_V = "20260826";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -296,7 +296,7 @@ function isNtgShellPage() {
 
 function ntgShowLiveTicker() {
   const path = window.location.pathname || "/";
-  if (path === "/" || path.startsWith("/performance") || path.startsWith("/mlb/props")) {
+  if (path === "/" || path.startsWith("/performance") || path.startsWith("/mlb/props") || path.startsWith("/props")) {
     return false;
   }
   return (
@@ -2384,7 +2384,7 @@ function renderBestProps(el, topProps, options = {}) {
     const open = () => {
       const prop = props[idx];
       if (typeof window.openPropModal === "function" && prop) {
-        window.openPropModal(prop, "mlb");
+        window.openPropModal(prop, prop.sport || options.sport || "mlb");
       }
     };
     card.addEventListener("click", (e) => {
@@ -2427,7 +2427,7 @@ function renderPropExplorerList(el, props, options = {}) {
       <div class="best-bets-empty-card empty-state-card">
         <h3>No props found</h3>
         <p>${options.emptyMessage || "No props match your current filters."}</p>
-        <a class="ntg-btn ntg-btn-primary" href="/mlb/props">Clear filters</a>
+        <a class="ntg-btn ntg-btn-primary" href="${options.clearHref || (options.sport === "nfl" ? "/props?sport=nfl" : "/mlb/props")}">Clear filters</a>
       </div>`;
     return;
   }
@@ -2442,8 +2442,28 @@ function renderPropExplorerList(el, props, options = {}) {
           : side === "under" && p.over_odds != null
             ? ` · O ${fmtAmericanOdds(p.over_odds)}`
             : "";
-      const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
-      const form = propHitRatesHtml(p, side);
+      const sport = (p.sport || options.sport || "mlb").toLowerCase();
+      const gameHref =
+        sport === "nfl"
+          ? p.game_id
+            ? `/nfl/game/${encodeURIComponent(p.game_id)}`
+            : "/nfl"
+          : p.game_id
+            ? `/mlb/game/${encodeURIComponent(p.game_id)}`
+            : "/mlb";
+      const form = sport === "nfl" ? "" : propHitRatesHtml(p, side);
+      const posLine =
+        sport === "nfl" && (p.position || p.team)
+          ? `${p.team || ""} ${p.position ? "• " + p.position : ""} vs ${p.opponent || ""}`.trim()
+          : p.matchup || "";
+      const projectionLine =
+        p.model_projection != null
+          ? `<p class="prop-explorer-model">Projection ${p.model_projection} · Model ${
+              p.model_probability != null ? `${(p.model_probability * 100).toFixed(1)}%` : "—"
+            } · Edge ${
+              p.edge != null ? `${p.edge >= 0 ? "+" : ""}${(p.edge * 100).toFixed(1)}%` : "—"
+            }</p>`
+          : "";
       const strength = lineStrengthHtml(p);
       const riskTag = p.risk_flag
         ? `<span class="hero-chip hero-chip-muted prop-risk-tag">${p.risk_flag}</span>`
@@ -2473,7 +2493,7 @@ function renderPropExplorerList(el, props, options = {}) {
           <div>
             <span class="prop-explorer-rank" aria-label="Rank ${i + 1}">#${i + 1}</span>
             <h3 class="prop-explorer-player">${p.player}</h3>
-            <p class="prop-explorer-meta">${p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
+            <p class="prop-explorer-meta">${posLine || p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
           </div>
           <div class="prop-explorer-score-block">
             <span class="prop-explorer-score-label">Score</span>
@@ -2487,10 +2507,15 @@ function renderPropExplorerList(el, props, options = {}) {
           ${strength ? `<span class="prop-strength-tag">${strength}</span>` : ""}
         </p>
         ${modelMeta}
-        <div class="prop-explorer-form-block">
+        ${projectionLine}
+        ${
+          form
+            ? `<div class="prop-explorer-form-block">
           <span class="prop-explorer-form-label">Hit rate on this ${sideLabel.toLowerCase()} pick</span>
           <p class="prop-explorer-form">${form}</p>
-        </div>
+        </div>`
+            : ""
+        }
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}
         <div class="prop-explorer-actions">
           <button type="button" class="btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View stats</button>
@@ -2525,7 +2550,7 @@ function renderPropExplorerList(el, props, options = {}) {
       const idx = Number(btn.dataset.propIdx);
       const prop = rows[idx];
       if (typeof window.openPropModal === "function" && prop) {
-        window.openPropModal(prop, "mlb");
+        window.openPropModal(prop, prop.sport || options.sport || "mlb");
       }
     });
   });
@@ -2535,7 +2560,7 @@ function renderPropExplorerList(el, props, options = {}) {
     const open = () => {
       const prop = rows[idx];
       if (typeof window.openPropModal === "function" && prop) {
-        window.openPropModal(prop, "mlb");
+        window.openPropModal(prop, prop.sport || options.sport || "mlb");
       }
     };
     card.addEventListener("click", (e) => {
@@ -3545,8 +3570,8 @@ function sportPillIsActive(href, path) {
   if (href === "/nfl") {
     return path === "/nfl" || (path.startsWith("/nfl/") && !path.startsWith("/nfl/draft"));
   }
-  if (href === "/mlb/props") {
-    return path === "/mlb/props" || path.startsWith("/mlb/props/");
+  if (href === "/mlb/props" || href === "/props") {
+    return path === "/mlb/props" || path.startsWith("/mlb/props/") || path === "/props" || path.startsWith("/props");
   }
   if (href === "/my-team") {
     return path === "/my-team" || path.startsWith("/teams/");
@@ -3601,7 +3626,7 @@ function renderMainNav(container, path) {
   }
   const specs = [
     { href: "/", label: "Slate" },
-    { href: "/mlb/props", label: "Props" },
+    { href: "/props", label: "Props" },
     { href: "/parlay", label: "Parlay", feature: "prop_slip" },
     { href: "/my-team", label: "My Team" },
     { href: "/performance", label: "Performance" },
@@ -3673,7 +3698,7 @@ function renderSportPills(container, path) {
       isActive: (p) => p === sport.futures || p.startsWith(`${sport.futures}/`),
     });
   }
-  specs.push({ href: "/mlb/props", label: "Props" }, { href: "/performance", label: "Performance" });
+  specs.push({ href: "/props", label: "Props", isActive: (p) => p === "/props" || p.startsWith("/props") || p.startsWith("/mlb/props") }, { href: "/performance", label: "Performance" });
   container.replaceChildren();
   container.setAttribute("aria-label", "Section");
   specs.forEach((spec) => {
@@ -3962,7 +3987,7 @@ function renderMobileBottomNav(path) {
   const items = [
     { href: "/", label: "Home", match: (p) => p === "/" },
     { href: sport.slate, label: "Games", match: (p) => p === sport.slate || p.startsWith(`${sport.slate}/game`) },
-    { href: "/mlb/props", label: "Props", match: (p) => p.startsWith("/mlb/props") },
+    { href: "/props", label: "Props", match: (p) => p.startsWith("/mlb/props") || p === "/props" || p.startsWith("/props") },
     { href: "/performance", label: "Picks", match: (p) => p.startsWith("/performance") },
     { href: signedIn ? "/my-team" : "/signin", label: "Account", match: (p) => p.startsWith("/signin") || p.startsWith("/signup") || p.startsWith("/my-team") },
   ];

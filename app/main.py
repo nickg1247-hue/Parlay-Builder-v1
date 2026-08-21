@@ -28,7 +28,10 @@ from app.auth.admin_auth import (
 from app.auth.maintenance import (
     MaintenanceModeMiddleware,
     clear_preview_cookie,
+    maintenance_enabled,
     set_preview_cookie,
+    turn_maintenance_off,
+    turn_maintenance_on,
 )
 from app.auth.public_api_gate import PublicApiGateMiddleware
 from app.auth.user_auth import (
@@ -44,8 +47,17 @@ from app.auth.user_auth import (
 from app.services.mlb_page_data import (
     build_home_page_data,
     build_mlb_game_page_data,
-    build_mlb_props_page_data,
     build_mlb_slate_page_data,
+)
+from app.services.props_platform import (
+    build_player_props_page_data,
+    build_sport_game_props,
+    list_bookmakers_for_sport,
+    list_markets_for_sport,
+    list_prop_sports,
+    normalize_prop_sport,
+    refresh_props,
+    search_props,
 )
 from app.services.page_data_cache import get_or_build
 from app.services.page_render import render_static_page
@@ -89,10 +101,6 @@ from app.services.props_mlb import (
     evaluate_prop_parlay,
     export_slip_for_bookmaker,
     get_props_cache_meta,
-    list_prop_bookmakers,
-    list_prop_market_types,
-    refresh_props_slate,
-    search_daily_props,
 )
 from app.services.home_summary import get_home_today_summary
 from app.services.news_feed import get_news_headlines
@@ -384,6 +392,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class MaintenanceToggleRequest(BaseModel):
+    enabled: bool
+
+
 class UserRegisterRequest(BaseModel):
     email: str = Field(..., min_length=3, max_length=254)
     password: str = Field(..., min_length=8, max_length=128)
@@ -536,6 +548,33 @@ async def maintenance_preview_exit():
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     clear_preview_cookie(response)
     return response
+
+
+def _maintenance_status_payload() -> dict[str, object]:
+    return {
+        "enabled": maintenance_enabled(),
+        "construction": maintenance_enabled(),
+    }
+
+
+@app.get("/api/maintenance")
+async def maintenance_status():
+    return _maintenance_status_payload()
+
+
+@app.post("/api/maintenance")
+async def maintenance_toggle(body: MaintenanceToggleRequest):
+    try:
+        if body.enabled:
+            turn_maintenance_on()
+        else:
+            turn_maintenance_off()
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not change construction mode: {exc}",
+        ) from exc
+    return _maintenance_status_payload()
 
 
 @app.get("/login")
@@ -1326,14 +1365,46 @@ async def mlb_game_props(
     return payload
 
 
+@app.get("/api/games/nfl/{game_id}/props")
+async def nfl_game_props(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
+    include_alternates: bool = Query(False),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    try:
+        payload = await asyncio.to_thread(
+            build_sport_game_props,
+            "nfl",
+            game_id,
+            game_date=game_date,
+            refresh=refresh,
+            bookmaker=bookmaker,
+            include_alternates=include_alternates,
+        )
+    except Exception as exc:
+        logger.exception("NFL props failed for game %s", game_id)
+        raise HTTPException(
+            status_code=503, detail="Player props temporarily unavailable"
+        ) from exc
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return payload
+
+
 @app.get("/api/props/bookmakers")
-async def prop_bookmakers():
-    return {"bookmakers": list_prop_bookmakers()}
+async def prop_bookmakers(sport: str | None = Query(None)):
+    return {"sport": normalize_prop_sport(sport), "bookmakers": list_bookmakers_for_sport(sport)}
 
 
 @app.get("/api/props/markets")
-async def prop_markets():
-    return {"markets": list_prop_market_types()}
+async def prop_markets(sport: str | None = Query(None)):
+    key = normalize_prop_sport(sport)
+    return {"sport": key, "sports": list_prop_sports(), "markets": list_markets_for_sport(key)}
 
 
 @app.get("/api/props/debug")
@@ -1362,6 +1433,7 @@ async def mlb_props_debug_page():
 @app.get("/api/props/search")
 async def props_search(
     date_param: str | None = Query(None, alias="date"),
+    sport: str | None = Query("mlb"),
     bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
     market_type: str | None = Query(None),
     min_odds: int | None = Query(
@@ -1385,7 +1457,7 @@ async def props_search(
     include_alternates: bool = Query(False),
     sort: str = Query(
         "score",
-        description="score, hit_l5, hit_l10, risk_asc, risk_desc",
+        description="score, hit_l5, hit_l10, risk_asc, risk_desc, edge",
     ),
     risk: str | None = Query(
         None,
@@ -1394,6 +1466,9 @@ async def props_search(
     min_score: int | None = Query(None, ge=0, le=100),
     min_hit_l5: float | None = Query(None, ge=0, le=1),
     min_hit_l10: float | None = Query(None, ge=0, le=1),
+    min_edge: float | None = Query(None),
+    position: str | None = Query(None),
+    team: str | None = Query(None),
     limit: int = Query(200, ge=1, le=500),
     scan: bool = Query(False),
     refresh: bool = Query(False),
@@ -1421,11 +1496,15 @@ async def props_search(
         min_score=min_score,
         min_hit_l5=min_hit_l5,
         min_hit_l10=min_hit_l10,
+        min_edge=min_edge,
+        position=position,
+        team=team,
     )
     # Filter/sort-only requests use cached pool; scan runs on refresh or empty pool.
-    result = search_daily_props(game_date, **search_kwargs)
+    result = search_props(sport, game_date, **search_kwargs)
     if not result.get("props") and not scan and not refresh:
-        result = search_daily_props(
+        result = search_props(
+            sport,
             game_date,
             **{**search_kwargs, "scan": True, "refresh": False},
         )
@@ -1478,6 +1557,7 @@ async def props_cache_meta():
 @app.post("/api/props/slate/refresh")
 async def props_slate_refresh(
     date_param: str | None = Query(None, alias="date"),
+    sport: str | None = Query("mlb"),
     bookmaker: str | None = Query(
         None,
         description="Sportsbook key (default PROP_SLATE_BOOKMAKER / DraftKings).",
@@ -1492,7 +1572,8 @@ async def props_slate_refresh(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    return refresh_props_slate(
+    return refresh_props(
+        sport,
         game_date,
         bookmaker=bookmaker,
         force=force,
@@ -2366,6 +2447,88 @@ async def nba_board_factors():
     return FileResponse(STATIC_DIR / "nba_factors.html")
 
 
+async def _render_player_props_page(request: Request, sport: str, **kwargs: Any):
+    qp = request.query_params
+    game_date = kwargs.pop("game_date")
+    page_data = await build_player_props_page_data(
+        sport,
+        game_date,
+        bookmaker=kwargs.get("bookmaker") or None,
+        market_type=kwargs.get("market_type") or None,
+        min_odds=_int_query(kwargs.get("min_odds")),
+        line_kind=kwargs.get("line_kind") or "main",
+        line_value=_float_query(kwargs.get("line_value")),
+        side=kwargs.get("side") or "both",
+        actionable_only=_bool_query(kwargs.get("actionable_only") or qp.get("actionable_only")),
+        very_strong_only=_bool_query(kwargs.get("very_strong_only") or qp.get("very_strong_only")),
+        include_alternates=_bool_query(
+            kwargs.get("include_alternates") or qp.get("include_alternates")
+        ),
+        sort=kwargs.get("sort") or "score",
+        risk=kwargs.get("risk") or None,
+        min_score=_int_query(kwargs.get("min_score")),
+        min_hit_l5=_pct_query(kwargs.get("min_hit_l5")),
+        min_hit_l10=_pct_query(kwargs.get("min_hit_l10")),
+        min_edge=_float_query(kwargs.get("min_edge")),
+        position=kwargs.get("position") or None,
+        team=kwargs.get("team") or None,
+        refresh=_bool_query(kwargs.get("refresh")),
+    )
+    return render_static_page(STATIC_DIR, "mlb_props.html", page_data)
+
+
+@app.get("/props")
+async def player_props_page(
+    request: Request,
+    sport: str | None = Query("mlb"),
+    date_param: str | None = Query(None, alias="date"),
+    bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
+    market_type: str | None = Query(None),
+    min_odds: str | None = Query(None),
+    line_kind: str | None = Query(None),
+    line_value: str | None = Query(None),
+    side: str | None = Query(None),
+    actionable_only: str | None = Query(None),
+    very_strong_only: str | None = Query(None),
+    include_alternates: str | None = Query(None),
+    sort: str = Query("score"),
+    risk: str | None = Query(None),
+    min_score: str | None = Query(None),
+    min_hit_l5: str | None = Query(None),
+    min_hit_l10: str | None = Query(None),
+    min_edge: str | None = Query(None),
+    position: str | None = Query(None),
+    team: str | None = Query(None),
+    refresh: str | None = Query(None),
+):
+    game_date = (
+        date_type.fromisoformat(date_param) if date_param else date_type.today()
+    )
+    return await _render_player_props_page(
+        request,
+        sport or "mlb",
+        game_date=game_date,
+        bookmaker=bookmaker,
+        market_type=market_type,
+        min_odds=min_odds,
+        line_kind=line_kind,
+        line_value=line_value,
+        side=side,
+        actionable_only=actionable_only,
+        very_strong_only=very_strong_only,
+        include_alternates=include_alternates,
+        sort=sort,
+        risk=risk,
+        min_score=min_score,
+        min_hit_l5=min_hit_l5,
+        min_hit_l10=min_hit_l10,
+        min_edge=min_edge,
+        position=position,
+        team=team,
+        refresh=refresh,
+    )
+
+
 @app.get("/mlb/props")
 async def mlb_props_page(
     request: Request,
@@ -2389,28 +2552,36 @@ async def mlb_props_page(
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
-    qp = request.query_params
-    page_data = await build_mlb_props_page_data(
-        game_date,
-        bookmaker=bookmaker or None,
-        market_type=market_type or None,
-        min_odds=_int_query(min_odds),
-        line_kind=line_kind or "main",
-        line_value=_float_query(line_value),
-        side=side or "both",
-        actionable_only=_bool_query(actionable_only or qp.get("actionable_only")),
-        very_strong_only=_bool_query(very_strong_only or qp.get("very_strong_only")),
-        include_alternates=_bool_query(
-            include_alternates or qp.get("include_alternates")
-        ),
-        sort=sort or "score",
-        risk=risk or None,
-        min_score=_int_query(min_score),
-        min_hit_l5=_pct_query(min_hit_l5),
-        min_hit_l10=_pct_query(min_hit_l10),
-        refresh=_bool_query(refresh),
+    return await _render_player_props_page(
+        request,
+        "mlb",
+        game_date=game_date,
+        bookmaker=bookmaker,
+        market_type=market_type,
+        min_odds=min_odds,
+        line_kind=line_kind,
+        line_value=line_value,
+        side=side,
+        actionable_only=actionable_only,
+        very_strong_only=very_strong_only,
+        include_alternates=include_alternates,
+        sort=sort,
+        risk=risk,
+        min_score=min_score,
+        min_hit_l5=min_hit_l5,
+        min_hit_l10=min_hit_l10,
+        refresh=refresh,
     )
-    return render_static_page(STATIC_DIR, "mlb_props.html", page_data)
+
+
+@app.get("/nfl/props")
+async def nfl_props_alias(request: Request):
+    """Keep a single Player Props product — NFL is a sport tab, not a separate app."""
+    qs = str(request.query_params)
+    target = "/props?sport=nfl"
+    if qs:
+        target = f"{target}&{qs}"
+    return RedirectResponse(target, status_code=307)
 
 
 @app.get("/mlb/board")

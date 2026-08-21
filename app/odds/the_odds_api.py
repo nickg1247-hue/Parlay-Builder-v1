@@ -47,6 +47,19 @@ DEFAULT_MLB_PROP_REGIONS = os.getenv("ODDS_PROP_REGIONS", "us")
 # Full slate pull: extended pitcher markets + batter runs (used by props_slate_refresh).
 SLATE_MLB_PROP_MARKETS = f"{EXTENDED_MLB_PROP_MARKETS},{OPTIONAL_MLB_PROP_MARKETS}"
 
+# Core NFL player props (Odds API event-odds; each market ≈ 1 credit per event).
+DEFAULT_NFL_PROP_MARKETS = (
+    "player_pass_yds,player_pass_tds,player_pass_completions,player_pass_attempts,"
+    "player_rush_yds,player_rush_attempts,"
+    "player_receptions,player_reception_yds,"
+    "player_rush_reception_yds,player_anytime_td"
+)
+ALTERNATE_NFL_PROP_MARKETS = (
+    "player_pass_yds_alternate,player_rush_yds_alternate,"
+    "player_receptions_alternate,player_reception_yds_alternate"
+)
+SLATE_NFL_PROP_MARKETS = DEFAULT_NFL_PROP_MARKETS
+
 
 def estimate_odds_api_credits(markets: str, regions: str | None = None) -> int:
     """Odds API bills event-odds as markets × regions (empty markets return 0 cost)."""
@@ -176,6 +189,104 @@ def fetch_mlb_event_odds(
         response = client.get(url, params=params)
         response.raise_for_status()
         return response.json()
+
+
+def fetch_events_for_sport(
+    sport: str,
+    api_key: str | None = None,
+    regions: str = "us",
+) -> list[dict[str, Any]] | None:
+    """List upcoming events for an Odds API sport key (includes event ids for props)."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key:
+        return None
+    url = f"{ODDS_API_BASE}/sports/{sport}/events"
+    params = {"apiKey": key, "regions": regions, "dateFormat": "iso"}
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+
+def fetch_event_odds_for_sport(
+    sport: str,
+    event_id: str,
+    api_key: str | None = None,
+    regions: str | None = None,
+    markets: str = DEFAULT_NFL_PROP_MARKETS,
+    bookmakers: str | None = None,
+) -> dict[str, Any] | None:
+    """Player props (or other markets) for one event on a given Odds API sport key."""
+    if not live_odds_enabled() and api_key is None:
+        return None
+    key = _api_key(api_key)
+    if not key or not event_id:
+        return None
+    region_str = regions if regions is not None else prop_regions()
+    url = f"{ODDS_API_BASE}/sports/{sport}/events/{event_id}/odds"
+    params = {
+        "apiKey": key,
+        "regions": region_str,
+        "markets": markets,
+        "oddsFormat": "american",
+        "includeLinks": "true",
+        "includeSids": "true",
+    }
+    if bookmakers:
+        params["bookmakers"] = bookmakers
+    with httpx.Client(timeout=30.0) as client:
+        response = client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+
+def fetch_nfl_events(
+    api_key: str | None = None,
+    regions: str = "us",
+    *,
+    include_preseason: bool = True,
+) -> list[dict[str, Any]] | None:
+    """Upcoming NFL events (regular + optional preseason), tagged with odds_sport_key."""
+    events = fetch_events_for_sport(SPORT_NFL, api_key=api_key, regions=regions)
+    if events is None:
+        return None
+    tagged: list[dict[str, Any]] = []
+    for event in events:
+        row = dict(event)
+        row["odds_sport_key"] = SPORT_NFL
+        tagged.append(row)
+    if include_preseason:
+        try:
+            pre = fetch_events_for_sport(SPORT_NFL_PRESEASON, api_key=api_key, regions=regions) or []
+            for event in pre:
+                row = dict(event)
+                row["odds_sport_key"] = SPORT_NFL_PRESEASON
+                tagged.append(row)
+        except Exception:
+            logger.warning("NFL preseason events list failed; using regular-season events only")
+    return tagged
+
+
+def fetch_nfl_event_odds(
+    event_id: str,
+    api_key: str | None = None,
+    regions: str | None = None,
+    markets: str = DEFAULT_NFL_PROP_MARKETS,
+    bookmakers: str | None = None,
+    *,
+    sport: str = SPORT_NFL,
+) -> dict[str, Any] | None:
+    """Player props for a single NFL event. *sport* must match the events list key."""
+    return fetch_event_odds_for_sport(
+        sport,
+        event_id,
+        api_key=api_key,
+        regions=regions,
+        markets=markets,
+        bookmakers=bookmakers,
+    )
 
 
 def fetch_live_mlb_odds(

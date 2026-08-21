@@ -287,11 +287,33 @@
     }
   }
 
+  async function loadNflProps() {
+    const body = document.getElementById("props-body");
+    if (!body) return;
+    try {
+      const params = new URLSearchParams();
+      if (dateParam) params.set("date", dateParam);
+      const q = params.toString();
+      const data = await fetchJSON(
+        `/api/games/nfl/${encodeURIComponent(gameId)}/props${q ? `?${q}` : ""}`
+      );
+      if (typeof renderPropExplorerList === "function") {
+        renderPropExplorerList(body, data.props || [], {
+          sport: "nfl",
+          emptyMessage: data.message || "Sportsbooks haven't posted NFL player props for this game yet.",
+        });
+      }
+    } catch (err) {
+      body.innerHTML = `<p class="empty-state">${err.message || "NFL player props unavailable."}</p>`;
+    }
+  }
+
   async function loadInsights(refresh) {
     const data = await fetchJSON(insightsUrl(refresh));
     loading.classList.add("hidden");
     content.classList.remove("hidden");
     renderInsights(data);
+    loadNflProps();
 
     if (!dateParam && !scorePollerStarted) {
       scorePollerStarted = true;

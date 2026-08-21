@@ -37,6 +37,7 @@ PROPS_API_EXACT = frozenset({
 
 PROPS_PAGE_PATHS = frozenset({
     "/mlb/props",
+    "/props",
 })
 
 USER_AUTH_PUBLIC_PATHS = frozenset({
@@ -195,13 +196,17 @@ def is_props_api_path(path: str) -> bool:
         return True
     if path.startswith("/api/games/mlb/") and path.endswith("/props"):
         return True
+    if path.startswith("/api/games/nfl/") and path.endswith("/props"):
+        return True
     if path.startswith("/api/parlay/props/"):
         return True
     return False
 
 
 def is_props_page_path(path: str) -> bool:
-    return path in PROPS_PAGE_PATHS
+    if path in PROPS_PAGE_PATHS:
+        return True
+    return path.startswith("/props")
 
 
 def can_access_props(request: Request, *, user_row: dict[str, Any] | None = None) -> bool:

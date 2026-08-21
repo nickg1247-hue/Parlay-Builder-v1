@@ -36,7 +36,7 @@ def test_site_normal_when_maintenance_off():
 
 
 def test_flag_file_enables_construction_for_public_pages(maintenance_on):
-    for path in ("/", "/mlb", "/mlb/props", "/performance", "/nfl", "/nba", "/cfb"):
+    for path in ("/", "/mlb", "/mlb/props", "/props", "/performance", "/nfl", "/nba", "/cfb"):
         response = client.get(path, follow_redirects=False)
         assert response.status_code == 302, path
         assert response.headers["location"] == "/under-construction.html"
@@ -145,6 +145,63 @@ def test_admin_auth_still_required_during_preview(maintenance_on, auth_env):
     )
     assert login.status_code == 200
     assert client.get("/mlb/board").status_code == 200
+
+
+def test_login_stays_reachable_during_construction(maintenance_on):
+    response = client.get("/login", follow_redirects=False)
+    assert response.status_code == 200
+
+
+def test_admin_session_bypasses_construction(maintenance_on, auth_env):
+    login = client.post(
+        "/api/auth/login",
+        json={"username": "testadmin", "password": "test-secret"},
+    )
+    assert login.status_code == 200
+    home = client.get("/", follow_redirects=False)
+    assert home.status_code == 200
+    assert "home-dashboard" in home.text
+
+
+def test_api_toggles_construction(tmp_path: Path, monkeypatch):
+    flag = tmp_path / "maintenance.on"
+    monkeypatch.setenv("MAINTENANCE_FLAG_PATH", str(flag))
+    monkeypatch.setenv("ADMIN_AUTH_DISABLED", "true")
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    monkeypatch.delenv("REQUIRE_ADMIN_AUTH", raising=False)
+    client.cookies.clear()
+
+    status = client.get("/api/maintenance")
+    assert status.status_code == 200
+    assert status.json()["enabled"] is False
+
+    turned_on = client.post("/api/maintenance", json={"enabled": True})
+    assert turned_on.status_code == 200
+    assert turned_on.json()["enabled"] is True
+    assert flag.is_file()
+    assert client.get("/", follow_redirects=False).status_code == 302
+
+    turned_off = client.post("/api/maintenance", json={"enabled": False})
+    assert turned_off.status_code == 200
+    assert turned_off.json()["enabled"] is False
+    assert not flag.is_file()
+    restored = client.get("/", follow_redirects=False)
+    assert restored.status_code == 200
+    assert "home-dashboard" in restored.text
+
+
+def test_api_toggle_requires_admin_when_auth_on(maintenance_on, auth_env):
+    blocked = client.post("/api/maintenance", json={"enabled": False})
+    assert blocked.status_code == 401
+    login = client.post(
+        "/api/auth/login",
+        json={"username": "testadmin", "password": "test-secret"},
+    )
+    assert login.status_code == 200
+    ok = client.post("/api/maintenance", json={"enabled": False})
+    assert ok.status_code == 200
+    assert ok.json()["enabled"] is False
 
 
 def test_cli_toggles_flag_file(tmp_path: Path, monkeypatch):

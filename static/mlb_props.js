@@ -17,9 +17,20 @@
   const minHitL10El = document.getElementById("filter-min-hit-l10");
   const minHitL5El = document.getElementById("filter-min-hit-l5");
   const refreshBtn = document.getElementById("props-search-refresh");
+  const sportEl = document.getElementById("filter-sport");
+  const positionEl = document.getElementById("filter-position");
 
   const EMPTY_FILTER_MESSAGE =
     "No props match — try lowering min score or hit rate, or choose Any to include weaker lines.";
+
+  function currentSport() {
+    const data = pageData();
+    return String(data?.sport || sportEl?.value || "mlb").toLowerCase();
+  }
+
+  function propsBasePath() {
+    return currentSport() === "mlb" ? "/mlb/props" : "/props";
+  }
 
   function pageData() {
     return typeof getPageData === "function" ? getPageData() : null;
@@ -55,11 +66,42 @@
     setSelectValue(sortEl, filters.sort || "score");
     setSelectValue(riskEl, filters.risk);
     if (filters.min_score != null) setSelectValue(minScoreEl, filters.min_score);
+    if (filters.position) setSelectValue(positionEl, filters.position);
     if (filters.min_hit_l10 != null) {
       setSelectValue(minHitL10El, hitSelectValue(filters.min_hit_l10) || "");
     }
     if (filters.min_hit_l5 != null) {
       setSelectValue(minHitL5El, hitSelectValue(filters.min_hit_l5) || "");
+    }
+  }
+
+  function syncSportUi(sport) {
+    const key = String(sport || "mlb").toLowerCase();
+    if (sportEl) sportEl.value = key;
+    document.querySelectorAll("[data-prop-sport]").forEach((el) => {
+      el.classList.toggle("sport-pill-active", el.getAttribute("data-prop-sport") === key);
+    });
+    document.querySelectorAll("[data-sport-filter]").forEach((el) => {
+      el.hidden = el.getAttribute("data-sport-filter") !== key;
+    });
+    document.querySelectorAll("[data-sport-panel]").forEach((el) => {
+      el.hidden = el.getAttribute("data-sport-panel") !== key;
+    });
+    const kicker = document.getElementById("props-page-kicker");
+    if (kicker) {
+      kicker.textContent =
+        key === "nfl"
+          ? "NFL role and game-environment projections on posted sportsbook lines."
+          : "Model-ranked opportunities across today's slate.";
+    }
+    const wrap = document.getElementById("props-quick-filters");
+    if (wrap && key === "nfl" && !wrap.querySelector("[data-quick=\"qb\"]")) {
+      wrap.insertAdjacentHTML(
+        "beforeend",
+        `<button type="button" class="sport-pill" data-quick="qb">QB</button>
+         <button type="button" class="sport-pill" data-quick="rb">RB</button>
+         <button type="button" class="sport-pill" data-quick="wr">WR/TE</button>`
+      );
     }
   }
 
@@ -89,8 +131,11 @@
 
   function emptyMessageFor(data, filters) {
     if ((data?.total_matched || 0) > 0) return data.hint || "";
-    if (hasTightFilters(filters)) return EMPTY_FILTER_MESSAGE;
-    return data?.hint || "No props match these filters. Try a different book or refresh lines.";
+    if (data?.empty_reason === "no_offers" || /haven't posted/i.test(data?.message || "")) {
+      return data.message || "Sportsbooks haven't posted NFL player props yet.";
+    }
+    if (hasTightFilters(filters)) return data?.message || EMPTY_FILTER_MESSAGE;
+    return data?.message || data?.hint || "No props match these filters. Try a different book or refresh lines.";
   }
 
   function renderTracker(tracker) {
@@ -111,13 +156,15 @@
   }
 
   function renderFromPageData(data) {
-    if (!data || data.kind !== "mlb_props") {
+    if (!data || (data.kind !== "mlb_props" && data.kind !== "player_props")) {
       renderPropExplorerList(resultsEl, [], {
         emptyMessage: "Page data missing — reload from the server.",
       });
       return;
     }
 
+    const sport = data.sport || "mlb";
+    syncSportUi(sport);
     populateMarkets(data.markets || []);
     applyFilterDefaults(data.filters || {});
 
@@ -135,30 +182,38 @@
     }
     renderPropExplorerList(resultsEl, search.props || [], {
       emptyMessage: emptyMessageFor(search, filters),
+      sport,
     });
-    renderTracker(data.tracker);
+    if (sport === "mlb") renderTracker(data.tracker);
   }
 
   function propsFilterParams() {
     const params = new URLSearchParams();
     if (!form) return params;
+    const sport = currentSport();
     for (const [key, value] of new FormData(form).entries()) {
       if (value == null || String(value).trim() === "") continue;
+      if (sport !== "nfl" && (key === "position" || key === "min_edge")) continue;
+      if (sport !== "mlb" && (key === "min_hit_l5" || key === "min_hit_l10")) continue;
       params.append(key, String(value));
     }
+    params.set("sport", sport);
     return params;
   }
 
   function buildRefreshUrl() {
     const params = propsFilterParams();
     params.set("refresh", "true");
-    return `/mlb/props?${params.toString()}`;
+    const base = params.get("sport") === "mlb" ? "/mlb/props" : "/props";
+    return `${base}?${params.toString()}`;
   }
 
   function applyPropsFilters() {
     const params = propsFilterParams();
+    const sport = params.get("sport") || "mlb";
+    const base = sport === "mlb" ? "/mlb/props" : "/props";
     const qs = params.toString();
-    window.location.href = qs ? `/mlb/props?${qs}` : "/mlb/props";
+    window.location.href = qs ? `${base}?${qs}` : base;
   }
 
   function fmtOdds(value) {
@@ -340,7 +395,17 @@
   function syncQuickFilters() {
     const wrap = document.getElementById("props-quick-filters");
     if (!wrap) return;
-    const mode = veryStrongEl?.checked ? "strong" : actionableEl?.checked ? "edges" : "all";
+    const mode = veryStrongEl?.checked
+      ? "strong"
+      : actionableEl?.checked
+        ? "edges"
+        : positionEl?.value === "QB"
+          ? "qb"
+          : positionEl?.value === "RB"
+            ? "rb"
+            : positionEl?.value === "WR" || positionEl?.value === "TE"
+              ? "wr"
+              : "all";
     wrap.querySelectorAll("[data-quick]").forEach((btn) => {
       btn.classList.toggle("sport-pill-active", btn.dataset.quick === mode);
     });
@@ -369,7 +434,7 @@
       }
       if (el.closest("#props-clear-filters") || el.closest("#props-drawer-clear")) {
         e.preventDefault();
-        window.location.href = "/mlb/props";
+        window.location.href = currentSport() === "nfl" ? "/props?sport=nfl" : "/mlb/props";
       }
     });
     document.getElementById("props-quick-filters")?.addEventListener("click", (e) => {
@@ -378,6 +443,12 @@
       const mode = btn.dataset.quick;
       if (actionableEl) actionableEl.checked = mode === "edges";
       if (veryStrongEl) veryStrongEl.checked = mode === "strong";
+      if (positionEl) {
+        if (mode === "qb") positionEl.value = "QB";
+        else if (mode === "rb") positionEl.value = "RB";
+        else if (mode === "wr") positionEl.value = "WR";
+        else if (mode === "all" || mode === "edges" || mode === "strong") positionEl.value = "";
+      }
       applyPropsFilters();
     });
     document.addEventListener("keydown", (e) => {

@@ -71,6 +71,14 @@ def test_run_morning_refresh_success(isolated_refresh_paths, monkeypatch, tmp_pa
             "app.services.morning_refresh.refresh_schedule_cache",
             return_value=SAMPLE_SCHEDULE,
         ) as mock_schedule,
+        patch(
+            "app.services.props_mlb.refresh_props_slate",
+            return_value={"games_with_props": 0, "games_on_slate": 0, "games_fetched": 0},
+        ),
+        patch(
+            "app.services.props_nfl.refresh_nfl_props_slate",
+            return_value={"games_with_props": 0, "games_on_slate": 0, "games_fetched": 0},
+        ),
     ):
         code = mr.run_morning_refresh(date(2026, 6, 6))
 

@@ -44,6 +44,7 @@ PROTECTED_API_PREFIXES = (
     "/api/backtest",
     "/api/clv/summary",
     "/api/lab/",
+    "/api/maintenance",
 )
 # Public on main site for admin auth — user props middleware gates verified access.
 PUBLIC_API_PATHS = frozenset({
@@ -150,11 +151,15 @@ def create_session_token() -> str:
     return _sign_payload(f"{admin_username()}|{exp}")
 
 
+def has_admin_session(request: Request) -> bool:
+    token = request.cookies.get(COOKIE_NAME, "")
+    return _verify_token(token)
+
+
 def is_authenticated(request: Request) -> bool:
     if not auth_enabled():
         return True
-    token = request.cookies.get(COOKIE_NAME, "")
-    return _verify_token(token)
+    return has_admin_session(request)
 
 
 def set_session_cookie(response: Response) -> None:

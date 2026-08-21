@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch full-market MLB player props for today's slate (resumable)."""
+"""Fetch full-market player props for today's slate (resumable)."""
 
 from __future__ import annotations
 
@@ -13,11 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.services.props_mlb import refresh_props_slate  # noqa: E402
+from app.services.props_platform import refresh_props  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh MLB props for the full slate.")
+    parser = argparse.ArgumentParser(description="Refresh player props for the full slate.")
+    parser.add_argument("--sport", default="mlb", help="mlb or nfl (default mlb)")
     parser.add_argument("--date", help="ISO date (default: today)")
     parser.add_argument(
         "--book",
@@ -45,7 +46,8 @@ def main() -> int:
     game_date = date.fromisoformat(args.date) if args.date else date.today()
     last: dict | None = None
     for attempt in range(1, max(1, args.loop) + 1):
-        last = refresh_props_slate(
+        last = refresh_props(
+            args.sport,
             game_date,
             bookmaker=args.book,
             force=args.force and attempt == 1,
