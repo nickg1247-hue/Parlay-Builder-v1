@@ -218,6 +218,65 @@
       </section>`;
   }
 
+  function analysisHeroHtml(prop) {
+    const side = prop.recommended_side || prop.side || "over";
+    const modelPct =
+      prop.model_probability ??
+      prop.recommended_probability ??
+      (side === "over" ? prop.model_probability_over : prop.model_probability_under);
+    const mktPct = prop.market_probability ?? (side === "over" ? prop.market_probability_over : prop.market_probability_under);
+    const edge = prop.edge ?? prop.edge_pct;
+    const edgeLabel =
+      edge == null
+        ? "—"
+        : `${Number(edge) <= 1 && Number(edge) >= -1 ? (Number(edge) * 100).toFixed(1) : Number(edge).toFixed(1)}%`;
+    const conf = prop.line_strength_label || prop.grade_label || prop.line_strength || "";
+    const book = prop.bookmaker_label || prop.bookmaker || "";
+    return `
+      <div class="pp-analysis-stats">
+        <div class="pp-stat"><span class="pp-stat-label">NTG Projection</span><span class="pp-stat-value">${prop.model_projection ?? "—"}</span></div>
+        <div class="pp-stat pp-stat--prob"><span class="pp-stat-label">Win Probability</span><span class="pp-stat-value">${fmtPct(modelPct)}</span></div>
+        <div class="pp-stat"><span class="pp-stat-label">Market Probability</span><span class="pp-stat-value">${fmtPct(mktPct)}</span></div>
+        <div class="pp-stat pp-stat--edge"><span class="pp-stat-label">Edge</span><span class="pp-stat-value${edge != null && Number(edge) > 0 ? " is-pos" : ""}">${edgeLabel === "—" ? "—" : (Number(edge) > 0 ? "+" : "") + edgeLabel.replace("+", "")}</span></div>
+        ${book ? `<div class="pp-stat"><span class="pp-stat-label">Sportsbook</span><span class="pp-stat-value">${book}</span></div>` : ""}
+        ${conf ? `<div class="pp-stat"><span class="pp-stat-label">Confidence</span><span class="pp-stat-value">${conf}</span></div>` : ""}
+      </div>`;
+  }
+
+  function whyChipsHtml(prop, data) {
+    const chips = [];
+    const usage = prop.analysis?.usage || {};
+    if (usage.l3_avg != null && usage.season_avg != null) {
+      const l3 = Number(usage.l3_avg);
+      const season = Number(usage.season_avg) || 1;
+      const delta = (l3 - season) / Math.abs(season);
+      chips.push({
+        label: "Usage",
+        value: delta > 0.12 ? "Elevated" : delta < -0.12 ? "Down" : "Stable",
+      });
+    }
+    if (usage.role_shift != null) {
+      const shift = Number(usage.role_shift);
+      chips.push({
+        label: "Role",
+        value: Math.abs(shift) < 0.1 ? "Stable" : shift > 0 ? "Increasing" : "Decreasing",
+      });
+    }
+    const edge = prop.edge ?? prop.edge_pct;
+    if (edge != null) {
+      chips.push({ label: "Market Edge", value: Number(edge) > 0 ? "Positive" : "Negative" });
+    }
+    if (data?.depth?.opposing_pitcher) {
+      chips.push({ label: "Matchup", value: data.depth.opposing_pitcher });
+    }
+    const risk = prop.risk_flag || (Array.isArray(prop.analysis?.risks) ? prop.analysis.risks[0] : null);
+    if (risk) chips.push({ label: "Risk", value: risk });
+    if (!chips.length) return "";
+    return `<div class="pp-why-chips">${chips
+      .map((c) => `<div class="pp-why-chip"><span>${c.label}</span><strong>${c.value}</strong></div>`)
+      .join("")}</div>`;
+  }
+
   function whyNtgLikesHtml(prop, data) {
     const reasons = [];
     const side = prop.recommended_side || prop.side || "over";
@@ -283,15 +342,18 @@
     if (risks.length) {
       reasons.push({ label: "Risk", tone: "risk", text: risks.filter(Boolean).join(" · ") });
     }
-    if (!reasons.length) return "";
+    if (!reasons.length && !whyChipsHtml(prop, data)) return "";
     return `
       <section class="why-pick-card ntg-card" aria-label="Why NTG likes this">
         <h3 class="why-pick-card__title">Why NTG likes this</h3>
-        <ul class="why-pick-card__factors">
-          ${reasons
-            .map((r) => `<li><strong>${r.label}</strong> ${r.text}</li>`)
-            .join("")}
-        </ul>
+        ${whyChipsHtml(prop, data)}
+        ${
+          reasons.length
+            ? `<ul class="why-pick-card__factors">${reasons
+                .map((r) => `<li><strong>${r.label}</strong> ${r.text}</li>`)
+                .join("")}</ul>`
+            : ""
+        }
       </section>`;
   }
 
@@ -320,7 +382,9 @@
 
   function renderModalContent(prop, data) {
     if (!data || data.status === "error") {
-      return `<div class="empty-state-card"><p>${data?.message || "Could not load player stats."}</p></div>`;
+      const raw = String(data?.message || "");
+      const safe = /http|traceback|undefined|failed/i.test(raw) ? "We couldn't load this analysis." : raw;
+      return `<div class="empty-state-card"><p>${safe || "Could not load player stats."}</p></div>`;
     }
     const side = prop.recommended_side || prop.side || "over";
     const sideLabel = side === "under" ? "Under" : "Over";
@@ -351,6 +415,7 @@
           <p class="prop-modal-odds">${fmtOdds(prop.recommended_odds)} ${edge}</p>
         </div>
       </header>
+      ${analysisHeroHtml(prop)}
       ${whyCard}
       ${depthBlock}
       <div class="prop-modal-rates">
@@ -472,6 +537,7 @@
           <p class="prop-modal-odds">${fmtOdds(prop.recommended_odds)}</p>
         </div>
       </header>
+      ${analysisHeroHtml(prop)}
       ${why}
       ${projectionVsLineHtml(prop)}
       <section class="why-pick-card ntg-card">
@@ -566,7 +632,7 @@
         } catch (_) {
           detail = await res.text().catch(() => "");
         }
-        throw new Error(detail || `HTTP ${res.status}`);
+        throw new Error(detail && !/^HTTP\s*\d+/i.test(detail) ? detail : "We couldn't load this analysis.");
       }
       const data = await res.json();
       try {
@@ -613,7 +679,7 @@
       const res = await fetch(
         `/api/players/${encodeURIComponent(sport)}/${encodeURIComponent(playerId)}/profile`
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error("We couldn't load this player profile.");
       const data = await res.json();
       if (data.status === "unsupported") {
         body.innerHTML = `<div class="empty-state-card"><p>${data.message || "Coming soon for this sport."}</p></div>`;

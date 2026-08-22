@@ -225,6 +225,10 @@ def test_mlb_props_empty_filter_query_is_ok(monkeypatch):
     assert 'id="props-open-filters"' in response.text
     assert 'hidden aria-label="Prop filters"' not in response.text
     assert 'id="props-search-results"' in response.text
+    assert 'id="pp-top-edge"' in response.text
+    assert 'id="pp-opportunities"' in response.text
+    assert 'id="pp-all"' in response.text
+    assert "props-page.css" in response.text
 
 
 def test_unified_props_page_nfl_selector(monkeypatch):

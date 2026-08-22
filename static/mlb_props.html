@@ -6,11 +6,12 @@
   <link rel="icon" href="/static/assets/ntg-logo.png?v=20260725" type="image/png">
   <title>Player Props — NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260725">
-  <link rel="stylesheet" href="/static/app.css?v=20260624b">
+  <link rel="stylesheet" href="/static/app.css?v=20260828">
   <link rel="stylesheet" href="/static/brand.css?v=20260725">
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
-  <link rel="stylesheet" href="/static/ntg-system.css?v=20260825">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260828">
+  <link rel="stylesheet" href="/static/props-page.css?v=20260828">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
@@ -34,34 +35,94 @@
     </header>
 
     <main class="app-main dash-main props-page">
-      <header class="dash-page-header props-explorer-head">
-        <div>
-          <h1>Player props</h1>
-          <p class="section-sub dash-page-kicker" id="props-page-kicker">Find the strongest model-rated player opportunities across supported sports.</p>
-          <p class="ntg-updated-time" id="props-updated-line"></p>
+      <h1 class="props-visually-hidden">Player props</h1>
+
+      <div class="pp-controls">
+        <div id="props-sport-selector" class="pp-sport-selector ntg-quick-filters props-sport-selector" role="tablist" aria-label="Prop sport">
+          <a class="sport-pill" data-prop-sport="mlb" href="/props?sport=mlb">MLB</a>
+          <a class="sport-pill" data-prop-sport="nfl" href="/props?sport=nfl">NFL</a>
+          <span class="sport-pill props-sport-soon" title="Player props for NBA are not live yet">NBA</span>
         </div>
-        <button type="button" id="props-search-refresh" class="dash-btn dash-btn-primary">Refresh lines</button>
-      </header>
-
-      <div id="props-sport-selector" class="ntg-quick-filters props-sport-selector" role="tablist" aria-label="Prop sport">
-        <a class="sport-pill" data-prop-sport="mlb" href="/props?sport=mlb">MLB</a>
-        <a class="sport-pill" data-prop-sport="nfl" href="/props?sport=nfl">NFL</a>
-        <span class="sport-pill props-sport-soon" title="Player props for NBA are not live yet">NBA</span>
-      </div>
-
-      <div class="ntg-toolbar">
-        <div id="props-quick-filters" class="ntg-quick-filters" role="group" aria-label="Quick filters">
-          <button type="button" class="sport-pill" data-quick="edges">Top edges</button>
-          <button type="button" class="sport-pill" data-quick="strong">Very strong</button>
-          <button type="button" class="sport-pill" data-quick="all">All</button>
+        <div class="pp-controls-right">
+          <label class="pp-date-field" for="props-date-input">
+            <span>Date</span>
+            <input type="date" id="props-date-input" aria-label="Prop slate date" />
+          </label>
+          <button type="button" id="props-open-filters" class="ntg-btn ntg-btn-ghost" aria-expanded="false" aria-controls="props-filter-drawer">Filters</button>
+          <button type="button" id="props-search-refresh" class="dash-btn dash-btn-ghost">Refresh</button>
         </div>
-        <input id="props-player-search" class="ntg-search" type="search" placeholder="Search players..." autocomplete="off" />
-        <button type="button" id="props-open-filters" class="ntg-btn ntg-btn-ghost" aria-expanded="false" aria-controls="props-filter-drawer">Filters</button>
-        <button type="button" id="props-clear-filters" class="ntg-btn ntg-btn-ghost">Clear all</button>
       </div>
+      <p class="ntg-updated-time" id="props-updated-line"></p>
 
-      <p id="props-search-meta" class="props-search-meta ntg-updated-time">Updating props…</p>
-      <div id="props-search-results" class="props-explorer-list"></div>
+      <section id="pp-top-edge" class="pp-section" aria-label="Top Edge Today">
+        <p class="pp-kicker">Top Edge Today</p>
+        <div id="pp-featured-slot">
+          <div class="pp-card pp-skel-featured ntg-skel" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section id="pp-opportunities" class="pp-section" aria-label="Top Opportunities">
+        <div class="pp-section-head">
+          <h2>Top Opportunities</h2>
+          <div id="pp-opp-filters" class="pp-chip-row" role="group" aria-label="Opportunity filters">
+            <button type="button" class="pp-chip is-active" data-opp="all">All</button>
+            <button type="button" class="pp-chip" data-opp="edges">Strongest Edges</button>
+            <button type="button" class="pp-chip" data-opp="over">Overs</button>
+            <button type="button" class="pp-chip" data-opp="under">Unders</button>
+          </div>
+        </div>
+        <div id="pp-opp-grid" class="pp-opp-grid">
+          <div class="pp-card pp-skel-opp ntg-skel" aria-hidden="true"></div>
+          <div class="pp-card pp-skel-opp ntg-skel" aria-hidden="true"></div>
+          <div class="pp-card pp-skel-opp ntg-skel" aria-hidden="true"></div>
+          <div class="pp-card pp-skel-opp ntg-skel" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section id="pp-all" class="pp-section" aria-label="All Player Props">
+        <div class="pp-section-head">
+          <h2>All Player Props</h2>
+          <span id="pp-count" class="pp-count"></span>
+        </div>
+        <div class="pp-filter-row">
+          <input id="props-player-search" class="pp-search ntg-search" type="search" placeholder="Search players or markets…" autocomplete="off" />
+          <select id="pp-inline-position" aria-label="Position" hidden>
+            <option value="">Position</option>
+            <option value="QB">QB</option>
+            <option value="RB">RB</option>
+            <option value="WR">WR / TE</option>
+            <option value="TE">TE</option>
+          </select>
+          <select id="pp-inline-market" aria-label="Market">
+            <option value="">Market</option>
+          </select>
+          <select id="pp-inline-side" aria-label="Over or Under">
+            <option value="both">Over / Under</option>
+            <option value="over">Overs</option>
+            <option value="under">Unders</option>
+          </select>
+          <select id="pp-inline-book" aria-label="Sportsbook"></select>
+          <select id="pp-inline-sort" aria-label="Sort">
+            <option value="score">Best first</option>
+            <option value="edge">Model edge</option>
+            <option value="hit_l5" data-sport-filter="mlb">L5 hit rate</option>
+            <option value="hit_l10" data-sport-filter="mlb">L10 hit rate</option>
+            <option value="risk_asc">Lowest risk</option>
+            <option value="risk_desc">Highest risk</option>
+          </select>
+        </div>
+        <p id="props-search-meta" class="props-search-meta ntg-updated-time props-visually-hidden">Updating props…</p>
+        <div id="props-search-results">
+          <div class="pp-card pp-skel-table ntg-skel" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <div id="props-quick-filters" class="ntg-quick-filters props-visually-hidden" hidden>
+        <button type="button" class="sport-pill" data-quick="edges">Top edges</button>
+        <button type="button" class="sport-pill" data-quick="strong">Very strong</button>
+        <button type="button" class="sport-pill" data-quick="all">All</button>
+      </div>
+      <button type="button" id="props-clear-filters" class="ntg-btn ntg-btn-ghost props-visually-hidden" hidden>Clear all</button>
 
       <section id="parlay-builder-panel" class="parlay-builder-panel dash-panel" data-sport-panel="mlb" aria-label="Auto parlay builder">
         <div class="dash-panel-head parlay-builder-head">
@@ -104,6 +165,7 @@
         </div>
       <form id="props-search-form" class="props-search-filters dash-panel" method="get" action="/props" aria-label="Prop search filters">
         <input type="hidden" id="filter-sport" name="sport" value="mlb" />
+        <input type="hidden" id="filter-date" name="date" value="" />
         <label class="props-filter-field">
           <span>Sportsbook</span>
           <select id="filter-book" name="bookmaker" class="home-props-select"></select>
@@ -216,12 +278,12 @@
             Apply filters
           </button>
           <button type="button" id="props-drawer-clear" class="ntg-btn ntg-btn-ghost">Clear all</button>
-          <span class="props-filter-hint text-muted">Filters reload this page with server-side results. Use <strong>Refresh lines</strong> above to pull new odds.</span>
+          <span class="props-filter-hint text-muted">Filters reload this page with server-side results. Use <strong>Refresh</strong> above to pull new odds.</span>
         </div>
       </form>
   </aside>
-  <script src="/static/player_prop_modal.js?v=20260827"></script>
-  <script src="/static/app.js?v=20260827"></script>
-  <script src="/static/mlb_props.js?v=20260827"></script>
+  <script src="/static/player_prop_modal.js?v=20260828"></script>
+  <script src="/static/app.js?v=20260828"></script>
+  <script src="/static/mlb_props.js?v=20260828"></script>
 </body>
 </html>

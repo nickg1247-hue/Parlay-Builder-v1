@@ -4418,8 +4418,8 @@ body.updates-modal-open {
   inset: 0;
   z-index: 9000;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-end;
   padding: 0;
 }
 
@@ -4430,18 +4430,31 @@ body.updates-modal-open {
 .player-prop-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(2, 6, 16, 0.62);
 }
 
 .player-prop-modal__panel {
   position: relative;
   z-index: 1;
-  width: min(100%, 560px);
-  max-height: 88vh;
+  width: min(100%, 440px);
+  height: 100%;
+  max-height: 100vh;
   overflow: auto;
   margin: 0;
   padding: 1.25rem 1.25rem 1.5rem;
-  border-radius: 16px 16px 0 0;
+  border-radius: 0;
+  border-left: 1px solid var(--ntg-border, var(--border));
+  background: var(--ntg-surface, var(--surface));
+  animation: ntg-drawer-in 220ms ease;
+}
+
+@keyframes ntg-drawer-in {
+  from { transform: translateX(18px); opacity: 0.72; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-prop-modal__panel { animation: none; }
 }
 
 .player-prop-modal__close {
@@ -4610,15 +4623,10 @@ body.player-prop-modal-open {
   margin-bottom: 0.35rem;
 }
 
-@media (min-width: 720px) {
-  .player-prop-modal {
-    align-items: center;
-    padding: 1rem;
-  }
-
+@media (max-width: 767px) {
   .player-prop-modal__panel {
-    border-radius: var(--ntg-radius, 12px);
-    max-height: 85vh;
+    width: 100%;
+    border-left: 0;
   }
 }
 

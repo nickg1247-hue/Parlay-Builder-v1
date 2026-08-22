@@ -68,6 +68,24 @@
   --green: var(--ntg-positive);
   --cyan: var(--ntg-bright);
   --blue: var(--ntg-secondary);
+
+  --bg-primary: var(--ntg-bg);
+  --bg-secondary: var(--ntg-surface);
+  --bg-tertiary: var(--ntg-surface-2);
+  --text-primary: var(--ntg-text);
+  --text-secondary: var(--ntg-text-2);
+  --text-muted: var(--ntg-text-3);
+  --accent-blue: var(--ntg-primary);
+  --accent-blue-hover: var(--ntg-primary-hover);
+  --success: var(--ntg-positive);
+  --warning: var(--ntg-warning);
+  --danger: var(--ntg-negative);
+  --border-subtle: var(--ntg-border);
+  --border-strong: var(--ntg-border-strong);
+  --radius-sm: var(--ntg-radius-sm);
+  --radius-md: var(--ntg-radius);
+  --radius-lg: 16px;
+  --shadow-card: var(--ntg-shadow-sm);
 }
 
 html[data-theme="light"] {
@@ -309,7 +327,7 @@ body.ntg-shell .main-nav-link:hover {
 }
 
 body.ntg-shell .main-nav-link-active {
-  color: var(--ntg-text);
+  color: var(--ntg-primary-hover);
 }
 
 body.ntg-shell .main-nav-link-active::after {
@@ -1106,6 +1124,45 @@ body.home-dashboard .dash-parlay-odds strong {
   font-weight: 800;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
+}
+
+.player-prop-modal .pp-analysis-stats,
+.player-prop-modal .pp-why-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.player-prop-modal .pp-stat,
+.player-prop-modal .pp-why-chip {
+  padding: 8px 10px;
+  background: var(--ntg-surface-2);
+  border: 1px solid var(--ntg-border);
+  border-radius: var(--ntg-radius-sm);
+}
+
+.player-prop-modal .pp-stat-label,
+.player-prop-modal .pp-why-chip span {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ntg-text-3);
+}
+
+.player-prop-modal .pp-stat-value,
+.player-prop-modal .pp-why-chip strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ntg-text);
+}
+
+.player-prop-modal .pp-stat--edge .pp-stat-value.is-pos {
+  color: var(--ntg-positive);
 }
 
 .ntg-why-title {

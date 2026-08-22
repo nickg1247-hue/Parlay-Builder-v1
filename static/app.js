@@ -3762,7 +3762,10 @@ function mainNavIsActive(href, path) {
 
 function sportPrimaryIsActive(href, path) {
   if (href === "/") return path === "/";
-  if (href === "/mlb") return path === "/mlb" || path.startsWith("/mlb/");
+  if (href === "/props") {
+    return path === "/props" || path.startsWith("/props") || path.startsWith("/mlb/props");
+  }
+  if (href === "/mlb") return (path === "/mlb" || path.startsWith("/mlb/")) && !path.startsWith("/mlb/props");
   if (href === "/nba") return path === "/nba" || path.startsWith("/nba/");
   if (href === "/nfl") return path === "/nfl" || path.startsWith("/nfl/");
   if (href === "/cfb") return path === "/cfb" || path.startsWith("/cfb/");
@@ -3773,6 +3776,7 @@ function sportPrimaryIsActive(href, path) {
 function renderDashboardPrimaryNav(container, path) {
   const specs = [
     { href: "/", label: "Dashboard" },
+    { href: "/props", label: "Player Props" },
     { href: "/mlb", label: "MLB" },
     { href: "/nfl", label: "NFL" },
     { href: "/nba", label: "NBA" },
