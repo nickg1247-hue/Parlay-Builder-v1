@@ -174,6 +174,13 @@
 
     const search = data.propsSearch || {};
     const filters = data.filters || {};
+    const updatedEl = document.getElementById("props-updated-line");
+    if (updatedEl) {
+      const stamp = search.lines_fetched_at || data.status?.ran_at;
+      updatedEl.textContent = stamp
+        ? `Updated ${new Date(stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+        : "";
+    }
     if (metaEl) {
       metaEl.textContent =
         typeof formatPropsSearchMeta === "function"
@@ -182,6 +189,10 @@
     }
     renderPropExplorerList(resultsEl, search.props || [], {
       emptyMessage: emptyMessageFor(search, filters),
+      emptyTitle:
+        search.empty_reason === "no_offers" || /haven't posted/i.test(search.message || "")
+          ? "NO PLAYER PROPS POSTED"
+          : "NO PROPS MATCH YOUR FILTERS",
       sport,
     });
     if (sport === "mlb") renderTracker(data.tracker);
@@ -360,6 +371,7 @@
     let n = 0;
     for (const [key, value] of data.entries()) {
       if (!value) continue;
+      if (key === "sport") continue;
       if (key === "sort" && value === "score") continue;
       if (key === "side" && value === "both") continue;
       if (key === "line_kind" && value === "main") continue;

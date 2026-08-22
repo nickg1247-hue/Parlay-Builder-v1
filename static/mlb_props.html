@@ -37,7 +37,8 @@
       <header class="dash-page-header props-explorer-head">
         <div>
           <h1>Player props</h1>
-          <p class="section-sub dash-page-kicker" id="props-page-kicker">Model-ranked opportunities across today's slate.</p>
+          <p class="section-sub dash-page-kicker" id="props-page-kicker">Find the strongest model-rated player opportunities across supported sports.</p>
+          <p class="ntg-updated-time" id="props-updated-line"></p>
         </div>
         <button type="button" id="props-search-refresh" class="dash-btn dash-btn-primary">Refresh lines</button>
       </header>
@@ -45,6 +46,7 @@
       <div id="props-sport-selector" class="ntg-quick-filters props-sport-selector" role="tablist" aria-label="Prop sport">
         <a class="sport-pill" data-prop-sport="mlb" href="/props?sport=mlb">MLB</a>
         <a class="sport-pill" data-prop-sport="nfl" href="/props?sport=nfl">NFL</a>
+        <span class="sport-pill props-sport-soon" title="Player props for NBA are not live yet">NBA</span>
       </div>
 
       <div class="ntg-toolbar">
@@ -218,8 +220,8 @@
         </div>
       </form>
   </aside>
-  <script src="/static/player_prop_modal.js?v=20260725"></script>
-  <script src="/static/app.js?v=20260825"></script>
-  <script src="/static/mlb_props.js?v=20260825"></script>
+  <script src="/static/player_prop_modal.js?v=20260827"></script>
+  <script src="/static/app.js?v=20260827"></script>
+  <script src="/static/mlb_props.js?v=20260827"></script>
 </body>
 </html>

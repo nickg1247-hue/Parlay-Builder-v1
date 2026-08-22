@@ -46,6 +46,7 @@ def test_home_page():
     assert "View today's slate" in text
     assert "Prop Parlay Builder" in text
     assert 'id="featured-edge"' in text
+    assert 'id="home-top-props"' in text
 
 
 def test_mlb_slate_page():

@@ -157,7 +157,13 @@ One Player Props product. Sport is a filter, not a separate app.
 | Search API | `GET /api/props/search?sport=nfl` |
 | Markets | `GET /api/props/markets?sport=nfl` |
 | Game props | `GET /api/games/nfl/{game_id}/props` |
-| Refresh | `POST /api/props/slate/refresh?sport=nfl` or `python scripts/refresh_props_slate.py --sport nfl`. Morning refresh also scans NFL props (quota-gated, isolated from MLB). |
+| Watchlist | `/watchlist` (alias `/my-picks`) — saved original line, not overwritten |
+| Player page | `/players/{sport}/{player_key}` — posted props + MLB game log when available |
+| Daily top | `GET /api/daily/props?sport=nfl` (MLB default unchanged) |
+
+**Watchlist:** SQLite `user_watchlist_props` / `user_watchlist_games`. Alert columns exist; no notifier is sent yet. Sign-in required for API.
+
+**CLV:** Player-prop closing-line history is not stored. Performance “CLV” is MLB moneyline only.
 
 **Odds:** The Odds API `americanfootball_nfl` / `americanfootball_nfl_preseason` event-odds. Same quota gate as MLB. Cache: `data/processed/props_repository/nfl/{date}/`.
 
@@ -166,7 +172,7 @@ One Player Props product. Sport is a filter, not a separate app.
 **Not fabricated:** snap share / route participation are omitted until we ingest those feeds.
 
 ```powershell
-pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py -q
+pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py tests/test_watchlist.py -q
 ```
 
 ---

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260827" type="image/png">
+  <title>Player — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260827">
+  <link rel="stylesheet" href="/static/app.css?v=20260827">
+  <link rel="stylesheet" href="/static/brand.css?v=20260827">
+  <link rel="stylesheet" href="/static/design.css?v=20260827">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260827">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260827">
+</head>
+<body class="ntg-shell home-v2">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260827" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+    </header>
+    <main class="app-main dash-main">
+      <header class="dash-page-header" id="player-header">
+        <div>
+          <h1 id="player-name">Player</h1>
+          <p class="dash-page-kicker" id="player-meta">Loading player…</p>
+        </div>
+        <a class="ntg-btn ntg-btn-ghost" id="player-back-props" href="/props">All props</a>
+      </header>
+      <h2 class="app-section-title">Available props</h2>
+      <div id="player-props" class="props-explorer-list">
+        <div class="prop-explorer-card ntg-skel" style="min-height:7rem"></div>
+      </div>
+      <section id="player-log-wrap" hidden>
+        <h2 class="app-section-title">Recent games</h2>
+        <div id="player-log"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/player_prop_modal.js?v=20260827"></script>
+  <script src="/static/app.js?v=20260827"></script>
+  <script src="/static/player.js?v=20260827"></script>
+</body>
+</html>

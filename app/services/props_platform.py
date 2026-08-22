@@ -11,6 +11,7 @@ from app.services.prop_books import DEFAULT_DISPLAY_BOOKMAKER, normalize_prop_sp
 from app.services.prop_engine.nfl_markets import list_nfl_market_types
 from app.services.prop_pick_tracker import summarize_prop_tracker
 from app.services.props_mlb import (
+    build_daily_top_props as build_mlb_daily_top_props,
     build_game_props as build_mlb_game_props,
     list_prop_bookmakers,
     list_prop_market_types,
@@ -48,12 +49,62 @@ def list_bookmakers_for_sport(sport: str | None) -> list[dict[str, Any]]:
 
 def search_props(sport: str | None, game_date: date | None = None, **kwargs: Any) -> dict[str, Any]:
     key = normalize_prop_sport(sport)
+    player = str(kwargs.pop("player", "") or "").strip().lower()
     if key == "nfl":
         result = search_nfl_daily_props(game_date, **_nfl_search_kwargs(kwargs))
     else:
         result = search_mlb_daily_props(game_date, **_mlb_search_kwargs(kwargs))
+    if player:
+        props = [
+            p
+            for p in (result.get("props") or [])
+            if player in str(p.get("player") or "").lower()
+        ]
+        result["props"] = props
+        result["total_matched"] = len(props)
     result["sport"] = key
     return result
+
+
+def build_daily_props(sport: str | None, game_date: date | None = None, **kwargs: Any) -> dict[str, Any]:
+    """Homepage / daily top props. MLB path is unchanged when sport is mlb."""
+    key = normalize_prop_sport(sport)
+    if key == "nfl":
+        limit = int(kwargs.get("limit") or 10)
+        result = search_nfl_daily_props(
+            game_date,
+            bookmaker=kwargs.get("bookmaker"),
+            actionable_only=True,
+            limit=max(limit, 20),
+            scan=bool(kwargs.get("scan")),
+            refresh=bool(kwargs.get("refresh")),
+        )
+        props = list(result.get("props") or [])
+        very_strong = [
+            p
+            for p in props
+            if str(p.get("line_strength") or "") in {"very_strong", "elite"}
+        ]
+        return {
+            "sport": "nfl",
+            "date": result.get("date"),
+            "top_props": props[:limit],
+            "very_strong_props": very_strong[:limit],
+            "total_matched": result.get("total_matched", len(props)),
+            "bookmaker": result.get("bookmaker"),
+            "bookmaker_label": result.get("bookmaker_label"),
+            "message": result.get("message"),
+            "empty_reason": result.get("empty_reason"),
+        }
+    out = build_mlb_daily_top_props(
+        game_date,
+        limit=int(kwargs.get("limit") or 10),
+        scan=bool(kwargs.get("scan")),
+        refresh=bool(kwargs.get("refresh")),
+        bookmaker=kwargs.get("bookmaker"),
+    )
+    out["sport"] = "mlb"
+    return out
 
 
 def refresh_props(sport: str | None, game_date: date | None = None, **kwargs: Any) -> dict[str, Any]:

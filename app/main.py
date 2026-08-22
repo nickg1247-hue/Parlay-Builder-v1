@@ -50,6 +50,7 @@ from app.services.mlb_page_data import (
     build_mlb_slate_page_data,
 )
 from app.services.props_platform import (
+    build_daily_props,
     build_player_props_page_data,
     build_sport_game_props,
     list_bookmakers_for_sport,
@@ -58,6 +59,14 @@ from app.services.props_platform import (
     normalize_prop_sport,
     refresh_props,
     search_props,
+)
+from app.services.watchlist import (
+    delete_watchlist_game,
+    delete_watchlist_prop,
+    list_watchlist_games,
+    list_watchlist_props,
+    save_watchlist_game,
+    save_watchlist_prop,
 )
 from app.services.page_data_cache import get_or_build
 from app.services.page_render import render_static_page
@@ -224,6 +233,28 @@ class PlayerFollowRequest(BaseModel):
 class AlertPrefsRequest(BaseModel):
     daily_digest: bool = False
     digest_hour_et: int = Field(8, ge=0, le=23)
+
+
+class WatchlistPropRequest(BaseModel):
+    sport: str = Field(..., min_length=2, max_length=8)
+    player_name: str = Field(..., min_length=1, max_length=120)
+    market_type: str = Field(..., min_length=1, max_length=80)
+    side: str = Field(..., min_length=2, max_length=8)
+    line: float
+    sportsbook: str | None = Field(None, max_length=40)
+    odds: int | None = None
+    game_id: str | None = Field(None, max_length=64)
+    event_id: str | None = Field(None, max_length=64)
+    player_id: str | None = Field(None, max_length=64)
+    market_label: str | None = Field(None, max_length=80)
+    prediction_id: str | None = Field(None, max_length=120)
+    matchup: str | None = Field(None, max_length=160)
+
+
+class WatchlistGameRequest(BaseModel):
+    sport: str = Field(..., min_length=2, max_length=8)
+    game_id: str = Field(..., min_length=1, max_length=64)
+    matchup: str | None = Field(None, max_length=160)
 
 
 logger = logging.getLogger(__name__)
@@ -1469,6 +1500,7 @@ async def props_search(
     min_edge: float | None = Query(None),
     position: str | None = Query(None),
     team: str | None = Query(None),
+    player: str | None = Query(None, description="Player name contains"),
     limit: int = Query(200, ge=1, le=500),
     scan: bool = Query(False),
     refresh: bool = Query(False),
@@ -1499,6 +1531,7 @@ async def props_search(
         min_edge=min_edge,
         position=position,
         team=team,
+        player=player,
     )
     # Filter/sort-only requests use cached pool; scan runs on refresh or empty pool.
     result = search_props(sport, game_date, **search_kwargs)
@@ -1608,10 +1641,20 @@ async def daily_top_props(
         DEFAULT_DISPLAY_BOOKMAKER,
         description="Sportsbook key (default DraftKings; consensus = median across major books).",
     ),
+    sport: str | None = Query("mlb"),
 ):
     game_date = (
         date_type.fromisoformat(date_param) if date_param else date_type.today()
     )
+    if normalize_prop_sport(sport) == "nfl":
+        return build_daily_props(
+            "nfl",
+            game_date,
+            limit=limit,
+            scan=scan,
+            refresh=refresh,
+            bookmaker=bookmaker,
+        )
     cache_meta = get_props_cache_meta()
     if not cache_only and cache_meta.get("requires_refresh"):
         scan = True
@@ -1636,6 +1679,7 @@ async def daily_top_props(
             bookmaker=bookmaker,
         )
         result["auto_scanned"] = True
+    result["sport"] = "mlb"
     return result
 
 
@@ -1886,6 +1930,80 @@ async def user_player_unfollow(
         return unfollow_player(conn, session["user_id"], sport, player_id)
     finally:
         conn.close()
+
+
+@app.get("/api/watchlist")
+async def watchlist_get(request: Request):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return {
+            "props": list_watchlist_props(conn, session["user_id"]),
+            "games": list_watchlist_games(conn, session["user_id"]),
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/api/watchlist/props")
+async def watchlist_save_prop(request: Request, body: WatchlistPropRequest):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return save_watchlist_prop(conn, session["user_id"], **body.model_dump())
+    finally:
+        conn.close()
+
+
+@app.delete("/api/watchlist/props/{item_id}")
+async def watchlist_delete_prop(request: Request, item_id: int):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return delete_watchlist_prop(conn, session["user_id"], item_id)
+    finally:
+        conn.close()
+
+
+@app.post("/api/watchlist/games")
+async def watchlist_save_game(request: Request, body: WatchlistGameRequest):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return save_watchlist_game(
+            conn,
+            session["user_id"],
+            sport=body.sport,
+            game_id=body.game_id,
+            matchup=body.matchup,
+        )
+    finally:
+        conn.close()
+
+
+@app.delete("/api/watchlist/games/{item_id}")
+async def watchlist_delete_game(request: Request, item_id: int):
+    session = _require_user_session(request)
+    conn = get_connection()
+    try:
+        return delete_watchlist_game(conn, session["user_id"], item_id)
+    finally:
+        conn.close()
+
+
+@app.get("/watchlist")
+async def watchlist_page():
+    return _html_page("watchlist.html")
+
+
+@app.get("/my-picks")
+async def my_picks_alias():
+    return RedirectResponse(url="/watchlist", status_code=307)
+
+
+@app.get("/players/{sport}/{player_key}")
+async def player_page(sport: str, player_key: str):
+    return _html_page("player.html")
 
 
 @app.get("/my-team")

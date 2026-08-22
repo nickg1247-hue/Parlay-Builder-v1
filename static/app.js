@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260826";
+const NTG_ASSET_V = "20260827";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -1928,7 +1928,8 @@ function renderHomeNews(list, data) {
 
 async function fetchDailyPropsForHome(options = {}) {
   const cacheOnly = options.cacheOnly !== false;
-  const url = `/api/daily/props?limit=50&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
+  const sport = options.sport || "mlb";
+  const url = `/api/daily/props?sport=${encodeURIComponent(sport)}&limit=50&bookmaker=draftkings&scan=false&cache_only=${cacheOnly ? "true" : "false"}`;
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), 25000);
   try {
@@ -1966,7 +1967,7 @@ function applyHomeProps(propsData, propsEl, veryStrongWrap, veryStrongEl) {
   if (veryStrongWrap && veryStrongEl) {
     if (veryStrong.length) {
       veryStrongWrap.classList.remove("hidden");
-      renderBestProps(veryStrongEl, veryStrong);
+      renderBestProps(veryStrongEl, veryStrong, { sport: propsData?.sport });
     } else {
       veryStrongWrap.classList.add("hidden");
       veryStrongEl.innerHTML = "";
@@ -1984,6 +1985,7 @@ function applyHomeProps(propsData, propsEl, veryStrongWrap, veryStrongEl) {
     return;
   }
   renderBestProps(propsEl, (propsData.top_props || []).slice(0, 25), {
+    sport: propsData.sport,
     emptyMessage: (propsData.top_props || []).length
       ? undefined
       : `No scored props found after scanning today's slate.${hint}`,
@@ -2317,9 +2319,10 @@ function renderBestProps(el, topProps, options = {}) {
     .map((p, i) => {
       const side = p.recommended_side || "over";
       const odds = fmtAmericanOdds(p.recommended_odds);
-      const gameHref = p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb";
+      const sport = (p.sport || options.sport || "mlb").toLowerCase();
+      const gameHref = typeof propGameHref === "function" ? propGameHref(p, sport) : (p.game_id ? `/mlb/game/${encodeURIComponent(p.game_id)}` : "/mlb");
       const line = `${p.market_label || p.market_type}: ${side} ${p.line}`;
-      const form = propHitRatesHtml(p, side);
+      const form = sport === "nfl" ? "" : propHitRatesHtml(p, side);
       const strength = lineStrengthHtml(p);
       const bookLabel = p.bookmaker_label || p.bookmaker || "Consensus";
       const offered =
@@ -2425,9 +2428,9 @@ function renderPropExplorerList(el, props, options = {}) {
   if (!rows.length) {
     el.innerHTML = `
       <div class="best-bets-empty-card empty-state-card">
-        <h3>No props found</h3>
-        <p>${options.emptyMessage || "No props match your current filters."}</p>
-        <a class="ntg-btn ntg-btn-primary" href="${options.clearHref || (options.sport === "nfl" ? "/props?sport=nfl" : "/mlb/props")}">Clear filters</a>
+        <h3>${options.emptyTitle || "NO PROPS MATCH YOUR FILTERS"}</h3>
+        <p>${options.emptyMessage || "Try removing one or more filters."}</p>
+        <a class="ntg-btn ntg-btn-primary" href="${options.clearHref || (options.sport === "nfl" ? "/props?sport=nfl" : "/props?sport=mlb")}">Clear filters</a>
       </div>`;
     return;
   }
@@ -2443,14 +2446,8 @@ function renderPropExplorerList(el, props, options = {}) {
             ? ` · O ${fmtAmericanOdds(p.over_odds)}`
             : "";
       const sport = (p.sport || options.sport || "mlb").toLowerCase();
-      const gameHref =
-        sport === "nfl"
-          ? p.game_id
-            ? `/nfl/game/${encodeURIComponent(p.game_id)}`
-            : "/nfl"
-          : p.game_id
-            ? `/mlb/game/${encodeURIComponent(p.game_id)}`
-            : "/mlb";
+      const gameHref = propGameHref(p, sport);
+      const playerHref = propPlayerHref(p, sport);
       const form = sport === "nfl" ? "" : propHitRatesHtml(p, side);
       const posLine =
         sport === "nfl" && (p.position || p.team)
@@ -2492,15 +2489,16 @@ function renderPropExplorerList(el, props, options = {}) {
         <div class="prop-explorer-head">
           <div>
             <span class="prop-explorer-rank" aria-label="Rank ${i + 1}">#${i + 1}</span>
-            <h3 class="prop-explorer-player">${p.player}</h3>
-            <p class="prop-explorer-meta">${posLine || p.matchup || ""} · ${bookLabel}${offeredNote}${oneSidedNote}</p>
+            <h3 class="prop-explorer-player"><a class="prop-player-link" href="${playerHref}">${p.player}</a></h3>
+            <p class="prop-explorer-meta">${posLine || p.matchup || ""}</p>
           </div>
           <div class="prop-explorer-score-block">
             <span class="prop-explorer-score-label">Score</span>
             <span class="prop-explorer-score" title="Model score (higher = stronger)">${score}</span>
           </div>
         </div>
-        <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line} (${odds}${altOdds}) ${offerTag} ${lineAge}</p>
+        <p class="prop-explorer-line"><span class="prop-side-tag prop-side-tag--${side}">${sideLabel}</span> ${p.market_label || p.market_type} ${p.line}</p>
+        <p class="prop-explorer-book">${bookLabel} ${odds}${altOdds} ${offerTag} ${lineAge}</p>
         <p class="prop-explorer-tags">
           <span class="prop-line-tag">${lineKind}</span>
           ${riskTag}
@@ -2518,16 +2516,15 @@ function renderPropExplorerList(el, props, options = {}) {
         }
         ${factors ? `<ul class="prop-explorer-factors">${factors}</ul>` : ""}
         <div class="prop-explorer-actions">
-          <button type="button" class="btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View stats</button>
-          <a class="btn-ghost" href="${gameHref}">Game</a>
-          <span class="game-card-cta prop-card-cta">View analysis →</span>
+          <button type="button" class="ntg-btn ntg-btn-ghost prop-view-stats-btn" data-prop-idx="${i}">View analysis</button>
+          <button type="button" class="ntg-btn ntg-btn-ghost" data-save-prop="${i}">Save</button>
+          <a class="ntg-btn ntg-btn-ghost" href="${gameHref}">Game</a>
         </div>
           ${
             isPropSlipPublic() && p.actionable && p.recommended_odds != null
               ? `<button type="button" class="home-prop-add-btn" data-add-explorer-prop="${i}">+ Add to slip</button>`
               : ""
           }
-        </div>
       </article>`;
     })
     .join("");
@@ -2555,6 +2552,19 @@ function renderPropExplorerList(el, props, options = {}) {
     });
   });
 
+  el.querySelectorAll("[data-save-prop]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.getAttribute("data-save-prop"));
+      const prop = rows[idx];
+      const sport = prop?.sport || options.sport || "mlb";
+      btn.disabled = true;
+      const out = await savePropToWatchlist(prop, sport);
+      btn.disabled = false;
+      if (out.ok) btn.textContent = "Saved";
+    });
+  });
+
   el.querySelectorAll(".prop-explorer-card.prop-card-clickable").forEach((card) => {
     const idx = Number(card.getAttribute("data-prop-idx"));
     const open = () => {
@@ -2576,11 +2586,64 @@ function renderPropExplorerList(el, props, options = {}) {
   });
 }
 
+function propPlayerHref(prop, sport) {
+  const key = prop.player_id || prop.player;
+  if (!key) return sport === "nfl" ? "/props?sport=nfl" : "/props";
+  return `/players/${encodeURIComponent(sport)}/${encodeURIComponent(key)}`;
+}
+
+function propGameHref(prop, sport) {
+  if (sport === "nfl") {
+    return prop.game_id ? `/nfl/game/${encodeURIComponent(prop.game_id)}` : "/nfl";
+  }
+  return prop.game_id ? `/mlb/game/${encodeURIComponent(prop.game_id)}` : "/mlb";
+}
+
+async function savePropToWatchlist(prop, sport) {
+  const user = window.pbUserAuth || {};
+  if (!user.signed_in) {
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/signin?next=${next}`;
+    return { ok: false, auth: false };
+  }
+  const side = prop.recommended_side || prop.side || "over";
+  const res = await fetch("/api/watchlist/props", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sport: sport || prop.sport || "mlb",
+      player_name: prop.player,
+      player_id: prop.player_id || null,
+      market_type: prop.market_type,
+      market_label: prop.market_label || null,
+      side,
+      line: prop.line,
+      sportsbook: prop.bookmaker || null,
+      odds: prop.recommended_odds ?? (side === "over" ? prop.over_odds : prop.under_odds),
+      game_id: prop.game_id || null,
+      event_id: prop.event_id || null,
+      matchup: prop.matchup || null,
+    }),
+  });
+  if (res.status === 401) {
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/signin?next=${next}`;
+    return { ok: false, auth: false };
+  }
+  return { ok: res.ok };
+}
+
+window.savePropToWatchlist = savePropToWatchlist;
+window.propPlayerHref = propPlayerHref;
+window.propGameHref = propGameHref;
 window.renderPropExplorerList = renderPropExplorerList;
 
 function buildPropSearchQuery(filters = {}) {
   const params = new URLSearchParams();
   params.set("limit", String(filters.limit || 100));
+  if (filters.sport) params.set("sport", filters.sport);
+  if (filters.player) params.set("player", filters.player);
   if (filters.bookmaker) params.set("bookmaker", filters.bookmaker);
   if (filters.market_type) params.set("market_type", filters.market_type);
   if (filters.min_odds != null && filters.min_odds !== "") {
@@ -3737,6 +3800,12 @@ function initUtilityNav(nav, path) {
     }
   }
 
+  const watchLink = document.createElement("a");
+  watchLink.href = "/watchlist";
+  watchLink.textContent = "Watchlist";
+  if (path === "/watchlist" || path.startsWith("/watchlist")) watchLink.classList.add("active");
+  nav.appendChild(watchLink);
+
   const updatesLink = document.createElement("a");
   updatesLink.href = "/updates";
   updatesLink.textContent = "Updates";
@@ -3970,6 +4039,36 @@ function initSiteChrome() {
     shellEl.insertAdjacentHTML("beforeend", renderSiteFooter());
   });
   renderMobileBottomNav(path);
+  initHomeTopPropsTabs();
+}
+
+function initHomeTopPropsTabs() {
+  const wrap = document.getElementById("home-top-props");
+  const tabs = document.getElementById("home-props-sports");
+  if (!wrap || !tabs || tabs.dataset.wired === "1") return;
+  tabs.dataset.wired = "1";
+  const load = async (sport) => {
+    tabs.querySelectorAll("[data-home-prop-sport]").forEach((btn) => {
+      btn.classList.toggle("sport-pill-active", btn.getAttribute("data-home-prop-sport") === sport);
+    });
+    wrap.innerHTML = `<div class="skeleton-card dash-skeleton-row" aria-hidden="true"></div>`;
+    const data = await fetchDailyPropsForHome({ sport, cacheOnly: true });
+    renderBestProps(wrap, (data?.top_props || []).slice(0, 6), {
+      sport,
+      emptyMessage:
+        sport === "nfl"
+          ? "No NFL player props are cached yet."
+          : "No MLB player props are cached yet.",
+    });
+    const more = document.querySelector("#home-top-props-wrap .dash-link-more");
+    if (more) more.href = `/props?sport=${encodeURIComponent(sport)}`;
+  };
+  tabs.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-home-prop-sport]");
+    if (!btn) return;
+    load(btn.getAttribute("data-home-prop-sport"));
+  });
+  load("mlb");
 }
 
 function renderMobileBottomNav(path) {
@@ -3988,7 +4087,7 @@ function renderMobileBottomNav(path) {
     { href: "/", label: "Home", match: (p) => p === "/" },
     { href: sport.slate, label: "Games", match: (p) => p === sport.slate || p.startsWith(`${sport.slate}/game`) },
     { href: "/props", label: "Props", match: (p) => p.startsWith("/mlb/props") || p === "/props" || p.startsWith("/props") },
-    { href: "/performance", label: "Picks", match: (p) => p.startsWith("/performance") },
+    { href: "/watchlist", label: "Picks", match: (p) => p.startsWith("/watchlist") || p.startsWith("/my-picks") },
     { href: signedIn ? "/my-team" : "/signin", label: "Account", match: (p) => p.startsWith("/signin") || p.startsWith("/signup") || p.startsWith("/my-team") },
   ];
   nav.innerHTML = items

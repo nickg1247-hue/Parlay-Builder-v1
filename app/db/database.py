@@ -46,5 +46,8 @@ def init_db() -> None:
         ensure_users_table(conn)
         ensure_user_team_tables(conn)
         ensure_user_player_tables(conn)
+        from app.services.watchlist import ensure_watchlist_tables
+
+        ensure_watchlist_tables(conn)
     finally:
         conn.close()

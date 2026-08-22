@@ -412,6 +412,8 @@
       <div class="prop-modal-rates">${sides}</div>
       <div class="prop-modal-actions">
         <a class="ntg-btn ntg-btn-ghost" href="${gameHref}">Open game</a>
+        <a class="ntg-btn ntg-btn-ghost" href="/players/nfl/${encodeURIComponent(prop.player_id || prop.player || "")}">Player</a>
+        <button type="button" class="ntg-btn ntg-btn-ghost" id="prop-modal-save">Save</button>
         <button type="button" class="ntg-btn ntg-btn-primary" id="prop-modal-add-slip">Add to slip</button>
       </div>
     `;
@@ -436,6 +438,11 @@
         if (leg && global.addPropToSlip?.(leg)) {
           body.querySelector("#prop-modal-add-slip").textContent = "Added ✓";
         }
+      });
+      body.querySelector("#prop-modal-save")?.addEventListener("click", async () => {
+        const btn = body.querySelector("#prop-modal-save");
+        const out = await global.savePropToWatchlist?.(prop, "nfl");
+        if (out?.ok && btn) btn.textContent = "Saved";
       });
       overlay.querySelector(".player-prop-modal__close")?.focus();
       return;
