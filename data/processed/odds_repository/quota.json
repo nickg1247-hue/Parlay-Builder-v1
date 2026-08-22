@@ -1,9 +1,11 @@
 {
-  "day": "2026-06-25",
-  "day_count": 2,
-  "hour_bucket": "2026-06-25T05",
-  "hour_count": 1,
-  "last_call_at": "2026-06-25T05:24:34.329920+00:00",
-  "last_denied_at": "2026-06-21T05:36:47.174259+00:00",
-  "last_denied_reason": null
+  "day": "2026-08-22",
+  "day_count": 25,
+  "hour_bucket": "2026-08-22T02",
+  "hour_count": 25,
+  "last_call_at": "2026-08-22T02:14:29.364877+00:00",
+  "last_denied_at": "2026-08-22T02:14:40.175703+00:00",
+  "last_denied_reason": "hour_limit",
+  "day_credits": 121,
+  "hour_credits": 121
 }

@@ -1,6 +1,83 @@
 {
   "dates": [
     {
+      "date": "2026-08-21",
+      "fetched_at": "2026-08-22T02:07:43.079571+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 25,
+      "api_fetch_count": 1
+    },
+    {
+      "date": "2026-08-20",
+      "fetched_at": "2026-08-20T04:37:40.563030+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 9,
+      "api_fetch_count": 1
+    },
+    {
+      "date": "2026-08-19",
+      "fetched_at": "2026-08-20T03:37:03.495891+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 10,
+      "api_fetch_count": 4
+    },
+    {
+      "date": "2026-08-15",
+      "fetched_at": "2026-08-15T15:08:39.591428+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 15,
+      "api_fetch_count": 12
+    },
+    {
+      "date": "2026-08-14",
+      "fetched_at": "2026-08-15T03:07:25.493380+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 19,
+      "api_fetch_count": 24
+    },
+    {
+      "date": "2026-08-13",
+      "fetched_at": "2026-08-14T03:03:45.504722+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 13,
+      "api_fetch_count": 24
+    },
+    {
+      "date": "2026-08-12",
+      "fetched_at": "2026-08-13T03:00:16.306728+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 11,
+      "api_fetch_count": 23
+    },
+    {
+      "date": "2026-08-11",
+      "fetched_at": "2026-08-12T03:58:23.489688+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 18,
+      "api_fetch_count": 24
+    },
+    {
+      "date": "2026-08-10",
+      "fetched_at": "2026-08-11T03:55:59.165369+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 21,
+      "api_fetch_count": 24
+    },
+    {
+      "date": "2026-08-09",
+      "fetched_at": "2026-08-10T03:53:58.277227+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 10,
+      "api_fetch_count": 3
+    },
+    {
+      "date": "2026-07-04",
+      "fetched_at": "2026-07-04T13:07:05.421280+00:00",
+      "source": "the_odds_api_live",
+      "games_matched": 15,
+      "api_fetch_count": 1
+    },
+    {
       "date": "2026-06-25",
       "fetched_at": "2026-06-25T05:24:34.922356+00:00",
       "source": "the_odds_api_live",
