@@ -91,7 +91,7 @@
       const dateParam = qs("date");
       const refreshParam = qs("refresh") === "true";
       let pollTimer = null;
-      const todayIso = new Date().toISOString().slice(0, 10);
+      const todayIso = typeof ntgSlateTodayIso === "function" ? ntgSlateTodayIso() : new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
       dateInput.value = dateParam || todayIso;
 
       initSiteChrome();

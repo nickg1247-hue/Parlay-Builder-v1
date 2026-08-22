@@ -131,21 +131,11 @@ def test_api_scores_nba():
 
 @patch("app.services.scores_nba.fetch_nba_scores_day")
 @patch("app.services.schedule_nba.fetch_nba_scores_day")
-def test_api_scores_nba_auto_resolve(mock_sched_fetch, mock_scores_fetch):
-    today = date.today()
-    target = today + timedelta(days=1)
-
-    def side_effect(game_date: date):
-        if game_date == target:
-            return [ESPN_EVENT]
-        return []
-
-    mock_sched_fetch.side_effect = side_effect
-    mock_scores_fetch.side_effect = side_effect
+def test_api_scores_nba_does_not_auto_resolve(mock_sched_fetch, mock_scores_fetch):
+    mock_sched_fetch.return_value = []
+    mock_scores_fetch.return_value = []
     resp = client.get("/api/scores/today?sport=nba")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["auto_advanced"] is True
-    assert data["days_ahead"] == 1
-    assert data["resolved_date"] == target.isoformat()
-    assert data["games_count"] == 1
+    assert data["auto_advanced"] is False
+    assert data["days_ahead"] == 0

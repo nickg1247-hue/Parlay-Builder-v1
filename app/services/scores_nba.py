@@ -8,6 +8,8 @@ from typing import Any
 
 import httpx
 
+from app.services.slate_clock import slate_today
+
 logger = logging.getLogger(__name__)
 
 ESPN_NBA_SCOREBOARD = (
@@ -161,7 +163,7 @@ def get_nba_scores_today(
     *,
     auto_resolve: bool = False,
 ) -> dict[str, Any]:
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     if auto_resolve and game_date is None:
         from app.services.schedule_nba import resolve_nba_slate_date
 

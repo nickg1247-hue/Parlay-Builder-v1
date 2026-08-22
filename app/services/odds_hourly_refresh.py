@@ -11,6 +11,7 @@ from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.odds.live_odds import live_odds_enabled
+from app.services.slate_clock import slate_today
 from app.odds.odds_repository import (
     get_mlb_odds_for_date,
     last_fetch_meta,
@@ -70,7 +71,7 @@ def run_hourly_odds_refresh(game_date: date | None = None) -> int:
 
     Returns 0 on success or benign skip; 1 only on unexpected failure.
     """
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
 
     if not live_odds_enabled():
         logger.info("Hourly odds refresh skipped: USE_LIVE_ODDS=false")

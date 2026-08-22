@@ -11,6 +11,7 @@ from app.odds.odds_repository import get_today_snapshot
 from app.services.forward_clv import summarize_clv as summarize_mlb_clv
 from app.services.game_insights import build_game_insights
 from app.services.home_summary import get_home_today_summary
+from app.services.slate_clock import slate_today
 from app.services.morning_refresh import get_refresh_status
 from app.services.performance_charts import model_vs_market_chart, performance_trend_chart
 from app.services.prop_pick_tracker import summarize_prop_tracker
@@ -57,7 +58,7 @@ def _cached_daily_props(game_date: date, *, limit: int = 12) -> dict[str, Any]:
 
 
 async def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
 
     props_data, scores, odds, status, tracker_summary, perf_summary = await asyncio.gather(
         asyncio.to_thread(_cached_daily_props, game_date, limit=40),
@@ -92,7 +93,7 @@ async def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
 
 
 async def build_mlb_slate_page_data(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
 
     slate, summary, odds, status, ticker = await asyncio.gather(
         asyncio.to_thread(load_mlb_schedule_cache, game_date),
@@ -126,7 +127,7 @@ async def build_mlb_game_page_data(
     refresh: bool = False,
     bookmaker: str | None = None,
 ) -> dict[str, Any] | None:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     book = bookmaker or DEFAULT_DISPLAY_BOOKMAKER
 
     insights, props_payload, ticker, odds = await asyncio.gather(
@@ -190,7 +191,7 @@ async def build_mlb_props_page_data(
     scan: bool = False,
     refresh: bool = False,
 ) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     if refresh:
         scan = True
     search_kwargs: dict[str, Any] = dict(

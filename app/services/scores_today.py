@@ -13,6 +13,7 @@ from app.services.scores_nba import get_nba_scores_today
 from app.services.scores_nba_summer import get_nba_summer_scores_today
 from app.services.scores_nfl import get_nfl_scores_today
 from app.services.scores_ufc import get_ufc_scores_today
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def get_scores_today(
         raise ValueError(f"Unsupported sport: {sport}")
 
     if sport == "mlb":
-        effective_date = game_date or date.today()
+        effective_date = game_date or slate_today()
         payload = get_mlb_scores_today(game_date=effective_date)
         payload["games"] = _tag_sport(payload.get("games") or [], "mlb")
         return payload
@@ -97,7 +98,7 @@ def get_scores_today(
             )
         except Exception:
             logger.warning("NFL scores failed", exc_info=True)
-            return _empty_scores("nfl", game_date or date.today())
+            return _empty_scores("nfl", game_date or slate_today())
 
     if sport == "ufc":
         return get_ufc_scores_today(
@@ -106,7 +107,7 @@ def get_scores_today(
             force_live=game_date is None,
         )
 
-    mlb_date = game_date or date.today()
+    mlb_date = game_date or slate_today()
 
     def _fetch_mlb() -> dict[str, Any]:
         return get_mlb_scores_today(game_date=mlb_date)
@@ -145,7 +146,7 @@ def get_scores_today(
         cfb_future = pool.submit(_fetch_cfb)
         nfl_future = pool.submit(_fetch_nfl)
         ufc_future = pool.submit(_fetch_ufc)
-        fallback_date = game_date or date.today()
+        fallback_date = game_date or slate_today()
         mlb = _future_result(mlb_future, "mlb", fallback_date)
         nba = _future_result(nba_future, "nba", fallback_date)
         cfb = _future_result(cfb_future, "cfb", fallback_date)
@@ -170,7 +171,7 @@ def get_scores_today(
     return {
         "sport": "all",
         "date": nba.get("date") or cfb.get("date") or mlb_date.isoformat(),
-        "requested_date": (game_date or date.today()).isoformat(),
+        "requested_date": (game_date or slate_today()).isoformat(),
         "resolved_date": nba.get("resolved_date")
         or cfb.get("resolved_date")
         or nfl.get("resolved_date")

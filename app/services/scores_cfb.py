@@ -8,6 +8,8 @@ from typing import Any
 
 import httpx
 
+from app.services.slate_clock import slate_today
+
 logger = logging.getLogger(__name__)
 
 ESPN_CFB_SCOREBOARD = (
@@ -131,7 +133,7 @@ def get_cfb_scores_today(
 ) -> dict[str, Any]:
     from app.services.schedule_cfb import get_cfb_schedule
 
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     cache_key = f"cfb:{requested_date.isoformat()}:live={force_live}"
     now = datetime.now(timezone.utc)
 

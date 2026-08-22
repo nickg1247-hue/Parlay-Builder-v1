@@ -18,6 +18,7 @@ from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.odds.live_odds import live_odds_enabled
 from app.odds.odds_repository import get_mlb_odds_for_date, last_fetch_meta
 from app.services.daily_board import build_daily_board
+from app.services.slate_clock import slate_today
 from app.services.schedule_mlb import refresh_schedule_cache
 
 logger = logging.getLogger(__name__)
@@ -112,7 +113,7 @@ def get_refresh_status() -> dict[str, Any]:
 
     from app.services.props_mlb import get_props_refresh_meta
 
-    props_meta = get_props_refresh_meta(date.today())
+    props_meta = get_props_refresh_meta(slate_today())
     status["props_cached_at"] = props_meta.get("cached_at")
     status["props_actionable_count"] = props_meta.get("total_actionable", 0)
 
@@ -181,7 +182,7 @@ def run_morning_refresh(
     sports: list[str] | None = None,
 ) -> int:
     """Run morning refresh. Returns 0 on success, 1 on failure."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     sport_list = [s.lower() for s in (sports or ["mlb"])]
     if not sport_list:
         sport_list = ["mlb"]

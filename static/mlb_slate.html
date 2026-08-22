@@ -44,6 +44,15 @@
         </div>
         <span class="dash-page-kicker ntg-updated" id="slate-date"></span>
       </header>
+
+      <div class="slate-toolbar dash-toolbar" id="slate-toolbar">
+        <label class="slate-date-field" for="slate-date-input">
+          Date
+          <input type="date" id="slate-date-input" aria-label="Slate date" />
+        </label>
+        <button type="button" class="dash-btn dash-btn-primary" id="slate-date-go">Go</button>
+      </div>
+
       <p class="refresh-line dash-sync-text ntg-updated-time" id="refresh-line"></p>
 
       <div id="watched-section" class="hidden"></div>
@@ -64,9 +73,27 @@
       const errEl = document.getElementById("slate-error");
       const list = document.getElementById("game-list");
       const dateEl = document.getElementById("slate-date");
+      const dateInput = document.getElementById("slate-date-input");
+      const goBtn = document.getElementById("slate-date-go");
       const refreshEl = document.getElementById("refresh-line");
       const watchedEl = document.getElementById("watched-section");
       const RELOAD_KEY = "ntg-mlb-slate-reload";
+      const dateParam = typeof qs === "function" ? qs("date") : new URLSearchParams(window.location.search).get("date");
+      const todayIso = typeof ntgSlateTodayIso === "function" ? ntgSlateTodayIso() : new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+      if (dateInput) dateInput.value = dateParam || todayIso;
+
+      function navigateDate(iso) {
+        const params = new URLSearchParams();
+        if (iso) params.set("date", iso);
+        const q = params.toString();
+        window.location.href = q ? `/mlb?${q}` : "/mlb";
+      }
+      goBtn?.addEventListener("click", () => {
+        if (dateInput?.value) navigateDate(dateInput.value);
+      });
+      dateInput?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") goBtn?.click();
+      });
 
       function readPageData() {
         if (typeof window.readNTGPageData === "function") return window.readNTGPageData();
@@ -134,7 +161,7 @@
         try {
           await loadTeamColors();
           const [slate, odds, status] = await Promise.all([
-            fetchJSON("/api/schedule/mlb"),
+            fetchJSON(dateParam ? `/api/schedule/mlb?date=${encodeURIComponent(dateParam)}` : "/api/schedule/mlb"),
             fetchJSON("/api/odds/today").catch(() => null),
             fetchJSON("/api/status/refresh").catch(() => null),
           ]);
@@ -167,6 +194,7 @@
       errEl?.classList.add("hidden");
       if (odds && slate.games) recordOddsSnapshot(odds, slate.games);
       if (dateEl) dateEl.textContent = slate.date || pageData.date || "";
+      if (dateInput) dateInput.value = slate.date || pageData.date || dateParam || todayIso;
       if (status && refreshEl) {
         refreshEl.textContent = formatRefreshStatus(status);
         refreshEl.classList.toggle("ok", Boolean(status.ok || status.display_updated_at));

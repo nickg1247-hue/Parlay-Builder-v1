@@ -161,7 +161,7 @@ One Player Props product. Sport is a filter, not a separate app.
 | Player page | `/players/{sport}/{player_key}` — posted props + MLB game log when available |
 | Daily top | `GET /api/daily/props?sport=nfl` (MLB default unchanged) |
 
-**Watchlist:** SQLite `user_watchlist_props` / `user_watchlist_games`. Alert columns exist; no notifier is sent yet. Sign-in required for API.
+**Watchlist / My Picks:** `/watchlist` (alias `/my-picks`). SQLite `user_watchlist_props` / `user_watchlist_games` store the original snapshot (line, odds, model fields). GET `/api/watchlist` enriches current cached line/status without overwriting the snapshot. Alert columns exist; no notifier is sent yet. Sign-in required for API.
 
 **CLV:** Player-prop closing-line history is not stored. Performance “CLV” is MLB moneyline only.
 
@@ -402,6 +402,7 @@ Leave `USE_LIVE_ODDS=false` (or unset) even if `ODDS_API_KEY` is in `.env` — *
 | Status | Drop `Final` / `Game Over`; drop **Postponed**, **Cancelled**, **Suspended** (`detailedState` prefix; MLB `codedGameState` D/C/T/U — see `/v1/gameStatus`) |
 | `gameType` | Include `R` + postseason `P/F/D/L/W`; exclude spring/exhibition/all-star `S/E/A` |
 | Calendar | `gameDate` converted to **America/New_York** must equal board date (handles late ET starts stored as next UTC day) |
+| Default day | `slate_today()` in `app/services/slate_clock.py` — boards/schedules/scores use the Eastern calendar date and do not roll to tomorrow until midnight ET. `/mlb` has the same date picker as NFL/CFB. |
 | Dedupe | By `gamePk`; doubleheaders (same teams, different PK) stay |
 
 Odds merge (`attach_market_odds`) keys on **board date**, not odds `commence_time` UTC date alone.

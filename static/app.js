@@ -1,8 +1,13 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260827";
+const NTG_ASSET_V = "20260828";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
+
+function ntgSlateTodayIso() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+}
+window.ntgSlateTodayIso = ntgSlateTodayIso;
 
 function getPageData() {
   if (typeof window.readNTGPageData === "function") {
@@ -1631,7 +1636,7 @@ function gameCardHtml(game, options = {}) {
     (boardRow && (boardRow.model_confidence || boardRow.ml_confidence || lean?.tier)) || "";
   const probBar = typeof ntgProbabilityBarHtml === "function" ? ntgProbabilityBarHtml(pcts) : "";
   return `
-    ${showWatch ? `<button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>` : ""}
+    ${showWatch ? `<button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" data-watch-sport="${game.sport || options.sport || "mlb"}" data-watch-matchup="${(game.away_team || "")} @ ${(game.home_team || "")}" aria-label="Save game">☆ Save</button>` : ""}
     <div class="game-card-kicker">
       <span>${league}</span>
       <span>${statusLabel}${isGameLive(game.status) ? ' · <span class="status-badge badge-live">Live</span>' : ""}</span>
@@ -1663,15 +1668,27 @@ function gameCardHtml(game, options = {}) {
   `;
 }
 
-function attachWatchHandlers(listEl) {
+function attachWatchHandlers(listEl, options = {}) {
   if (!listEl) return;
   listEl.querySelectorAll(".watch-btn").forEach((btn) => {
-    btn.onclick = (e) => {
+    btn.onclick = async (e) => {
       e.preventDefault();
       e.stopPropagation();
       const id = btn.dataset.watchId;
       const on = toggleWatch(id);
       btn.classList.toggle("watched", on);
+      btn.textContent = on ? "★ Saved" : "☆ Save";
+      if (on && typeof saveGameToWatchlist === "function") {
+        await saveGameToWatchlist(
+          {
+            game_id: id,
+            sport: btn.dataset.watchSport || options.sport || "mlb",
+            away_team: (btn.dataset.watchMatchup || "").split(" @ ")[0],
+            home_team: (btn.dataset.watchMatchup || "").split(" @ ")[1],
+          },
+          { sport: btn.dataset.watchSport || options.sport || "mlb" }
+        );
+      }
     };
   });
 }
@@ -2599,42 +2616,138 @@ function propGameHref(prop, sport) {
   return prop.game_id ? `/mlb/game/${encodeURIComponent(prop.game_id)}` : "/mlb";
 }
 
+function ntgPendingSaveKey() {
+  return "ntg_pending_save";
+}
+
+function stashPendingSave(payload) {
+  try {
+    sessionStorage.setItem(ntgPendingSaveKey(), JSON.stringify(payload));
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function signInToSave(nextPath) {
+  const next = encodeURIComponent(nextPath || window.location.pathname + window.location.search);
+  window.location.href = `/signin?next=${next}`;
+}
+
+function propWatchlistPayload(prop, sport) {
+  const side = prop.recommended_side || prop.side || "over";
+  const modelPct =
+    prop.model_probability ??
+    prop.recommended_probability ??
+    (side === "over" ? prop.model_probability_over : prop.model_probability_under);
+  const mktPct = prop.market_probability ?? (side === "over" ? prop.market_probability_over : prop.market_probability_under);
+  return {
+    sport: sport || prop.sport || "mlb",
+    player_name: prop.player,
+    player_id: prop.player_id || null,
+    market_type: prop.market_type,
+    market_label: prop.market_label || null,
+    side,
+    line: prop.line,
+    sportsbook: prop.bookmaker || null,
+    odds: prop.recommended_odds ?? (side === "over" ? prop.over_odds : prop.under_odds),
+    game_id: prop.game_id || null,
+    event_id: prop.event_id || null,
+    matchup: prop.matchup || null,
+    projection: prop.model_projection ?? null,
+    model_probability: modelPct ?? null,
+    market_probability: mktPct ?? null,
+    model_edge: prop.edge ?? prop.edge_pct ?? null,
+    model_score: prop.prop_score ?? prop.score ?? null,
+    confidence: prop.line_strength_label || prop.line_strength || null,
+  };
+}
+
 async function savePropToWatchlist(prop, sport) {
+  const payload = { kind: "prop", body: propWatchlistPayload(prop, sport) };
   const user = window.pbUserAuth || {};
   if (!user.signed_in) {
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = `/signin?next=${next}`;
+    stashPendingSave(payload);
+    signInToSave();
     return { ok: false, auth: false };
   }
-  const side = prop.recommended_side || prop.side || "over";
   const res = await fetch("/api/watchlist/props", {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sport: sport || prop.sport || "mlb",
-      player_name: prop.player,
-      player_id: prop.player_id || null,
-      market_type: prop.market_type,
-      market_label: prop.market_label || null,
-      side,
-      line: prop.line,
-      sportsbook: prop.bookmaker || null,
-      odds: prop.recommended_odds ?? (side === "over" ? prop.over_odds : prop.under_odds),
-      game_id: prop.game_id || null,
-      event_id: prop.event_id || null,
-      matchup: prop.matchup || null,
-    }),
+    body: JSON.stringify(payload.body),
   });
   if (res.status === 401) {
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = `/signin?next=${next}`;
+    stashPendingSave(payload);
+    signInToSave();
     return { ok: false, auth: false };
   }
   return { ok: res.ok };
 }
 
+async function saveGameToWatchlist(game, options = {}) {
+  const board = options.boardRow || {};
+  const pick = board.best_pick || {};
+  const payload = {
+    kind: "game",
+    body: {
+      sport: game.sport || options.sport || "mlb",
+      game_id: String(game.game_id),
+      matchup: `${game.away_team || ""} @ ${game.home_team || ""}`.trim(),
+      model_lean: pick.team || board.model_pick_team || null,
+      model_probability: pick.model_prob ?? board.model_prob_home ?? null,
+      market_probability: pick.market_prob ?? null,
+      model_edge: pick.edge ?? board.ev_pick_edge ?? null,
+      confidence: board.model_confidence || pick.confidence || pick.tier || null,
+    },
+  };
+  const user = window.pbUserAuth || {};
+  if (!user.signed_in) {
+    stashPendingSave(payload);
+    signInToSave();
+    return { ok: false, auth: false };
+  }
+  const res = await fetch("/api/watchlist/games", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload.body),
+  });
+  if (res.status === 401) {
+    stashPendingSave(payload);
+    signInToSave();
+    return { ok: false, auth: false };
+  }
+  return { ok: res.ok };
+}
+
+async function flushPendingWatchlistSave() {
+  const user = window.pbUserAuth || {};
+  if (!user.signed_in) return;
+  let raw;
+  try {
+    raw = sessionStorage.getItem(ntgPendingSaveKey());
+  } catch (_) {
+    return;
+  }
+  if (!raw) return;
+  try {
+    const pending = JSON.parse(raw);
+    const path = pending.kind === "game" ? "/api/watchlist/games" : "/api/watchlist/props";
+    await fetch(path, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pending.body || {}),
+    });
+    sessionStorage.removeItem(ntgPendingSaveKey());
+  } catch (_) {
+    /* leave pending */
+  }
+}
+
 window.savePropToWatchlist = savePropToWatchlist;
+window.saveGameToWatchlist = saveGameToWatchlist;
+window.flushPendingWatchlistSave = flushPendingWatchlistSave;
 window.propPlayerHref = propPlayerHref;
 window.propGameHref = propGameHref;
 window.renderPropExplorerList = renderPropExplorerList;
@@ -3101,7 +3214,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
   return `
     <div class="matchup-header-wrap ${isUfc ? "matchup-header-ufc" : ""}" style="${gameCardColorStyle(game)}">
     ${bandHtml}
-    <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" aria-label="Watch game">★</button>
+    <button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" data-watch-sport="${game.sport || "mlb"}" data-watch-matchup="${(game.away_team || "")} @ ${(game.home_team || "")}" aria-label="Save game">☆ Save</button>
     ${seriesHtml}
     <div class="game-card-kicker matchup-kicker">
       <span>${league}${game.start_time_utc ? ` · ${formatLocalTimeShort(game.start_time_utc)}` : ""}</span>
@@ -3802,7 +3915,7 @@ function initUtilityNav(nav, path) {
 
   const watchLink = document.createElement("a");
   watchLink.href = "/watchlist";
-  watchLink.textContent = "Watchlist";
+  watchLink.textContent = "My Picks";
   if (path === "/watchlist" || path.startsWith("/watchlist")) watchLink.classList.add("active");
   nav.appendChild(watchLink);
 
@@ -4040,6 +4153,77 @@ function initSiteChrome() {
   });
   renderMobileBottomNav(path);
   initHomeTopPropsTabs();
+  initDailyBoard();
+}
+
+function initDailyBoard() {
+  const dateEl = document.getElementById("daily-board-date");
+  const updatedEl = document.getElementById("daily-board-updated");
+  const sportsEl = document.getElementById("daily-board-sports");
+  const watchEl = document.getElementById("daily-board-watchlist");
+  if (!dateEl && !sportsEl) return;
+  const today = typeof ntgSlateTodayIso === "function" ? ntgSlateTodayIso() : new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const pretty = new Date(`${today}T12:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "America/New_York",
+  });
+  if (dateEl) dateEl.textContent = pretty;
+  const page = typeof getPageData === "function" ? getPageData() : null;
+  const stamp = page?.status?.ran_at || page?.odds?.fetched_at;
+  if (updatedEl) {
+    updatedEl.textContent = stamp
+      ? `Updated ${new Date(stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+      : "Model intelligence across today's active sports.";
+  }
+  const sports = page?.scores?.sports || {};
+  const spec = [
+    { key: "mlb", href: "/mlb", label: "MLB" },
+    { key: "nfl", href: "/nfl", label: "NFL" },
+    { key: "nba", href: "/nba", label: "NBA" },
+    { key: "cfb", href: "/cfb", label: "CFB" },
+  ];
+  if (sportsEl) {
+    sportsEl.innerHTML = spec
+      .map((s) => {
+        const n = Number(sports[s.key] || 0);
+        const muted = n === 0 ? " props-sport-soon" : "";
+        return `<a class="sport-pill${muted}" href="${s.href}">${s.label} · ${n} ${n === 1 ? "game" : "games"}</a>`;
+      })
+      .join("");
+  }
+  if (!watchEl) return;
+  const user = window.pbUserAuth || {};
+  if (!user.signed_in) {
+    watchEl.hidden = false;
+    watchEl.innerHTML = `
+      <header class="dash-panel-head"><h2>Your watchlist</h2></header>
+      <p class="dash-page-kicker">Sign in to save games and player props and track them here.</p>
+      <a class="ntg-btn ntg-btn-ghost" href="/signin?next=${encodeURIComponent("/")}">Sign in</a>`;
+    return;
+  }
+  fetch("/api/watchlist", { credentials: "same-origin" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data) return;
+      const counts = data.counts || {};
+      const total = (data.props || []).length + (data.games || []).length;
+      watchEl.hidden = false;
+      if (!total) {
+        watchEl.innerHTML = `
+          <header class="dash-panel-head"><h2>Your watchlist</h2></header>
+          <p class="dash-page-kicker">Save games and player props to track them here.</p>
+          <a class="ntg-btn ntg-btn-ghost" href="/props">Explore player props</a>`;
+        return;
+      }
+      watchEl.innerHTML = `
+        <header class="dash-panel-head"><h2>Your watchlist</h2><a class="dash-link-more" href="/watchlist">View My Picks →</a></header>
+        <p class="dash-page-kicker">${counts.upcoming || 0} upcoming · ${counts.live || 0} live · ${counts.final || 0} final</p>`;
+    })
+    .catch(() => {
+      /* keep hidden */
+    });
 }
 
 function initHomeTopPropsTabs() {
@@ -4230,6 +4414,9 @@ async function loadPublicFeatures() {
   window.canAccessProps = canAccessProps;
   window.propsAuthBannerHtml = propsAuthBannerHtml;
   window.renderPropsAuthGate = renderPropsAuthGate;
+  if (typeof flushPendingWatchlistSave === "function") {
+    flushPendingWatchlistSave();
+  }
 }
 
 function getPropSlipLegs() {

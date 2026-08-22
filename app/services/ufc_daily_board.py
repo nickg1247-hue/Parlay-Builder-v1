@@ -8,6 +8,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from app.models.constants import DEFAULT_MIN_EDGE
+from app.services.slate_clock import slate_today
 from app.models.ufc_baseline import ACTIVE_UFC_MANIFEST, load_model_artifact
 from app.odds.live_odds import live_odds_enabled
 from app.parlay.ufc_parlay import top_parlays_payload
@@ -132,7 +133,7 @@ def build_ufc_daily_board(
 ) -> dict[str, Any]:
     if use_cache and game_date is None:
         game_date = date.fromisoformat(DEMO_DATE)
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     mode = "demo" if use_cache else "live"
     warnings: list[str] = []
 

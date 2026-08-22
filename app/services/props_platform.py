@@ -8,6 +8,7 @@ from typing import Any
 from app.services.mlb_page_data import build_mlb_props_page_data
 from app.services.morning_refresh import get_refresh_status
 from app.services.prop_books import DEFAULT_DISPLAY_BOOKMAKER, normalize_prop_sport
+from app.services.slate_clock import slate_today
 from app.services.prop_engine.nfl_markets import list_nfl_market_types
 from app.services.prop_pick_tracker import summarize_prop_tracker
 from app.services.props_mlb import (
@@ -190,7 +191,7 @@ async def build_player_props_page_data(
 
     import asyncio
 
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     search_kwargs = _nfl_search_kwargs(kwargs)
     props_search, markets, bookmakers, status = await asyncio.gather(
         asyncio.to_thread(search_nfl_daily_props, game_date, **search_kwargs),

@@ -52,6 +52,7 @@ from app.parlay.slate import (
     slate_filter_meta,
 )
 from app.parlay.totals_slate import build_totals_slate
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -612,7 +613,7 @@ def _status_footer() -> dict[str, Any]:
 
 def board_disk_date_matches(game_date: date | None = None) -> bool:
     """True when on-disk daily_board.json exists for the given calendar date."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     if not DAILY_BOARD_CACHE.exists():
         return False
     try:
@@ -628,7 +629,7 @@ def ensure_today_daily_board(*, skip_ingest: bool = True) -> dict[str, Any] | No
 
     Skips auto-ingest by default so startup stays fast; periodic refresh still backfills history.
     """
-    game_date = date.today()
+    game_date = slate_today()
     if board_disk_date_matches(game_date):
         return None
     logger.warning(
@@ -656,7 +657,7 @@ def build_daily_board(
     live_test: bool = False,
     skip_ingest: bool = False,
 ) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     # Board "Run live" bypass: force API + full totals board for main-site game pages.
     if live_test and not use_cache:
         refresh = True

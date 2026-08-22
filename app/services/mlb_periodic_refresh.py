@@ -13,6 +13,7 @@ from app.config import PROJECT_ROOT
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.odds.live_odds import live_odds_enabled
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
+from app.services.slate_clock import slate_today
 from app.services.daily_board import board_disk_date_matches, build_daily_board
 from app.services.mlb_data_freshness import ensure_mlb_ingest_fresh, ensure_odds_snapshot
 from app.services.schedule_mlb import get_mlb_schedule
@@ -106,7 +107,7 @@ def run_mlb_periodic_refresh(game_date: date | None = None) -> int:
     Runs on a timer (default every 3h) so game pages pick up current stats
     without manual scripts. Returns 0 on success or benign skip.
     """
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
 
     if not periodic_refresh_enabled():
         _write_status(ok=True, game_date=game_date, skipped="disabled")

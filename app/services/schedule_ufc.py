@@ -13,6 +13,7 @@ import pandas as pd
 from app.config import PROJECT_ROOT
 from app.services.scores_ufc import fetch_ufc_scoreboard_day, live_fights_from_events
 from app.services.ufc_historical_slate import fights_from_ingest, ingest_has_fights
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ SLATE_LOOKAHEAD_DAYS = 30
 
 
 def _is_past_date(game_date: date) -> bool:
-    return game_date < date.today()
+    return game_date < slate_today()
 
 
 def schedule_cache_path(game_date: date) -> Path:
@@ -45,7 +46,7 @@ def _date_has_fights(game_date: date) -> bool:
 
 
 def resolve_ufc_slate_date(start: date | None = None) -> tuple[date, int]:
-    anchor = start or date.today()
+    anchor = start or slate_today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = anchor + timedelta(days=offset)
         if _date_has_fights(candidate):
@@ -114,7 +115,7 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
 
 
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     return _load_schedule_payload(game_date, force_live=True)
 
 
@@ -185,7 +186,7 @@ def get_ufc_fight(fight_id: str, game_date: date | None = None) -> dict[str, Any
 
     resolved_date, _ = resolve_ufc_slate_date(None)
     search_dates: list[date] = [resolved_date]
-    today = date.today()
+    today = slate_today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = today + timedelta(days=offset)
         if candidate not in search_dates:
@@ -223,7 +224,7 @@ def get_ufc_schedule(
     auto_resolve: bool = False,
     force_live: bool = False,
 ) -> dict[str, Any]:
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     if auto_resolve and game_date is None:
         resolved_date, days_ahead = resolve_ufc_slate_date(None)
         auto_advanced = days_ahead > 0

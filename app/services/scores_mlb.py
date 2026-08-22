@@ -10,6 +10,7 @@ import httpx
 
 from app.odds.team_aliases import normalize_team_name
 from app.services.schedule_mlb import _update_teams_map, team_logo_url
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ def get_scores_today(sport: str = "mlb", game_date: date | None = None) -> dict[
     if sport != "mlb":
         raise ValueError(f"Unsupported sport: {sport}")
 
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     cache_key = f"{sport}:{game_date.isoformat()}"
     now = datetime.now(timezone.utc)
 

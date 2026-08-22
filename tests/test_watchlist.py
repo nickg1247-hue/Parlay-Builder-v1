@@ -43,7 +43,7 @@ def test_watchlist_requires_sign_in():
 def test_watchlist_page_renders():
     res = client.get("/watchlist")
     assert res.status_code == 200
-    assert "Watchlist" in res.text
+    assert "My Picks" in res.text
 
 
 def test_player_page_renders():
@@ -67,6 +67,8 @@ def test_save_and_remove_prop_keeps_original_line(tmp_path, monkeypatch):
             "odds": -110,
             "game_id": "nfl-1",
             "matchup": "MIN vs GB",
+            "projection": 96.2,
+            "model_probability": 0.618,
         },
     )
     assert saved.status_code == 200
@@ -76,6 +78,10 @@ def test_save_and_remove_prop_keeps_original_line(tmp_path, monkeypatch):
     assert len(props) == 1
     assert props[0]["saved_line"] == 84.5
     assert props[0]["player"] == "Justin Jefferson"
+    assert "current_line" in props[0]
+    assert props[0]["saved_line"] == 84.5
+    assert props[0]["saved_projection"] == 96.2
+    assert props[0]["saved_model_probability"] == 0.618
     removed = client.delete(f"/api/watchlist/props/{props[0]['id']}")
     assert removed.status_code == 200
     assert client.get("/api/watchlist").json()["props"] == []

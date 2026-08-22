@@ -1060,6 +1060,45 @@ body.slate-mlb .app-main > * {
   font-size: 0.82rem;
 }
 
+.ntg-proj-track {
+  position: relative;
+  height: 0.45rem;
+  margin: 1rem 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+}
+
+.ntg-proj-dot {
+  position: absolute;
+  top: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-left: -0.35rem;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.ntg-proj-dot--line {
+  background: #94a3b8;
+}
+
+.ntg-proj-dot--model {
+  background: #3b82f6;
+}
+
+.ntg-daily-board {
+  margin: 0 0 1.5rem;
+}
+
+.ntg-daily-board-date {
+  margin: 0.2rem 0 0;
+  color: var(--ntg-text-2, #cbd5e1);
+}
+
+.watch-btn {
+  font-size: 0.72rem;
+}
+
 .sandbox-maintenance-actions {
   display: flex;
   flex-wrap: wrap;

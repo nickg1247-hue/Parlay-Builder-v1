@@ -63,6 +63,7 @@ from app.services.props_platform import (
 from app.services.watchlist import (
     delete_watchlist_game,
     delete_watchlist_prop,
+    enrich_watchlist,
     list_watchlist_games,
     list_watchlist_props,
     save_watchlist_game,
@@ -71,6 +72,7 @@ from app.services.watchlist import (
 from app.services.page_data_cache import get_or_build
 from app.services.page_render import render_static_page
 from app.db.database import get_connection, get_sqlite_path, init_db
+from app.services.slate_clock import slate_today
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.ev_ranker import DEFAULT_MAX_PARLAYS
 from app.services.daily_board import build_daily_board
@@ -249,12 +251,23 @@ class WatchlistPropRequest(BaseModel):
     market_label: str | None = Field(None, max_length=80)
     prediction_id: str | None = Field(None, max_length=120)
     matchup: str | None = Field(None, max_length=160)
+    projection: float | None = None
+    model_probability: float | None = None
+    market_probability: float | None = None
+    model_edge: float | None = None
+    model_score: float | None = None
+    confidence: str | None = Field(None, max_length=40)
 
 
 class WatchlistGameRequest(BaseModel):
     sport: str = Field(..., min_length=2, max_length=8)
     game_id: str = Field(..., min_length=1, max_length=64)
     matchup: str | None = Field(None, max_length=160)
+    model_lean: str | None = Field(None, max_length=80)
+    model_probability: float | None = None
+    market_probability: float | None = None
+    model_edge: float | None = None
+    confidence: str | None = Field(None, max_length=40)
 
 
 logger = logging.getLogger(__name__)
@@ -309,7 +322,7 @@ async def lifespan(app: FastAPI):
             from app.features.mlb_pregame import get_team_tracker_before
             from app.features.mlb_totals_pregame import get_runs_tracker_before
 
-            today = pd.Timestamp(date_type.today())
+            today = pd.Timestamp(slate_today())
             get_team_tracker_before(today)
             get_runs_tracker_before(today)
         except Exception:
@@ -816,7 +829,7 @@ async def build_info():
         / "data"
         / "processed"
         / "props_repository"
-        / f"slate_{date_type.today().isoformat()}.draftkings.json"
+        / f"slate_{slate_today().isoformat()}.draftkings.json"
     )
     slate_summary: dict[str, Any] = {}
     if slate_path.exists():
@@ -908,7 +921,7 @@ async def nba_daily(
     ),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return build_nba_daily_board(
         game_date=game_date,
@@ -959,7 +972,7 @@ async def home_today(
 ):
     """Today at a glance + best bets from cached daily board (no rebuild)."""
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         return get_home_today_summary(game_date)
@@ -981,7 +994,7 @@ async def mlb_schedule(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return get_mlb_schedule(game_date)
 
@@ -993,7 +1006,7 @@ async def nba_schedule(
     if date_param:
         game_date = date_type.fromisoformat(date_param)
         return get_nba_schedule(game_date, auto_resolve=False)
-    return get_nba_schedule(None, auto_resolve=True)
+    return get_nba_schedule(None, auto_resolve=False)
 
 
 @app.get("/api/schedule/nba-summer")
@@ -1004,7 +1017,7 @@ async def nba_summer_schedule(
     if not nba_summer_enabled():
         return {
             "sport": "nba-summer",
-            "date": date_type.today().isoformat(),
+            "date": slate_today().isoformat(),
             "games": [],
             "games_count": 0,
             "disabled": True,
@@ -1015,7 +1028,7 @@ async def nba_summer_schedule(
     if date_param:
         payload = get_nba_schedule(date_type.fromisoformat(date_param), auto_resolve=False)
     else:
-        payload = get_nba_schedule(None, auto_resolve=True)
+        payload = get_nba_schedule(None, auto_resolve=False)
     games = [
         g
         for g in (payload.get("games") or [])
@@ -1038,7 +1051,7 @@ async def nba_summer_daily(
     if not nba_summer_enabled():
         return {
             "sport": "nba-summer",
-            "date": (date_param or date_type.today().isoformat()),
+            "date": (date_param or slate_today().isoformat()),
             "slate": [],
             "games_on_slate": 0,
             "disabled": True,
@@ -1047,7 +1060,7 @@ async def nba_summer_daily(
     from app.services.nba_daily_board import build_nba_daily_board
 
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     board = build_nba_daily_board(
         game_date=game_date,
@@ -1071,7 +1084,7 @@ async def cfb_schedule(
     if date_param:
         game_date = date_type.fromisoformat(date_param)
         return get_cfb_schedule(game_date, auto_resolve=False, force_live=refresh)
-    return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
+    return get_cfb_schedule(None, auto_resolve=False, force_live=refresh)
 
 
 @app.get("/api/schedule/nfl")
@@ -1082,7 +1095,7 @@ async def nfl_schedule(
     if date_param:
         game_date = date_type.fromisoformat(date_param)
         return get_nfl_schedule(game_date, auto_resolve=False, force_live=refresh)
-    return get_nfl_schedule(None, auto_resolve=True, force_live=refresh)
+    return get_nfl_schedule(None, auto_resolve=False, force_live=refresh)
 
 
 @app.get("/api/nfl/predictions")
@@ -1100,7 +1113,7 @@ async def nfl_daily(
     refresh: bool = Query(False),
     use_cache: bool = Query(False),
 ):
-    game_date = date_type.fromisoformat(date_param) if date_param else date_type.today()
+    game_date = date_type.fromisoformat(date_param) if date_param else slate_today()
     return build_nfl_daily_board(
         game_date=game_date,
         min_edge=min_edge,
@@ -1124,7 +1137,7 @@ async def ufc_schedule(
     if date_param:
         game_date = date_type.fromisoformat(date_param)
         return get_ufc_schedule(game_date, auto_resolve=False, force_live=refresh)
-    return get_ufc_schedule(None, auto_resolve=True, force_live=refresh)
+    return get_ufc_schedule(None, auto_resolve=False, force_live=refresh)
 
 
 @app.get("/api/cfb/daily")
@@ -1138,7 +1151,7 @@ async def cfb_daily(
     ),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return build_cfb_daily_board(
         game_date=game_date,
@@ -1177,7 +1190,7 @@ async def ufc_daily(
     ),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return build_ufc_daily_board(
         game_date=game_date,
@@ -1266,15 +1279,7 @@ async def scores_today(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
-    auto_resolve = date_param is None and sport in (
-        "nba",
-        "nba-summer",
-        "cfb",
-        "nfl",
-        "ufc",
-        "all",
-    )
-    return get_scores_today(sport=sport, game_date=game_date, auto_resolve=auto_resolve)
+    return get_scores_today(sport=sport, game_date=game_date, auto_resolve=False)
 
 
 @app.get("/api/games/mlb/{game_id}/lineup")
@@ -1283,7 +1288,7 @@ async def mlb_game_lineup(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         return get_mlb_game_lineup(game_id, game_date)
@@ -1316,7 +1321,7 @@ async def mlb_game_detail(
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     detail = get_mlb_game(game_id, game_date, allow_fetch=True)
     if detail is None:
@@ -1330,7 +1335,7 @@ async def mlb_matchup_preview(
     date_param: str | None = Query(None, alias="date"),
     use_cache: bool = Query(False),
 ):
-    game_date = date_type.fromisoformat(date_param) if date_param else date_type.today()
+    game_date = date_type.fromisoformat(date_param) if date_param else slate_today()
     return build_matchup_preview("mlb", game_id, game_date=game_date, use_cache=use_cache)
 
 
@@ -1342,7 +1347,7 @@ async def mlb_game_insights(
     refresh: bool = Query(False),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         insights = await asyncio.to_thread(
@@ -1375,7 +1380,7 @@ async def mlb_game_props(
     ),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         payload = await asyncio.to_thread(
@@ -1405,7 +1410,7 @@ async def nfl_game_props(
     include_alternates: bool = Query(False),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         payload = await asyncio.to_thread(
@@ -1446,7 +1451,7 @@ async def props_debug(
     limit: int = Query(500, ge=1, le=1000),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return build_prop_debug_report(
         game_date,
@@ -1506,7 +1511,7 @@ async def props_search(
     refresh: bool = Query(False),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     if refresh:
         scan = True
@@ -1560,7 +1565,7 @@ async def prop_parlay_optimize(body: PropParlayOptimizeRequest):
 @app.post("/api/parlay/props/build")
 async def prop_parlay_build(body: PropParlayBuildRequest):
     game_date = (
-        date_type.fromisoformat(body.date) if body.date else date_type.today()
+        date_type.fromisoformat(body.date) if body.date else slate_today()
     )
     return build_auto_prop_parlay(
         body.leg_count,
@@ -1603,7 +1608,7 @@ async def props_slate_refresh(
 ):
     """Pull full-market props for every game on the slate (resumable if quota stops)."""
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return refresh_props(
         sport,
@@ -1644,7 +1649,7 @@ async def daily_top_props(
     sport: str | None = Query("mlb"),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     if normalize_prop_sport(sport) == "nfl":
         return build_daily_props(
@@ -1713,7 +1718,7 @@ async def daily_board(
     ),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return build_daily_board(
         game_date=game_date,
@@ -1937,10 +1942,10 @@ async def watchlist_get(request: Request):
     session = _require_user_session(request)
     conn = get_connection()
     try:
-        return {
-            "props": list_watchlist_props(conn, session["user_id"]),
-            "games": list_watchlist_games(conn, session["user_id"]),
-        }
+        return enrich_watchlist(
+            list_watchlist_props(conn, session["user_id"]),
+            list_watchlist_games(conn, session["user_id"]),
+        )
     finally:
         conn.close()
 
@@ -1970,13 +1975,7 @@ async def watchlist_save_game(request: Request, body: WatchlistGameRequest):
     session = _require_user_session(request)
     conn = get_connection()
     try:
-        return save_watchlist_game(
-            conn,
-            session["user_id"],
-            sport=body.sport,
-            game_id=body.game_id,
-            matchup=body.matchup,
-        )
+        return save_watchlist_game(conn, session["user_id"], **body.model_dump())
     finally:
         conn.close()
 
@@ -2103,7 +2102,7 @@ async def _ssr_page_data(
 @app.get("/")
 async def home(date_param: str | None = Query(None, alias="date")):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     try:
         page_data = await _ssr_page_data(
@@ -2236,7 +2235,7 @@ async def fantasy_nfl_mock_advance(body: NflFantasyMockAdvanceRequest):
 @app.get("/mlb")
 async def mlb_slate(date_param: str | None = Query(None, alias="date")):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     page_data = await _ssr_page_data(
         f"slate:{game_date.isoformat()}",
@@ -2498,7 +2497,7 @@ async def nba_game_insights(
     from app.services.nba_game_insights import build_nba_game_insights
 
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     insights = build_nba_game_insights(
         game_id,
@@ -2520,7 +2519,7 @@ async def mlb_game_page(
     bookmaker: str | None = Query(DEFAULT_DISPLAY_BOOKMAKER),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     cache_key = (
         f"game:{game_id}:{game_date.isoformat()}:"
@@ -2620,7 +2619,7 @@ async def player_props_page(
     refresh: str | None = Query(None),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return await _render_player_props_page(
         request,
@@ -2668,7 +2667,7 @@ async def mlb_props_page(
     refresh: str | None = Query(None),
 ):
     game_date = (
-        date_type.fromisoformat(date_param) if date_param else date_type.today()
+        date_type.fromisoformat(date_param) if date_param else slate_today()
     )
     return await _render_player_props_page(
         request,

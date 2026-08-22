@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from app.models.constants import DEFAULT_MIN_EDGE
+from app.services.slate_clock import slate_today
 from app.models.nba_baseline import ACTIVE_NBA_MANIFEST, load_model_artifact, predict_home_win_proba
 from app.models.nba_custom import load_custom_weights, predict_custom_home_proba
 from app.odds.live_odds import live_odds_enabled
@@ -480,7 +481,7 @@ def build_nba_daily_board(
     skip_totals: bool | None = None,
 ) -> dict[str, Any]:
     """Build NBA slate with model probs and odds; logs forward CLV on live +EV singles."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     mode = "demo" if use_cache else "live"
     warnings: list[str] = []
 

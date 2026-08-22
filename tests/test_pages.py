@@ -47,6 +47,7 @@ def test_home_page():
     assert "Prop Parlay Builder" in text
     assert 'id="featured-edge"' in text
     assert 'id="home-top-props"' in text
+    assert 'id="daily-board"' in text
 
 
 def test_mlb_slate_page():
@@ -60,6 +61,8 @@ def test_mlb_slate_page():
     assert "app.js" in text
     assert "ntg-system.css" in text
     assert "Today's model outlook" in text
+    assert 'id="slate-date-input"' in text
+    assert 'id="slate-date-go"' in text
 
 
 def test_mlb_board_page(auth_env):

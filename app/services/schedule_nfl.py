@@ -11,6 +11,7 @@ from typing import Any
 
 from app.config import PROJECT_ROOT
 from app.services.nfl_historical_slate import games_from_ingest, ingest_has_games
+from app.services.slate_clock import slate_today
 from app.services.scores_nfl import fetch_nfl_scores_day, live_game_record
 
 logger = logging.getLogger(__name__)
@@ -21,12 +22,12 @@ SLATE_LOOKAHEAD_DAYS = 7
 
 
 def _is_past_date(game_date: date) -> bool:
-    return game_date < date.today()
+    return game_date < slate_today()
 
 
 def resolve_nfl_slate_date(start: date | None = None) -> tuple[date, int]:
     """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
-    anchor = start or date.today()
+    anchor = start or slate_today()
     candidates = [anchor + timedelta(days=offset) for offset in range(SLATE_LOOKAHEAD_DAYS + 1)]
     for offset, candidate in enumerate(candidates):
         count = _local_games_count(candidate)
@@ -161,7 +162,7 @@ def _game_from_payload(payload: dict[str, Any], game_id: str) -> dict[str, Any] 
 
 
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     return _load_schedule_payload(game_date, force_live=True)
 
 
@@ -175,7 +176,7 @@ def get_nfl_schedule(
     auto_resolve: bool = False,
     force_live: bool = False,
 ) -> dict[str, Any]:
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     if auto_resolve and game_date is None:
         resolved_date, days_ahead = resolve_nfl_slate_date(None)
         auto_advanced = days_ahead > 0
@@ -203,7 +204,7 @@ def get_nfl_game(game_id: str, game_date: date | None = None) -> dict[str, Any] 
 
     resolved_date, _ = resolve_nfl_slate_date(None)
     search_dates: list[date] = [resolved_date]
-    today = date.today()
+    today = slate_today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = today + timedelta(days=offset)
         if candidate not in search_dates:

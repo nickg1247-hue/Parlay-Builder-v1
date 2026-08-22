@@ -90,25 +90,13 @@ def test_get_nba_schedule_explicit_date_skips_resolve(mock_fetch):
 
 
 @patch("app.services.schedule_nba.fetch_nba_scores_day")
-def test_api_schedule_nba_auto_advanced_fields(mock_fetch):
-    today = date.today()
-    target = today + timedelta(days=2)
-
-    def side_effect(game_date: date):
-        if game_date == target:
-            return [ESPN_EVENT]
-        if (game_date - today).days <= 1:
-            return []
-        return []
-
-    mock_fetch.side_effect = side_effect
+def test_api_schedule_nba_stays_on_requested_day(mock_fetch):
+    mock_fetch.return_value = []
     resp = client.get("/api/schedule/nba")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["auto_advanced"] is True
-    assert data["days_ahead"] == 2
-    assert data["resolved_date"] == target.isoformat()
-    assert data["requested_date"] == today.isoformat()
+    assert data["auto_advanced"] is False
+    assert data["days_ahead"] == 0
 
 
 @patch("app.services.schedule_nba.fetch_nba_scores_day")

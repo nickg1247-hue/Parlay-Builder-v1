@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 from app.ingest.nfl import ESPN_NFL_SCOREBOARD, normalize_abbr
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ def get_nfl_scores_today(
 ) -> dict[str, Any]:
     from app.services.schedule_nfl import get_nfl_schedule
 
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     cache_key = f"nfl:{requested_date.isoformat()}:ar={int(auto_resolve)}"
     now = datetime.now(timezone.utc)
 

@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 from app.odds.ufc_fighter_aliases import normalize_fighter_name
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +150,7 @@ def get_ufc_scores_today(
 ) -> dict[str, Any]:
     from app.services.schedule_ufc import get_ufc_schedule
 
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     cache_key = f"ufc:{requested_date.isoformat()}:live={force_live}"
     now = datetime.now(timezone.utc)
 

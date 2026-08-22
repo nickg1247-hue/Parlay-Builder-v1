@@ -196,19 +196,107 @@
       </div>`;
   }
 
-  function renderWhyPickCard(prop, data) {
-    const factors = (prop.factors || []).slice(0, 6);
-    const insight = prop.line_insight || data?.line_insight || "";
-    if (!factors.length && !insight) return "";
-    const list = factors.length
-      ? `<ul class="why-pick-card__factors">${factors.map((f) => `<li>${f}</li>`).join("")}</ul>`
-      : "";
+  function projectionVsLineHtml(prop) {
+    const line = prop.line;
+    const proj = prop.model_projection;
+    if (line == null || proj == null || Number.isNaN(Number(line)) || Number.isNaN(Number(proj))) return "";
+    const a = Number(line);
+    const b = Number(proj);
+    const min = Math.min(a, b);
+    const max = Math.max(a, b);
+    const span = max - min || 1;
+    const linePct = ((a - min) / span) * 80 + 10;
+    const projPct = ((b - min) / span) * 80 + 10;
     return `
-      <section class="why-pick-card ntg-card" aria-label="Why this pick">
-        <h3 class="why-pick-card__title">Why this pick</h3>
-        ${insight ? `<p class="why-pick-card__insight">${insight}</p>` : ""}
-        ${list}
+      <section class="why-pick-card ntg-card" aria-label="Projection vs line">
+        <h3 class="why-pick-card__title">Model vs line</h3>
+        <p class="why-pick-card__insight">Sportsbook ${a} · Model projection ${b}</p>
+        <div class="ntg-proj-track" aria-hidden="true">
+          <span class="ntg-proj-dot ntg-proj-dot--line" style="left:${linePct}%"></span>
+          <span class="ntg-proj-dot ntg-proj-dot--model" style="left:${projPct}%"></span>
+        </div>
       </section>`;
+  }
+
+  function whyNtgLikesHtml(prop, data) {
+    const reasons = [];
+    const side = prop.recommended_side || prop.side || "over";
+    const modelPct =
+      prop.model_probability ??
+      prop.recommended_probability ??
+      (side === "over" ? prop.model_probability_over : prop.model_probability_under);
+    const mktPct = prop.market_probability ?? (side === "over" ? prop.market_probability_over : prop.market_probability_under);
+    const edge = prop.edge ?? prop.edge_pct;
+    if (modelPct != null && mktPct != null) {
+      reasons.push({
+        label: "Market",
+        tone: "up",
+        text: `Model ${fmtPct(modelPct)} vs market ${fmtPct(mktPct)}${
+          edge != null ? ` · edge ${Number(edge) <= 1 && Number(edge) >= -1 ? (Number(edge) * 100).toFixed(1) : Number(edge).toFixed(1)}%` : ""
+        }.`,
+      });
+    }
+    const usage = prop.analysis?.usage || {};
+    if (usage.l3_avg != null || usage.season_avg != null) {
+      reasons.push({
+        label: "Usage",
+        tone: "up",
+        text: `L3 ${usage.l3_avg ?? "—"} · Season ${usage.season_avg ?? "—"}${
+          usage.sample_games != null ? ` · ${usage.sample_games} games` : ""
+        }.`,
+      });
+    }
+    const env = prop.analysis?.environment || {};
+    if (env.team_spread != null || env.game_total != null) {
+      reasons.push({
+        label: "Game environment",
+        tone: "neutral",
+        text: `Spread ${env.team_spread ?? "—"} · Total ${env.game_total ?? "—"}${
+          env.team_implied_total != null ? ` · Implied ${env.team_implied_total}` : ""
+        }.`,
+      });
+    }
+    const rates = data?.hit_rates || {};
+    if (rates.l10 != null) {
+      reasons.push({
+        label: "Recent form",
+        tone: "up",
+        text: `This ${side} hit in ${fmtPct(rates.l10)} of the last 10 logged games.`,
+      });
+    }
+    if (data?.depth?.opposing_pitcher) {
+      reasons.push({
+        label: "Matchup",
+        tone: "neutral",
+        text: `Opposing starter ${data.depth.opposing_pitcher}${
+          data.depth.opposing_pitcher_era != null ? ` (${data.depth.opposing_pitcher_era} ERA)` : ""
+        }.`,
+      });
+    }
+    (prop.factors || []).slice(0, 3).forEach((f) => {
+      reasons.push({ label: "Factor", tone: "neutral", text: f });
+    });
+    const insight = prop.line_insight || data?.line_insight;
+    if (insight) reasons.push({ label: "Line", tone: "neutral", text: insight });
+    const risks = prop.analysis?.risks || prop.risk_flags || [];
+    if (prop.risk_flag) risks.push(prop.risk_flag);
+    if (risks.length) {
+      reasons.push({ label: "Risk", tone: "risk", text: risks.filter(Boolean).join(" · ") });
+    }
+    if (!reasons.length) return "";
+    return `
+      <section class="why-pick-card ntg-card" aria-label="Why NTG likes this">
+        <h3 class="why-pick-card__title">Why NTG likes this</h3>
+        <ul class="why-pick-card__factors">
+          ${reasons
+            .map((r) => `<li><strong>${r.label}</strong> ${r.text}</li>`)
+            .join("")}
+        </ul>
+      </section>`;
+  }
+
+  function renderWhyPickCard(prop, data) {
+    return `${whyNtgLikesHtml(prop, data)}${projectionVsLineHtml(prop)}`;
   }
 
   function renderDepthBadges(depth) {
@@ -277,6 +365,7 @@
         ${gameLogTable}
       </section>
       <div class="prop-modal-actions">
+        <button type="button" class="ntg-btn ntg-btn-ghost" id="prop-modal-save">☆ Save</button>
         ${
           typeof global.addPropToSlip === "function" && typeof global.propSlipLegFromProp === "function"
             ? `<button type="button" class="home-props-fill-btn" id="prop-modal-add-slip">Add to prop slip</button>`
@@ -384,6 +473,7 @@
         </div>
       </header>
       ${why}
+      ${projectionVsLineHtml(prop)}
       <section class="why-pick-card ntg-card">
         <h3 class="why-pick-card__title">Projection</h3>
         <p>Model ${prop.model_projection ?? "—"} · P(${sideLabel}) ${
@@ -491,6 +581,11 @@
         if (leg && global.addPropToSlip?.(leg)) {
           body.querySelector("#prop-modal-add-slip").textContent = "Added ✓";
         }
+      });
+      body.querySelector("#prop-modal-save")?.addEventListener("click", async () => {
+        const btn = body.querySelector("#prop-modal-save");
+        const out = await global.savePropToWatchlist?.(prop, sport);
+        if (out?.ok && btn) btn.textContent = "★ Saved";
       });
     } catch (err) {
       const msg = err?.message || "Could not load prop context.";

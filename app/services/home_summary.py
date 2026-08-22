@@ -13,6 +13,7 @@ from app.services.bet_context import enrich_ml_singles, form_composite_score
 from app.services.prop_scoring import prop_form_average_from_prop
 from app.services.daily_board import DAILY_BOARD_CACHE, _top_form_singles
 from app.services.ufc_home_summary import get_ufc_home_chip
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +162,7 @@ def get_home_today_summary(
     fetch_ufc: bool = True,
 ) -> dict[str, Any]:
     """Today at a glance + best bets from on-disk daily board (no rebuild)."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     board = _load_board()
     odds_snap = get_today_snapshot()
 

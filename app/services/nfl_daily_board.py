@@ -10,6 +10,7 @@ from app.models.constants import DEFAULT_MIN_EDGE
 from app.models.nfl_baseline import ACTIVE_NFL_MANIFEST, load_model_artifact
 from app.parlay.nfl_parlay import top_parlays_payload
 from app.services.nfl_slate_predictions import predict_slate
+from app.services.slate_clock import slate_today
 from app.services.schedule_nfl import get_nfl_schedule
 
 NFL_DISCLAIMER = (
@@ -116,7 +117,7 @@ def build_nfl_daily_board(
     del force_refresh
     if use_cache and game_date is None:
         game_date = date.fromisoformat(DEMO_DATE)
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     mode = "demo" if use_cache else "live"
     warnings: list[str] = []
     schedule = get_nfl_schedule(game_date, auto_resolve=not use_cache)

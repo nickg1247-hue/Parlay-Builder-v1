@@ -10,6 +10,7 @@ from app.models.cfb_baseline import ACTIVE_CFB_MANIFEST, load_model_artifact
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.cfb_parlay import top_parlays_payload
 from app.services.cfb_slate_predictions import predict_slate
+from app.services.slate_clock import slate_today
 from app.services.cfb_team_logos import enrich_games_logos
 from app.services.schedule_cfb import get_cfb_schedule
 
@@ -135,7 +136,7 @@ def build_cfb_daily_board(
     del force_refresh  # predict_slate uses CFBD lines cache + optional live odds
     if use_cache and game_date is None:
         game_date = date.fromisoformat(DEMO_DATE)
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     mode = "demo" if use_cache else "live"
     warnings: list[str] = []
 

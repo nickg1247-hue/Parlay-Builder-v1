@@ -11,6 +11,7 @@ from typing import Any
 from app.config import PROJECT_ROOT
 from app.odds.team_aliases import normalize_team_name
 from app.parlay.slate import fetch_mlb_schedule_day, filter_board_games
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ def _update_teams_map(games: list[dict[str, Any]]) -> dict[str, int]:
 
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
     """Fetch MLB schedule and write ``mlb_schedule_{date}.json``."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     api_games = filter_board_games(fetch_mlb_schedule_day(game_date), game_date)
     games = [_game_record(g) for g in api_games]
     _update_teams_map(games)
@@ -117,7 +118,7 @@ def _load_cache_payload(path: Path) -> dict[str, Any]:
 
 def load_mlb_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
     """Read schedule JSON from disk only — safe for SSR (no MLB API calls)."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     path = schedule_cache_path(game_date)
     if not path.exists():
         return {
@@ -133,7 +134,7 @@ def load_mlb_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
 
 def get_mlb_schedule(game_date: date | None = None) -> dict[str, Any]:
     """Return schedule from cache if fresh (<6h), else fetch and write."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     path = schedule_cache_path(game_date)
     if cache_is_fresh(path):
         return load_mlb_schedule_cache(game_date)
@@ -207,7 +208,7 @@ def _games_for_date(game_date: date) -> list[dict[str, Any]]:
 
 def _recent_cached_games(max_days: int = 14) -> list[tuple[date, dict[str, Any]]]:
     """Games from recent on-disk schedule caches, newest dates first."""
-    today = date.today()
+    today = slate_today()
     out: list[tuple[date, dict[str, Any]]] = []
     for path in sorted(PROCESSED_DIR.glob("mlb_schedule_*.json"), reverse=True):
         stem = path.stem.replace("mlb_schedule_", "")
@@ -238,7 +239,7 @@ def _find_game_record(
             continue
         seen.add(iso)
         games = _games_for_date(search_date)
-        if not games and allow_fetch and idx == 0 and search_date == date.today():
+        if not games and allow_fetch and idx == 0 and search_date == slate_today():
             games = get_mlb_schedule(search_date).get("games") or []
         for game in games:
             if str(game.get("game_id")) == gid:
@@ -263,14 +264,14 @@ def get_mlb_game(
     allow_fetch: bool = False,
 ) -> dict[str, Any] | None:
     """Single game metadata plus daily-board slate row when available."""
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     game, resolved_date = _find_game_record(
         game_id, game_date, allow_fetch=allow_fetch
     )
     if game is None or resolved_date is None:
         return None
     schedule_source = "cache"
-    if resolved_date == date.today():
+    if resolved_date == slate_today():
         schedule = load_mlb_schedule_cache(resolved_date)
         schedule_source = schedule.get("source", "cache")
     return {

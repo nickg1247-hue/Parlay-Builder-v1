@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 
+from app.services.slate_clock import slate_today
 from app.services.scores_nba import (
     live_game_record as _nba_live_game_record,
 )
@@ -127,7 +128,7 @@ def get_nba_summer_scores_today(
     *,
     auto_resolve: bool = False,
 ) -> dict[str, Any]:
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     if auto_resolve and game_date is None:
         from app.services.schedule_nba_summer import resolve_nba_summer_slate_date
 

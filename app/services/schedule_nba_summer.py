@@ -13,6 +13,7 @@ from app.services.scores_nba_summer import (
     fetch_nba_summer_scores_day,
     live_game_record,
 )
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ SLATE_LOOKAHEAD_DAYS = 7
 
 def resolve_nba_summer_slate_date(start: date | None = None) -> tuple[date, int]:
     """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
-    anchor = start or date.today()
+    anchor = start or slate_today()
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = anchor + timedelta(days=offset)
         if fetch_nba_summer_scores_day(candidate):
@@ -62,7 +63,7 @@ def cache_is_fresh(path: Path, ttl_seconds: int = SCHEDULE_CACHE_TTL_SECONDS) ->
 
 
 def _is_empty_future_cache(path: Path, game_date: date) -> bool:
-    if game_date < date.today():
+    if game_date < slate_today():
         return False
     if not path.exists():
         return False
@@ -81,7 +82,7 @@ def _load_cache_payload(path: Path) -> dict[str, Any]:
 
 
 def refresh_schedule_cache(game_date: date | None = None) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     events = fetch_nba_summer_scores_day(game_date)
     games = [live_game_record(e) for e in events]
     cached_at = datetime.now(timezone.utc).isoformat()
@@ -121,7 +122,7 @@ def get_nba_summer_schedule(
     *,
     auto_resolve: bool = False,
 ) -> dict[str, Any]:
-    requested_date = game_date or date.today()
+    requested_date = game_date or slate_today()
     if auto_resolve and game_date is None:
         resolved_date, days_ahead = resolve_nba_summer_slate_date(None)
         auto_advanced = days_ahead > 0
@@ -160,7 +161,7 @@ def get_nba_summer_game(
     if game_date is not None:
         dates_to_try.append(game_date)
     else:
-        today = date.today()
+        today = slate_today()
         for offset in range(-1, SLATE_LOOKAHEAD_DAYS + 1):
             dates_to_try.append(today + timedelta(days=offset))
 

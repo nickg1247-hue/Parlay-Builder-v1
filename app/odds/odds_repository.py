@@ -16,6 +16,7 @@ import httpx
 
 from app.config import PROJECT_ROOT
 from app.odds.live_odds import live_odds_enabled
+from app.services.slate_clock import slate_today
 from app.odds.team_aliases import is_valid_american_odds, normalize_team_name
 from app.odds.the_odds_api import (
     DEFAULT_MLB_PROP_MARKETS,
@@ -328,7 +329,7 @@ def _do_http_fetch(
     include_spreads: bool,
 ) -> tuple[list[dict[str, Any]], str]:
     """Low-level HTTP — only call from fetch_from_api_if_allowed."""
-    if game_date >= date.today():
+    if game_date >= slate_today():
         events = fetch_live_mlb_odds(
             include_totals=include_totals,
             include_spreads=include_spreads,
@@ -719,7 +720,7 @@ def get_mlb_odds_for_date(
         "force_refresh"
         if force_refresh and has_date(game_date)
         else "historical_backfill"
-        if game_date < date.today()
+        if game_date < slate_today()
         else "initial_fetch"
     )
 
@@ -813,7 +814,7 @@ def _daily_board_generated_at(game_date: date) -> str | None:
 
 def get_today_snapshot() -> dict[str, Any]:
     """Repository snapshot for today + quota summary (no API)."""
-    today = date.today()
+    today = slate_today()
     payload = load_date(today) or {}
     age = _payload_age_seconds(payload)
     quota = get_quota_summary()

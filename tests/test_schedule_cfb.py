@@ -94,21 +94,13 @@ def test_get_cfb_schedule_returns_logos(mock_fetch):
 
 
 @patch("app.services.schedule_cfb.fetch_cfb_scores_day")
-def test_api_schedule_cfb_auto_advanced_fields(mock_fetch):
-    today = date.today()
-    target = today + timedelta(days=5)
-
-    def side_effect(game_date: date):
-        if game_date == target:
-            return [ESPN_EVENT]
-        return []
-
-    mock_fetch.side_effect = side_effect
+def test_api_schedule_cfb_stays_on_requested_day(mock_fetch):
+    mock_fetch.return_value = []
     resp = client.get("/api/schedule/cfb")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["auto_advanced"] is True
-    assert data["days_ahead"] == 5
+    assert data["auto_advanced"] is False
+    assert data["days_ahead"] == 0
 
 
 @patch("app.services.schedule_cfb.fetch_cfb_scores_day")
