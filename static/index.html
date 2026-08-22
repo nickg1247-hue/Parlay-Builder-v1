@@ -3,200 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260740" type="image/png">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260830" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#030712">
-  <title>Dashboard — NTG Sports</title>
+  <title>NTG Sports</title>
   <link rel="stylesheet" href="/static/style.css?v=20260740">
-  <link rel="stylesheet" href="/static/app.css?v=20260816">
+  <link rel="stylesheet" href="/static/app.css?v=20260830">
   <link rel="stylesheet" href="/static/brand.css?v=20260740">
   <link rel="stylesheet" href="/static/design.css?v=20260740">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260822">
-  <link rel="stylesheet" href="/static/ntg-system.css?v=20260822">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260830">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260830">
+  <link rel="stylesheet" href="/static/home-landing.css?v=20260831">
 </head>
-<body data-ntg-splash="1" class="ntg-shell home-v2 home-dashboard">
+<body data-ntg-splash="1" class="ntg-shell home-v2 home-landing">
   <div class="app-shell">
     <header class="app-topbar dash-topbar">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260740" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260830" alt="NTG Sports" width="56" height="56" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
       </div>
-      <div class="dash-subnav">
-        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
-      </div>
-      <div class="dash-sync-wrap">
-        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
-        <div class="dash-progress" aria-hidden="true">
-          <div id="dash-progress-fill" class="dash-progress-fill"></div>
-        </div>
-      </div>
     </header>
 
-    <section class="dash-hero" aria-label="Today on NTG Sports">
-      <div class="dash-hero-bg" aria-hidden="true">
-        <div class="dash-hero-bg-solid"></div>
-        <div class="dash-hero-bg-stadium"></div>
-        <div class="dash-hero-bg-stadium-overlay"></div>
-        <div class="dash-hero-bg-split"></div>
-      </div>
-      <div class="dash-hero-inner">
-        <div class="dash-hero-copy">
-          <h1>See the edge before the line moves.</h1>
-          <p class="dash-hero-kicker ntg-hero-kicker">Data-driven sports intelligence built to identify where our model sees an advantage.</p>
-          <div class="dash-hero-actions ntg-hero-actions">
-            <a class="dash-btn dash-btn-primary" href="/mlb">View today's slate</a>
-            <a class="dash-btn dash-btn-ghost" href="#edge-scroll">View top edges</a>
-          </div>
-          <div id="hero-chips" class="hero-chips dash-hero-chips hidden" aria-hidden="true"></div>
-        </div>
-        <div id="hero-bento" class="dash-hero-widgets" aria-label="Live preview">
-          <div class="dash-widget skeleton-card"></div>
-          <div class="dash-widget skeleton-card"></div>
-          <div class="dash-widget skeleton-card"></div>
-          <div class="dash-widget skeleton-card"></div>
-        </div>
-      </div>
-    </section>
-
-    <main class="app-main dash-main">
-      <p class="refresh-line hidden" id="refresh-line" aria-hidden="true">Checking last update…</p>
-
-      <section id="daily-board" class="ntg-daily-board" aria-label="Today's board">
-        <header class="dash-page-header">
-          <div>
-            <h2>Today's Board</h2>
-            <p class="ntg-daily-board-date" id="daily-board-date"></p>
-            <p class="dash-page-kicker" id="daily-board-updated"></p>
-          </div>
-        </header>
-        <div id="daily-board-sports" class="ntg-quick-filters" aria-label="Active sports"></div>
-        <div id="daily-board-watchlist" class="dash-panel" hidden></div>
-      </section>
-
-      <section id="featured-edge" class="ntg-featured hidden" aria-label="Featured model edge"></section>
-
-      <section id="home-top-props-wrap" class="dash-panel" aria-label="Top player props">
-        <header class="dash-panel-head">
-          <h2>Top player props</h2>
-          <a href="/props" class="dash-link-more">View all player props →</a>
-        </header>
-        <div id="home-props-sports" class="ntg-quick-filters" role="tablist" aria-label="Top props sport">
-          <button type="button" class="sport-pill sport-pill-active" data-home-prop-sport="mlb">MLB</button>
-          <button type="button" class="sport-pill" data-home-prop-sport="nfl">NFL</button>
-        </div>
-        <div id="home-top-props" class="dash-bets-list">
-          <div class="skeleton-card dash-skeleton-row"></div>
-        </div>
-      </section>
-
-      <section class="dash-metrics" aria-label="Today's metrics">
-        <div id="today-glance">
-          <div class="dash-metrics-grid">
-            <div class="dash-metric skeleton-card"></div>
-            <div class="dash-metric skeleton-card"></div>
-            <div class="dash-metric skeleton-card"></div>
-            <div class="dash-metric skeleton-card"></div>
+    <div id="home-landing" class="hl-page">
+      <section class="hl-hero" aria-label="NTG Sports">
+        <div class="hl-hero-bg" aria-hidden="true">
+          <div class="hl-hero-bg-photo"></div>
+          <div class="hl-hero-bg-grid"></div>
+          <div class="hl-hero-bg-glow"></div>
+          <div class="hl-hero-athletes">
+            <svg class="hl-athlete hl-athlete-nfl" viewBox="0 0 120 220" fill="currentColor"><path d="M60 18c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm-2 32h4l8 22 18 8-4 8-16-6-6 20 22 36-8 6-18-32-6 18 16 40-10 4-16-42-8 20-20 8-4-8 22-10 10-48-14-8 4-8 16 8z"/></svg>
+            <svg class="hl-athlete hl-athlete-mlb" viewBox="0 0 120 220" fill="currentColor"><path d="M52 16c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm8 34 10 8 28-24 6 6-26 28 8 18 24 10-4 8-26-8-16 36 22 28-8 6-20-28-10 22h-10l6-34-18-22 6-8 16 16 8-20z"/></svg>
+            <svg class="hl-athlete hl-athlete-nba" viewBox="0 0 120 220" fill="currentColor"><path d="M58 14c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm-4 34h8l6 20 20-8 4 8-18 10 8 22 22 8-4 8-22-6-12 28 16 34-8 4-16-34-8 16-18 6-4-8 20-10 10-46-16-10z"/></svg>
           </div>
         </div>
-      </section>
-
-      <section id="very-strong-props-wrap" class="dash-gold-band hidden" aria-label="Very strong props">
-        <div class="dash-gold-band-inner">
-          <header class="dash-gold-head">
-            <span class="dash-gold-icon" aria-hidden="true"><svg class="dash-icon-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.9L22 10l-5.5 4.7L18.5 22 12 18.3 5.5 22l2-7.3L2 10l7.1-1.1L12 2z"/></svg></span>
-            <h2>Very Strong · 100% Form</h2>
-            <a href="/props" class="dash-link-more">View all →</a>
-          </header>
-          <div id="very-strong-props" class="dash-gold-cards"></div>
-        </div>
-      </section>
-
-      <section class="dash-grid" aria-label="Today's board">
-        <div class="dash-col dash-col-left">
-          <article class="dash-panel">
-            <header class="dash-panel-head">
-              <h2>Best Bets Today</h2>
-              <span class="dash-panel-tag">Top player props</span>
-            </header>
-            <div id="best-bets" class="dash-bets-list">
-              <div class="skeleton-card dash-skeleton-row"></div>
+        <div class="hl-wrap hl-hero-inner">
+          <div class="hl-hero-copy">
+            <p class="hl-kicker">NTG Sports</p>
+            <h1>
+              <span class="hl-display">Data. Models. Edges.</span>
+              <span class="hl-display hl-display-accent">Win More.</span>
+            </h1>
+            <p class="hl-hero-lead">Advanced analytics and real-time data to give you the edge every day.</p>
+            <div class="hl-hero-actions">
+              <a class="ntg-btn ntg-btn-primary hl-btn-primary" href="#todays-top-edges">View today's top edges</a>
+              <a class="ntg-btn ntg-btn-ghost hl-btn-secondary" href="/mlb">Explore matchups</a>
             </div>
-          </article>
-
-          <article class="dash-panel dash-panel-parlay">
-            <header class="dash-panel-head">
-              <h2>Prop Parlay Builder</h2>
-              <span class="dash-panel-tag">Suggested 3-leg</span>
-            </header>
-            <div id="home-parlay-preview" class="dash-parlay-preview">
-              <p class="dash-parlay-empty">Add props from game pages to build a slip.</p>
-            </div>
-          </article>
+          </div>
+          <aside id="hl-performance" class="hl-perf" aria-label="Model performance">
+            <div class="hl-skel hl-skel-perf" id="HeroPerformanceSkeleton" aria-hidden="true"></div>
+          </aside>
         </div>
+      </section>
 
-        <div class="dash-col dash-col-right">
-          <article class="dash-panel">
-            <header class="dash-panel-head dash-panel-head-live">
-              <div class="dash-panel-head-left">
-                <h2>Live Board</h2>
-                <span id="dash-live-head-badge" class="dash-live-head-badge dash-live-head-badge--idle"><span class="dash-live-pulse" aria-hidden="true"></span> LIVE</span>
+      <section class="hl-strip" aria-label="Platform capabilities">
+        <div class="hl-wrap hl-strip-grid">
+          <div class="hl-strip-item">
+            <span class="hl-strip-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V5h4v14H4zm6 0V9h4v10h-4zm6 0v-7h4v7h-4z"/></svg>
+            </span>
+            <div>
+              <h2>Advanced Models</h2>
+              <p>Sport-specific game and player models across MLB, NFL, NBA, CFB, and UFC.</p>
+            </div>
+          </div>
+          <div class="hl-strip-item">
+            <span class="hl-strip-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v3M12 18v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M3 12h3M18 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/><circle cx="12" cy="12" r="4"/></svg>
+            </span>
+            <div>
+              <h2>Real-Time Data</h2>
+              <p>Live scores and scheduled odds refresh from the books we already track.</p>
+            </div>
+          </div>
+          <div class="hl-strip-item">
+            <span class="hl-strip-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 14l5 5L20 6"/></svg>
+            </span>
+            <div>
+              <h2>Proven Results</h2>
+              <p>Settled pick tracking on Performance — only real recorded outcomes.</p>
+            </div>
+          </div>
+          <div class="hl-strip-item">
+            <span class="hl-strip-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2.6 6.4L21 10l-5 4.2L17.5 21 12 17.6 6.5 21 8 14.2 3 10l6.4-.6L12 3z"/></svg>
+            </span>
+            <div>
+              <h2>Built for Winners</h2>
+              <p>Save games and props to My Picks and follow the original line to the result.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main class="hl-main">
+        <div class="hl-wrap hl-board">
+          <section id="todays-top-edges" class="hl-panel hl-edges-panel" aria-label="Today's top edges">
+            <header class="hl-section-head">
+              <div class="hl-section-title">
+                <svg class="hl-star" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2l2.9 6.9L22 10l-5.5 4.7L18.5 22 12 18.3 5.5 22l2-7.3L2 10l7.1-1.1L12 2z"/></svg>
+                <h2>Today's Top Edges</h2>
               </div>
-              <a href="/mlb" class="dash-link-more">View All ›</a>
+              <a class="hl-link-more" href="/props">View all</a>
             </header>
-            <div id="home-scores-rail" class="dash-live-list">
-              <div class="skeleton-card dash-skeleton-row"></div>
+            <div id="hl-top-edges" class="hl-edges">
+              <div class="hl-skel hl-skel-edges" id="TopEdgesSkeleton" aria-hidden="true"></div>
             </div>
-          </article>
+          </section>
 
-          <article class="dash-panel dash-panel-perf">
-            <header class="dash-panel-head">
-              <h2>Model Performance</h2>
-              <a href="/performance" class="dash-link-more">Full report →</a>
+          <aside class="hl-side">
+            <section class="hl-panel hl-games-panel" aria-label="Today's games">
+              <header class="hl-section-head">
+                <h2>Today's Games</h2>
+                <a class="hl-link-more" href="/mlb">View slate</a>
+              </header>
+              <div id="hl-game-filters" class="hl-filters" role="tablist" aria-label="Sports"></div>
+              <div id="hl-games" class="hl-games">
+                <div class="hl-skel hl-skel-games" id="GamesSkeleton" aria-hidden="true"></div>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        <div class="hl-wrap hl-lower">
+          <section class="hl-panel hl-insights-panel" aria-label="Insights and breakdown">
+            <header class="hl-section-head">
+              <h2>Insights &amp; Breakdown</h2>
             </header>
-            <div id="home-performance" class="dash-perf-body">
-              <p class="dash-perf-loading">Loading performance…</p>
+            <div id="hl-insights" class="hl-insights">
+              <div class="hl-skel hl-skel-insights" id="InsightsSkeleton" aria-hidden="true"></div>
             </div>
-          </article>
-        </div>
-      </section>
+            <div id="hl-markets" class="hl-markets" hidden></div>
+          </section>
 
-      <section class="dash-edge-section" aria-label="The edge">
-        <header class="dash-edge-head">
-          <span class="dash-edge-bolt" aria-hidden="true">⚡</span>
-          <div>
-            <h2>The Edge</h2>
-            <p class="dash-edge-sub">Top Model Edges</p>
-          </div>
-        </header>
-        <div class="dash-edge-scroll-wrap">
-          <div id="edge-scroll" class="dash-edge-track">
-            <p class="dash-edge-empty">Loading picks…</p>
-          </div>
+          <aside class="hl-panel hl-picks-panel" aria-label="My Picks">
+            <div id="hl-picks">
+              <div class="hl-skel hl-skel-picks" id="MyPicksSkeleton" aria-hidden="true"></div>
+            </div>
+          </aside>
         </div>
-      </section>
+      </main>
+    </div>
 
-      <div id="best-props" class="hidden" aria-hidden="true"></div>
-      <div id="watched-section" class="hidden"></div>
-    </main>
+    <footer class="site-footer hl-footer" aria-label="Site footer">
+      <div class="hl-wrap hl-footer-inner">
+        <p id="hl-live-status" class="hl-live-status">Checking updates…</p>
+        <nav class="hl-footer-nav" aria-label="Footer links">
+          <a href="/methodology">Methodology</a>
+          <a href="/performance">Performance</a>
+          <a href="/install">Install app</a>
+          <a href="/updates">Updates</a>
+        </nav>
+      </div>
+    </footer>
   </div>
   <script src="/static/ntg-intro.js?v=20260740"></script>
   <script src="/static/design.js?v=20260816"></script>
   <script src="/static/player_prop_modal.js?v=20260740"></script>
-  <script src="/static/home-dashboard.js?v=20260822"></script>
-  <script src="/static/app.js?v=20260822"></script>
+  <script src="/static/home-landing.js?v=20260831"></script>
+  <script src="/static/app.js?v=20260830"></script>
   <script>
     if (typeof initDesignSystem === "function") initDesignSystem();
-    if (typeof hydrateHomeFromEmbeddedData === "function") {
-      setTimeout(function () {
-        var glance = document.getElementById("today-glance");
-        if (glance && glance.querySelector(".skeleton-card")) {
-          hydrateHomeFromEmbeddedData();
-        }
-      }, 400);
-    }
   </script>
 </body>
 </html>

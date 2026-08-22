@@ -28,26 +28,34 @@ def test_home_page():
     assert response.status_code == 200
     text = response.text
     assert "NTG Sports" in text
-    assert "home-dashboard" in text
-    assert "sport-pills" in text
+    assert "home-landing" in text
     assert "home-v2" in text
-    assert 'id="today-glance"' in text
-    assert 'id="best-bets"' in text
-    assert 'id="hero-bento"' in text
-    assert 'id="edge-scroll"' in text
-    assert 'id="home-parlay-preview"' in text
-    assert 'id="home-performance"' in text
-    assert 'id="home-scores-rail"' in text
+    assert 'id="home-landing"' in text
+    assert 'id="todays-top-edges"' in text
+    assert 'id="hl-performance"' in text
+    assert 'id="hl-top-edges"' in text
+    assert 'id="hl-games"' in text
+    assert 'id="hl-insights"' in text
+    assert 'id="hl-picks"' in text
     assert 'id="news-list"' not in text
-    assert "home-v2.css" in text
+    assert "home-landing.css" in text
     assert "ntg-system.css" in text
-    assert "home-dashboard.js" in text
-    assert "See the edge before the line moves" in text
-    assert "View today's slate" in text
-    assert "Prop Parlay Builder" in text
-    assert 'id="featured-edge"' in text
-    assert 'id="home-top-props"' in text
-    assert 'id="daily-board"' in text
+    assert "home-landing.js" in text
+    assert "Data. Models. Edges." in text
+    assert "Win More." in text
+    assert "View today's top edges" in text
+    assert "Explore matchups" in text
+    assert "Today's Top Edges" in text
+    assert "Today's Games" in text
+    assert "Insights" in text
+    assert "My Picks" in text
+    assert "Learn &amp; Improve" not in text
+    assert "Edge by Sport" not in text
+    assert "Why NTG Has the Edge" not in text
+    assert 'id="today-glance"' not in text
+    assert 'id="best-bets"' not in text
+    assert "Prop Parlay Builder" not in text
+    assert 'id="daily-board"' not in text
 
 
 def test_mlb_slate_page():

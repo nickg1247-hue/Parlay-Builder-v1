@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260828";
+const NTG_ASSET_V = "20260830";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -24,7 +24,7 @@ function getPageData() {
 window.getPageData = getPageData;
 
 (function ensureChromeStylesEarly() {
-  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css", "home-landing.css"]) {
     const existing = document.querySelector(`link[href*="${file}"]`);
     const href = `/static/${file}?v=${NTG_ASSET_V}`;
     if (existing) {
@@ -268,7 +268,7 @@ function formatRefreshStrip(status) {
 
 function ensureSiteStyles() {
   const v = NTG_ASSET_V;
-  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css"]) {
+  for (const file of ["brand.css", "design.css", "home-v2.css", "ntg-system.css", "home-landing.css"]) {
     const existing = document.querySelector(`link[href*="${file}"]`);
     const href = `/static/${file}?v=${v}`;
     if (existing) {
@@ -320,7 +320,7 @@ function ntgShowLiveTicker() {
 }
 
 function applyShellBodyClasses() {
-  if (document.querySelector(".app-shell") || document.body.classList.contains("home-dashboard")) {
+  if (document.querySelector(".app-shell") || document.body.classList.contains("home-dashboard") || document.body.classList.contains("home-landing")) {
     document.body.classList.add("ntg-shell", "home-v2");
   }
   document.body.classList.toggle("ntg-ticker-visible", ntgShowLiveTicker());
@@ -3358,7 +3358,11 @@ function initNTGSplash(splashOptions = {}) {
 }
 
 function isHomePage() {
-  return Boolean(document.getElementById("today-glance"));
+  return Boolean(document.getElementById("today-glance") || document.getElementById("home-landing"));
+}
+
+function isHomeLanding() {
+  return Boolean(document.getElementById("home-landing"));
 }
 
 function setHomeLoadProgress(progress, value, status) {
@@ -3581,6 +3585,12 @@ function showBuildBadgeFromData(data) {
 }
 
 async function loadHomePageCritical(progress) {
+  if (isHomeLanding()) {
+    if (typeof window.hydrateHomeLanding === "function") {
+      return window.hydrateHomeLanding(progress);
+    }
+    return { landing: true };
+  }
   const els = homePageElements();
   if (!els.glance) return null;
 
@@ -3643,6 +3653,7 @@ async function loadHomePageCritical(progress) {
 }
 
 async function loadHomePageDeferred(core) {
+  if (isHomeLanding()) return;
   if (!core?.summary || !core?.scores) return;
   const embedded = getPageData();
   if (embedded?.kind === "home") return;
@@ -3775,13 +3786,14 @@ function sportPrimaryIsActive(href, path) {
 
 function renderDashboardPrimaryNav(container, path) {
   const specs = [
-    { href: "/", label: "Dashboard" },
+    { href: "/", label: "Overview" },
     { href: "/props", label: "Player Props" },
     { href: "/mlb", label: "MLB" },
     { href: "/nfl", label: "NFL" },
     { href: "/nba", label: "NBA" },
     { href: "/cfb", label: "CFB" },
     { href: "/ufc", label: "UFC" },
+    { href: "/performance", label: "Performance" },
   ];
   container.replaceChildren();
   container.setAttribute("aria-label", "Primary");
@@ -5115,11 +5127,13 @@ function bootNTGSplash() {
   const homeProgress = { value: 0, status: "Starting up…" };
   const embeddedPage = getPageData();
   const homeCritical =
-    isHomePage() && embeddedPage?.kind === "home"
-      ? hydrateHomeFromPageData(embeddedPage, homeProgress)
-      : isHomePage()
-        ? loadHomePageCritical(homeProgress)
-        : Promise.resolve(null);
+    isHomeLanding()
+      ? loadHomePageCritical(homeProgress)
+      : isHomePage() && embeddedPage?.kind === "home"
+        ? hydrateHomeFromPageData(embeddedPage, homeProgress)
+        : isHomePage()
+          ? loadHomePageCritical(homeProgress)
+          : Promise.resolve(null);
   const splashReady = Promise.all([ensureAppReady(), homeCritical]).then(() => {
     initSiteChrome();
   });

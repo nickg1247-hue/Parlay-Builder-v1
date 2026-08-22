@@ -71,7 +71,7 @@ def test_test_path_sets_preview_cookie_then_homepage(maintenance_on):
 
     home = client.get("/", follow_redirects=False)
     assert home.status_code == 200
-    assert "home-dashboard" in home.text
+    assert "home-landing" in home.text
 
     mlb = client.get("/mlb", follow_redirects=False)
     assert mlb.status_code == 200
@@ -112,7 +112,7 @@ def test_deleting_flag_restores_public_site(tmp_path: Path, monkeypatch):
     flag.unlink()
     restored = client.get("/", follow_redirects=False)
     assert restored.status_code == 200
-    assert "home-dashboard" in restored.text
+    assert "home-landing" in restored.text
 
 
 def test_api_and_health_stay_up_during_maintenance(maintenance_on):
@@ -160,7 +160,7 @@ def test_admin_session_bypasses_construction(maintenance_on, auth_env):
     assert login.status_code == 200
     home = client.get("/", follow_redirects=False)
     assert home.status_code == 200
-    assert "home-dashboard" in home.text
+    assert "home-landing" in home.text
 
 
 def test_api_toggles_construction(tmp_path: Path, monkeypatch):
@@ -188,7 +188,7 @@ def test_api_toggles_construction(tmp_path: Path, monkeypatch):
     assert not flag.is_file()
     restored = client.get("/", follow_redirects=False)
     assert restored.status_code == 200
-    assert "home-dashboard" in restored.text
+    assert "home-landing" in restored.text
 
 
 def test_api_toggle_requires_admin_when_auth_on(maintenance_on, auth_env):
