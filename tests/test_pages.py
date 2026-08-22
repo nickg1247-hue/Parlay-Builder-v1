@@ -31,27 +31,28 @@ def test_home_page():
     assert "home-landing" in text
     assert "home-v2" in text
     assert 'id="home-landing"' in text
-    assert 'id="todays-top-edges"' in text
     assert 'id="hl-performance"' in text
-    assert 'id="hl-top-edges"' in text
+    assert 'id="hl-live-summary"' in text
+    assert 'id="hl-sports"' in text
+    assert 'id="hl-intel"' in text
     assert 'id="hl-games"' in text
-    assert 'id="hl-insights"' in text
     assert 'id="hl-picks"' in text
     assert 'id="news-list"' not in text
     assert "home-landing.css" in text
     assert "ntg-system.css" in text
     assert "home-landing.js" in text
-    assert "Data. Models. Edges." in text
-    assert "Win More." in text
-    assert "View today's top edges" in text
-    assert "Explore matchups" in text
-    assert "Today's Top Edges" in text
-    assert "Today's Games" in text
-    assert "Insights" in text
-    assert "My Picks" in text
+    assert "See the edge" in text
+    assert "before the line moves." in text
+    assert "Explore today's slate" in text
+    assert "Today on NTG" in text
+    assert "Today's Intelligence" in text
+    assert "Live Board" in text
+    assert "The NTG Edge" in text
+    assert "Your NTG" in text
     assert "Learn &amp; Improve" not in text
     assert "Edge by Sport" not in text
     assert "Why NTG Has the Edge" not in text
+    assert "Data. Models. Edges." not in text
     assert 'id="today-glance"' not in text
     assert 'id="best-bets"' not in text
     assert "Prop Parlay Builder" not in text

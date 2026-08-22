@@ -943,6 +943,11 @@
   function initPropsPlayerSearch() {
     const input = document.getElementById("props-player-search");
     if (!input) return;
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) {
+      input.value = q;
+      applyPlayerSearch();
+    }
     input.addEventListener("input", applyPlayerSearch);
   }
 

@@ -1,6 +1,6 @@
 /** Shared helpers for ESPN-style shell (Phase A). */
 
-const NTG_ASSET_V = "20260830";
+const NTG_ASSET_V = "20260902";
 const NTG_LOGO_SRC = `/static/assets/ntg-logo.png?v=${NTG_ASSET_V}`;
 window.NTG_LOGO_SRC = NTG_LOGO_SRC;
 
@@ -3785,16 +3785,33 @@ function sportPrimaryIsActive(href, path) {
 }
 
 function renderDashboardPrimaryNav(container, path) {
-  const specs = [
-    { href: "/", label: "Overview" },
-    { href: "/props", label: "Player Props" },
-    { href: "/mlb", label: "MLB" },
-    { href: "/nfl", label: "NFL" },
-    { href: "/nba", label: "NBA" },
-    { href: "/cfb", label: "CFB" },
-    { href: "/ufc", label: "UFC" },
-    { href: "/performance", label: "Performance" },
-  ];
+  const landing = document.body.classList.contains("home-landing");
+  const specs = landing
+    ? [
+        { href: "/", label: "Overview", isActive: (p) => p === "/" },
+        { href: "/props", label: "Player Props" },
+        {
+          href: "/mlb",
+          label: "Game Matchups",
+          isActive: (p) =>
+            ["/mlb", "/nfl", "/nba", "/cfb", "/ufc"].some(
+              (s) => (p === s || p.startsWith(`${s}/`)) && !p.startsWith("/mlb/props")
+            ),
+        },
+        { href: "/watchlist", label: "My Picks" },
+        { href: "/performance", label: "Performance" },
+        { href: "/my-team", label: "Player Profiles" },
+      ]
+    : [
+        { href: "/", label: "Overview" },
+        { href: "/props", label: "Player Props" },
+        { href: "/mlb", label: "MLB" },
+        { href: "/nfl", label: "NFL" },
+        { href: "/nba", label: "NBA" },
+        { href: "/cfb", label: "CFB" },
+        { href: "/ufc", label: "UFC" },
+        { href: "/performance", label: "Performance" },
+      ];
   container.replaceChildren();
   container.setAttribute("aria-label", "Primary");
   specs.forEach((spec) => {
@@ -3802,7 +3819,8 @@ function renderDashboardPrimaryNav(container, path) {
     link.className = "main-nav-link";
     link.href = spec.href;
     link.textContent = spec.label;
-    if (sportPrimaryIsActive(spec.href, path)) link.classList.add("main-nav-link-active");
+    const active = spec.isActive ? spec.isActive(path) : sportPrimaryIsActive(spec.href, path);
+    if (active) link.classList.add("main-nav-link-active");
     container.appendChild(link);
   });
 }
@@ -3909,7 +3927,19 @@ function initUtilityNav(nav, path) {
   nav.setAttribute("aria-label", "Account & tools");
   nav.classList.add("app-nav-utility");
 
+  const landing = document.body.classList.contains("home-landing");
   const userAuth = window.pbUserAuth || {};
+
+  if (landing) {
+    const search = document.createElement("form");
+    search.className = "hl-nav-search";
+    search.action = "/props";
+    search.method = "get";
+    search.setAttribute("role", "search");
+    search.innerHTML = `<label class="sr-only" for="hl-nav-search-q">Search</label><input id="hl-nav-search-q" name="q" type="search" placeholder="Search" autocomplete="off" />`;
+    nav.appendChild(search);
+  }
+
   if (pbFeatures.props_require_verified_user) {
     const userEl = document.createElement("span");
     userEl.className = "app-nav-user";
@@ -3929,17 +3959,19 @@ function initUtilityNav(nav, path) {
     }
   }
 
-  const watchLink = document.createElement("a");
-  watchLink.href = "/watchlist";
-  watchLink.textContent = "My Picks";
-  if (path === "/watchlist" || path.startsWith("/watchlist")) watchLink.classList.add("active");
-  nav.appendChild(watchLink);
+  if (!landing) {
+    const watchLink = document.createElement("a");
+    watchLink.href = "/watchlist";
+    watchLink.textContent = "My Picks";
+    if (path === "/watchlist" || path.startsWith("/watchlist")) watchLink.classList.add("active");
+    nav.appendChild(watchLink);
 
-  const updatesLink = document.createElement("a");
-  updatesLink.href = "/updates";
-  updatesLink.textContent = "Updates";
-  if (path === "/updates") updatesLink.classList.add("active");
-  nav.appendChild(updatesLink);
+    const updatesLink = document.createElement("a");
+    updatesLink.href = "/updates";
+    updatesLink.textContent = "Updates";
+    if (path === "/updates") updatesLink.classList.add("active");
+    nav.appendChild(updatesLink);
+  }
 
   if (!nav.querySelector('a[href="/signin"]') && !nav.querySelector(".app-nav-user")) {
     const accountLink = document.createElement("a");
