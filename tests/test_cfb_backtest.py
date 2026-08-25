@@ -29,6 +29,11 @@ def test_walk_forward_backtest_smoke(tmp_path, monkeypatch):
     assert "feature_effects" in report
     assert report["feature_effects"]["logistic_importance_avg"]
     assert out.exists()
+    assert report["bam"]["method"] == "expanding_window_walk_forward_oos"
+    assert report["bam"]["overall"]["metrics"]["count"] == sum(
+        fold["moneyline"]["games"] for fold in report["folds"]
+    )
+    assert all(fold["bam"]["season"] == fold["holdout_season"] for fold in report["folds"])
 
 
 def test_backtest_missing_data(tmp_path, monkeypatch):

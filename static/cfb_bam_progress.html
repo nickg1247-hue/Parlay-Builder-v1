@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/static/assets/ntg-logo.png?v=20260825" type="image/png"><title>CFB BAM Progress — NTG Sports</title>
+<link rel="stylesheet" href="/static/style.css?v=20260816"><link rel="stylesheet" href="/static/app.css?v=20260816">
+<link rel="stylesheet" href="/static/brand.css?v=20260816"><link rel="stylesheet" href="/static/design.css?v=20260816">
+<link rel="stylesheet" href="/static/home-v2.css?v=20260816"><link rel="stylesheet" href="/static/cfb_bam_progress.css?v=20260825"></head>
+<body class="ntg-shell home-v2 board-cfb" data-sport="cfb"><div class="app-shell">
+<header class="app-topbar dash-topbar"><div class="app-nav-row dash-nav-row"><a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home"><img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260816" alt="NTG Sports" width="56" height="56"></a><nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav><nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav></div><div class="dash-subnav"><div class="sport-pills dash-sport-pills" aria-label="Sports"></div></div></header>
+<main class="app-main dash-main board-main"><header class="dash-page-header"><div><h1>CFB BAM progress</h1><p class="dash-page-kicker"><a href="/cfb">← Slate</a> · leakage-safe historical evaluation</p></div><span class="dash-page-kicker" id="bam-meta">Loading saved report…</span></header>
+<div class="banner">BAM tiers are fixed evaluation bands, separate from live confidence labels and confidence cuts. Historical results do not guarantee future outcomes.</div>
+<div class="loading empty-state" id="bam-loading"><div class="spinner"></div><p>Loading walk-forward results…</p></div>
+<section class="error error-state hidden" id="bam-error" role="alert"></section>
+<section class="empty-state hidden" id="bam-missing"><h2>No saved BAM report</h2><p>Generate the walk-forward CFB report before viewing progress.</p></section>
+<div class="hidden" id="bam-content"><section class="bam-overview" id="bam-overview"></section>
+<section class="board-section ntg-card"><div class="bam-section-head"><div><h2>Immutable BAM tiers</h2><p class="simple-note">2022 is training-only. Every scored record is out-of-sample from 2023–2025.</p></div><label>Season <select id="bam-season"><option value="overall">Overall</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option></select></label></div><div class="bam-tier-grid" id="bam-tiers"></div></section>
+<section class="board-section ntg-card"><h2>Reliability</h2><p class="simple-note">Ten fixed 5-point confidence bins. Samples below 30 are shown and flagged.</p><div class="table-wrap"><table><thead><tr><th>Band</th><th>Predicted</th><th>Won</th><th>Games</th><th>Gap</th></tr></thead><tbody id="bam-reliability"></tbody></table></div></section></div>
+</main></div><script src="/static/app.js?v=20260819"></script><script src="/static/cfb_bam_progress.js?v=20260825"></script></body></html>
