@@ -31,6 +31,7 @@ from app.models.cfb_baseline import (
 )
 from app.models.cfb_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD
 from app.models.cfb_totals import actual_went_over, prob_over_normal
+from app.services.cfb_bam import build_bam_report
 from app.odds.spread_math import (
     model_prob_away_cover,
     model_prob_home_cover,
@@ -137,6 +138,11 @@ def _moneyline_fold(
                 "home_pct": float(prob) * 100.0,
                 "away_pct": (1.0 - float(prob)) * 100.0,
                 "correct": int(int(prob >= 0.5) == int(won)),
+                "predicted_probability": float(prob),
+                "outcome": int(won),
+                "confidence_probability": max(float(prob), 1.0 - float(prob)),
+                "won": int(int(prob >= 0.5) == int(won)),
+                "source": "walk_forward_oos",
             }
         )
 
@@ -391,11 +397,9 @@ def run_cfb_walk_forward_backtest(
             apply_categories,
             category_proof,
             fit_cfb_category_cuts,
-            save_category_cuts,
         )
 
         cuts = fit_cfb_category_cuts(fit_games)
-        save_category_cuts(cuts)
         stamped = apply_categories(fit_games, cuts)
         confidence_block = {
             "fit_seasons": [2024, 2025],
@@ -403,6 +407,11 @@ def run_cfb_walk_forward_backtest(
             "cuts": cuts.get("cuts"),
             "proof": category_proof(stamped, cuts),
         }
+
+    bam = build_bam_report(labeled_games)
+    bam_by_season = {row["season"]: row for row in bam["by_season"]}
+    for fold in folds:
+        fold["bam"] = bam_by_season.get(fold["holdout_season"])
 
     report: dict[str, Any] = {
         "generated_at": _iso_now(),
@@ -437,6 +446,7 @@ def run_cfb_walk_forward_backtest(
             ),
         },
         "confidence": confidence_block,
+        "bam": bam,
         "feature_effects": {
             "logistic_importance_avg": feature_rank,
             "univariate_correlation": univariate[:15],

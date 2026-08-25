@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T03:25:57.455074+00:00",
+  "generated_at": "2026-08-25T23:31:20.017900+00:00",
   "status": "ok",
   "method": "walk_forward_expanding_window",
   "description": "Each holdout season: train on all prior seasons only; features built chronologically with no same-day leakage; compare predictions to actual results.",
@@ -40,6 +40,231 @@
         "total_mae": 13.759,
         "ou_picks_made": 868,
         "ou_pick_accuracy_pct": 58.76
+      },
+      "bam": {
+        "season": 2023,
+        "metrics": {
+          "count": 868,
+          "wins": 644,
+          "losses": 224,
+          "accuracy_pct": 74.19,
+          "brier_score": 0.1726,
+          "log_loss": 0.5183,
+          "mean_confidence_pct": 77.63,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": -3.44,
+          "wilson_95_pct": [
+            71.18,
+            76.99
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 140,
+            "wins": 70,
+            "losses": 70,
+            "accuracy_pct": 50.0,
+            "brier_score": 0.2566,
+            "log_loss": 0.7064,
+            "mean_confidence_pct": 54.9,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": -4.9,
+            "wilson_95_pct": [
+              41.83,
+              58.17
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 216,
+            "wins": 140,
+            "losses": 76,
+            "accuracy_pct": 64.81,
+            "brier_score": 0.234,
+            "log_loss": 0.6622,
+            "mean_confidence_pct": 67.43,
+            "target_pct": 60.0,
+            "goal_gap_points": 4.81,
+            "confidence_calibration_gap_points": -2.62,
+            "wilson_95_pct": [
+              58.24,
+              70.87
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 286,
+            "wins": 227,
+            "losses": 59,
+            "accuracy_pct": 79.37,
+            "brier_score": 0.1608,
+            "log_loss": 0.4987,
+            "mean_confidence_pct": 82.89,
+            "target_pct": 75.0,
+            "goal_gap_points": 4.37,
+            "confidence_calibration_gap_points": -3.51,
+            "wilson_95_pct": [
+              74.31,
+              83.66
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 226,
+            "wins": 207,
+            "losses": 19,
+            "accuracy_pct": 91.59,
+            "brier_score": 0.0769,
+            "log_loss": 0.289,
+            "mean_confidence_pct": 94.8,
+            "target_pct": 95.0,
+            "goal_gap_points": -3.41,
+            "confidence_calibration_gap_points": -3.21,
+            "wilson_95_pct": [
+              87.24,
+              94.55
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 41,
+              "predicted_probability_pct": 6.19,
+              "empirical_win_rate_pct": 9.76,
+              "gap_points": 3.57,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 65,
+              "predicted_probability_pct": 14.86,
+              "empirical_win_rate_pct": 24.62,
+              "gap_points": 9.76,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 58,
+              "predicted_probability_pct": 25.36,
+              "empirical_win_rate_pct": 32.76,
+              "gap_points": 7.4,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 69,
+              "predicted_probability_pct": 34.86,
+              "empirical_win_rate_pct": 43.48,
+              "gap_points": 8.62,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 45.02,
+              "empirical_win_rate_pct": 50.82,
+              "gap_points": 5.8,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 79,
+              "predicted_probability_pct": 54.84,
+              "empirical_win_rate_pct": 50.63,
+              "gap_points": -4.21,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 85,
+              "predicted_probability_pct": 65.56,
+              "empirical_win_rate_pct": 74.12,
+              "gap_points": 8.55,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 86,
+              "predicted_probability_pct": 75.86,
+              "empirical_win_rate_pct": 67.44,
+              "gap_points": -8.42,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 139,
+              "predicted_probability_pct": 85.01,
+              "empirical_win_rate_pct": 85.61,
+              "gap_points": 0.61,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 185,
+              "predicted_probability_pct": 95.02,
+              "empirical_win_rate_pct": 91.89,
+              "gap_points": -3.13,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 5.3
+        }
       }
     },
     {
@@ -73,6 +298,231 @@
         "total_mae": 13.379,
         "ou_picks_made": 873,
         "ou_pick_accuracy_pct": 54.87
+      },
+      "bam": {
+        "season": 2024,
+        "metrics": {
+          "count": 873,
+          "wins": 689,
+          "losses": 184,
+          "accuracy_pct": 78.92,
+          "brier_score": 0.1448,
+          "log_loss": 0.4454,
+          "mean_confidence_pct": 80.86,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": -1.94,
+          "wilson_95_pct": [
+            76.09,
+            81.5
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 110,
+            "wins": 66,
+            "losses": 44,
+            "accuracy_pct": 60.0,
+            "brier_score": 0.2397,
+            "log_loss": 0.6725,
+            "mean_confidence_pct": 55.36,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": 4.64,
+            "wilson_95_pct": [
+              50.66,
+              68.67
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 171,
+            "wins": 106,
+            "losses": 65,
+            "accuracy_pct": 61.99,
+            "brier_score": 0.2291,
+            "log_loss": 0.6494,
+            "mean_confidence_pct": 67.44,
+            "target_pct": 60.0,
+            "goal_gap_points": 1.99,
+            "confidence_calibration_gap_points": -5.45,
+            "wilson_95_pct": [
+              54.52,
+              68.92
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 272,
+            "wins": 211,
+            "losses": 61,
+            "accuracy_pct": 77.57,
+            "brier_score": 0.174,
+            "log_loss": 0.5321,
+            "mean_confidence_pct": 83.29,
+            "target_pct": 75.0,
+            "goal_gap_points": 2.57,
+            "confidence_calibration_gap_points": -5.72,
+            "wilson_95_pct": [
+              72.25,
+              82.13
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 320,
+            "wins": 306,
+            "losses": 14,
+            "accuracy_pct": 95.62,
+            "brier_score": 0.0423,
+            "log_loss": 0.1845,
+            "mean_confidence_pct": 94.74,
+            "target_pct": 95.0,
+            "goal_gap_points": 0.63,
+            "confidence_calibration_gap_points": 0.89,
+            "wilson_95_pct": [
+              92.79,
+              97.38
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 53,
+              "predicted_probability_pct": 5.36,
+              "empirical_win_rate_pct": 7.55,
+              "gap_points": 2.18,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 68,
+              "predicted_probability_pct": 15.21,
+              "empirical_win_rate_pct": 29.41,
+              "gap_points": 14.2,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 59,
+              "predicted_probability_pct": 24.52,
+              "empirical_win_rate_pct": 18.64,
+              "gap_points": -5.88,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 42,
+              "predicted_probability_pct": 34.92,
+              "empirical_win_rate_pct": 40.48,
+              "gap_points": 5.56,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 64,
+              "predicted_probability_pct": 45.04,
+              "empirical_win_rate_pct": 39.06,
+              "gap_points": -5.97,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 46,
+              "predicted_probability_pct": 55.91,
+              "empirical_win_rate_pct": 58.7,
+              "gap_points": 2.78,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 77,
+              "predicted_probability_pct": 65.34,
+              "empirical_win_rate_pct": 53.25,
+              "gap_points": -12.09,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 60,
+              "predicted_probability_pct": 75.12,
+              "empirical_win_rate_pct": 71.67,
+              "gap_points": -3.46,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 137,
+              "predicted_probability_pct": 85.38,
+              "empirical_win_rate_pct": 81.75,
+              "gap_points": -3.63,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 267,
+              "predicted_probability_pct": 94.76,
+              "empirical_win_rate_pct": 96.25,
+              "gap_points": 1.5,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 4.82
+        }
       }
     },
     {
@@ -107,6 +557,231 @@
         "total_mae": 12.847,
         "ou_picks_made": 888,
         "ou_pick_accuracy_pct": 56.64
+      },
+      "bam": {
+        "season": 2025,
+        "metrics": {
+          "count": 888,
+          "wins": 729,
+          "losses": 159,
+          "accuracy_pct": 82.09,
+          "brier_score": 0.1269,
+          "log_loss": 0.3989,
+          "mean_confidence_pct": 80.27,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": 1.82,
+          "wilson_95_pct": [
+            79.44,
+            84.48
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 117,
+            "wins": 71,
+            "losses": 46,
+            "accuracy_pct": 60.68,
+            "brier_score": 0.2412,
+            "log_loss": 0.6755,
+            "mean_confidence_pct": 54.78,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": 5.91,
+            "wilson_95_pct": [
+              51.63,
+              69.06
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 185,
+            "wins": 123,
+            "losses": 62,
+            "accuracy_pct": 66.49,
+            "brier_score": 0.2127,
+            "log_loss": 0.6147,
+            "mean_confidence_pct": 67.58,
+            "target_pct": 60.0,
+            "goal_gap_points": 6.49,
+            "confidence_calibration_gap_points": -1.1,
+            "wilson_95_pct": [
+              59.41,
+              72.89
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 292,
+            "wins": 253,
+            "losses": 39,
+            "accuracy_pct": 86.64,
+            "brier_score": 0.1159,
+            "log_loss": 0.3919,
+            "mean_confidence_pct": 83.95,
+            "target_pct": 75.0,
+            "goal_gap_points": 11.64,
+            "confidence_calibration_gap_points": 2.69,
+            "wilson_95_pct": [
+              82.26,
+              90.07
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 294,
+            "wins": 282,
+            "losses": 12,
+            "accuracy_pct": 95.92,
+            "brier_score": 0.0384,
+            "log_loss": 0.16,
+            "mean_confidence_pct": 94.75,
+            "target_pct": 95.0,
+            "goal_gap_points": 0.92,
+            "confidence_calibration_gap_points": 1.17,
+            "wilson_95_pct": [
+              93.0,
+              97.65
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 56,
+              "predicted_probability_pct": 5.45,
+              "empirical_win_rate_pct": 8.93,
+              "gap_points": 3.48,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 75,
+              "predicted_probability_pct": 14.58,
+              "empirical_win_rate_pct": 18.67,
+              "gap_points": 4.09,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 50,
+              "predicted_probability_pct": 25.61,
+              "empirical_win_rate_pct": 20.0,
+              "gap_points": -5.61,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 63,
+              "predicted_probability_pct": 34.82,
+              "empirical_win_rate_pct": 31.75,
+              "gap_points": -3.07,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 56,
+              "predicted_probability_pct": 45.22,
+              "empirical_win_rate_pct": 41.07,
+              "gap_points": -4.15,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 54.77,
+              "empirical_win_rate_pct": 62.3,
+              "gap_points": 7.52,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 64.91,
+              "empirical_win_rate_pct": 45.9,
+              "gap_points": -19.0,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 74,
+              "predicted_probability_pct": 75.47,
+              "empirical_win_rate_pct": 86.49,
+              "gap_points": 11.01,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 154,
+              "predicted_probability_pct": 85.97,
+              "empirical_win_rate_pct": 90.91,
+              "gap_points": 4.93,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 238,
+              "predicted_probability_pct": 94.79,
+              "empirical_win_rate_pct": 97.06,
+              "gap_points": 2.26,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 5.56
+        }
       }
     }
   ],
@@ -129,7 +804,10 @@
         "lo": 50.0,
         "hi": 55.0
       },
-      "soft": null,
+      "soft": {
+        "lo": 55.0,
+        "hi": 62.5
+      },
       "hard": {
         "lo": 62.5,
         "hi": 88.5
@@ -156,20 +834,16 @@
       },
       {
         "category": "soft",
-        "favorite_range": null,
-        "games": 0,
-        "correct": 0,
-        "wrong": 0,
-        "hit_pct": null,
+        "favorite_range": "55\u201362.5%",
+        "lo": 55.0,
+        "hi": 62.5,
+        "games": 168,
+        "correct": 94,
+        "wrong": 74,
+        "hit_pct": 56.0,
         "floor_pct": 60,
         "meets_floor": false,
-        "note": "No favorite-% band with at least 25 games hit the 60% floor. Best tail: favorites >=98.5% went 86/87 (98.9%).",
-        "best_tail": {
-          "lo": 98.5,
-          "games": 87,
-          "correct": 86,
-          "hit_pct": 98.9
-        }
+        "note": "Favorites 55\u201362.5% went 94/168 (56.0%). Floor is 60%."
       },
       {
         "category": "hard",
@@ -196,6 +870,923 @@
         "floor_pct": 95,
         "meets_floor": true,
         "note": "Favorites 88.5\u2013100% went 678/710 (95.5%). Floor is 95%."
+      }
+    ]
+  },
+  "bam": {
+    "status": "ok",
+    "evaluation_only": true,
+    "immutable_tiers": true,
+    "method": "expanding_window_walk_forward_oos",
+    "training_only_seasons": [
+      2022
+    ],
+    "evaluation_seasons": [
+      2023,
+      2024,
+      2025
+    ],
+    "small_sample_threshold": 30,
+    "disclaimer": "Historical out-of-sample results describe past model performance and do not guarantee future outcomes.",
+    "overall": {
+      "metrics": {
+        "count": 2629,
+        "wins": 2062,
+        "losses": 567,
+        "accuracy_pct": 78.43,
+        "brier_score": 0.1479,
+        "log_loss": 0.4537,
+        "mean_confidence_pct": 79.6,
+        "target_pct": null,
+        "goal_gap_points": null,
+        "confidence_calibration_gap_points": -1.16,
+        "wilson_95_pct": [
+          76.82,
+          79.96
+        ],
+        "small_sample": false
+      },
+      "tiers": [
+        {
+          "key": "bam_1",
+          "label": "BAM 1",
+          "lower_pct": 50.0,
+          "upper_pct": 60.0,
+          "upper_inclusive": false,
+          "count": 367,
+          "wins": 207,
+          "losses": 160,
+          "accuracy_pct": 56.4,
+          "brier_score": 0.2466,
+          "log_loss": 0.6864,
+          "mean_confidence_pct": 55.0,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": 1.4,
+          "wilson_95_pct": [
+            51.29,
+            61.38
+          ],
+          "small_sample": false
+        },
+        {
+          "key": "bam_2",
+          "label": "BAM 2",
+          "lower_pct": 60.0,
+          "upper_pct": 75.0,
+          "upper_inclusive": false,
+          "count": 572,
+          "wins": 369,
+          "losses": 203,
+          "accuracy_pct": 64.51,
+          "brier_score": 0.2256,
+          "log_loss": 0.643,
+          "mean_confidence_pct": 67.48,
+          "target_pct": 60.0,
+          "goal_gap_points": 4.51,
+          "confidence_calibration_gap_points": -2.97,
+          "wilson_95_pct": [
+            60.5,
+            68.32
+          ],
+          "small_sample": false
+        },
+        {
+          "key": "bam_3",
+          "label": "BAM 3",
+          "lower_pct": 75.0,
+          "upper_pct": 90.0,
+          "upper_inclusive": false,
+          "count": 850,
+          "wins": 691,
+          "losses": 159,
+          "accuracy_pct": 81.29,
+          "brier_score": 0.1496,
+          "log_loss": 0.4727,
+          "mean_confidence_pct": 83.38,
+          "target_pct": 75.0,
+          "goal_gap_points": 6.29,
+          "confidence_calibration_gap_points": -2.09,
+          "wilson_95_pct": [
+            78.53,
+            83.77
+          ],
+          "small_sample": false
+        },
+        {
+          "key": "bam_4",
+          "label": "BAM 4",
+          "lower_pct": 90.0,
+          "upper_pct": 100.0,
+          "upper_inclusive": true,
+          "count": 840,
+          "wins": 795,
+          "losses": 45,
+          "accuracy_pct": 94.64,
+          "brier_score": 0.0503,
+          "log_loss": 0.204,
+          "mean_confidence_pct": 94.76,
+          "target_pct": 95.0,
+          "goal_gap_points": -0.36,
+          "confidence_calibration_gap_points": -0.12,
+          "wilson_95_pct": [
+            92.91,
+            95.97
+          ],
+          "small_sample": false
+        }
+      ],
+      "reliability": {
+        "bins": [
+          {
+            "bin": 1,
+            "lower_pct": 0.0,
+            "upper_pct": 10.0,
+            "upper_inclusive": false,
+            "count": 150,
+            "predicted_probability_pct": 5.62,
+            "empirical_win_rate_pct": 8.67,
+            "gap_points": 3.05,
+            "small_sample": false
+          },
+          {
+            "bin": 2,
+            "lower_pct": 10.0,
+            "upper_pct": 20.0,
+            "upper_inclusive": false,
+            "count": 208,
+            "predicted_probability_pct": 14.87,
+            "empirical_win_rate_pct": 24.04,
+            "gap_points": 9.17,
+            "small_sample": false
+          },
+          {
+            "bin": 3,
+            "lower_pct": 20.0,
+            "upper_pct": 30.0,
+            "upper_inclusive": false,
+            "count": 167,
+            "predicted_probability_pct": 25.14,
+            "empirical_win_rate_pct": 23.95,
+            "gap_points": -1.19,
+            "small_sample": false
+          },
+          {
+            "bin": 4,
+            "lower_pct": 30.0,
+            "upper_pct": 40.0,
+            "upper_inclusive": false,
+            "count": 174,
+            "predicted_probability_pct": 34.86,
+            "empirical_win_rate_pct": 38.51,
+            "gap_points": 3.65,
+            "small_sample": false
+          },
+          {
+            "bin": 5,
+            "lower_pct": 40.0,
+            "upper_pct": 50.0,
+            "upper_inclusive": false,
+            "count": 181,
+            "predicted_probability_pct": 45.09,
+            "empirical_win_rate_pct": 43.65,
+            "gap_points": -1.44,
+            "small_sample": false
+          },
+          {
+            "bin": 6,
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 186,
+            "predicted_probability_pct": 55.08,
+            "empirical_win_rate_pct": 56.45,
+            "gap_points": 1.37,
+            "small_sample": false
+          },
+          {
+            "bin": 7,
+            "lower_pct": 60.0,
+            "upper_pct": 70.0,
+            "upper_inclusive": false,
+            "count": 223,
+            "predicted_probability_pct": 65.31,
+            "empirical_win_rate_pct": 59.19,
+            "gap_points": -6.11,
+            "small_sample": false
+          },
+          {
+            "bin": 8,
+            "lower_pct": 70.0,
+            "upper_pct": 80.0,
+            "upper_inclusive": false,
+            "count": 220,
+            "predicted_probability_pct": 75.53,
+            "empirical_win_rate_pct": 75.0,
+            "gap_points": -0.53,
+            "small_sample": false
+          },
+          {
+            "bin": 9,
+            "lower_pct": 80.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 430,
+            "predicted_probability_pct": 85.47,
+            "empirical_win_rate_pct": 86.28,
+            "gap_points": 0.81,
+            "small_sample": false
+          },
+          {
+            "bin": 10,
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 690,
+            "predicted_probability_pct": 94.84,
+            "empirical_win_rate_pct": 95.36,
+            "gap_points": 0.52,
+            "small_sample": false
+          }
+        ],
+        "ece_pct": 2.24
+      }
+    },
+    "by_season": [
+      {
+        "season": 2023,
+        "metrics": {
+          "count": 868,
+          "wins": 644,
+          "losses": 224,
+          "accuracy_pct": 74.19,
+          "brier_score": 0.1726,
+          "log_loss": 0.5183,
+          "mean_confidence_pct": 77.63,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": -3.44,
+          "wilson_95_pct": [
+            71.18,
+            76.99
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 140,
+            "wins": 70,
+            "losses": 70,
+            "accuracy_pct": 50.0,
+            "brier_score": 0.2566,
+            "log_loss": 0.7064,
+            "mean_confidence_pct": 54.9,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": -4.9,
+            "wilson_95_pct": [
+              41.83,
+              58.17
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 216,
+            "wins": 140,
+            "losses": 76,
+            "accuracy_pct": 64.81,
+            "brier_score": 0.234,
+            "log_loss": 0.6622,
+            "mean_confidence_pct": 67.43,
+            "target_pct": 60.0,
+            "goal_gap_points": 4.81,
+            "confidence_calibration_gap_points": -2.62,
+            "wilson_95_pct": [
+              58.24,
+              70.87
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 286,
+            "wins": 227,
+            "losses": 59,
+            "accuracy_pct": 79.37,
+            "brier_score": 0.1608,
+            "log_loss": 0.4987,
+            "mean_confidence_pct": 82.89,
+            "target_pct": 75.0,
+            "goal_gap_points": 4.37,
+            "confidence_calibration_gap_points": -3.51,
+            "wilson_95_pct": [
+              74.31,
+              83.66
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 226,
+            "wins": 207,
+            "losses": 19,
+            "accuracy_pct": 91.59,
+            "brier_score": 0.0769,
+            "log_loss": 0.289,
+            "mean_confidence_pct": 94.8,
+            "target_pct": 95.0,
+            "goal_gap_points": -3.41,
+            "confidence_calibration_gap_points": -3.21,
+            "wilson_95_pct": [
+              87.24,
+              94.55
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 41,
+              "predicted_probability_pct": 6.19,
+              "empirical_win_rate_pct": 9.76,
+              "gap_points": 3.57,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 65,
+              "predicted_probability_pct": 14.86,
+              "empirical_win_rate_pct": 24.62,
+              "gap_points": 9.76,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 58,
+              "predicted_probability_pct": 25.36,
+              "empirical_win_rate_pct": 32.76,
+              "gap_points": 7.4,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 69,
+              "predicted_probability_pct": 34.86,
+              "empirical_win_rate_pct": 43.48,
+              "gap_points": 8.62,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 45.02,
+              "empirical_win_rate_pct": 50.82,
+              "gap_points": 5.8,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 79,
+              "predicted_probability_pct": 54.84,
+              "empirical_win_rate_pct": 50.63,
+              "gap_points": -4.21,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 85,
+              "predicted_probability_pct": 65.56,
+              "empirical_win_rate_pct": 74.12,
+              "gap_points": 8.55,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 86,
+              "predicted_probability_pct": 75.86,
+              "empirical_win_rate_pct": 67.44,
+              "gap_points": -8.42,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 139,
+              "predicted_probability_pct": 85.01,
+              "empirical_win_rate_pct": 85.61,
+              "gap_points": 0.61,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 185,
+              "predicted_probability_pct": 95.02,
+              "empirical_win_rate_pct": 91.89,
+              "gap_points": -3.13,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 5.3
+        }
+      },
+      {
+        "season": 2024,
+        "metrics": {
+          "count": 873,
+          "wins": 689,
+          "losses": 184,
+          "accuracy_pct": 78.92,
+          "brier_score": 0.1448,
+          "log_loss": 0.4454,
+          "mean_confidence_pct": 80.86,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": -1.94,
+          "wilson_95_pct": [
+            76.09,
+            81.5
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 110,
+            "wins": 66,
+            "losses": 44,
+            "accuracy_pct": 60.0,
+            "brier_score": 0.2397,
+            "log_loss": 0.6725,
+            "mean_confidence_pct": 55.36,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": 4.64,
+            "wilson_95_pct": [
+              50.66,
+              68.67
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 171,
+            "wins": 106,
+            "losses": 65,
+            "accuracy_pct": 61.99,
+            "brier_score": 0.2291,
+            "log_loss": 0.6494,
+            "mean_confidence_pct": 67.44,
+            "target_pct": 60.0,
+            "goal_gap_points": 1.99,
+            "confidence_calibration_gap_points": -5.45,
+            "wilson_95_pct": [
+              54.52,
+              68.92
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 272,
+            "wins": 211,
+            "losses": 61,
+            "accuracy_pct": 77.57,
+            "brier_score": 0.174,
+            "log_loss": 0.5321,
+            "mean_confidence_pct": 83.29,
+            "target_pct": 75.0,
+            "goal_gap_points": 2.57,
+            "confidence_calibration_gap_points": -5.72,
+            "wilson_95_pct": [
+              72.25,
+              82.13
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 320,
+            "wins": 306,
+            "losses": 14,
+            "accuracy_pct": 95.62,
+            "brier_score": 0.0423,
+            "log_loss": 0.1845,
+            "mean_confidence_pct": 94.74,
+            "target_pct": 95.0,
+            "goal_gap_points": 0.63,
+            "confidence_calibration_gap_points": 0.89,
+            "wilson_95_pct": [
+              92.79,
+              97.38
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 53,
+              "predicted_probability_pct": 5.36,
+              "empirical_win_rate_pct": 7.55,
+              "gap_points": 2.18,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 68,
+              "predicted_probability_pct": 15.21,
+              "empirical_win_rate_pct": 29.41,
+              "gap_points": 14.2,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 59,
+              "predicted_probability_pct": 24.52,
+              "empirical_win_rate_pct": 18.64,
+              "gap_points": -5.88,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 42,
+              "predicted_probability_pct": 34.92,
+              "empirical_win_rate_pct": 40.48,
+              "gap_points": 5.56,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 64,
+              "predicted_probability_pct": 45.04,
+              "empirical_win_rate_pct": 39.06,
+              "gap_points": -5.97,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 46,
+              "predicted_probability_pct": 55.91,
+              "empirical_win_rate_pct": 58.7,
+              "gap_points": 2.78,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 77,
+              "predicted_probability_pct": 65.34,
+              "empirical_win_rate_pct": 53.25,
+              "gap_points": -12.09,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 60,
+              "predicted_probability_pct": 75.12,
+              "empirical_win_rate_pct": 71.67,
+              "gap_points": -3.46,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 137,
+              "predicted_probability_pct": 85.38,
+              "empirical_win_rate_pct": 81.75,
+              "gap_points": -3.63,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 267,
+              "predicted_probability_pct": 94.76,
+              "empirical_win_rate_pct": 96.25,
+              "gap_points": 1.5,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 4.82
+        }
+      },
+      {
+        "season": 2025,
+        "metrics": {
+          "count": 888,
+          "wins": 729,
+          "losses": 159,
+          "accuracy_pct": 82.09,
+          "brier_score": 0.1269,
+          "log_loss": 0.3989,
+          "mean_confidence_pct": 80.27,
+          "target_pct": null,
+          "goal_gap_points": null,
+          "confidence_calibration_gap_points": 1.82,
+          "wilson_95_pct": [
+            79.44,
+            84.48
+          ],
+          "small_sample": false
+        },
+        "tiers": [
+          {
+            "key": "bam_1",
+            "label": "BAM 1",
+            "lower_pct": 50.0,
+            "upper_pct": 60.0,
+            "upper_inclusive": false,
+            "count": 117,
+            "wins": 71,
+            "losses": 46,
+            "accuracy_pct": 60.68,
+            "brier_score": 0.2412,
+            "log_loss": 0.6755,
+            "mean_confidence_pct": 54.78,
+            "target_pct": null,
+            "goal_gap_points": null,
+            "confidence_calibration_gap_points": 5.91,
+            "wilson_95_pct": [
+              51.63,
+              69.06
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_2",
+            "label": "BAM 2",
+            "lower_pct": 60.0,
+            "upper_pct": 75.0,
+            "upper_inclusive": false,
+            "count": 185,
+            "wins": 123,
+            "losses": 62,
+            "accuracy_pct": 66.49,
+            "brier_score": 0.2127,
+            "log_loss": 0.6147,
+            "mean_confidence_pct": 67.58,
+            "target_pct": 60.0,
+            "goal_gap_points": 6.49,
+            "confidence_calibration_gap_points": -1.1,
+            "wilson_95_pct": [
+              59.41,
+              72.89
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_3",
+            "label": "BAM 3",
+            "lower_pct": 75.0,
+            "upper_pct": 90.0,
+            "upper_inclusive": false,
+            "count": 292,
+            "wins": 253,
+            "losses": 39,
+            "accuracy_pct": 86.64,
+            "brier_score": 0.1159,
+            "log_loss": 0.3919,
+            "mean_confidence_pct": 83.95,
+            "target_pct": 75.0,
+            "goal_gap_points": 11.64,
+            "confidence_calibration_gap_points": 2.69,
+            "wilson_95_pct": [
+              82.26,
+              90.07
+            ],
+            "small_sample": false
+          },
+          {
+            "key": "bam_4",
+            "label": "BAM 4",
+            "lower_pct": 90.0,
+            "upper_pct": 100.0,
+            "upper_inclusive": true,
+            "count": 294,
+            "wins": 282,
+            "losses": 12,
+            "accuracy_pct": 95.92,
+            "brier_score": 0.0384,
+            "log_loss": 0.16,
+            "mean_confidence_pct": 94.75,
+            "target_pct": 95.0,
+            "goal_gap_points": 0.92,
+            "confidence_calibration_gap_points": 1.17,
+            "wilson_95_pct": [
+              93.0,
+              97.65
+            ],
+            "small_sample": false
+          }
+        ],
+        "reliability": {
+          "bins": [
+            {
+              "bin": 1,
+              "lower_pct": 0.0,
+              "upper_pct": 10.0,
+              "upper_inclusive": false,
+              "count": 56,
+              "predicted_probability_pct": 5.45,
+              "empirical_win_rate_pct": 8.93,
+              "gap_points": 3.48,
+              "small_sample": false
+            },
+            {
+              "bin": 2,
+              "lower_pct": 10.0,
+              "upper_pct": 20.0,
+              "upper_inclusive": false,
+              "count": 75,
+              "predicted_probability_pct": 14.58,
+              "empirical_win_rate_pct": 18.67,
+              "gap_points": 4.09,
+              "small_sample": false
+            },
+            {
+              "bin": 3,
+              "lower_pct": 20.0,
+              "upper_pct": 30.0,
+              "upper_inclusive": false,
+              "count": 50,
+              "predicted_probability_pct": 25.61,
+              "empirical_win_rate_pct": 20.0,
+              "gap_points": -5.61,
+              "small_sample": false
+            },
+            {
+              "bin": 4,
+              "lower_pct": 30.0,
+              "upper_pct": 40.0,
+              "upper_inclusive": false,
+              "count": 63,
+              "predicted_probability_pct": 34.82,
+              "empirical_win_rate_pct": 31.75,
+              "gap_points": -3.07,
+              "small_sample": false
+            },
+            {
+              "bin": 5,
+              "lower_pct": 40.0,
+              "upper_pct": 50.0,
+              "upper_inclusive": false,
+              "count": 56,
+              "predicted_probability_pct": 45.22,
+              "empirical_win_rate_pct": 41.07,
+              "gap_points": -4.15,
+              "small_sample": false
+            },
+            {
+              "bin": 6,
+              "lower_pct": 50.0,
+              "upper_pct": 60.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 54.77,
+              "empirical_win_rate_pct": 62.3,
+              "gap_points": 7.52,
+              "small_sample": false
+            },
+            {
+              "bin": 7,
+              "lower_pct": 60.0,
+              "upper_pct": 70.0,
+              "upper_inclusive": false,
+              "count": 61,
+              "predicted_probability_pct": 64.91,
+              "empirical_win_rate_pct": 45.9,
+              "gap_points": -19.0,
+              "small_sample": false
+            },
+            {
+              "bin": 8,
+              "lower_pct": 70.0,
+              "upper_pct": 80.0,
+              "upper_inclusive": false,
+              "count": 74,
+              "predicted_probability_pct": 75.47,
+              "empirical_win_rate_pct": 86.49,
+              "gap_points": 11.01,
+              "small_sample": false
+            },
+            {
+              "bin": 9,
+              "lower_pct": 80.0,
+              "upper_pct": 90.0,
+              "upper_inclusive": false,
+              "count": 154,
+              "predicted_probability_pct": 85.97,
+              "empirical_win_rate_pct": 90.91,
+              "gap_points": 4.93,
+              "small_sample": false
+            },
+            {
+              "bin": 10,
+              "lower_pct": 90.0,
+              "upper_pct": 100.0,
+              "upper_inclusive": true,
+              "count": 238,
+              "predicted_probability_pct": 94.79,
+              "empirical_win_rate_pct": 97.06,
+              "gap_points": 2.26,
+              "small_sample": false
+            }
+          ],
+          "ece_pct": 5.56
+        }
       }
     ]
   },

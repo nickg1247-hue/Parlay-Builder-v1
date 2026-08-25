@@ -1273,6 +1273,17 @@ async def cfb_backtest_saved():
     return load_saved_cfb_backtest_report()
 
 
+@app.get("/api/cfb/bam-progress")
+async def cfb_bam_progress():
+    saved = load_saved_cfb_backtest_report()
+    if saved.get("status") in ("missing", "error"):
+        return saved
+    bam = saved.get("bam")
+    if not bam:
+        return {"status": "missing", "error": "Saved CFB report has no BAM evaluation."}
+    return bam
+
+
 @app.get("/api/scores/today")
 async def scores_today(
     sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|nfl|ufc|all)$"),
@@ -2367,6 +2378,11 @@ async def cfb_board():
 @app.get("/cfb/futures")
 async def cfb_futures_page():
     return FileResponse(STATIC_DIR / "cfb_futures.html")
+
+
+@app.get("/cfb/bam-progress")
+async def cfb_bam_progress_page():
+    return FileResponse(STATIC_DIR / "cfb_bam_progress.html")
 
 
 @app.get("/cfb/game/{game_id}")
