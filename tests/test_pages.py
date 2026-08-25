@@ -46,8 +46,8 @@ def test_home_page():
     assert "Explore today's slate" in text
     assert "Today on NTG" in text
     assert "Today's Intelligence" in text
-    assert "Live Board" in text
-    assert "The NTG Edge" in text
+    assert "Live &amp; Upcoming" in text
+    assert "Inside the NTG Engine" in text
     assert "Your NTG" in text
     assert "Learn &amp; Improve" not in text
     assert "Edge by Sport" not in text

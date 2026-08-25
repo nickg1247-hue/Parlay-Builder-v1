@@ -33,11 +33,6 @@
           <div class="hl-hero-bg-photo"></div>
           <div class="hl-hero-bg-glow"></div>
           <div class="hl-hero-bg-chart"></div>
-          <div class="hl-hero-athletes">
-            <svg class="hl-athlete hl-athlete-nfl" viewBox="0 0 120 220" fill="currentColor" aria-hidden="true"><path d="M60 18c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm-2 32h4l8 22 18 8-4 8-16-6-6 20 22 36-8 6-18-32-6 18 16 40-10 4-16-42-8 20-20 8-4-8 22-10 10-48-14-8 4-8 16 8z"/></svg>
-            <svg class="hl-athlete hl-athlete-mlb" viewBox="0 0 120 220" fill="currentColor" aria-hidden="true"><path d="M52 16c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm8 34 10 8 28-24 6 6-26 28 8 18 24 10-4 8-26-8-16 36 22 28-8 6-20-28-10 22h-10l6-34-18-22 6-8 16 16 8-20z"/></svg>
-            <svg class="hl-athlete hl-athlete-nba" viewBox="0 0 120 220" fill="currentColor" aria-hidden="true"><path d="M58 14c8 0 14 6 14 14s-6 14-14 14-14-6-14-14 6-14 14-14zm-4 34h8l6 20 20-8 4 8-18 10 8 22 22 8-4 8-22-6-12 28 16 34-8 4-16-34-8 16-18 6-4-8 20-10 10-46-16-10z"/></svg>
-          </div>
         </div>
         <div class="hl-wrap hl-hero-inner">
           <div class="hl-hero-copy">
@@ -50,9 +45,6 @@
               <a class="hl-cta" href="/mlb">Explore today's slate →</a>
             </div>
           </div>
-          <aside id="hl-performance" class="hl-perf hl-surface-featured" aria-label="Model performance">
-            <div class="hl-skel hl-skel-perf" id="HeroPerformanceSkeleton" aria-hidden="true"></div>
-          </aside>
         </div>
         <div class="hl-wrap">
           <dl id="hl-live-summary" class="hl-live-summary" aria-label="Today's snapshot">
@@ -84,9 +76,9 @@
       </section>
 
       <section class="hl-board-sec" aria-label="Live board">
-        <div class="hl-wrap hl-surface hl-board-shell">
+        <div class="hl-board-field" aria-hidden="true"></div>`r`n        <div class="hl-wrap hl-board-shell">
           <header class="hl-section-head">
-            <h2>Live Board</h2>
+            <div><span class="hl-section-index">02</span><h2>Live &amp; Upcoming</h2></div>
             <a class="hl-link-more" href="/mlb">View all →</a>
           </header>
           <div id="hl-game-filters" class="hl-filters" role="tablist" aria-label="Sports"></div>
@@ -95,47 +87,20 @@
           </div>
         </div>
       </section>
-
-      <section class="hl-bottom-sec" aria-label="Platform and your NTG">
-        <div class="hl-wrap hl-bottom">
-          <div class="hl-edge-row" aria-label="The NTG Edge">
-            <h2 class="hl-edge-title">The NTG Edge</h2>
-            <div class="hl-edge-items">
-              <div class="hl-edge-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 19V5h4v14H4zm6 0V9h4v10h-4zm6 0v-7h4v7h-4z"/></svg>
-                <div>
-                  <h3>Advanced Models</h3>
-                  <p>Sport-specific game and player models.</p>
-                </div>
-              </div>
-              <div class="hl-edge-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M3 12h2M19 12h2M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"/></svg>
-                <div>
-                  <h3>Real-Time Data</h3>
-                  <p>Live scores and scheduled odds refresh.</p>
-                </div>
-              </div>
-              <div class="hl-edge-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 14l5 5L20 6"/></svg>
-                <div>
-                  <h3>Proven Results</h3>
-                  <p>Settled pick tracking only.</p>
-                </div>
-              </div>
-              <div class="hl-edge-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3l2.6 6.4L21 10l-5 4.2L17.5 21 12 17.6 6.5 21 8 14.2 3 10l6.4-.6L12 3z"/></svg>
-                <div>
-                  <h3>Built for Winners</h3>
-                  <p>Save a pick and follow it to the result.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <aside id="hl-picks" class="hl-yours hl-surface" aria-label="Your NTG">
-            <div class="hl-skel hl-skel-picks" id="YourNtgSkeleton" aria-hidden="true"></div>
-          </aside>
+      <section class="hl-performance-sec" aria-label="Model performance">
+        <div class="hl-performance-grid" aria-hidden="true"></div>
+        <div class="hl-wrap hl-performance-layout">
+          <header class="hl-performance-copy"><span class="hl-section-index">03</span><p class="hl-performance-kicker">Tracked. Settled. Transparent.</p><h2>Performance you can inspect, not just a claim.</h2><p>Every number comes from settled tracking. Review the sample, reporting window, and recent trend before acting on the board.</p><a class="hl-text-cta" href="/methodology">Read the methodology →</a></header>
+          <aside id="hl-performance" class="hl-perf" aria-label="Model performance details"><div class="hl-skel hl-skel-perf" id="HeroPerformanceSkeleton" aria-hidden="true"></div></aside>
         </div>
       </section>
+      <section class="hl-engine-sec" aria-label="Inside the NTG Engine">
+        <div class="hl-wrap hl-engine-layout">
+          <div class="hl-engine-visual" aria-label="NTG model workflow"><div class="hl-engine-orbit" aria-hidden="true"></div><div class="hl-engine-node hl-engine-node-data"><span>01</span><b>Live Data</b><small>Schedules · odds · form</small></div><div class="hl-engine-node hl-engine-node-model"><span>02</span><b>Sport Models</b><small>Matchup-specific probabilities</small></div><div class="hl-engine-node hl-engine-node-rank"><span>03</span><b>Opportunities</b><small>Qualified games and props</small></div><div class="hl-engine-node hl-engine-node-track"><span>04</span><b>Tracking</b><small>Settled results and trends</small></div></div>
+          <div class="hl-engine-copy"><span class="hl-section-index">04</span><p class="hl-performance-kicker">Inside the NTG Engine</p><h2>From the raw slate to a decision you can audit.</h2><p>NTG connects real schedules and market context to sport-specific models, surfaces only qualifying opportunities, and follows every saved pick through settlement.</p><nav class="hl-engine-links" aria-label="Explore NTG tools"><a href="/methodology">Methodology <span>→</span></a><a href="/performance">Performance <span>→</span></a><a href="/props">Player Props <span>→</span></a><a href="/mlb">Game Analysis <span>→</span></a></nav></div>
+        </div>
+      </section>
+      <section class="hl-yours-sec" aria-label="Your NTG"><div class="hl-wrap"><aside id="hl-picks" class="hl-yours" aria-label="Your NTG"><div class="hl-skel hl-skel-picks" id="YourNtgSkeleton" aria-hidden="true"></div></aside></div></section>
     </div>
 
     <footer class="site-footer hl-footer" aria-label="Site footer">

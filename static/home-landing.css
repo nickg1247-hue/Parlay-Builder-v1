@@ -93,10 +93,10 @@ body.home-landing .dash-primary-nav .main-nav-link {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(4, 8, 15, 0.88) 0%, rgba(4, 8, 15, 0.28) 48%, rgba(4, 8, 15, 0.7) 100%),
-    linear-gradient(180deg, rgba(4, 8, 15, 0.1), rgba(4, 8, 15, 0.88)),
-    url("/static/assets/real-intro-3-stadium-night.png") 68% 40% / cover no-repeat;
-  opacity: 0.78;
+    linear-gradient(90deg, rgba(4, 8, 15, 0.18) 0%, rgba(4, 8, 15, 0.04) 48%, rgba(4, 8, 15, 0.2) 100%),
+    linear-gradient(180deg, rgba(4, 8, 15, 0.02), rgba(4, 8, 15, 0.78)),
+    url("/static/assets/ntg-hero-anonymous-athletes-v1.png") 50% 42% / cover no-repeat;
+  opacity: 0.96;
   animation: hl-drift 28s ease-in-out infinite alternate;
 }
 
@@ -119,34 +119,17 @@ body.home-landing .dash-primary-nav .main-nav-link {
   mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
 }
 
-.hl-hero-athletes {
-  position: absolute;
-  right: 7%;
-  bottom: 8%;
-  width: min(560px, 46vw);
-  height: 78%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-.hl-athlete {
-  height: 90%;
-  width: auto;
-  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.5));
-}
-.hl-athlete-nfl { height: 96%; color: rgba(147, 197, 253, 0.16); }
-.hl-athlete-mlb { height: 86%; margin: 0 -1.8rem; color: rgba(96, 165, 250, 0.14); }
-.hl-athlete-nba { height: 90%; color: rgba(56, 189, 248, 0.12); }
-
 .hl-hero-inner {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.62fr);
-  gap: 2.2rem;
+  display: flex;
   align-items: center;
   min-height: 360px;
+}
+
+.hl-hero-copy {
+  width: min(48%, 660px);
+  min-width: 520px;
 }
 
 .hl-hero-copy h1 {
@@ -287,7 +270,7 @@ body.home-landing .dash-primary-nav .main-nav-link {
 }
 
 /* Today on NTG */
-.hl-sports-sec, .hl-intel-sec, .hl-board-sec, .hl-bottom-sec { padding: 0.4rem 0 1.5rem; }
+.hl-sports-sec, .hl-performance-sec, .hl-intel-sec, .hl-board-sec, .hl-bottom-sec { padding: 0.4rem 0 1.5rem; }
 .hl-section-head {
   display: flex;
   align-items: center;
@@ -326,11 +309,11 @@ body.home-landing .dash-primary-nav .main-nav-link {
   background-position: center;
   transition: transform 400ms ease, opacity 220ms ease;
 }
-.hl-sport-tile[data-sport="nfl"]::before { background-image: url("/static/assets/football-stadium-bg-only.png"); }
-.hl-sport-tile[data-sport="mlb"]::before { background-image: url("/static/assets/hero-stadium-field-level-50.png"); }
-.hl-sport-tile[data-sport="nba"]::before { background-image: url("/static/assets/osu-stadium-field-centered.png"); }
-.hl-sport-tile[data-sport="cfb"]::before { background-image: url("/static/assets/analytics-intro-3-football-centered.png"); }
-.hl-sport-tile[data-sport="ufc"]::before { background-image: url("/static/assets/real-intro-3-stadium-night.png"); }
+.hl-sport-tile[data-sport="nfl"]::before { background-image: url("/static/assets/ntg-tile-nfl-coin-toss-v1.png"); }
+.hl-sport-tile[data-sport="mlb"]::before { background-image: url("/static/assets/ntg-tile-mlb-umpire-pov-v1.png"); }
+.hl-sport-tile[data-sport="nba"]::before { background-image: url("/static/assets/ntg-tile-nba-tipoff-v1.png"); }
+.hl-sport-tile[data-sport="cfb"]::before { background-image: url("/static/assets/ntg-tile-cfb-rivalry-catch-v3.png"); }
+.hl-sport-tile[data-sport="ufc"]::before { background-image: url("/static/assets/ntg-tile-ufc-octagon-v1.png"); }
 .hl-sport-tile:hover { transform: translateY(-2px); border-color: rgba(96, 165, 250, 0.32); }
 .hl-sport-tile:hover::before { transform: scale(1.06); opacity: 0.28; }
 .hl-sport-tile > * { position: relative; }
@@ -346,6 +329,37 @@ body.home-landing .dash-primary-nav .main-nav-link {
 .hl-sport-name { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.03em; }
 .hl-sport-meta { margin: 0.3rem 0 0; color: var(--ntg-text-3); font-size: 0.78rem; }
 .hl-sport-go { margin-top: 0.7rem; color: var(--ntg-primary-hover); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Performance trust band */
+.hl-performance-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.15rem 0;
+}
+.hl-performance-copy { max-width: 520px; }
+.hl-performance-kicker {
+  margin: 0 0 0.45rem;
+  color: var(--ntg-primary-hover);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hl-performance-copy h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+.hl-performance-copy > p:last-child {
+  margin: 0.7rem 0 0;
+  max-width: 46ch;
+  color: var(--ntg-text-3);
+  line-height: 1.55;
+}
 
 /* Intelligence */
 .hl-intel {
@@ -533,16 +547,17 @@ body.home-landing .dash-primary-nav .main-nav-link {
 }
 
 @media (max-width: 1100px) {
-  .hl-hero-inner, .hl-intel, .hl-bottom { grid-template-columns: 1fr; }
+  .hl-intel, .hl-bottom, .hl-performance-layout { grid-template-columns: 1fr; }
   .hl-sports { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hl-hero { min-height: 0; padding: 1.6rem 0 1.2rem; }
-  .hl-hero-athletes { opacity: 0.22; }
+  .hl-hero-copy { width: min(56%, 620px); min-width: 0; }
 }
 
 @media (max-width: 768px) {
   .hl-wrap { width: min(var(--hl-max), calc(100% - 1.35rem)); }
   .hl-display { font-size: clamp(1.9rem, 10vw, 2.6rem); }
-  .hl-hero-athletes { display: none; }
+  .hl-hero-bg-photo { background-position: 56% 42%; }
+  .hl-hero-copy { width: 64%; }
   .hl-edge-items { grid-template-columns: 1fr 1fr; }
   .hl-live-summary { grid-template-columns: 1fr; }
   .hl-footer-inner { flex-direction: column; }
@@ -551,9 +566,26 @@ body.home-landing .dash-primary-nav .main-nav-link {
 @media (max-width: 430px) {
   .hl-sports { grid-template-columns: 1fr 1fr; }
   .hl-cta { width: 100%; justify-content: center; }
+  .hl-hero-copy { width: 68%; }
+  .hl-hero-lead { font-size: 0.9rem; }
   .hl-perf-chart { display: none; }
   .hl-edge-items { grid-template-columns: 1fr; }
   .hl-hero { padding: 1.05rem 0 0.7rem; }
   .hl-live-summary { grid-template-columns: repeat(3, 1fr); margin-top: 0.85rem; }
   .hl-live-summary dd { font-size: 1.15rem; }
 }
+/* --- NTG editorial homepage composition --- */
+.hl-section-index{display:block;margin-bottom:.45rem;color:rgba(96,165,250,.68);font:800 .62rem/1 var(--ntg-font);letter-spacing:.22em}
+.hl-intel-sec{position:relative;padding:4.8rem 0 5.4rem;background:linear-gradient(180deg,rgba(4,8,15,0),rgba(8,17,30,.88) 30%,rgba(5,11,22,.98));overflow:hidden}.hl-intel-sec:before{content:"01 / MODEL SIGNAL";position:absolute;right:-1rem;top:1rem;color:rgba(148,163,184,.035);font-size:clamp(3.8rem,10vw,9rem);font-weight:900;letter-spacing:-.06em;white-space:nowrap}
+.hl-intel{position:relative;display:grid;grid-template-columns:minmax(0,1.9fr) minmax(285px,.8fr);gap:1rem}.hl-story,.hl-story-side{position:relative;overflow:hidden;color:inherit;text-decoration:none}.hl-story-main{min-height:500px;border:1px solid rgba(96,165,250,.22);border-radius:22px;background:#07101c}.hl-story-photo,.hl-story-shade{position:absolute;inset:0}.hl-story-photo{background:center/cover no-repeat;filter:saturate(.82);transition:transform .65s ease,filter .35s ease}.hl-story-main[data-sport="mlb"] .hl-story-photo{background-image:url("/static/assets/ntg-tile-mlb-umpire-pov-v1.png")}.hl-story-main[data-sport="nfl"] .hl-story-photo{background-image:url("/static/assets/ntg-tile-nfl-coin-toss-v1.png")}.hl-story-main[data-sport="nba"] .hl-story-photo{background-image:url("/static/assets/ntg-tile-nba-tipoff-v1.png")}.hl-story-main[data-sport="cfb"] .hl-story-photo{background-image:url("/static/assets/ntg-tile-cfb-rivalry-catch-v3.png")}.hl-story-main[data-sport="ufc"] .hl-story-photo{background-image:url("/static/assets/ntg-tile-ufc-octagon-v1.png")}.hl-story-shade{background:linear-gradient(90deg,rgba(3,8,15,.96),rgba(3,8,15,.66) 55%,rgba(3,8,15,.18)),linear-gradient(0deg,rgba(3,8,15,.92),transparent 58%)}.hl-story-body{position:relative;z-index:1;display:flex;flex-direction:column;width:min(66%,620px);min-height:500px;padding:2rem}.hl-story-matchup{display:flex;align-items:center;gap:.8rem;margin:1rem 0}.hl-story-team{display:flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:800}.hl-story-logo{width:54px;height:54px;object-fit:contain}.hl-story-at{color:var(--ntg-text-3);font-size:.62rem;font-weight:800}.hl-story-body h3{max-width:13ch;margin:.45rem 0 0;color:#fff;font-size:clamp(2rem,4.8vw,4rem);line-height:.96;letter-spacing:-.055em}.hl-story-lean{margin:.7rem 0;color:var(--ntg-text-2)}.hl-story-evidence{display:flex;align-items:center;gap:1.25rem;margin-top:auto}.hl-story-evidence>div:last-child{display:flex;flex-direction:column}.hl-story-evidence b{font-size:1.5rem}.hl-story-evidence small{color:var(--ntg-text-3);font-size:.62rem;text-transform:uppercase}.hl-prob-ring{display:grid;width:92px;height:92px;place-content:center;border-radius:50%;background:radial-gradient(circle at center,#07101c 58%,transparent 60%),conic-gradient(var(--ntg-primary) calc(var(--prob)*1%),rgba(125,158,201,.16) 0);text-align:center}.hl-prob-ring span{font-size:1.2rem;font-weight:850}.hl-prob-ring small{font-size:.52rem}.hl-story-cta{margin-top:1rem;color:#fff;font-size:.78rem;font-weight:800;text-transform:uppercase}.hl-story-main:hover .hl-story-photo{transform:scale(1.035);filter:saturate(1)}.hl-story-stack{display:grid;grid-template-rows:1fr 1fr;gap:1rem}.hl-story-side{display:flex;flex-direction:column;padding:1.25rem;border-top:1px solid rgba(96,165,250,.24);background:linear-gradient(145deg,rgba(19,34,55,.9),rgba(6,13,23,.98));transition:transform .25s ease}.hl-story-side:hover{transform:translateX(-4px)}.hl-story-side-top{display:flex;justify-content:space-between;gap:1rem}.hl-story-side h3{margin:.55rem 0 .25rem;font-size:1.28rem}.hl-story-side p{margin:0;color:var(--ntg-text-3);font-size:.8rem}.hl-story-side>strong{margin-top:auto;font-size:2rem}.hl-story-side>span{margin-top:.5rem;color:var(--ntg-primary-hover);font-size:.72rem;font-weight:750}
+.hl-board-sec{position:relative;padding:4.8rem 0 5.2rem;overflow:hidden;background:#030812;border-block:1px solid rgba(125,158,201,.1)}.hl-board-field{position:absolute;inset:0;opacity:.22;background:linear-gradient(90deg,transparent 49.8%,rgba(59,130,246,.28) 50%,transparent 50.2%),repeating-linear-gradient(90deg,rgba(148,163,184,.08) 0 1px,transparent 1px 8.33%)}.hl-board-shell{position:relative;padding:0}.hl-board-shell .hl-section-head h2{font-size:clamp(1.4rem,2.6vw,2.15rem);text-transform:none}.hl-games{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(245px,300px);gap:.75rem;overflow-x:auto;padding:.25rem .1rem 1rem;scroll-snap-type:x proximity}.hl-score-card{position:relative;scroll-snap-align:start;display:flex;flex-direction:column;min-height:238px;padding:1rem;border:1px solid rgba(125,158,201,.15);border-radius:14px;background:linear-gradient(180deg,rgba(17,30,49,.94),rgba(5,11,20,.98));color:inherit;text-decoration:none;animation:hl-score-enter .48s ease both;animation-delay:var(--delay)}.hl-score-card:before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:rgba(96,165,250,.45)}.hl-score-card.is-live:before{background:var(--ntg-positive);box-shadow:0 0 14px rgba(34,197,94,.75)}.hl-score-card-top,.hl-score-card-foot{display:flex;justify-content:space-between;gap:.5rem}.hl-score-card-top{font-size:.61rem;text-transform:uppercase;color:var(--ntg-text-3)}.hl-score-match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem;margin:auto 0}.hl-score-team{display:flex;flex-direction:column;align-items:center;gap:.35rem}.hl-score-logo{width:54px;height:54px;object-fit:contain}.hl-score-team em{font-style:normal;font-size:1.6rem;font-weight:850}.hl-score-vs{color:var(--ntg-text-3);font-size:.58rem}.hl-score-card-foot{padding-top:.75rem;border-top:1px solid rgba(125,158,201,.1);color:var(--ntg-primary-hover);font-size:.66rem;font-weight:750}
+.hl-performance-sec{position:relative;padding:6rem 0;overflow:hidden;background:linear-gradient(135deg,#07111f,#040914 66%)}.hl-performance-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(96,165,250,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.055) 1px,transparent 1px);background-size:52px 52px}.hl-performance-layout{position:relative;grid-template-columns:minmax(300px,.75fr) minmax(520px,1.25fr);gap:3rem;padding:0}.hl-performance-copy h2,.hl-engine-copy h2{font-size:clamp(2rem,4vw,3.4rem)}.hl-text-cta{display:inline-block;margin-top:1rem;color:var(--ntg-primary-hover);font-size:.75rem;font-weight:800;text-decoration:none}.hl-perf{padding:1.6rem 1.7rem;border-left:1px solid rgba(96,165,250,.36);background:rgba(7,15,27,.65)}.hl-perf-value{font-size:clamp(4rem,8vw,7rem)}.hl-perf-chart{height:120px;margin:.5rem 0}.hl-perf-metrics{gap:1rem;padding-top:1rem;border-top:1px solid rgba(125,158,201,.13)}
+.hl-engine-sec{padding:6rem 0;background:linear-gradient(180deg,#040914,#070f1c)}.hl-engine-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:4rem;align-items:center}.hl-engine-visual{position:relative;min-height:480px}.hl-engine-orbit{position:absolute;inset:12% 15%;border:1px solid rgba(96,165,250,.22);border-radius:50%;transform:rotate(-12deg)}.hl-engine-orbit:after{content:"NTG";position:absolute;left:50%;top:50%;display:grid;width:118px;height:118px;place-items:center;border:1px solid rgba(96,165,250,.34);border-radius:50%;background:#081426;color:#fff;font-size:1.5rem;font-weight:900;transform:translate(-50%,-50%)}.hl-engine-node{position:absolute;display:flex;flex-direction:column;width:220px;padding:1rem;border-left:2px solid var(--ntg-primary);background:rgba(10,22,39,.9)}.hl-engine-node span{color:var(--ntg-primary-hover);font-size:.58rem}.hl-engine-node b{margin:.25rem 0}.hl-engine-node small{color:var(--ntg-text-3)}.hl-engine-node-data{left:0;top:8%}.hl-engine-node-model{right:0;top:24%}.hl-engine-node-rank{left:5%;bottom:16%}.hl-engine-node-track{right:4%;bottom:2%}.hl-engine-copy>p:last-of-type{color:var(--ntg-text-3);line-height:1.65}.hl-engine-links{display:grid;margin-top:1.25rem;border-top:1px solid rgba(125,158,201,.14)}.hl-engine-links a{display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid rgba(125,158,201,.1);color:#fff;font-size:.76rem;font-weight:750;text-decoration:none}
+.hl-yours-sec{padding:2rem 0 4.5rem;background:#070f1c}.hl-yours{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.4rem 0;border-block:1px solid rgba(125,158,201,.17)}
+@keyframes hl-score-enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.hl-story-photo,.hl-story-side,.hl-score-card{animation:none;transition:none}}
+@media(max-width:1100px){.hl-intel,.hl-performance-layout,.hl-engine-layout{grid-template-columns:1fr}.hl-story-main{min-height:440px}.hl-engine-visual{min-height:430px}}
+@media(max-width:768px){.hl-intel-sec,.hl-board-sec,.hl-performance-sec,.hl-engine-sec{padding:3.5rem 0}.hl-intel{grid-template-columns:1fr}.hl-story-body{width:78%;min-height:430px;padding:1.3rem}.hl-story-stack{grid-template-columns:1fr 1fr;grid-template-rows:none}.hl-engine-visual{min-height:520px}.hl-engine-node{width:190px}.hl-yours{align-items:flex-start;flex-direction:column}}
+@media(max-width:500px){.hl-story-body{width:100%}.hl-story-stack{grid-template-columns:1fr}.hl-story-side{min-height:210px}.hl-engine-visual{min-height:620px}.hl-engine-node{width:160px}.hl-games{grid-auto-columns:82vw}.hl-perf{padding:1.1rem}}
+
+.hl-model-hold .hl-story-body{justify-content:center;max-width:610px}.hl-model-hold .hl-story-shade{display:none}.hl-model-hold{background:linear-gradient(135deg,rgba(10,24,42,.98),rgba(4,10,18,.99))}.hl-model-hold:before{content:"";position:absolute;inset:0;background:repeating-radial-gradient(circle at 76% 48%,rgba(96,165,250,.12) 0 1px,transparent 1px 46px);mask-image:linear-gradient(90deg,transparent,#000)}.hl-hold-signal{position:relative;width:110px;height:110px;margin:.8rem 0 1.2rem;border:1px solid rgba(96,165,250,.3);border-radius:50%}.hl-hold-signal:before,.hl-hold-signal:after{content:"";position:absolute;border:1px solid rgba(96,165,250,.16);border-radius:50%}.hl-hold-signal:before{inset:18px}.hl-hold-signal:after{inset:38px}.hl-hold-signal span{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:var(--ntg-primary-hover);box-shadow:0 0 16px rgba(96,165,250,.9);transform:translate(-50%,-50%)}.hl-model-hold .hl-story-body h3{font-size:clamp(2.2rem,4.2vw,3.8rem)}.hl-model-hold .hl-story-body>p:not(.hl-intel-kicker){max-width:48ch;color:var(--ntg-text-2);line-height:1.6}.hl-model-hold .hl-story-cta{align-self:flex-start;text-decoration:none}.hl-model-hold-side{justify-content:center}.hl-hold-status{display:flex;align-items:center;gap:.45rem;margin:.7rem 0;color:var(--ntg-text-2);font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.hl-hold-status i{width:7px;height:7px;border-radius:50%;background:var(--ntg-primary-hover);box-shadow:0 0 12px rgba(96,165,250,.7)}.hl-model-hold-side>a{margin-top:1rem;color:var(--ntg-primary-hover);font-size:.72rem;font-weight:750;text-decoration:none}

@@ -345,62 +345,56 @@
 
   function renderIntel(el, { gameEdge, playerEdge, confident }, games) {
     if (!el) return;
-    const gameCard = gameEdge
-      ? (() => {
-          const g = findGame(games, gameEdge.game_id) || gameEdge;
-          const away = imgOrFallback(logo(g, "away") || gameEdge.away_logo_url, gameEdge.away_team, "hl-game-logo");
-          const home = imgOrFallback(logo(g, "home") || gameEdge.home_logo_url, gameEdge.home_team, "hl-game-logo");
-          return `
-            <a class="hl-intel-card hl-intel-game" href="${escapeHtml(gameHref(gameEdge.sport, gameEdge.game_id))}">
-              <p class="hl-intel-kicker">Top Game Edge · ${escapeHtml(SPORT_LABEL[gameEdge.sport] || "MLB")}</p>
-              <div class="hl-intel-logos">${away}${home || ""}</div>
-              <h3 class="hl-intel-title">${escapeHtml(gameEdge.matchup || gameEdge.name)}</h3>
-              <p class="hl-intel-sub">NTG lean ${escapeHtml(gameEdge.recommendation || "")}</p>
-              <div class="hl-intel-stat">${escapeHtml(fmtPct(gameEdge.win_prob) || fmtSignedPct(gameEdge.edge) || "—")}</div>
-              <span class="hl-intel-go">View matchup →</span>
-            </a>`;
-        })()
-      : `<div class="hl-intel-card hl-intel-game"><p class="hl-intel-kicker">Top Game Edge</p><div class="hl-empty"><h3>No qualifying game edge yet</h3><p>NTG has not identified a qualifying game edge for this slate.</p></div></div>`;
-
-    const playerCard = playerEdge
-      ? `
-        <a class="hl-intel-card hl-intel-prop" href="${escapeHtml(
-          playerEdge.player_id || playerEdge.name
-            ? `/players/${encodeURIComponent(playerEdge.sport)}/${encodeURIComponent(playerEdge.player_id || playerEdge.name)}`
-            : "/props"
-        )}">
-          <p class="hl-intel-kicker">Top Player Edge · ${escapeHtml(SPORT_LABEL[playerEdge.sport] || "")}</p>
-          ${
-            playerEdge.photo_url
-              ? imgOrFallback(playerEdge.photo_url, playerEdge.name, "hl-player-photo")
-              : `<div class="hl-player-fallback">${escapeHtml(initials(playerEdge.name))}</div>`
-          }
-          <h3 class="hl-intel-title">${escapeHtml(playerEdge.name)}</h3>
-          <p class="hl-intel-sub">${escapeHtml(playerEdge.matchup || "")}<br>${escapeHtml(playerEdge.market || "")} · ${escapeHtml(
-            String(playerEdge.recommendation || "").toUpperCase()
-          )}${playerEdge.line != null ? ` ${escapeHtml(playerEdge.line)}` : ""}</p>
-          <div class="hl-intel-stat hl-stat-pos">${escapeHtml(fmtSignedPct(playerEdge.edge) || fmtPct(playerEdge.win_prob) || "—")}</div>
-          <span class="hl-intel-go">View analysis →</span>
+    const game = gameEdge ? findGame(games, gameEdge.game_id) || gameEdge : null;
+    const gameProb = num(gameEdge?.win_prob);
+    const gamePct = gameProb == null ? 0 : Math.abs(gameProb) <= 1.5 ? gameProb * 100 : gameProb;
+    const gameVisual = gameEdge
+      ? `<a class="hl-story hl-story-main" data-sport="${escapeHtml(gameEdge.sport)}" href="${escapeHtml(gameHref(gameEdge.sport, gameEdge.game_id))}">
+          <div class="hl-story-photo" aria-hidden="true"></div>
+          <div class="hl-story-shade"></div>
+          <div class="hl-story-body">
+            <p class="hl-intel-kicker">Featured Model Opportunity · ${escapeHtml(SPORT_LABEL[gameEdge.sport] || "MLB")}</p>
+            <div class="hl-story-matchup">
+              <div class="hl-story-team">${imgOrFallback(logo(game, "away") || gameEdge.away_logo_url, gameEdge.away_team, "hl-story-logo")}<span>${escapeHtml(teamShort(gameEdge.away_team || game?.away_team))}</span></div>
+              <span class="hl-story-at">AT</span>
+              <div class="hl-story-team">${imgOrFallback(logo(game, "home") || gameEdge.home_logo_url, gameEdge.home_team, "hl-story-logo")}<span>${escapeHtml(teamShort(gameEdge.home_team || game?.home_team))}</span></div>
+            </div>
+            <h3>${escapeHtml(gameEdge.matchup || gameEdge.name)}</h3>
+            <p class="hl-story-lean">NTG lean <strong>${escapeHtml(gameEdge.recommendation || "")}</strong></p>
+            <div class="hl-story-evidence">
+              <div class="hl-prob-ring" style="--prob:${Math.max(0, Math.min(100, gamePct)).toFixed(1)}"><span>${escapeHtml(fmtPct(gameProb) || "—")}</span><small>Model</small></div>
+              <div><b>${escapeHtml(fmtSignedPct(gameEdge.edge) || "Qualified")}</b><small>${gameEdge.edge != null ? "Model edge" : "Opportunity"}</small></div>
+            </div>
+            <span class="hl-story-cta">Open full matchup <b>→</b></span>
+          </div>
         </a>`
-      : `<div class="hl-intel-card hl-intel-prop"><p class="hl-intel-kicker">Top Player Edge</p><div class="hl-empty"><h3>No qualifying player edge yet</h3><p>NTG has not identified a qualifying player prop for this slate.</p></div></div>`;
+      : `<div class="hl-story hl-story-main hl-story-empty hl-model-hold"><div class="hl-story-body"><p class="hl-intel-kicker">Model Status · Slate Monitor</p><div class="hl-hold-signal" aria-hidden="true"><span></span></div><h3>The model is holding.</h3><p>No game has cleared today’s edge threshold. NTG will surface an opportunity only when the data supports it.</p><a class="hl-story-cta" href="/mlb">Explore all matchups <b>→</b></a></div></div>`;
+
+    const playerVisual = playerEdge
+      ? `<a class="hl-story-side hl-story-player" href="${escapeHtml(playerEdge.player_id || playerEdge.name ? `/players/${encodeURIComponent(playerEdge.sport)}/${encodeURIComponent(playerEdge.player_id || playerEdge.name)}` : "/props")}">
+          <div class="hl-story-side-top"><p class="hl-intel-kicker">Player Edge · ${escapeHtml(SPORT_LABEL[playerEdge.sport] || "")}</p>${playerEdge.photo_url ? imgOrFallback(playerEdge.photo_url, playerEdge.name, "hl-player-photo") : `<div class="hl-player-fallback">${escapeHtml(initials(playerEdge.name))}</div>`}</div>
+          <h3>${escapeHtml(playerEdge.name)}</h3>
+          <p>${escapeHtml(playerEdge.market || "")} · ${escapeHtml(String(playerEdge.recommendation || "").toUpperCase())}${playerEdge.line != null ? ` ${escapeHtml(playerEdge.line)}` : ""}</p>
+          <strong>${escapeHtml(fmtSignedPct(playerEdge.edge) || fmtPct(playerEdge.win_prob) || "—")}</strong>
+          <span>View player analysis →</span>
+        </a>`
+      : `<div class="hl-story-side hl-model-hold-side"><p class="hl-intel-kicker">Prop Market Monitor</p><div class="hl-hold-status"><i></i><span>Qualification gates active</span></div><h3>No prop clears the model threshold.</h3><p>The board is live. NTG is choosing discipline over a forced recommendation.</p><a href="/props">Browse the full prop board →</a></div>`;
 
     const watchProb = num(confident?.best_pick?.model_prob || confident?.model_prob_home);
     const watchPct = watchProb == null ? 0 : Math.abs(watchProb) <= 1.5 ? watchProb * 100 : watchProb;
-    const watch = confident
-      ? `
-        <a class="hl-intel-card hl-intel-watch" href="${escapeHtml(gameHref("mlb", confident.game_id))}">
-          <p class="hl-intel-kicker">Most Confident Game</p>
-          <h3 class="hl-intel-title">${escapeHtml(confident.matchup || [confident.away_team, confident.home_team].filter(Boolean).join(" @ "))}</h3>
-          <p class="hl-intel-sub">${escapeHtml(confident.best_pick?.team || confident.model_pick_team || "NTG lean")}</p>
-          <div class="hl-intel-stat">${escapeHtml(fmtPct(watchProb) || "—")}</div>
-          <div class="hl-prob-track" aria-hidden="true"><span class="hl-prob-fill" style="--p:${watchPct.toFixed(1)}%"></span></div>
-          <span class="hl-intel-go">View matchup →</span>
+    const watchVisual = confident
+      ? `<a class="hl-story-side hl-story-watch" href="${escapeHtml(gameHref(sportOf(confident), confident.game_id))}">
+          <p class="hl-intel-kicker">Matchup to Watch</p>
+          <h3>${escapeHtml(confident.matchup || [confident.away_team, confident.home_team].filter(Boolean).join(" @ "))}</h3>
+          <p>Model side · ${escapeHtml(confident.best_pick?.team || confident.model_pick_team || "NTG lean")}</p>
+          <div class="hl-prob-track"><span class="hl-prob-fill" style="--p:${watchPct.toFixed(1)}%"></span></div>
+          <strong>${escapeHtml(fmtPct(watchProb) || "—")}</strong>
+          <span>View matchup →</span>
         </a>`
-      : `<div class="hl-intel-card hl-intel-watch"><p class="hl-intel-kicker">Most Confident Game</p><div class="hl-empty"><h3>No qualifying game edge yet</h3></div></div>`;
+      : `<div class="hl-story-side hl-model-hold-side"><p class="hl-intel-kicker">Matchup Radar</p><div class="hl-hold-status"><i></i><span>Monitoring the slate</span></div><h3>Waiting for a qualified signal.</h3><p>Line movement and model confidence remain under review.</p><a href="#hl-games">Open the live board →</a></div>`;
 
-    el.innerHTML = gameCard + playerCard + watch;
+    el.innerHTML = gameVisual + `<div class="hl-story-stack">${playerVisual}${watchVisual}</div>`;
   }
-
   function renderGameFilters(el, sports, active, onChange) {
     if (!el) return;
     const available = ["all"].concat(SPORT_ORDER.filter((key) => (sports[key] || 0) > 0));
@@ -416,28 +410,28 @@
     if (!el) return;
     const rows = (games || []).filter((g) => sport === "all" || sportOf(g) === sport);
     if (!rows.length) {
-      el.innerHTML = `<div class="hl-empty"><h3>No games on today's slate</h3><p>Check back after the next schedule refresh.</p></div>`;
+      el.innerHTML = `<div class="hl-board-empty"><h3>No games on today's slate</h3><p>Check back after the next schedule refresh.</p></div>`;
       return;
     }
-    el.innerHTML = rows
-      .map((game) => {
-        const key = sportOf(game);
-        const awayLogo = imgOrFallback(logo(game, "away"), game.away_team, "hl-game-logo");
-        const homeLogo = imgOrFallback(logo(game, "home"), game.home_team, "hl-game-logo");
-        const count = edgeCounts[String(game.game_id || "")] || 0;
-        return `
-          <a class="hl-game-row" href="${escapeHtml(gameHref(key, game.game_id))}">
-            <span class="hl-game-league">${escapeHtml(SPORT_LABEL[key] || key)}</span>
-            <span class="hl-game-time">${escapeHtml(gameStartLabel(game))}</span>
-            <span class="hl-game-match">${awayLogo}<b>${escapeHtml(game.away_team_abbr || teamShort(game.away_team))}</b><span class="hl-game-at">AT</span>${homeLogo}<b>${escapeHtml(
-              game.home_team_abbr || teamShort(game.home_team)
-            )}</b></span>
-            ${count ? `<span class="hl-game-edges">${count} edges</span>` : `<span></span>`}
-          </a>`;
-      })
-      .join("");
+    el.innerHTML = rows.map((game, index) => {
+      const key = sportOf(game);
+      const label = gameStartLabel(game);
+      const isLive = String(label).toLowerCase() === "live";
+      const awayScore = num(game.away_score ?? game.score_away);
+      const homeScore = num(game.home_score ?? game.score_home);
+      const count = edgeCounts[String(game.game_id || "")] || 0;
+      return `
+        <a class="hl-score-card${isLive ? " is-live" : ""}" style="--delay:${Math.min(index, 8) * 55}ms" href="${escapeHtml(gameHref(key, game.game_id))}">
+          <div class="hl-score-card-top"><span>${escapeHtml(SPORT_LABEL[key] || key)}</span><b>${escapeHtml(label)}</b></div>
+          <div class="hl-score-match">
+            <div class="hl-score-team">${imgOrFallback(logo(game, "away"), game.away_team, "hl-score-logo")}<strong>${escapeHtml(game.away_team_abbr || teamShort(game.away_team))}</strong>${awayScore != null ? `<em>${awayScore}</em>` : ""}</div>
+            <span class="hl-score-vs">VS</span>
+            <div class="hl-score-team">${imgOrFallback(logo(game, "home"), game.home_team, "hl-score-logo")}<strong>${escapeHtml(game.home_team_abbr || teamShort(game.home_team))}</strong>${homeScore != null ? `<em>${homeScore}</em>` : ""}</div>
+          </div>
+          <div class="hl-score-card-foot">${count ? `<span>${count} model ${count === 1 ? "edge" : "edges"}</span>` : "<span>Matchup analysis</span>"}<b>Open →</b></div>
+        </a>`;
+    }).join("");
   }
-
   function renderYours(el, payload, signedIn) {
     if (!el) return;
     if (!signedIn) {
