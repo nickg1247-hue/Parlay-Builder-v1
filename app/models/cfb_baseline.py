@@ -319,10 +319,12 @@ def predict_home_win_proba(df: pd.DataFrame) -> np.ndarray:
     platt = artifact.get("platt_calibrator")
     if platt is not None:
         raw = platt.transform(raw)
-    if len(prepared) != len(df):
-        by_id = dict(zip(prepared["game_id"].astype(str), raw))
-        return df["game_id"].astype(str).map(by_id).to_numpy()
-    return raw
+    by_id = dict(zip(prepared["game_id"].astype(str), raw))
+    ordered = df["game_id"].astype(str).map(by_id)
+    if ordered.isna().any():
+        missing = df.loc[ordered.isna(), "game_id"].astype(str).tolist()
+        raise ValueError(f"Missing CFB feature rows for game ids: {missing}")
+    return ordered.to_numpy()
 
 
 def _metrics_dict(m: HoldoutMetrics) -> dict[str, float]:

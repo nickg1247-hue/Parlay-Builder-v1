@@ -7,7 +7,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app.features.cfb_pregame import FEATURE_COLUMNS, build_features_for_history
+from app.features.cfb_pregame import (
+    FEATURE_COLUMNS,
+    build_features_for_history,
+    build_features_for_slate,
+)
 from app.models.cfb_baseline import (
     BASE_TRAIN_SEASONS,
     HOLDOUT_SEASON,
@@ -102,3 +106,54 @@ def test_predict_returns_valid_probs(tiny_parquet):
     probs = predict_home_win_proba(slate)
     assert len(probs) == 1
     assert 0.0 < probs[0] < 1.0
+
+
+def test_predict_home_win_proba_rejoins_sorted_features_by_game_id(monkeypatch):
+    import numpy as np
+    from app.models import cfb_baseline
+
+    class FakeModel:
+        def predict_proba(self, values):
+            assert len(values) == 2
+            return np.array([[0.1, 0.9], [0.8, 0.2]])
+
+    artifact = {
+        "model": FakeModel(),
+        "feature_columns": ["elo_diff"],
+        "rest_fill": 7.0,
+    }
+    prepared = pd.DataFrame({
+        "game_id": ["a", "b"],
+        "elo_diff": [1.0, -1.0],
+    })
+    requested = pd.DataFrame({
+        "game_id": ["b", "a"],
+        "date": pd.to_datetime(["2026-09-12", "2026-09-12"]),
+        "season": [2026, 2026],
+        "home_team": ["B", "A"],
+        "away_team": ["D", "C"],
+    })
+    monkeypatch.setattr(cfb_baseline, "load_model_artifact", lambda: artifact)
+    monkeypatch.setattr(
+        "app.features.cfb_pregame.build_features_for_slate",
+        lambda df, rest_fill=7.0: prepared,
+    )
+    probabilities = cfb_baseline.predict_home_win_proba(requested)
+    assert probabilities.tolist() == [0.2, 0.9]
+
+
+def test_live_slate_preserves_historical_elo_instead_of_resetting_to_zero():
+    history = _tiny_games_df()
+    slate = pd.DataFrame([
+        {
+            "game_id": "future-b-a",
+            "date": "2026-09-12",
+            "season": 2026,
+            "home_team": "B",
+            "away_team": "A",
+        }
+    ])
+    features = build_features_for_slate(slate, history_df=history)
+    assert len(features) == 1
+    assert features.iloc[0]["elo_diff"] != 0.0
+    assert features.iloc[0]["elo_away_pre"] != 1500.0
