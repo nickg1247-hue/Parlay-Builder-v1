@@ -986,8 +986,8 @@ function modelLeanChips(boardRow, options = {}) {
           : "";
     const label =
       pct != null
-        ? `Model: ${modelTeam} ${pct}%${summerTag}`
-        : `Model: ${modelTeam}${summerTag}`;
+        ? `Our belief: ${modelTeam} ${pct}%${summerTag}`
+        : `Our belief: ${modelTeam}${summerTag}`;
     chips.push({ text: label, tier: modelConf || "Medium" });
   }
   const evTeam = boardRow.ev_pick_team ?? boardRow.best_pick?.team;
@@ -1444,11 +1444,15 @@ function winProbPcts(boardRow) {
     homeRaw = boardRow.market_prob_home;
   }
   if (homeRaw == null) return null;
-  const homePct = Math.round(Number(homeRaw) * 100);
+  const explicitHome = Number(boardRow.model_belief_home_pct);
+  const homePct = Number.isFinite(explicitHome)
+    ? Math.round(explicitHome)
+    : Math.round(Number(homeRaw) * 100);
   if (!Number.isFinite(homePct)) return null;
+  const boundedHome = Math.max(0, Math.min(100, homePct));
   return {
-    homePct: Math.max(0, Math.min(100, homePct)),
-    awayPct: Math.max(0, Math.min(100, 100 - homePct)),
+    homePct: boundedHome,
+    awayPct: 100 - boundedHome,
     stale: false,
   };
 }
@@ -3241,7 +3245,7 @@ function matchupHeaderHtml(game, boardRow, options = {}) {
         ${showScores ? `<span class="matchup-score">${game.home_score ?? 0}</span>` : ""}
       </div>
     </div>
-    ${pcts ? `<p class="ntg-prob-caption">Model win probability</p>${probBar}` : ""}
+    ${pcts ? `<p class="ntg-prob-caption">Our win belief</p>${probBar}` : ""}
     ${leanHtml}
     </div>
   `;

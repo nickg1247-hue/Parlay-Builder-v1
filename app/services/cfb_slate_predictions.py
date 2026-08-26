@@ -7,7 +7,7 @@ from typing import Any
 
 import pandas as pd
 
-from app.models.cfb_baseline import predict_home_win_proba
+from app.models.cfb_baseline import load_games, load_model_artifact, predict_home_win_proba
 from app.models.cfb_confidence import category_for_proba, category_label
 from app.models.cfb_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD, predict_spread_covers
 from app.models.cfb_totals import enrich_totals_columns
@@ -29,6 +29,21 @@ def cfb_season_end_year(game_date: date) -> int:
 def _model_edge_proxy(prob: float) -> float:
     """Distance from coin flip when no market odds are available."""
     return abs(float(prob) - 0.5) * 2.0
+
+
+def _model_team_name(game: dict[str, Any], side: str, canonical: tuple[str, ...]) -> str:
+    """Resolve ESPN display names (often with mascots) to model-history school names."""
+    display = str(game.get(f"{side}_team") or "")
+    preferred = str(game.get(f"{side}_team_model_name") or "")
+    for candidate in (preferred, display):
+        normalized = normalize_team_name(candidate)
+        if normalized in canonical:
+            return normalized
+    folded = normalize_team_name(display).casefold()
+    matches = [name for name in canonical if folded == name.casefold() or folded.startswith(name.casefold() + " ")]
+    if matches:
+        return max(matches, key=len)
+    return normalize_team_name(preferred or display)
 
 
 def _ml_market_fields(
@@ -129,15 +144,25 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
     slate_date = schedule.get("resolved_date") or schedule.get("date")
     slate_day = date.fromisoformat(str(slate_date)[:10])
     season_end = cfb_season_end_year(slate_day)
+    history = load_games()
+    canonical = tuple(sorted(
+        set(history["home_team"].dropna().astype(str))
+        | set(history["away_team"].dropna().astype(str)),
+        key=len,
+        reverse=True,
+    ))
+    display_by_id: dict[str, tuple[str, str]] = {}
     rows = []
     for g in games:
+        gid = str(g["game_id"])
+        display_by_id[gid] = (str(g.get("home_team") or "Home"), str(g.get("away_team") or "Away"))
         rows.append(
             {
-                "game_id": str(g["game_id"]),
+                "game_id": gid,
                 "date": slate_date,
                 "season": season_end,
-                "home_team": normalize_team_name(g.get("home_team") or ""),
-                "away_team": normalize_team_name(g.get("away_team") or ""),
+                "home_team": _model_team_name(g, "home", canonical),
+                "away_team": _model_team_name(g, "away", canonical),
             }
         )
     df = pd.DataFrame(rows)
@@ -149,6 +174,7 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
         df["ou_line"] = df["game_id"].astype(str).map(ou_by_game)
 
     try:
+        artifact = load_model_artifact()
         probs = predict_home_win_proba(df)
     except FileNotFoundError:
         return {}
@@ -190,13 +216,23 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
             row.get("away_ml"),
         )
 
+        belief_home_pct = max(0, min(100, round(prob * 100)))
+        belief_away_pct = 100 - belief_home_pct
+        display_home, display_away = display_by_id[gid]
         payload: dict[str, Any] = {
             "game_id": gid,
-            "home_team": row["home_team"],
-            "away_team": row["away_team"],
+            "home_team": display_home,
+            "away_team": display_away,
+            "model_team_home": row["home_team"],
+            "model_team_away": row["away_team"],
             "model_prob_home": prob,
-            "model_prob_away": round(1.0 - prob, 4),
-            "model_pick": model_pick,
+            "model_prob_away": 1.0 - prob,
+            "model_belief_home_pct": belief_home_pct,
+            "model_belief_away_pct": belief_away_pct,
+            "model_belief_pick_pct": max(belief_home_pct, belief_away_pct),
+            "active_model_version": artifact.get("model_version", "unknown"),
+            "active_feature_set": artifact.get("feature_set"),
+            "model_pick": display_home if pick_side == "home" else display_away,
             "model_pick_side": pick_side,
             "model_category": category,
             "model_category_label": cat_label,

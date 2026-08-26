@@ -80,6 +80,11 @@ def test_predictions_include_spread_and_totals(
     data = predict_slate(date(2024, 11, 30))
     row = data["401635000"]
     assert row["model_prob_home"] == 0.72
+    assert row["model_belief_home_pct"] == 72
+    assert row["model_belief_away_pct"] == 28
+    assert row["model_belief_home_pct"] + row["model_belief_away_pct"] == 100
+    assert row["active_model_version"] == "v4_logistic_platt"
+    assert row["active_feature_set"] == "cfb_v4"
     assert row["model_pick"] == "Georgia"
     assert row["model_pick_side"] == "home"
     assert row["model_category_label"] in ("Toss-up", "Soft", "Hard", "Lock")
@@ -108,3 +113,18 @@ def test_cfb_predictions_api_does_not_use_ufc_predictor(mock_cfb):
     assert body["401635000"]["home_team"] == "Georgia"
     assert "event_name" not in body["401635000"]
     mock_cfb.assert_called_once()
+
+
+def test_model_team_name_strips_espn_mascot_for_history_match():
+    from app.services.cfb_slate_predictions import _model_team_name
+    canonical = ("North Carolina", "TCU", "San Jose State", "USC")
+    assert _model_team_name({"home_team": "TCU Horned Frogs"}, "home", canonical) == "TCU"
+    assert _model_team_name({"away_team": "North Carolina Tar Heels"}, "away", canonical) == "North Carolina"
+    assert _model_team_name({"away_team": "San José State Spartans"}, "away", canonical) == "San Jose State"
+
+
+def test_model_team_name_prefers_espn_location():
+    from app.services.cfb_slate_predictions import _model_team_name
+    canonical = ("North Dakota State",)
+    game = {"home_team": "NDSU Bison", "home_team_model_name": "North Dakota State"}
+    assert _model_team_name(game, "home", canonical) == "North Dakota State"
