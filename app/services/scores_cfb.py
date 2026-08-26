@@ -101,6 +101,8 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
         "game_id": str(event.get("id")),
         "home_team": home_team.get("displayName") or home_team.get("name") or "Home",
         "away_team": away_team.get("displayName") or away_team.get("name") or "Away",
+        "home_team_model_name": home_team.get("location") or home_team.get("shortDisplayName"),
+        "away_team_model_name": away_team.get("location") or away_team.get("shortDisplayName"),
         "home_team_id": int(home_id) if home_id is not None else None,
         "away_team_id": int(away_id) if away_id is not None else None,
         "home_team_abbr": home_team.get("abbreviation"),

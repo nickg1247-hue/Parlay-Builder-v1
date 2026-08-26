@@ -74,6 +74,8 @@ _CFB_ALIASES: dict[str, str] = {
     "hawai'i rainbow warriors": "Hawaii",
     "san josé state": "San Jose State",
     "san jose state": "San Jose State",
+    "san jos\u00e9 state spartans": "San Jose State",
+    "san jose state spartans": "San Jose State",
     "cal": "California",
     "california": "California",
     "california golden bears": "California",
