@@ -673,7 +673,7 @@ def _build_slate_features(
     *,
     include_scoring: bool,
 ) -> pd.DataFrame:
-    from app.models.cfb_baseline import load_games
+    from app.models.cfb_baseline import attach_elo_for_slate, load_games
 
     hist = _ensure_v2_game_columns(history_df if history_df is not None else load_games())
     hist = hist[hist["home_win"].notna()].copy()
@@ -694,22 +694,48 @@ def _build_slate_features(
     slate["away_rest_days"] = rest_fill
     slate["home_b2b"] = 0
     slate["away_b2b"] = 0
+
+    slate_ids = set(slate["game_id"].astype(str))
+    slate_min_date = pd.to_datetime(slate["date"]).min()
+    hist_before = hist[
+        (hist["date"] < slate_min_date)
+        & ~hist["game_id"].astype(str).isin(slate_ids)
+    ].copy()
+
+    conference_by_team: dict[str, str] = {}
+    for row in hist_before.sort_values(["date", "game_id"]).itertuples(index=False):
+        home_conf = str(getattr(row, "home_conference", "") or "")
+        away_conf = str(getattr(row, "away_conference", "") or "")
+        if home_conf:
+            conference_by_team[str(row.home_team)] = home_conf
+        if away_conf:
+            conference_by_team[str(row.away_team)] = away_conf
+
     for col, default in (
         ("neutral_site", 0),
         ("conference_game", 0),
-        ("home_conference", ""),
-        ("away_conference", ""),
         ("week", 0),
     ):
         if col not in slate.columns:
             slate[col] = default
+        else:
+            slate[col] = slate[col].fillna(default)
+    if "home_conference" not in slate.columns:
+        slate["home_conference"] = slate["home_team"].map(conference_by_team).fillna("")
+    else:
+        slate["home_conference"] = slate["home_conference"].fillna("")
+        missing = slate["home_conference"].eq("")
+        slate.loc[missing, "home_conference"] = slate.loc[missing, "home_team"].map(conference_by_team).fillna("")
+    if "away_conference" not in slate.columns:
+        slate["away_conference"] = slate["away_team"].map(conference_by_team).fillna("")
+    else:
+        slate["away_conference"] = slate["away_conference"].fillna("")
+        missing = slate["away_conference"].eq("")
+        slate.loc[missing, "away_conference"] = slate.loc[missing, "away_team"].map(conference_by_team).fillna("")
 
-    slate_ids = set(slate["game_id"].astype(str))
-    slate_min_date = pd.to_datetime(slate["date"]).min()
-    hist = hist[~hist["game_id"].astype(str).isin(slate_ids)].copy()
-    hist_before = hist[hist["date"] < slate_min_date].copy()
     tracker = build_team_tracker_from_history(hist_before)
     conf_tracker = _ConferenceTracker()
+    srs_tracker = _SrsTracker()
     for row in hist_before.sort_values(["date", "game_id"]).itertuples(index=False):
         conf_tracker.update(
             int(row.season),
@@ -717,27 +743,31 @@ def _build_slate_features(
             str(getattr(row, "away_conference", "") or ""),
             int(row.home_win),
         )
-    combined = pd.concat([hist_before, slate], ignore_index=True, sort=False)
-    combined["date"] = pd.to_datetime(combined["date"])
-    combined = combined.sort_values(["date", "game_id"]).reset_index(drop=True)
+        home_score = int(row.home_score) if pd.notna(getattr(row, "home_score", None)) else None
+        away_score = int(row.away_score) if pd.notna(getattr(row, "away_score", None)) else None
+        srs_tracker.update(str(row.home_team), str(row.away_team), home_score, away_score)
+
     from app.ingest.cfb_sp_plus import load_sp_plus_lookup
 
-    sp_lookup = load_sp_plus_lookup(tuple(sorted(combined["season"].unique())))
-    priors_store = _load_priors_store(combined)
-    full = build_features(
-        combined,
+    seasons = tuple(sorted(set(hist_before["season"].astype(int)) | set(slate["season"].astype(int))))
+    sp_lookup = load_sp_plus_lookup(seasons)
+    priors_store = _load_priors_store(pd.concat([hist_before, slate], ignore_index=True, sort=False))
+    features = build_features(
+        slate,
         rest_fill=rest_fill,
         pts_fill=pts_fill,
+        update_state=False,
         tracker=tracker,
         conf_tracker=conf_tracker,
-        attach_elo=True,
+        attach_elo=False,
         include_scoring=include_scoring,
         sp_lookup=sp_lookup,
         priors_store=priors_store,
+        srs_tracker=srs_tracker,
     )
-    return full[full["game_id"].astype(str).isin(slate_ids)].drop_duplicates(
-        subset=["game_id"], keep="last"
-    ).copy()
+    features = attach_elo_for_slate(features, history=hist_before)
+    features["elo_diff"] = features["elo_home_pre"] - features["elo_away_pre"]
+    return features.drop_duplicates(subset=["game_id"], keep="last").copy()
 
 
 def build_features_for_slate(
