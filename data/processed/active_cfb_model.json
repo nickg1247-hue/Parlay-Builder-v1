@@ -4,5 +4,5 @@
   "path": "data/processed/cfb_baseline_model.joblib",
   "feature_set": "cfb_v4",
   "model_version": "v4_logistic_platt",
-  "promoted_at": "2026-08-16T03:24:08.894523+00:00"
+  "promoted_at": "2026-08-27T00:56:43.852216+00:00"
 }

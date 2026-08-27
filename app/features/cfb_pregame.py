@@ -431,30 +431,37 @@ def _row_features(
         "away_last5_win_pct": away_last5,
         "last5_win_pct_diff": home_last5 - away_last5,
         "home_home_win_pct": home_home_pct,
+        "home_conf_win_pct": home_conf_pct,
+        "away_conf_win_pct": away_conf_pct,
         "conf_win_pct_diff": conf_diff,
         "elo_home_pre": elo_home,
         "elo_away_pre": elo_away,
         "elo_diff": elo_home - elo_away,
     }
 
+    home_sp = None
+    away_sp = None
     if sp_lookup is not None:
-        from app.ingest.cfb_sp_plus import sp_plus_diffs_for_game
+        from app.ingest.cfb_sp_plus import sp_plus_values_for_game
 
         game_week = _game_week(row)
-        sp_diff, sp_off_diff, sp_def_diff = sp_plus_diffs_for_game(
+        home_sp, away_sp = sp_plus_values_for_game(
             season=season,
             game_week=game_week,
             home_team=home_team,
             away_team=away_team,
             lookup=sp_lookup,
         )
-        feats["sp_plus_diff"] = sp_diff
-        feats["sp_offense_diff"] = sp_off_diff
-        feats["sp_defense_diff"] = sp_def_diff
-    else:
-        feats["sp_plus_diff"] = 0.0
-        feats["sp_offense_diff"] = 0.0
-        feats["sp_defense_diff"] = 0.0
+    feats["sp_plus_available"] = int(home_sp is not None and away_sp is not None)
+    feats["home_sp_plus"] = float(home_sp.overall) if home_sp is not None else 0.0
+    feats["away_sp_plus"] = float(away_sp.overall) if away_sp is not None else 0.0
+    feats["home_sp_offense"] = float(home_sp.offense) if home_sp is not None else 0.0
+    feats["away_sp_offense"] = float(away_sp.offense) if away_sp is not None else 0.0
+    feats["home_sp_defense"] = float(home_sp.defense) if home_sp is not None else 0.0
+    feats["away_sp_defense"] = float(away_sp.defense) if away_sp is not None else 0.0
+    feats["sp_plus_diff"] = feats["home_sp_plus"] - feats["away_sp_plus"]
+    feats["sp_offense_diff"] = feats["home_sp_offense"] - feats["away_sp_offense"]
+    feats["sp_defense_diff"] = feats["home_sp_defense"] - feats["away_sp_defense"]
 
     game_week = _game_week(row)
     weight = prior_blend_weight(game_week)
@@ -463,23 +470,42 @@ def _row_features(
     srs_home = srs_tracker.pre(home_team) if srs_tracker is not None else 0.0
     srs_away = srs_tracker.pre(away_team) if srs_tracker is not None else 0.0
     srs_diff = srs_home - srs_away
-    prior_diffs = {
-        "talent_diff": 0.0,
-        "returning_pct_diff": 0.0,
-        "returning_pass_pct_diff": 0.0,
-        "prior_fpi_diff": 0.0,
+    prior_values = {
+        "home_talent": 0.0,
+        "away_talent": 0.0,
+        "home_returning_pct": 0.0,
+        "away_returning_pct": 0.0,
+        "home_returning_pass_pct": 0.0,
+        "away_returning_pass_pct": 0.0,
+        "home_prior_fpi": 0.0,
+        "away_prior_fpi": 0.0,
         "coach_change_home": 0.0,
         "coach_change_away": 0.0,
     }
     if priors_store is not None:
-        from app.ingest.cfb_priors import prior_feature_diffs
+        from app.ingest.cfb_priors import prior_feature_values
 
-        prior_diffs = prior_feature_diffs(
+        prior_values = prior_feature_values(
             season=season,
             home_team=home_team,
             away_team=away_team,
             store=priors_store,
         )
+    prior_diffs = {
+        "talent_diff": prior_values["home_talent"] - prior_values["away_talent"],
+        "returning_pct_diff": (
+            prior_values["home_returning_pct"] - prior_values["away_returning_pct"]
+        ),
+        "returning_pass_pct_diff": (
+            prior_values["home_returning_pass_pct"]
+            - prior_values["away_returning_pass_pct"]
+        ),
+        "prior_fpi_diff": (
+            prior_values["home_prior_fpi"] - prior_values["away_prior_fpi"]
+        ),
+        "coach_change_home": prior_values["coach_change_home"],
+        "coach_change_away": prior_values["coach_change_away"],
+    }
     prior_points = (
         0.40 * float(feats.get("sp_plus_diff") or 0.0)
         + 0.25 * float(prior_diffs["prior_fpi_diff"])
@@ -488,9 +514,14 @@ def _row_features(
         + 0.08 * (float(prior_diffs["returning_pass_pct_diff"]) * 10.0)
     )
     in_season_points = 0.60 * (float(feats["elo_diff"]) / 25.0) + 0.40 * srs_diff
+    feats.update(prior_values)
     feats.update(prior_diffs)
+    feats["home_srs"] = srs_home
+    feats["away_srs"] = srs_away
     feats["srs_diff"] = srs_diff
     feats["program_home_margin"] = _home_program_margin(home_prior)
+    feats["home_matchup_tier"] = float(home_tier)
+    feats["away_matchup_tier"] = float(away_tier)
     feats["matchup_tier_diff"] = float(home_tier - away_tier)
     feats["is_fcs_away"] = 1.0 if away_tier == 1 else 0.0
     feats["conference_game"] = (

@@ -34,7 +34,7 @@ def test_pregame_sp_week():
     assert pregame_sp_week(5) == 4
 
 
-def test_flat_mode_uses_preseason_all_year(tmp_path, monkeypatch):
+def test_flat_mode_uses_preseason_week_one_only(tmp_path, monkeypatch):
     cache_dir = tmp_path / "sp_cache"
     monkeypatch.setattr("app.ingest.cfb_sp_plus.SP_PLUS_CACHE_DIR", cache_dir)
     cache_dir.mkdir()
@@ -66,7 +66,7 @@ def test_flat_mode_uses_preseason_all_year(tmp_path, monkeypatch):
         away_team="Alabama",
         lookup=store,
     )
-    assert week3 == pytest.approx(2.0)
+    assert week3 == pytest.approx(0.0)
 
 
 def test_fetch_preseason_roundtrip(tmp_path, monkeypatch):

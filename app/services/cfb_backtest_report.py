@@ -108,7 +108,7 @@ def _aggregate_importance(
 def _moneyline_fold(
     train: pd.DataFrame,
     test: pd.DataFrame,
-) -> tuple[dict[str, Any], dict[str, float], Pipeline]:
+) -> tuple[dict[str, Any], dict[str, float], Pipeline, list[dict[str, Any]]]:
     cols = FEATURE_COLUMNS
     y_test = test["home_win"].astype(int).values
     pipe = train_logistic(train, cols)
@@ -135,8 +135,14 @@ def _moneyline_fold(
             {
                 "game_id": str(getattr(row, "game_id", "")),
                 "season": int(getattr(row, "season", 0) or 0),
+                "date": str(getattr(row, "date", ""))[:10],
+                "home_team": str(getattr(row, "home_team", "")),
+                "away_team": str(getattr(row, "away_team", "")),
+                "neutral_site": bool(getattr(row, "neutral_site", 0)),
                 "home_pct": float(prob) * 100.0,
                 "away_pct": (1.0 - float(prob)) * 100.0,
+                "predicted_winner": str(row.home_team if prob >= 0.5 else row.away_team),
+                "actual_winner": str(row.home_team if int(won) else row.away_team),
                 "correct": int(int(prob >= 0.5) == int(won)),
                 "predicted_probability": float(prob),
                 "outcome": int(won),
@@ -163,6 +169,36 @@ def _moneyline_fold(
         pipe,
         labeled,
     )
+
+
+def _prediction_audit(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    favorites = np.array([float(r["confidence_probability"]) for r in rows], dtype=float)
+    won = np.array([int(r["won"]) for r in rows], dtype=int)
+    bins = ((0.50, 0.60), (0.60, 0.75), (0.75, 0.90), (0.90, 1.000001))
+    distribution = []
+    for lower, upper in bins:
+        mask = (favorites >= lower) & (favorites < upper)
+        distribution.append({
+            "lower_pct": round(lower * 100, 1),
+            "upper_pct": round(min(upper, 1.0) * 100, 1),
+            "count": int(mask.sum()),
+            "share_pct": round(float(mask.mean()) * 100, 2),
+        })
+    high = favorites >= 0.90
+    incorrect = sorted(
+        (r for r in rows if not int(r["won"])),
+        key=lambda r: float(r["confidence_probability"]),
+        reverse=True,
+    )
+    losses = [r for r in incorrect if float(r["confidence_probability"]) >= 0.90]
+    return {
+        "mean_confidence_pct": round(float(favorites.mean()) * 100, 2),
+        "favorite_probability_distribution": distribution,
+        "high_confidence_90_plus_count": int(high.sum()),
+        "high_confidence_90_plus_accuracy_pct": round(float(won[high].mean()) * 100, 2) if high.any() else None,
+        "suspicious_high_confidence_losses": losses,
+        "incorrect_predictions": incorrect,
+    }
 
 
 def _spread_fold(
@@ -385,6 +421,11 @@ def run_cfb_walk_forward_backtest(
         sum(f["moneyline"]["log_loss"] * f["moneyline"]["games"] for f in folds)
         / total_games
     )
+    weighted_brier = (
+        sum(f["moneyline"]["brier"] * f["moneyline"]["games"] for f in folds)
+        / total_games
+    )
+    prediction_audit = _prediction_audit(labeled_games)
     beats_naive_all = all(f["moneyline"]["beats_naive"] for f in folds)
 
     feature_rank = _aggregate_importance(fold_importances)
@@ -427,6 +468,10 @@ def run_cfb_walk_forward_backtest(
             "holdout_games_scored": total_games,
             "moneyline_accuracy_pct": round(weighted_acc, 2),
             "moneyline_log_loss": round(weighted_ll, 4),
+            "moneyline_brier": round(weighted_brier, 4),
+            "mean_confidence_pct": prediction_audit["mean_confidence_pct"],
+            "high_confidence_90_plus_count": prediction_audit["high_confidence_90_plus_count"],
+            "high_confidence_90_plus_accuracy_pct": prediction_audit["high_confidence_90_plus_accuracy_pct"],
             "beats_naive_every_fold": beats_naive_all,
             "spread_pick_accuracy_pct": round(
                 sum(
@@ -446,6 +491,7 @@ def run_cfb_walk_forward_backtest(
             ),
         },
         "confidence": confidence_block,
+        "prediction_audit": prediction_audit,
         "bam": bam,
         "feature_effects": {
             "logistic_importance_avg": feature_rank,

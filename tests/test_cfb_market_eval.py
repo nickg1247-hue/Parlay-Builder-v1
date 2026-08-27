@@ -46,7 +46,8 @@ def tiny_holdout(tmp_path, monkeypatch):
     }
 
     def _feat_row(**kwargs):
-        base = {
+        base = {feature: 0.0 for feature in FEATURE_COLUMNS}
+        base.update({
             "elo_diff": 30,
             "home_season_win_pct": 0.7,
             "away_season_win_pct": 0.5,
@@ -62,7 +63,7 @@ def tiny_holdout(tmp_path, monkeypatch):
             "conf_win_pct_diff": 0.0,
             "home_b2b": 0,
             "away_b2b": 0,
-        }
+        })
         base.update(kwargs)
         return base
 

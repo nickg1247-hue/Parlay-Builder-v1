@@ -1169,6 +1169,17 @@ async def cfb_predictions(
     return predict_cfb_slate(game_date)
 
 
+@app.get("/api/cfb/diagnostics/{game_id}")
+async def cfb_prediction_diagnostic(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    from app.services.cfb_prediction_diagnostic import diagnose_cfb_prediction
+
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    return diagnose_cfb_prediction(game_id, game_date)
+
+
 @app.get("/api/cfb/futures")
 async def cfb_futures(
     season: int | None = Query(None),
