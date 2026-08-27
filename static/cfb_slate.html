@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/static/design.css?v=20260742">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260742">
   <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+  <link rel="stylesheet" href="/static/cfb_board.css?v=20260826">
 </head>
 <body class="ntg-shell home-v2 slate-cfb" data-sport="cfb">
   <div class="app-shell">
@@ -55,6 +56,31 @@
           Refresh
         </button>
         <span class="slate-source-badge hidden" id="slate-source" aria-live="polite"></span>
+        <label class="toolbar-field">
+          Division
+          <select id="slate-division-filter">
+            <option value="all">All divisions</option>
+          </select>
+        </label>
+        <label class="toolbar-field">
+          Conference
+          <select id="slate-conference-filter">
+            <option value="all">All conferences</option>
+          </select>
+        </label>
+        <label class="toolbar-field">
+          Ranking
+          <select id="slate-ranking-filter">
+            <option value="all">All games</option>
+            <option value="top25">Any Top 25 team</option>
+            <option value="ranked-v-ranked">Ranked vs ranked</option>
+          </select>
+        </label>
+        <label class="toolbar-check">
+          <input type="checkbox" id="slate-hbcu-filter" />
+          HBCU games
+        </label>
+        <span class="filter-count" id="slate-filter-count" aria-live="polite"></span>
       </div>
 
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
@@ -67,7 +93,7 @@
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260819"></script>
+  <script src="/static/app.js?v=20260826"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -79,9 +105,95 @@
       const goBtn = document.getElementById("slate-date-go");
       const refreshBtn = document.getElementById("slate-date-refresh");
       const sourceEl = document.getElementById("slate-source");
+      const divisionFilter = document.getElementById("slate-division-filter");
+      const conferenceFilter = document.getElementById("slate-conference-filter");
+      const rankingFilter = document.getElementById("slate-ranking-filter");
+      const hbcuFilter = document.getElementById("slate-hbcu-filter");
+      const filterCount = document.getElementById("slate-filter-count");
       const dateParam = qs("date");
       const refreshParam = qs("refresh") === "true";
       let pollTimer = null;
+      let currentGames = [];
+      let currentBoardMap = {};
+      let currentSlateDate = "";
+
+      function setFilterOptions(select, options, allLabel) {
+        const previous = select.value || "all";
+        select.innerHTML = "";
+        const allOption = document.createElement("option");
+        allOption.value = "all";
+        allOption.textContent = allLabel;
+        select.appendChild(allOption);
+        options.forEach((option) => {
+          const element = document.createElement("option");
+          element.value = option.key || option;
+          element.textContent = option.label || option;
+          select.appendChild(element);
+        });
+        select.value = Array.from(select.options).some((option) => option.value === previous)
+          ? previous
+          : "all";
+      }
+
+      function populateSlateFilters(games) {
+        const labels = { fbs: "FBS", fcs: "FCS", d2: "Division II", d3: "Division III" };
+        const presentDivisions = new Set();
+        const conferences = new Set();
+        let hasHbcu = false;
+        games.forEach((game) => {
+          (game.divisions || [game.division || "fbs"]).forEach((division) => presentDivisions.add(division));
+          if (game.home_conference) conferences.add(game.home_conference);
+          if (game.away_conference) conferences.add(game.away_conference);
+          if (game.is_hbcu) hasHbcu = true;
+        });
+        const divisions = ["fbs", "fcs", "d2", "d3"]
+          .filter((key) => presentDivisions.has(key))
+          .map((key) => ({ key, label: labels[key] }));
+        setFilterOptions(divisionFilter, divisions, "All divisions");
+        setFilterOptions(conferenceFilter, Array.from(conferences).sort(), "All conferences");
+        hbcuFilter.disabled = !hasHbcu;
+        if (!hasHbcu) hbcuFilter.checked = false;
+      }
+
+      function isTop25(value) {
+        const rank = Number(value);
+        return Number.isInteger(rank) && rank >= 1 && rank <= 25;
+      }
+
+      function gamePassesFilters(game) {
+        const divisions = game.divisions || [game.division || "fbs"];
+        if (divisionFilter.value !== "all" && !divisions.includes(divisionFilter.value)) return false;
+        if (
+          conferenceFilter.value !== "all" &&
+          game.home_conference !== conferenceFilter.value &&
+          game.away_conference !== conferenceFilter.value
+        ) return false;
+        const homeRanked = isTop25(game.home_rank);
+        const awayRanked = isTop25(game.away_rank);
+        if (rankingFilter.value === "top25" && !homeRanked && !awayRanked) return false;
+        if (rankingFilter.value === "ranked-v-ranked" && !(homeRanked && awayRanked)) return false;
+        if (hbcuFilter.checked && !game.is_hbcu) return false;
+        return true;
+      }
+
+      function renderFilteredSlate() {
+        const visible = currentGames.filter(gamePassesFilters);
+        filterCount.textContent = visible.length + " of " + currentGames.length + " games";
+        if (!visible.length) {
+          list.innerHTML = '<div class="empty-state"><h2>No games match these filters</h2><p>Try another division, conference, or ranking filter.</p></div>';
+          return;
+        }
+        renderGameList(list, visible, {
+          boardMap: currentBoardMap,
+          gameDate: currentSlateDate,
+          useCache: true,
+          colors: _teamColors,
+        });
+      }
+
+      [divisionFilter, conferenceFilter, rankingFilter, hbcuFilter].forEach((control) => {
+        control.addEventListener("change", renderFilteredSlate);
+      });
 
       const todayIso = typeof ntgSlateTodayIso === "function" ? ntgSlateTodayIso() : new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
       dateInput.value = dateParam || todayIso;
@@ -125,6 +237,7 @@
         if (source === "ingest") return "Saved ingest";
         if (source === "cache") return "Saved snapshot";
         if (source === "api") return "ESPN API";
+        if (source === "espn+ncaa") return "ESPN + NCAA";
         return source || "";
       }
 
@@ -184,12 +297,11 @@
         } catch (_) { /* model optional */ }
         const gamesWithPreds = attachBoardMapToGames(games, boardMap);
 
-        renderGameList(list, gamesWithPreds, {
-          boardMap,
-          gameDate: slateDate,
-          useCache: true,
-          colors: _teamColors,
-        });
+        currentGames = gamesWithPreds;
+        currentBoardMap = boardMap;
+        currentSlateDate = slateDate;
+        populateSlateFilters(currentGames);
+        renderFilteredSlate();
       }
 
       try {
@@ -202,12 +314,10 @@
               const slateDate = live.resolved_date || live.date || "";
               dateEl.textContent = slateDate;
               showSource(live);
-              const opts = list._renderOptions || {};
-              updateGameCards(
-                list,
-                attachBoardMapToGames(mapGames(live), opts.boardMap || {}),
-                { boardMap: opts.boardMap || {}, colors: _teamColors }
-              );
+              currentSlateDate = slateDate;
+              currentGames = attachBoardMapToGames(mapGames(live), currentBoardMap);
+              populateSlateFilters(currentGames);
+              renderFilteredSlate();
             } catch (_) { /* keep last good state */ }
           }, 60000);
         }

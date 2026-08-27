@@ -137,7 +137,11 @@ def _resolve_home_spread(
 
 def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
     schedule = get_cfb_schedule(game_date, auto_resolve=game_date is None)
-    games = schedule.get("games") or []
+    games = [
+        game
+        for game in schedule.get("games") or []
+        if game.get("model_eligible", True)
+    ]
     if not games:
         return {}
 

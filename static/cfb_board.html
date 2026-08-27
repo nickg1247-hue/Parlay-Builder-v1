@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="/static/app.css?v=20260816">
   <link rel="stylesheet" href="/static/brand.css?v=20260740">
   <link rel="stylesheet" href="/static/design.css?v=20260740">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260740">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260826">
+  <link rel="stylesheet" href="/static/cfb_board.css?v=20260826">
 </head>
 <body class="ntg-shell home-v2 board-cfb" data-sport="cfb">
   <div class="app-shell">
@@ -50,6 +51,31 @@
           Min edge %
           <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
         </label>
+        <label class="toolbar-field">
+          Division
+          <select id="division-filter">
+            <option value="all">All divisions</option>
+          </select>
+        </label>
+        <label class="toolbar-field">
+          Conference
+          <select id="conference-filter">
+            <option value="all">All conferences</option>
+          </select>
+        </label>
+        <label class="toolbar-field">
+          Ranking
+          <select id="ranking-filter">
+            <option value="all">All games</option>
+            <option value="top25">Any Top 25 team</option>
+            <option value="ranked-v-ranked">Ranked vs ranked</option>
+          </select>
+        </label>
+        <label class="toolbar-check">
+          <input type="checkbox" id="hbcu-filter" />
+          HBCU games
+        </label>
+        <span class="filter-count" id="filter-count" aria-live="polite"></span>
         <button type="button" class="dash-btn dash-btn-ghost hidden" id="refresh-btn">Refresh</button>
       </div>
 
@@ -85,7 +111,7 @@
               <tbody></tbody>
             </table>
           </div>
-          <p class="simple-note" id="confidence-note">Confidence reflects model vs market edge, not a guarantee.</p>
+          <p class="simple-note" id="confidence-note">FBS-involving games receive model coverage. Lower-division-only games show verified schedule and score data without a fabricated pick.</p>
         </section>
 
         <section class="board-section ntg-card">
@@ -102,7 +128,7 @@
       <footer class="footer status-footer hidden" id="status-footer"></footer>
     </main>
   </div>
-  <script src="/static/app.js?v=20260819"></script>
-  <script src="/static/cfb_board.js?v=20260740"></script>
+  <script src="/static/app.js?v=20260826"></script>
+  <script src="/static/cfb_board.js?v=20260826"></script>
 </body>
 </html>

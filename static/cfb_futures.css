@@ -25,6 +25,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 10rem;
 }
 
 .futures-logo {
@@ -32,10 +33,11 @@
   height: 28px;
   object-fit: contain;
   border-radius: 4px;
+  flex: 0 0 auto;
 }
 
 .champ-badge {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: #b45309;
@@ -48,10 +50,15 @@
   font-weight: 600;
 }
 
+.title-odds {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
 .cfp-seeds {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 0.65rem;
   padding: 0;
   margin: 1rem 0;
@@ -82,6 +89,11 @@
   font-size: 0.85rem;
 }
 
+.cfp-seed-odds {
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.76rem;
+}
+
 .futures-subhead {
   margin: 1.25rem 0 0.5rem;
   font-size: 1rem;
@@ -89,7 +101,7 @@
 
 .cfp-first-round {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 0.6rem;
 }
 
@@ -102,7 +114,63 @@
   gap: 0.2rem;
 }
 
+.cfp-matchup small {
+  margin-left: 0.3rem;
+  color: var(--text-muted, #9ca3af);
+}
+
 .cfp-vs {
   opacity: 0.6;
   font-size: 0.8rem;
+}
+
+.futures-section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.futures-section-head h2 {
+  margin-bottom: 0.2rem;
+}
+
+.futures-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: min(16rem, 100%);
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.8rem;
+}
+
+.futures-search input {
+  min-height: 2.4rem;
+  border: 1px solid var(--border, #2a3344);
+  border-radius: 8px;
+  background: var(--surface, #111827);
+  color: inherit;
+  padding: 0.45rem 0.65rem;
+}
+
+#playoff-odds-table,
+#standings-table,
+#overall-table {
+  min-width: 760px;
+}
+
+@media (max-width: 720px) {
+  .futures-section-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .futures-search {
+    min-width: 100%;
+  }
+
+  .cfp-seeds {
+    grid-template-columns: 1fr;
+  }
 }
