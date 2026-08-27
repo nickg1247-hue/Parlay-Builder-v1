@@ -305,14 +305,14 @@ def _lookup(table: dict[tuple[int, str], float], season: int, team: str) -> floa
     return float(table.get((season, normalize_team_name(team)), 0.0))
 
 
-def prior_feature_diffs(
+def prior_feature_values(
     *,
     season: int,
     home_team: str,
     away_team: str,
     store: PriorsStore,
 ) -> dict[str, float]:
-    """Safe pregame priors — current-year talent/returning, prior-year FPI only."""
+    """Return the exact team-level pregame priors used by the model."""
     home = normalize_team_name(home_team)
     away = normalize_team_name(away_team)
     prior_year = season - PRIOR_LOOKBACK_YEAR
@@ -321,17 +321,44 @@ def prior_feature_diffs(
     home_prev_coach = store.coaches.get((prior_year, home), "")
     away_prev_coach = store.coaches.get((prior_year, away), "")
     return {
-        "talent_diff": _lookup(store.talent, season, home) - _lookup(store.talent, season, away),
-        "returning_pct_diff": _lookup(store.returning_pct, season, home)
-        - _lookup(store.returning_pct, season, away),
-        "returning_pass_pct_diff": _lookup(store.returning_pass_pct, season, home)
-        - _lookup(store.returning_pass_pct, season, away),
-        "prior_fpi_diff": _lookup(store.fpi, prior_year, home)
-        - _lookup(store.fpi, prior_year, away),
+        "home_talent": _lookup(store.talent, season, home),
+        "away_talent": _lookup(store.talent, season, away),
+        "home_returning_pct": _lookup(store.returning_pct, season, home),
+        "away_returning_pct": _lookup(store.returning_pct, season, away),
+        "home_returning_pass_pct": _lookup(store.returning_pass_pct, season, home),
+        "away_returning_pass_pct": _lookup(store.returning_pass_pct, season, away),
+        "home_prior_fpi": _lookup(store.fpi, prior_year, home),
+        "away_prior_fpi": _lookup(store.fpi, prior_year, away),
         "coach_change_home": float(
             1.0 if home_coach and home_prev_coach and home_coach != home_prev_coach else 0.0
         ),
         "coach_change_away": float(
             1.0 if away_coach and away_prev_coach and away_coach != away_prev_coach else 0.0
         ),
+    }
+
+
+def prior_feature_diffs(
+    *,
+    season: int,
+    home_team: str,
+    away_team: str,
+    store: PriorsStore,
+) -> dict[str, float]:
+    """Safe pregame priors — current-year talent/returning, prior-year FPI only."""
+    values = prior_feature_values(
+        season=season,
+        home_team=home_team,
+        away_team=away_team,
+        store=store,
+    )
+    return {
+        "talent_diff": values["home_talent"] - values["away_talent"],
+        "returning_pct_diff": values["home_returning_pct"] - values["away_returning_pct"],
+        "returning_pass_pct_diff": (
+            values["home_returning_pass_pct"] - values["away_returning_pass_pct"]
+        ),
+        "prior_fpi_diff": values["home_prior_fpi"] - values["away_prior_fpi"],
+        "coach_change_home": values["coach_change_home"],
+        "coach_change_away": values["coach_change_away"],
     }

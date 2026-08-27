@@ -111,6 +111,8 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
         "away_logo_url": away_team.get("logo"),
         "home_record": _competitor_record(home),
         "away_record": _competitor_record(away),
+        "neutral_site": int(bool(competition.get("neutralSite"))),
+        "week": int((event.get("week") or {}).get("number") or 0),
         "start_time_utc": event.get("date") or competition.get("date"),
         "status": _cfb_status(status),
         "detailed_status": (status.get("type") or {}).get("description", ""),

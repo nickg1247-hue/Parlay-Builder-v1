@@ -1,4 +1,4 @@
-"""CFBD SP+ cache — weekly when API differs; preseason all year when flat."""
+"""CFBD SP+ cache with leakage-safe pregame snapshot selection."""
 
 from __future__ import annotations
 
@@ -480,6 +480,41 @@ def _lookup_team_sp(
     return store.weekly.get((season, week, team))
 
 
+def sp_plus_values_for_game(
+    *,
+    season: int,
+    game_week: int,
+    home_team: str,
+    away_team: str,
+    lookup: SPPlusStore,
+) -> tuple[TeamSPPlus | None, TeamSPPlus | None]:
+    """Return the exact leakage-safe home and away SP+ snapshots used."""
+    if isinstance(lookup, dict):
+        # Backward-compatible empty/legacy lookup: absence must stay neutral.
+        lookup = SPPlusStore(preseason=lookup)
+    home = normalize_team_name(home_team)
+    away = normalize_team_name(away_team)
+    pg_week = pregame_sp_week(game_week)
+    mode = lookup.weekly_mode.get(season, "flat")
+
+    home_sp: TeamSPPlus | None = None
+    away_sp: TeamSPPlus | None = None
+    if mode == "ok":
+        home_sp = _lookup_team_sp(lookup, season, pg_week, home)
+        away_sp = _lookup_team_sp(lookup, season, pg_week, away)
+    elif int(game_week) <= 1:
+        home_sp = lookup.preseason.get((season, home))
+        away_sp = lookup.preseason.get((season, away))
+    else:
+        last_w = lookup.last_confirmed_week.get(season)
+        if last_w is not None and pg_week > 0 and pg_week <= last_w:
+            home_sp = _lookup_team_sp(lookup, season, pg_week, home)
+            away_sp = _lookup_team_sp(lookup, season, pg_week, away)
+    if home_sp is None or away_sp is None:
+        return None, None
+    return home_sp, away_sp
+
+
 def sp_plus_diffs_for_game(
     *,
     season: int,
@@ -488,27 +523,14 @@ def sp_plus_diffs_for_game(
     away_team: str,
     lookup: SPPlusStore,
 ) -> tuple[float, float, float]:
-    """Safe SP+ diffs — preseason snapshot all year when weekly files are flat."""
-    home = normalize_team_name(home_team)
-    away = normalize_team_name(away_team)
-    pg_week = pregame_sp_week(game_week)
-    mode = lookup.weekly_mode.get(season, "flat")
-
-    home_sp: TeamSPPlus | None = None
-    away_sp: TeamSPPlus | None = None
-
-    if mode == "ok":
-        home_sp = _lookup_team_sp(lookup, season, pg_week, home)
-        away_sp = _lookup_team_sp(lookup, season, pg_week, away)
-    else:
-        home_sp = lookup.preseason.get((season, home))
-        away_sp = lookup.preseason.get((season, away))
-        if home_sp is None or away_sp is None:
-            last_w = lookup.last_confirmed_week.get(season)
-            if last_w is not None and pg_week > 0 and pg_week <= last_w:
-                home_sp = home_sp or _lookup_team_sp(lookup, season, pg_week, home)
-                away_sp = away_sp or _lookup_team_sp(lookup, season, pg_week, away)
-
+    """Leakage-safe SP+ diffs: flat feeds use preseason only for Week 1."""
+    home_sp, away_sp = sp_plus_values_for_game(
+        season=season,
+        game_week=game_week,
+        home_team=home_team,
+        away_team=away_team,
+        lookup=lookup,
+    )
     if home_sp is None or away_sp is None:
         return 0.0, 0.0, 0.0
     return (

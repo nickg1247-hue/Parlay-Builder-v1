@@ -163,6 +163,11 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
                 "season": season_end,
                 "home_team": _model_team_name(g, "home", canonical),
                 "away_team": _model_team_name(g, "away", canonical),
+                "neutral_site": int(bool(g.get("neutral_site"))),
+                "week": int(g.get("week") or 0),
+                "conference_game": int(bool(g.get("conference_game"))),
+                "home_conference": str(g.get("home_conference") or ""),
+                "away_conference": str(g.get("away_conference") or ""),
             }
         )
     df = pd.DataFrame(rows)

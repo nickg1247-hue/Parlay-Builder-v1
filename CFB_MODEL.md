@@ -33,7 +33,7 @@ Promotion rule: highest tier that beats the prior tier on holdout log loss **and
 - Rolling opponent-adjusted SRS (from our results, not CFBD weekly SP+)
 - P4 / G5 / FCS matchup tier, conference game, program home margin
 - `prior_weight` and `blended_quality_diff` (Week 1–3 ≈ 70% prior, Week 8+ ≈ 30% prior)
-- Preseason SP+ is used **all year** when CFBD weekly SP+ is flat (no Week 2+ zeros)
+- When CFBD weekly SP+ is flat, the preseason snapshot is used for **Week 1 only**; Week 2+ SP+ inputs stay neutral until a real prior-week snapshot exists.
 
 Priors cache (season-level CFBD only): `python scripts/fetch_cfb_priors.py` → `data/processed/cfb_priors_cache/`. Current-year FPI is stored but **not** used as a feature (leakage).
 
