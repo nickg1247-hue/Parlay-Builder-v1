@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260816" type="image/png">
-  <title>CFB Futures — NTG Sports</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260816">
-  <link rel="stylesheet" href="/static/app.css?v=20260816">
-  <link rel="stylesheet" href="/static/brand.css?v=20260816">
-  <link rel="stylesheet" href="/static/design.css?v=20260816">
-  <link rel="stylesheet" href="/static/home-v2.css?v=20260816">
-  <link rel="stylesheet" href="/static/cfb_futures.css?v=20260816">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260826" type="image/png">
+  <title>CFB Futures  NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260826">
+  <link rel="stylesheet" href="/static/app.css?v=20260826">
+  <link rel="stylesheet" href="/static/brand.css?v=20260826">
+  <link rel="stylesheet" href="/static/design.css?v=20260826">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260826">
+  <link rel="stylesheet" href="/static/cfb_futures.css?v=20260826">
 </head>
 <body class="ntg-shell home-v2 board-cfb" data-sport="cfb">
   <div class="app-shell">
     <header class="app-topbar dash-topbar">
       <div class="app-nav-row dash-nav-row">
         <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
-          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260816" alt="NTG Sports" width="56" height="56" />
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260826" alt="NTG Sports" width="56" height="56" />
         </a>
         <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
         <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
@@ -26,7 +26,7 @@
         <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
       </div>
       <div class="dash-sync-wrap">
-        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync</div>
         <div class="dash-progress" aria-hidden="true">
           <div id="dash-progress-fill" class="dash-progress-fill"></div>
         </div>
@@ -37,9 +37,9 @@
       <header class="dash-page-header">
         <div>
           <h1>CFB futures</h1>
-          <p class="dash-page-kicker"><a href="/cfb">← Slate</a> · conference placement · playoff field</p>
+          <p class="dash-page-kicker"><a href="/cfb"> Slate</a>  projected records  conference winners  CFP odds</p>
         </div>
-        <span class="dash-page-kicker" id="futures-meta">Loading Sunday snapshot…</span>
+        <span class="dash-page-kicker" id="futures-meta">Loading Sunday snapshot</span>
       </header>
 
       <div class="slate-toolbar dash-toolbar">
@@ -50,21 +50,40 @@
       <div class="error error-state hidden" id="error"></div>
       <div class="loading empty-state" id="loading">
         <div class="spinner" id="loading-spinner"></div>
-        <p>Projecting conference races and the 12-team playoff…</p>
+        <p>Simulating records, conference races, and the full CFP bracket</p>
       </div>
 
       <div class="content hidden" id="content">
         <section class="board-section ntg-card">
-          <h2>Projected 12-team playoff</h2>
-          <p class="simple-note">5 conference champions + 7 at-large. Seeds 1–4 get a first-round bye.</p>
+          <h2>Playoff and national-title outlook</h2>
+          <p class="simple-note">Make-CFP odds come from season simulations. Advancement odds also simulate each first-round, quarterfinal, semifinal, and championship matchup.</p>
+          <div class="table-wrap">
+            <table id="playoff-odds-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Team</th>
+                  <th>Most likely</th>
+                  <th>Make CFP</th>
+                  <th>Bye</th>
+                  <th>Semifinal</th>
+                  <th>Final</th>
+                  <th>National title</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <h3 class="futures-subhead">Projected field</h3>
           <ol class="cfp-seeds" id="cfp-seeds"></ol>
-          <h3 class="futures-subhead">First round</h3>
+          <h3 class="futures-subhead">Projected first round</h3>
           <div class="cfp-first-round" id="cfp-first-round"></div>
         </section>
 
         <section class="board-section ntg-card">
           <h2>Conference placement</h2>
-          <p class="simple-note">Predicted 1st through last in every Power and Group of 5 league. Resets each Sunday.</p>
+          <p class="simple-note">Projected order, title-game chance, and title probability for every FBS conference.</p>
           <div class="conf-pills" id="conf-pills" role="tablist" aria-label="Conferences"></div>
           <div class="table-wrap">
             <table id="standings-table">
@@ -72,9 +91,43 @@
                 <tr>
                   <th>#</th>
                   <th>Team</th>
-                  <th>Conf (proj.)</th>
-                  <th>Title %</th>
-                  <th>Playoff %</th>
+                  <th>Projected record</th>
+                  <th>80% win range</th>
+                  <th>Conf. wins</th>
+                  <th>Title game</th>
+                  <th>Conf. title</th>
+                  <th>Make CFP</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="board-section ntg-card">
+          <div class="futures-section-head">
+            <div>
+              <h2>Overall finishes</h2>
+              <p class="simple-note">Most likely record, expected record, win range, and postseason odds for every modeled FBS team.</p>
+            </div>
+            <label class="futures-search">
+              Find team
+              <input type="search" id="overall-search" placeholder="Search teams" autocomplete="off" />
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table id="overall-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Team</th>
+                  <th>Conference</th>
+                  <th>Expected</th>
+                  <th>Most likely</th>
+                  <th>80% win range</th>
+                  <th>10+ wins</th>
+                  <th>Make CFP</th>
+                  <th>National title</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -84,7 +137,7 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260819"></script>
-  <script src="/static/cfb_futures.js?v=20260816"></script>
+  <script src="/static/app.js?v=20260826"></script>
+  <script src="/static/cfb_futures.js?v=20260826"></script>
 </body>
 </html>

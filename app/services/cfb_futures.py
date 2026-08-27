@@ -25,7 +25,7 @@ from app.services.cfb_team_logos import lookup_team_logo
 logger = logging.getLogger(__name__)
 
 FUTURES_JSON = PROJECT_ROOT / "data" / "processed" / "cfb_futures.json"
-N_SIMS = 400
+N_SIMS = 5000
 TITLE_GAME_MIN_WEEK = 13
 AUTO_BIDS = 5
 PLAYOFF_FIELD = 12
@@ -236,6 +236,107 @@ def _clip_prob(value: float) -> float:
     return float(min(0.97, max(0.03, value)))
 
 
+def _simulate_strength_game(
+    rng: np.random.Generator,
+    first: int,
+    second: int,
+    strength: np.ndarray,
+    *,
+    neutral: bool,
+) -> int:
+    """Draw one matchup from the same strength scale used by futures."""
+    p_first = _clip_prob(
+        elo_win_prob(
+            float(strength[first]),
+            float(strength[second]),
+            neutral=neutral,
+        )
+    )
+    return first if rng.random() < p_first else second
+
+
+def _simulate_playoff_field(
+    field: list[int],
+    strength: np.ndarray,
+    rng: np.random.Generator,
+) -> dict[str, Any] | None:
+    """Simulate the official fixed 12-team bracket.
+
+    First-round games use the higher seed's home field. Every later round is
+    neutral. The returned stage lists contain the teams that reached that
+    round, so callers can aggregate advancement probabilities.
+    """
+    if len(field) < PLAYOFF_FIELD:
+        return None
+
+    by_seed = {seed: field[seed - 1] for seed in range(1, PLAYOFF_FIELD + 1)}
+    first_round_winners = {
+        high: _simulate_strength_game(
+            rng,
+            by_seed[high],
+            by_seed[low],
+            strength,
+            neutral=False,
+        )
+        for high, low in ((5, 12), (6, 11), (7, 10), (8, 9))
+    }
+    quarterfinalists = [
+        by_seed[1],
+        by_seed[4],
+        by_seed[2],
+        by_seed[3],
+        first_round_winners[8],
+        first_round_winners[5],
+        first_round_winners[7],
+        first_round_winners[6],
+    ]
+    quarterfinal_winners = [
+        _simulate_strength_game(
+            rng, by_seed[1], first_round_winners[8], strength, neutral=True
+        ),
+        _simulate_strength_game(
+            rng, by_seed[4], first_round_winners[5], strength, neutral=True
+        ),
+        _simulate_strength_game(
+            rng, by_seed[2], first_round_winners[7], strength, neutral=True
+        ),
+        _simulate_strength_game(
+            rng, by_seed[3], first_round_winners[6], strength, neutral=True
+        ),
+    ]
+    semifinalists = quarterfinal_winners
+    finalists = [
+        _simulate_strength_game(
+            rng,
+            quarterfinal_winners[0],
+            quarterfinal_winners[1],
+            strength,
+            neutral=True,
+        ),
+        _simulate_strength_game(
+            rng,
+            quarterfinal_winners[2],
+            quarterfinal_winners[3],
+            strength,
+            neutral=True,
+        ),
+    ]
+    champion = _simulate_strength_game(
+        rng,
+        finalists[0],
+        finalists[1],
+        strength,
+        neutral=True,
+    )
+    return {
+        "byes": field[:BYE_SEEDS],
+        "quarterfinalists": quarterfinalists,
+        "semifinalists": semifinalists,
+        "finalists": finalists,
+        "champion": champion,
+    }
+
+
 def project_from_probs(
     *,
     team_conf: dict[str, str],
@@ -248,7 +349,7 @@ def project_from_probs(
     season: int = 2026,
     season_progress: float = 0.0,
 ) -> dict[str, Any]:
-    """Seeded Monte Carlo of remaining games → standings + playoff field."""
+    """Project records, conference races, CFP selection, and the full bracket."""
     teams = sorted(team_conf)
     team_index = {team: i for i, team in enumerate(teams)}
     n_teams = len(teams)
@@ -256,14 +357,15 @@ def project_from_probs(
 
     conf_wins = np.zeros((n_sims, n_teams), dtype=np.float64)
     overall_wins = np.zeros((n_sims, n_teams), dtype=np.float64)
+    games_scheduled = np.zeros(n_teams, dtype=np.int32)
     for team, rec in records.items():
         idx = team_index.get(team)
         if idx is None:
             continue
         conf_wins[:, idx] = rec["conf_wins"]
         overall_wins[:, idx] = rec["wins"]
+        games_scheduled[idx] = int(rec["wins"]) + int(rec["losses"])
 
-    title_games: list[dict[str, Any]] = []
     for game in remaining:
         gid = str(game["game_id"])
         p_home = _clip_prob(float(probs.get(gid, 0.5)))
@@ -272,11 +374,12 @@ def project_from_probs(
         if home not in team_index or away not in team_index:
             continue
         if game.get("title_game"):
-            title_games.append(game)
             continue
-        draws = rng.random(n_sims) < p_home
         hi = team_index[home]
         ai = team_index[away]
+        games_scheduled[hi] += 1
+        games_scheduled[ai] += 1
+        draws = rng.random(n_sims) < p_home
         overall_wins[draws, hi] += 1
         overall_wins[~draws, ai] += 1
         same_conf = (
@@ -290,17 +393,30 @@ def project_from_probs(
     conf_keys = sorted(
         {key for key in team_conf.values() if key != INDEPENDENT_KEY}
     )
-    champ_counts = np.zeros(n_teams, dtype=np.int32)
-    finish_sum = np.zeros(n_teams, dtype=np.float64)
-    playoff_counts = np.zeros(n_teams, dtype=np.int32)
-    seed_sum = np.zeros(n_teams, dtype=np.float64)
-
     teams_by_conf: dict[str, list[int]] = defaultdict(list)
     for team, conf_key in team_conf.items():
         teams_by_conf[conf_key].append(team_index[team])
 
-    strength_arr = np.array([float(strength.get(team, 1500.0)) for team in teams])
-    sos_arr, qwin_arr = _resume_arrays(teams, team_index, records, remaining, probs, strength)
+    max_conf_size = max((len(v) for v in teams_by_conf.values()), default=1)
+    champ_counts = np.zeros(n_teams, dtype=np.int32)
+    title_game_counts = np.zeros(n_teams, dtype=np.int32)
+    finish_sum = np.zeros(n_teams, dtype=np.float64)
+    finish_counts = np.zeros((n_teams, max_conf_size), dtype=np.int32)
+    playoff_counts = np.zeros(n_teams, dtype=np.int32)
+    bye_counts = np.zeros(n_teams, dtype=np.int32)
+    quarterfinal_counts = np.zeros(n_teams, dtype=np.int32)
+    semifinal_counts = np.zeros(n_teams, dtype=np.int32)
+    finalist_counts = np.zeros(n_teams, dtype=np.int32)
+    national_title_counts = np.zeros(n_teams, dtype=np.int32)
+    seed_sum = np.zeros(n_teams, dtype=np.float64)
+
+    strength_arr = np.array(
+        [float(strength.get(team, 1500.0)) for team in teams],
+        dtype=np.float64,
+    )
+    sos_arr, qwin_arr = _resume_arrays(
+        teams, team_index, records, remaining, probs, strength
+    )
 
     for sim in range(n_sims):
         champs: dict[str, int] = {}
@@ -317,12 +433,17 @@ def project_from_probs(
             )
             for place, idx in enumerate(order, start=1):
                 finish_sum[idx] += place
+                finish_counts[idx, place - 1] += 1
             if len(order) >= 2:
                 top, second = order[0], order[1]
-                p_top = elo_win_prob(strength_arr[top], strength_arr[second], neutral=True)
-                champ = top if rng.random() < p_top else second
+                title_game_counts[top] += 1
+                title_game_counts[second] += 1
+                champ = _simulate_strength_game(
+                    rng, top, second, strength_arr, neutral=True
+                )
             else:
                 champ = order[0]
+                title_game_counts[champ] += 1
             champs[conf_key] = champ
             champ_counts[champ] += 1
 
@@ -341,16 +462,99 @@ def project_from_probs(
             playoff_counts[idx] += 1
             seed_sum[idx] += seed_num
 
+        bracket = _simulate_playoff_field(field, strength_arr, rng)
+        if bracket is None:
+            continue
+        for idx in bracket["byes"]:
+            bye_counts[idx] += 1
+        for idx in bracket["quarterfinalists"]:
+            quarterfinal_counts[idx] += 1
+        for idx in bracket["semifinalists"]:
+            semifinal_counts[idx] += 1
+        for idx in bracket["finalists"]:
+            finalist_counts[idx] += 1
+        national_title_counts[bracket["champion"]] += 1
+
     expected_conf = conf_wins.mean(axis=0)
     expected_overall = overall_wins.mean(axis=0)
     mean_finish = finish_sum / n_sims
+    title_game_pct = title_game_counts / n_sims
     title_pct = champ_counts / n_sims
     playoff_pct = playoff_counts / n_sims
+    bye_pct = bye_counts / n_sims
+    quarterfinal_pct = quarterfinal_counts / n_sims
+    semifinal_pct = semifinal_counts / n_sims
+    finalist_pct = finalist_counts / n_sims
+    national_title_pct = national_title_counts / n_sims
     mean_seed = np.divide(
         seed_sum,
         np.maximum(playoff_counts, 1),
         dtype=np.float64,
     )
+
+    def _projection_row(idx: int) -> dict[str, Any]:
+        team = teams[idx]
+        rec = records.get(
+            team,
+            {"conf_wins": 0, "conf_losses": 0, "wins": 0, "losses": 0},
+        )
+        win_samples = overall_wins[:, idx].astype(np.int32)
+        counts = np.bincount(win_samples)
+        likely_wins = int(np.argmax(counts)) if counts.size else 0
+        ordered = np.sort(win_samples)
+        low_idx = int(round((len(ordered) - 1) * 0.10)) if len(ordered) else 0
+        high_idx = int(round((len(ordered) - 1) * 0.90)) if len(ordered) else 0
+        win_low = int(ordered[low_idx]) if len(ordered) else 0
+        win_high = int(ordered[high_idx]) if len(ordered) else 0
+        scheduled = int(games_scheduled[idx])
+        expected_wins = float(expected_overall[idx])
+        distribution = [
+            {"wins": int(wins), "pct": round(float(count / n_sims), 4)}
+            for wins, count in enumerate(counts)
+            if count
+        ]
+        return {
+            "team": team,
+            "logo_url": _team_logo(team),
+            "conference_key": team_conf.get(team, ""),
+            "actual_conf_wins": int(rec["conf_wins"]),
+            "actual_conf_losses": int(rec["conf_losses"]),
+            "actual_wins": int(rec["wins"]),
+            "actual_losses": int(rec["losses"]),
+            "games_scheduled": scheduled,
+            "expected_conf_wins": round(float(expected_conf[idx]), 2),
+            "expected_wins": round(expected_wins, 2),
+            "expected_losses": round(max(0.0, scheduled - expected_wins), 2),
+            "likely_wins": likely_wins,
+            "likely_losses": max(0, scheduled - likely_wins),
+            "likely_record": f"{likely_wins}-{max(0, scheduled - likely_wins)}",
+            "win_range_low": win_low,
+            "win_range_high": win_high,
+            "win_distribution": distribution,
+            "bowl_pct": round(float(np.mean(win_samples >= 6)), 4),
+            "nine_win_pct": round(float(np.mean(win_samples >= 9)), 4),
+            "ten_win_pct": round(float(np.mean(win_samples >= 10)), 4),
+            "eleven_win_pct": round(float(np.mean(win_samples >= 11)), 4),
+            "undefeated_pct": round(
+                float(np.mean(win_samples >= scheduled)) if scheduled else 0.0,
+                4,
+            ),
+            "mean_finish": round(float(mean_finish[idx]), 2),
+            "title_game_pct": round(float(title_game_pct[idx]), 4),
+            "title_pct": round(float(title_pct[idx]), 4),
+            "playoff_pct": round(float(playoff_pct[idx]), 4),
+            "bye_pct": round(float(bye_pct[idx]), 4),
+            "quarterfinal_pct": round(float(quarterfinal_pct[idx]), 4),
+            "semifinal_pct": round(float(semifinal_pct[idx]), 4),
+            "final_pct": round(float(finalist_pct[idx]), 4),
+            "national_title_pct": round(float(national_title_pct[idx]), 4),
+            "mean_seed": (
+                round(float(mean_seed[idx]), 2) if playoff_counts[idx] > 0 else None
+            ),
+            "strength": round(float(strength_arr[idx]), 1),
+        }
+
+    projections = {team: _projection_row(idx) for idx, team in enumerate(teams)}
 
     standings_by_conf: dict[str, list[dict[str, Any]]] = {}
     for spec in CONFERENCES:
@@ -382,29 +586,27 @@ def project_from_probs(
             )
         rows = []
         for place, idx in enumerate(ranked, start=1):
-            team = teams[idx]
-            rec = records.get(team, {"conf_wins": 0, "conf_losses": 0, "wins": 0, "losses": 0})
-            rows.append(
-                {
-                    "place": place,
-                    "team": team,
-                    "logo_url": _team_logo(team),
-                    "conference_key": conf_key,
-                    "actual_conf_wins": rec["conf_wins"],
-                    "actual_conf_losses": rec["conf_losses"],
-                    "actual_wins": rec["wins"],
-                    "actual_losses": rec["losses"],
-                    "expected_conf_wins": round(float(expected_conf[idx]), 2),
-                    "expected_wins": round(float(expected_overall[idx]), 2),
-                    "mean_finish": round(float(mean_finish[idx]), 2),
-                    "title_pct": round(float(title_pct[idx]), 4),
-                    "playoff_pct": round(float(playoff_pct[idx]), 4),
-                    "strength": round(float(strength_arr[idx]), 1),
-                }
-            )
+            row = dict(projections[teams[idx]])
+            row["place"] = place
+            rows.append(row)
         standings_by_conf[conf_key] = rows
 
-    # Deterministic published field: rank by title% / expected wins / strength
+    overall_ranked = sorted(
+        range(n_teams),
+        key=lambda i: (
+            -national_title_pct[i],
+            -playoff_pct[i],
+            -expected_overall[i],
+            -strength_arr[i],
+            teams[i],
+        ),
+    )
+    overall = []
+    for rank, idx in enumerate(overall_ranked, start=1):
+        row = dict(projections[teams[idx]])
+        row["rank"] = rank
+        overall.append(row)
+
     published_champs: dict[str, int] = {}
     for spec in CONFERENCES:
         rows = standings_by_conf.get(spec["key"]) or []
@@ -428,12 +630,13 @@ def project_from_probs(
         teams=teams,
         team_conf=team_conf,
         standings_by_conf=standings_by_conf,
-        playoff_pct=playoff_pct,
-        mean_seed=mean_seed,
-        expected_overall=expected_overall,
+        projections=projections,
+        strength=strength_arr,
+        overall=overall,
     )
     return {
         "conferences": standings_by_conf,
+        "overall": overall,
         "playoff": playoff,
     }
 
@@ -501,9 +704,9 @@ def _playoff_payload(
     teams: list[str],
     team_conf: dict[str, str],
     standings_by_conf: dict[str, list[dict[str, Any]]],
-    playoff_pct: np.ndarray,
-    mean_seed: np.ndarray,
-    expected_overall: np.ndarray,
+    projections: dict[str, dict[str, Any]],
+    strength: np.ndarray,
+    overall: list[dict[str, Any]],
 ) -> dict[str, Any]:
     conf_name = {spec["key"]: spec["name"] for spec in CONFERENCES}
     champ_teams = {
@@ -520,35 +723,90 @@ def _playoff_payload(
             if conf_key == INDEPENDENT_KEY
             else conf_name.get(conf_key, conf_key)
         )
+        projection = projections[team]
         seeds.append(
             {
                 "seed": seed_num,
                 "team": team,
-                "logo_url": _team_logo(team),
+                "logo_url": projection["logo_url"],
                 "conference_key": conf_key,
                 "conference": display_conf,
                 "auto_bid": idx in auto,
                 "conference_champ": team in champ_teams,
                 "bye": seed_num <= BYE_SEEDS,
-                "expected_wins": round(float(expected_overall[idx]), 2),
-                "playoff_pct": round(float(playoff_pct[idx]), 4),
-                "mean_seed": round(float(mean_seed[idx]), 2)
-                if playoff_pct[idx] > 0
-                else None,
+                "expected_wins": projection["expected_wins"],
+                "likely_record": projection["likely_record"],
+                "playoff_pct": projection["playoff_pct"],
+                "bye_pct": projection["bye_pct"],
+                "semifinal_pct": projection["semifinal_pct"],
+                "final_pct": projection["final_pct"],
+                "national_title_pct": projection["national_title_pct"],
+                "mean_seed": projection["mean_seed"],
             }
         )
     first_round = []
     pairings = ((5, 12), (6, 11), (7, 10), (8, 9))
     by_seed = {row["seed"]: row for row in seeds}
-    for hi, lo in pairings:
-        if hi in by_seed and lo in by_seed:
-            first_round.append({"home": by_seed[hi], "away": by_seed[lo]})
+    index_by_team = {team: idx for idx, team in enumerate(teams)}
+    for high, low in pairings:
+        if high not in by_seed or low not in by_seed:
+            continue
+        home = by_seed[high]
+        away = by_seed[low]
+        home_idx = index_by_team[home["team"]]
+        away_idx = index_by_team[away["team"]]
+        home_win_pct = _clip_prob(
+            elo_win_prob(
+                float(strength[home_idx]),
+                float(strength[away_idx]),
+                neutral=False,
+            )
+        )
+        first_round.append(
+            {
+                "home": home,
+                "away": away,
+                "home_win_pct": round(float(home_win_pct), 4),
+                "away_win_pct": round(float(1.0 - home_win_pct), 4),
+            }
+        )
+
+    odds = []
+    for row in overall:
+        conf_key = str(row.get("conference_key") or "")
+        odds.append(
+            {
+                "rank": row["rank"],
+                "team": row["team"],
+                "logo_url": row["logo_url"],
+                "conference_key": conf_key,
+                "conference": (
+                    "Independent"
+                    if conf_key == INDEPENDENT_KEY
+                    else conf_name.get(conf_key, conf_key)
+                ),
+                "likely_record": row["likely_record"],
+                "playoff_pct": row["playoff_pct"],
+                "bye_pct": row["bye_pct"],
+                "quarterfinal_pct": row["quarterfinal_pct"],
+                "semifinal_pct": row["semifinal_pct"],
+                "final_pct": row["final_pct"],
+                "national_title_pct": row["national_title_pct"],
+                "mean_seed": row["mean_seed"],
+            }
+        )
     return {
         "format": "12-team CFP",
+        "rules": (
+            "ACC, Big Ten, Big 12 and SEC champions; highest-ranked Group of 6 "
+            "team; seven at-large teams. The four highest-ranked teams receive byes."
+        ),
         "auto_bids": AUTO_BIDS,
         "field_size": PLAYOFF_FIELD,
+        "postseason_model": "model_strength_matchup",
         "seeds": seeds,
         "first_round": first_round,
+        "odds": odds,
     }
 
 
@@ -681,16 +939,19 @@ def _empty_payload(
         "games_completed": 0,
         "games_remaining": 0,
         "disclaimer": (
-            "Sunday snapshot: conference finish order and a projected 12-team "
-            "playoff field. Resets each Sunday after Saturday results."
+            "Sunday snapshot: projected records, conference races, CFP selection, "
+            "and playoff advancement. Resets each Sunday after Saturday results."
         ),
         "conferences": [],
+        "overall": [],
         "playoff": {
             "format": "12-team CFP",
             "auto_bids": AUTO_BIDS,
             "field_size": PLAYOFF_FIELD,
+            "postseason_model": "model_strength_matchup",
             "seeds": [],
             "first_round": [],
+            "odds": [],
         },
         "error": error,
     }
@@ -818,12 +1079,14 @@ def build_cfb_futures(
         "games_completed": len(completed),
         "games_remaining": len(remaining),
         "disclaimer": (
-            "Sunday snapshot from the CFB v4 model. Conference tables are the "
-            "projected 1-through-last finish. Playoff uses 2026 CFP rules "
-            "(Power 4 champs + top Group of 6 team + 7 at-large; top 4 byes). "
-            "Resets each Sunday after Saturday results."
+            "Sunday snapshot from the corrected CFB game model. Scheduled games "
+            "drive projected records and conference races; neutral model-strength "
+            "matchups drive conference title games and the CFP bracket. 2026 CFP "
+            "rules: Power 4 champions, the highest-ranked Group of 6 team, seven "
+            "at-large teams, and byes for the four highest-ranked teams."
         ),
         "conferences": _conference_payloads(projected["conferences"]),
+        "overall": projected["overall"],
         "playoff": projected["playoff"],
         "error": None,
     }

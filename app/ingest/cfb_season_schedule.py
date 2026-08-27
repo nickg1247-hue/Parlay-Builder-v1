@@ -77,6 +77,18 @@ def parse_schedule_row(row: dict[str, Any], season: int) -> dict[str, Any] | Non
         "away_team": away_team,
         "home_conference": str(row.get("homeConference") or "").strip(),
         "away_conference": str(row.get("awayConference") or "").strip(),
+        "home_division": str(row.get("homeClassification") or "").strip().lower(),
+        "away_division": str(row.get("awayClassification") or "").strip().lower(),
+        "divisions": list(
+            dict.fromkeys(
+                value
+                for value in (
+                    str(row.get("homeClassification") or "").strip().lower(),
+                    str(row.get("awayClassification") or "").strip().lower(),
+                )
+                if value
+            )
+        ),
         "conference_game": 1 if row.get("conferenceGame") else 0,
         "neutral_site": 1 if row.get("neutralSite") else 0,
         "completed": completed,

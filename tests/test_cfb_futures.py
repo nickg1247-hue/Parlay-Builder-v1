@@ -171,6 +171,16 @@ def test_playoff_has_twelve_seeds_and_first_round():
     assert seeds[4]["bye"] is False
     assert len(out["playoff"]["first_round"]) == 4
     assert {row["seed"] for row in seeds} == set(range(1, 13))
+    assert len(out["overall"]) == 20
+    assert abs(sum(row["national_title_pct"] for row in out["overall"]) - 1.0) < 0.01
+    for row in out["overall"]:
+        assert row["national_title_pct"] <= row["final_pct"]
+        assert row["final_pct"] <= row["semifinal_pct"]
+        assert row["semifinal_pct"] <= row["quarterfinal_pct"]
+        assert row["quarterfinal_pct"] <= row["playoff_pct"]
+        assert row["likely_record"]
+        assert row["win_range_low"] <= row["likely_wins"] <= row["win_range_high"]
+        assert abs(sum(bucket["pct"] for bucket in row["win_distribution"]) - 1.0) < 0.01
 
 
 def test_build_cfb_futures_uses_injected_schedule(tmp_path, monkeypatch):

@@ -4,20 +4,29 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from app.config import PROJECT_ROOT
+from app.ingest.cfb_season_schedule import load_season_schedule
+from app.odds.cfb_team_aliases import normalize_team_name
+from app.services.cfb_game_metadata import annotate_game_metadata, merge_game_records
 from app.services.cfb_historical_slate import games_from_ingest, ingest_has_games
 from app.services.cfb_team_logos import enrich_games_logos
-from app.services.scores_cfb import fetch_cfb_scores_day, live_game_record
+from app.services.scores_cfb import (
+    fetch_cfb_scores_day,
+    fetch_lower_division_scores_day,
+    live_game_record,
+)
 from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
+SCHEDULE_SCHEMA_VERSION = 2
 SLATE_LOOKAHEAD_DAYS = 7
 
 
@@ -81,8 +90,16 @@ def cache_is_fresh(path: Path, ttl_seconds: int = SCHEDULE_CACHE_TTL_SECONDS) ->
 
 
 def _should_read_cache(path: Path, *, force_live: bool) -> bool:
-    """Reuse saved snapshot until ?refresh=true."""
-    return path.exists() and not force_live
+    """Reuse current-schema snapshots; preserve historical ingest caches."""
+    if not path.exists() or force_live:
+        return False
+    try:
+        payload = _load_cache_payload(path)
+    except (json.JSONDecodeError, OSError):
+        return False
+    if payload.get("source") in (None, "ingest"):
+        return True
+    return int(payload.get("schema_version") or 0) >= SCHEDULE_SCHEMA_VERSION
 
 
 def _is_empty_future_cache(path: Path, game_date: date) -> bool:
@@ -105,15 +122,18 @@ def _write_schedule_cache(
     games: list[dict[str, Any]],
     *,
     source: str,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     cached_at = datetime.now(timezone.utc).isoformat()
     payload = {
         "date": game_date.isoformat(),
         "sport": "cfb",
+        "schema_version": SCHEDULE_SCHEMA_VERSION,
         "games": games,
         "games_count": len(games),
         "cached_at": cached_at,
         "source": source,
+        **(metadata or {}),
     }
     path = schedule_cache_path(game_date)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -127,28 +147,139 @@ def _write_schedule_cache(
     return payload
 
 
+def _season_week_for_date(game_date: date) -> tuple[int, int]:
+    season = game_date.year
+    schedule = load_season_schedule(season)
+    exact = [
+        int(row.get("week") or 0)
+        for row in schedule
+        if str(row.get("date") or "")[:10] == game_date.isoformat()
+        and int(row.get("week") or 0) > 0
+    ]
+    if exact:
+        return season, Counter(exact).most_common(1)[0][0]
+
+    calendar_path = PROCESSED_DIR / "cfb_calendar_cache" / f"{season}.json"
+    if calendar_path.exists():
+        try:
+            calendar = json.loads(calendar_path.read_text(encoding="utf-8"))
+            target = game_date.isoformat()
+            for row in calendar if isinstance(calendar, list) else []:
+                if str(row.get("seasonType") or "").lower() != "regular":
+                    continue
+                start = str(row.get("startDate") or "")[:10]
+                end = str(row.get("endDate") or "")[:10]
+                if start <= target <= end:
+                    return season, int(row.get("week") or 0)
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
+            pass
+    return season, 0
+
+
+def _annotate_fbs_schedule(
+    games: list[dict[str, Any]],
+    *,
+    game_date: date,
+) -> list[dict[str, Any]]:
+    rows = load_season_schedule(game_date.year)
+    index: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in rows:
+        if str(row.get("date") or "")[:10] != game_date.isoformat():
+            continue
+        home = normalize_team_name(str(row.get("home_team") or ""))
+        away = normalize_team_name(str(row.get("away_team") or ""))
+        index[(home, away)] = row
+        index[(away, home)] = row
+
+    out = []
+    for raw in games:
+        game = dict(raw)
+        home = normalize_team_name(
+            str(game.get("home_team_model_name") or game.get("home_team") or "")
+        )
+        away = normalize_team_name(
+            str(game.get("away_team_model_name") or game.get("away_team") or "")
+        )
+        matched = index.get((home, away))
+        if matched:
+            same_orientation = normalize_team_name(
+                str(matched.get("home_team") or "")
+            ) == home
+            for field in ("conference", "division"):
+                home_value = matched.get(
+                    f"{'home' if same_orientation else 'away'}_{field}"
+                )
+                away_value = matched.get(
+                    f"{'away' if same_orientation else 'home'}_{field}"
+                )
+                if home_value:
+                    game[f"home_{field}"] = home_value
+                if away_value:
+                    game[f"away_{field}"] = away_value
+            divisions = matched.get("divisions") or []
+            if divisions:
+                game["divisions"] = list(divisions)
+            game["conference_game"] = int(matched.get("conference_game") or 0)
+        out.append(annotate_game_metadata(game))
+    return out
+
+
 def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict[str, Any]:
     path = schedule_cache_path(game_date)
     if _should_read_cache(path, force_live=force_live):
         payload = _load_cache_payload(path)
         payload["source"] = payload.get("source", "cache")
+        payload["games"] = [
+            annotate_game_metadata(dict(game))
+            for game in payload.get("games") or []
+        ]
         if payload.get("source") == "ingest" or any(
             not (g.get("home_logo_url") or g.get("away_logo_url"))
             for g in payload.get("games") or []
         ):
             payload["games"] = enrich_games_logos(payload.get("games") or [])
+        payload["games_count"] = len(payload["games"])
         return payload
 
     if _is_past_date(game_date):
-        games = games_from_ingest(game_date)
+        games = [
+            annotate_game_metadata(dict(game))
+            for game in games_from_ingest(game_date)
+        ]
         source = "ingest"
         if not games:
             logger.info("No ingested CFB games for %s", game_date.isoformat())
         return _write_schedule_cache(game_date, games, source=source)
 
     events = fetch_cfb_scores_day(game_date)
-    games = enrich_games_logos([live_game_record(e) for e in events])
-    return _write_schedule_cache(game_date, games, source="api")
+    fbs_games = _annotate_fbs_schedule(
+        [live_game_record(event) for event in events],
+        game_date=game_date,
+    )
+    season, week = _season_week_for_date(game_date)
+    lower_games, coverage_warnings = fetch_lower_division_scores_day(
+        game_date,
+        season=season,
+        week=week,
+    )
+    games = enrich_games_logos(merge_game_records(fbs_games + lower_games))
+    divisions = sorted(
+        {
+            division
+            for game in games
+            for division in game.get("divisions") or []
+        }
+    )
+    return _write_schedule_cache(
+        game_date,
+        games,
+        source="espn+ncaa",
+        metadata={
+            "coverage_warnings": coverage_warnings,
+            "divisions": divisions,
+            "ncaa_week": week,
+        },
+    )
 
 
 def _game_from_payload(payload: dict[str, Any], game_id: str) -> dict[str, Any] | None:
