@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from app.config import PROJECT_ROOT
 from app.features.fcs_pregame import FEATURE_COLUMNS,build_features,canonical_team_id
 from app.models.platt_calibration import PlattCalibrator
+from app.models.fcs_tier_policy import cap_home_probability
 from app.services.cfb_game_metadata import _school_key
 
 MODEL_PATH=PROJECT_ROOT/"data/processed/fcs_baseline_model.joblib"
@@ -18,7 +19,6 @@ MANIFEST_PATH=PROJECT_ROOT/"data/processed/active_fcs_model.json"
 REPORT_PATH=PROJECT_ROOT/"data/processed/fcs_model_evaluation.json"
 HISTORY_PATH=PROJECT_ROOT/"data/processed/fcs_games.parquet"
 MODEL_FAMILY="fcs_moneyline";MODEL_VERSION="fcs_v1_logistic_platt"
-DISPLAY_CONFIDENCE_CAP=.89
 
 def _metrics(y:pd.Series,p:np.ndarray)->dict[str,Any]:
     from sklearn.metrics import accuracy_score,brier_score_loss,log_loss
@@ -103,9 +103,7 @@ def live_game_features(game:dict[str,Any],game_date:str)->pd.Series:
     return row.iloc[0]
 
 def capped_display_probability(raw_home:float)->tuple[float,bool]:
-    favorite=max(raw_home,1-raw_home)
-    if favorite<=DISPLAY_CONFIDENCE_CAP:return raw_home,False
-    return (DISPLAY_CONFIDENCE_CAP if raw_home>=.5 else 1-DISPLAY_CONFIDENCE_CAP),True
+    return cap_home_probability(raw_home)
 
 def diagnostic(artifact:dict[str,Any],row:pd.Series)->list[dict[str,Any]]:
     validate_schema(pd.DataFrame([row]));pipe=artifact["model"];source=pd.DataFrame([row])[FEATURE_COLUMNS];imputer=pipe.named_steps["imputer"];imputed=imputer.transform(source);scaled=pipe.named_steps["scale"].transform(imputed);coef=pipe.named_steps["model"].coef_[0];names=list(imputer.get_feature_names_out(FEATURE_COLUMNS));lookup={name:i for i,name in enumerate(names)}

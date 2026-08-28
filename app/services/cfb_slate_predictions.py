@@ -12,6 +12,7 @@ from app.models.cfb_confidence import category_for_proba, category_label
 from app.models.cfb_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD, predict_spread_covers
 from app.models.cfb_totals import enrich_totals_columns
 from app.models.fcs_baseline import capped_display_probability,diagnostic as fcs_diagnostic,live_game_features,load_artifact as load_fcs_artifact,predict_fcs
+from app.models.fcs_tier_policy import load_tier_policy,tier_decision
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.odds.cfb_betting_lines import resolve_lines_for_slate
 from app.odds.cfb_team_aliases import normalize_team_name
@@ -27,7 +28,7 @@ def _pure_fcs(game:dict[str,Any])->bool:
 
 def _fcs_beta_predictions(schedule:dict[str,Any],slate_date:str)->dict[str,dict[str,Any]]:
     """Route pure FCS games only. Any eligibility failure is fail-closed."""
-    try:artifact=load_fcs_artifact()
+    try:artifact=load_fcs_artifact();tier_policy=load_tier_policy()
     except (FileNotFoundError,RuntimeError,ValueError,KeyError):return {}
     out={}
     for game in schedule.get("games")or[]:
@@ -36,8 +37,8 @@ def _fcs_beta_predictions(schedule:dict[str,Any],slate_date:str)->dict[str,dict[
         try:
             features=live_game_features(game,slate_date);raw=float(predict_fcs(pd.DataFrame([features]))[0])
         except (FileNotFoundError,RuntimeError,ValueError,KeyError):continue
-        shown,capped=capped_display_probability(raw);pick_side="home"if raw>=.5 else"away";home=str(game.get("home_team")or"Home");away=str(game.get("away_team")or"Away");gid=str(game.get("game_id")or"")
-        out[gid]={"game_id":gid,"home_team":home,"away_team":away,"model_prob_home":shown,"model_prob_away":1-shown,"raw_model_prob_home":raw,"raw_model_prob_away":1-raw,"raw_calibrated_probability":max(raw,1-raw),"display_probability":max(shown,1-shown),"display_probability_capped":capped,"display_probability_cap":.89,"display_probability_cap_reason":"FCS Beta hides 90%+ presentation until prospective reliability is established"if capped else None,"model_belief_home_pct":round(shown*100),"model_belief_away_pct":100-round(shown*100),"model_belief_pick_pct":round(max(shown,1-shown)*100),"model_pick":home if pick_side=="home"else away,"model_pick_side":pick_side,"model_family":"fcs_moneyline","model_version":artifact.get("model_version"),"active_model_version":artifact.get("model_version"),"model_category":"fcs_beta","model_category_label":"FCS Beta","model_confidence":"FCS Beta","ml_confidence":"FCS Beta","experimental":True,"prediction_available":True,"site_status_source":game.get("neutral_site_source"),"sample_context":{"historical_rows":3500,"evaluable_rows":1543,"locked_2025_games":252,"locked_2025_accuracy":.6627},"diagnostics":{"raw_calibrated_probability":raw,"displayed_home_probability":shown,"site_status_source":game.get("neutral_site_source"),"cap_policy":{"maximum_display_confidence":.89,"applied":capped},"features":fcs_diagnostic(artifact,features)}}
+        shown,capped=capped_display_probability(raw);decision=tier_decision(max(shown,1-shown),tier_policy);pick_side="home"if raw>=.5 else"away";home=str(game.get("home_team")or"Home");away=str(game.get("away_team")or"Away");gid=str(game.get("game_id")or"")
+        out[gid]={"game_id":gid,"home_team":home,"away_team":away,"model_prob_home":shown,"model_prob_away":1-shown,"raw_model_prob_home":raw,"raw_model_prob_away":1-raw,"raw_calibrated_probability":max(raw,1-raw),"display_probability":max(shown,1-shown),"display_probability_capped":capped,"display_probability_cap":.90,"display_probability_cap_reason":"FCS public probabilities never exceed 90%; raw calibration remains diagnostic"if capped else None,"model_belief_home_pct":round(shown*100),"model_belief_away_pct":100-round(shown*100),"model_belief_pick_pct":round(max(shown,1-shown)*100),"model_pick":home if pick_side=="home"else away,"model_pick_side":pick_side,"model_family":"fcs_moneyline","model_version":artifact.get("model_version"),"active_model_version":artifact.get("model_version"),"model_category":decision["tier_key"]if decision["tier_validated"]else"fcs_beta","model_category_label":decision["tier_status_label"],"model_confidence":decision["tier_status_label"],"ml_confidence":decision["tier_status_label"],"experimental":True,"prediction_available":True,"site_status_source":game.get("neutral_site_source"),**decision,"sample_context":{"historical_rows":3500,"evaluable_rows":1543,"2024_oos_games":234,"2025_seen_regression_games":252},"diagnostics":{"raw_calibrated_probability":raw,"displayed_home_probability":shown,"site_status_source":game.get("neutral_site_source"),"tier_policy":decision,"cap_policy":{"maximum_display_confidence":.90,"applied":capped},"features":fcs_diagnostic(artifact,features)}}
     return out
 
 

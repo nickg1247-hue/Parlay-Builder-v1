@@ -145,9 +145,11 @@ def test_fcs_beta_cap_winner_and_no_high_confidence(monkeypatch):
     monkeypatch.setattr("app.services.cfb_slate_predictions.fcs_diagnostic",lambda *a:[])
     pred=_fcs_beta_predictions({"games":[game]},"2026-08-29")["fcs-1"]
     assert pred["model_pick"]=="Montana"
-    assert pred["raw_model_prob_home"]==.96 and pred["model_prob_home"]==.89
+    assert pred["raw_model_prob_home"]==.96 and pred["model_prob_home"]==.90
     assert pred["display_probability_capped"] is True
-    assert pred["model_category_label"]==pred["model_confidence"]=="FCS Beta"
+    assert pred["tier_validated"] is False
+    assert pred["public_tier_label"] is None
+    assert "Elite tier unvalidated" in pred["model_category_label"]
     assert "BAM" not in str(pred) and "High" not in str(pred)
 
 def test_fcs_beta_fails_closed_for_mixed_or_unknown_site(monkeypatch):
@@ -156,3 +158,51 @@ def test_fcs_beta_fails_closed_for_mixed_or_unknown_site(monkeypatch):
     mixed={"game_id":"mixed","division":"fbs","divisions":["fbs","fcs"],"neutral_site":0,"neutral_site_known":True}
     unknown={"game_id":"unknown","division":"fcs","divisions":["fcs"],"neutral_site_missing":True}
     assert _fcs_beta_predictions({"games":[mixed,unknown]},"2026-08-29")=={}
+
+
+def test_fcs_diagnostic_routes_to_fcs_without_fbs_fallback(monkeypatch):
+    game = {
+        "game_id": "fcs-diagnostic",
+        "home_team": "Montana",
+        "away_team": "Weber State",
+        "division": "fcs",
+        "divisions": ["fcs"],
+    }
+    prediction = {
+        "model_pick": "Montana",
+        "model_pick_side": "home",
+        "raw_model_prob_home": 0.93,
+        "raw_model_prob_away": 0.07,
+        "model_prob_home": 0.90,
+        "model_prob_away": 0.10,
+        "candidate_tier": "Elite",
+        "tier_validated": False,
+        "public_tier_label": None,
+        "tier_status_label": "FCS Beta · Elite tier unvalidated",
+        "tier_validation_reason": "insufficient evidence",
+        "tier_policy_version": "test",
+        "diagnostics": {"raw_calibrated_probability": 0.93, "features": []},
+    }
+    monkeypatch.setattr(
+        "app.services.schedule_cfb.get_cfb_schedule",
+        lambda _day: {"games": [game]},
+    )
+    monkeypatch.setattr(
+        "app.services.cfb_slate_predictions._fcs_beta_predictions",
+        lambda *_args: {"fcs-diagnostic": prediction},
+    )
+
+    with patch(
+        "app.services.cfb_prediction_diagnostic.diagnose_cfb_prediction"
+    ) as fbs_diagnostic:
+        response = client.get(
+            "/api/cfb/diagnostics/fcs-diagnostic?date=2026-08-29"
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["model_family"] == "fcs_moneyline"
+    assert body["prediction"]["raw_model_prob_home"] == 0.93
+    assert body["prediction"]["model_prob_home"] == 0.90
+    assert body["prediction"]["public_tier_label"] is None
+    fbs_diagnostic.assert_not_called()

@@ -908,6 +908,10 @@ function confidenceFromModelProb(homeProb) {
 /** Toss-up / Soft / Hard / Lock for NFL; Toss-up / Lean / Strong / Elite otherwise. */
 function confidenceMeterHtml(boardRow) {
   if (!boardRow) return "";
+  if (String(boardRow.model_family || "").toLowerCase() === "fcs_moneyline") {
+    const label = boardRow.public_tier_label || boardRow.tier_status_label || "FCS Beta";
+    return `<div class="confidence-meter confidence-meter-beta" aria-label="FCS Beta confidence status"><span class="conf-label">${escapeHtml(label)}</span></div>`;
+  }
   const nflCat = String(boardRow.model_category || "").toLowerCase();
   if (nflCat && ["toss-up", "soft", "hard", "lock"].includes(nflCat)) {
     const nflLevels = [
@@ -956,10 +960,10 @@ function modelLeanChips(boardRow, options = {}) {
   if (!boardRow) return [];
   const chips = [];
   let modelTeam = boardRow.model_pick_team;
-  let modelConf =
-    boardRow.model_confidence ||
-    boardRow.ml_confidence ||
-    confidenceFromModelProb(boardRow.model_prob_home);
+  const isFcsBeta = String(boardRow.model_family || "").toLowerCase() === "fcs_moneyline";
+  let modelConf = isFcsBeta
+    ? (boardRow.public_tier_label || boardRow.tier_status_label || "FCS Beta")
+    : (boardRow.model_confidence || boardRow.ml_confidence || confidenceFromModelProb(boardRow.model_prob_home));
   if (!modelTeam && boardRow.model_prob_home != null) {
     const home = Number(boardRow.model_prob_home) >= 0.5;
     modelTeam = home
@@ -1368,6 +1372,16 @@ function resolveBoardRow(game, boardRow) {
       model_confidence: game.model_confidence,
       model_category: game.model_category,
       model_category_label: game.model_category_label,
+      model_family: game.model_family,
+      raw_model_prob_home: game.raw_model_prob_home,
+      raw_model_prob_away: game.raw_model_prob_away,
+      display_probability_capped: game.display_probability_capped,
+      candidate_tier: game.candidate_tier,
+      tier_validated: game.tier_validated,
+      public_tier_label: game.public_tier_label,
+      tier_status_label: game.tier_status_label,
+      tier_validation_reason: game.tier_validation_reason,
+      tier_policy_version: game.tier_policy_version,
     };
   }
   return impliedMarketRowFromGame(game) || boardRow;
@@ -1398,6 +1412,15 @@ function boardRowFromInsights(data) {
     model_category: ml.model_category || row?.model_category || data.board_row?.model_category,
     model_category_label:
       ml.model_category_label || row?.model_category_label || data.board_row?.model_category_label,
+    model_family: ml.model_family || row?.model_family || data.game?.model_family,
+    raw_model_prob_home: ml.raw_model_prob_home || row?.raw_model_prob_home,
+    display_probability_capped: ml.display_probability_capped || row?.display_probability_capped,
+    candidate_tier: ml.candidate_tier || row?.candidate_tier,
+    tier_validated: ml.tier_validated ?? row?.tier_validated,
+    public_tier_label: ml.public_tier_label || row?.public_tier_label,
+    tier_status_label: ml.tier_status_label || row?.tier_status_label,
+    tier_validation_reason: ml.tier_validation_reason || row?.tier_validation_reason,
+    tier_policy_version: ml.tier_policy_version || row?.tier_policy_version,
   };
 }
 

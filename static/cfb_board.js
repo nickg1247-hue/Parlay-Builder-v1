@@ -178,7 +178,7 @@ function matchupMarkup(game) {
 
   const meta = [];
   if (game.division_label) meta.push('<span class="meta-chip">' + escapeHtml(game.division_label) + "</span>");
-  if (game.experimental) meta.push('<span class="meta-chip">FCS Beta · directional</span>');
+  if (game.experimental) meta.push('<span class="meta-chip">' + escapeHtml(game.public_tier_label ? "FCS Beta · " + game.public_tier_label : game.tier_status_label || "FCS Beta · directional") + '</span>');
   const conferences = Array.from(new Set([game.away_conference, game.home_conference].filter(Boolean)));
   conferences.forEach((conference) => {
     meta.push('<span class="meta-chip">' + escapeHtml(conference) + "</span>");
@@ -205,7 +205,7 @@ function renderSlate(slate, edgeFraction = 0.08) {
 
     const edge = predictionAvailable ? (game.ml_edge_best ?? game.edge_home) : null;
     const mlConf = predictionAvailable
-      ? (game.model_category_label || game.ml_confidence || "—")
+      ? (game.model_family === "fcs_moneyline" ? (game.public_tier_label || game.tier_status_label || "FCS Beta") : (game.model_category_label || game.ml_confidence || "—"))
       : (game.model_eligible ? "Unavailable" : "Schedule only");
 
     let bestPick = "—";

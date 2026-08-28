@@ -41,8 +41,8 @@ def test_schema_and_cross_division_ownership():
     assert not is_public_fbs_fcs_game({"divisions":["d2"],"home_conference":"SAC","away_conference":"SAC"})
 
 def test_fcs_display_cap_preserves_probability_orientation():
-    assert capped_display_probability(.96)==(.89,True)
-    assert capped_display_probability(.04)==pytest.approx((.11,True))
+    assert capped_display_probability(.96)==(.90,True)
+    assert capped_display_probability(.04)==pytest.approx((.10,True))
     assert capped_display_probability(.72)==(.72,False)
 
 def test_fcs_alias_keys_bridge_cfbd_and_ncaa_names():

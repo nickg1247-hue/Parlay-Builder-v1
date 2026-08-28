@@ -1174,9 +1174,18 @@ async def cfb_prediction_diagnostic(
     game_id: str,
     date_param: str | None = Query(None, alias="date"),
 ):
-    from app.services.cfb_prediction_diagnostic import diagnose_cfb_prediction
-
     game_date = date_type.fromisoformat(date_param) if date_param else None
+    if game_date is not None:
+        from app.services.schedule_cfb import get_cfb_schedule
+        from app.services.cfb_slate_predictions import _fcs_beta_predictions
+        schedule=get_cfb_schedule(game_date)
+        game=next((row for row in schedule.get("games",[])if str(row.get("game_id"))==str(game_id)),None)
+        divisions={str(value).lower()for value in((game or{}).get("divisions")or[(game or{}).get("division")])if value}
+        if divisions=={"fcs"}:
+            prediction=_fcs_beta_predictions(schedule,game_date.isoformat()).get(str(game_id))
+            if prediction is None:raise HTTPException(status_code=422,detail="FCS Beta prediction is ineligible or unavailable for this game")
+            return {"model_family":"fcs_moneyline","game":{"game_id":game_id,"date":game_date.isoformat(),"home_team":game.get("home_team"),"away_team":game.get("away_team")},"prediction":{key:prediction.get(key)for key in("model_pick","model_pick_side","raw_model_prob_home","raw_model_prob_away","model_prob_home","model_prob_away","candidate_tier","tier_validated","public_tier_label","tier_status_label","tier_validation_reason","tier_policy_version")},"features":prediction.get("diagnostics",{}).get("features",[]),"diagnostics":prediction.get("diagnostics")}
+    from app.services.cfb_prediction_diagnostic import diagnose_cfb_prediction
     return diagnose_cfb_prediction(game_id, game_date)
 
 
