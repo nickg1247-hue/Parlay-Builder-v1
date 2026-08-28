@@ -14,7 +14,7 @@ import httpx
 from app.config import PROJECT_ROOT
 from app.ingest.cfb_season_schedule import load_season_schedule
 from app.odds.cfb_team_aliases import normalize_team_name
-from app.services.cfb_game_metadata import annotate_game_metadata, merge_game_records
+from app.services.cfb_game_metadata import annotate_game_metadata, is_public_fbs_fcs_game, merge_game_records
 from app.services.cfb_historical_slate import games_from_ingest, ingest_has_games
 from app.services.cfb_team_logos import enrich_games_logos
 from app.services.scores_cfb import (
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
-SCHEDULE_SCHEMA_VERSION = 3
+SCHEDULE_SCHEMA_VERSION = 4
 SLATE_LOOKAHEAD_DAYS = 7
 
 
@@ -290,12 +290,10 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
         "espn_fbs": len(fbs_games),
         "ncaa_fbs": sum(1 for game in lower_games if game.get("division") == "fbs"),
         "ncaa_fcs": sum(1 for game in lower_games if game.get("division") == "fcs"),
-        "ncaa_d2": sum(1 for game in lower_games if game.get("division") == "d2"),
-        "ncaa_d3": sum(1 for game in lower_games if game.get("division") == "d3"),
     }
     division_counts = {
         division: sum(1 for game in games if division in (game.get("divisions") or []))
-        for division in ("fbs", "fcs", "d2", "d3")
+        for division in ("fbs", "fcs")
     }
     logger.info(
         "CFB coverage %s: source_counts=%s division_counts=%s warnings=%s",
@@ -350,6 +348,11 @@ def get_cfb_schedule(
         auto_advanced = False
 
     payload = _load_schedule_payload(resolved_date, force_live=force_live)
+    payload["games"] = [
+        game for game in payload.get("games") or []
+        if is_public_fbs_fcs_game(game)
+    ]
+    payload["games_count"] = len(payload["games"])
     payload["date"] = resolved_date.isoformat()
     payload.update(
         _slate_meta(

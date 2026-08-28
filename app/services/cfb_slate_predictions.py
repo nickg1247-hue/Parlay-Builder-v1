@@ -140,7 +140,8 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
     games = [
         game
         for game in schedule.get("games") or []
-        if game.get("model_eligible", True)
+        if game.get("model_eligible", False)
+        and game.get("model_family") in (None, "cfb_moneyline")
     ]
     if not games:
         return {}
@@ -241,6 +242,8 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
             "model_belief_pick_pct": max(belief_home_pct, belief_away_pct),
             "active_model_version": artifact.get("model_version", "unknown"),
             "active_feature_set": artifact.get("feature_set"),
+            "model_family": "cfb_moneyline",
+            "model_version": artifact.get("model_version", "unknown"),
             "model_pick": display_home if pick_side == "home" else display_away,
             "model_pick_side": pick_side,
             "model_category": category,

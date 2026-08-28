@@ -25,7 +25,6 @@ const els = {
   divisionFilter: document.getElementById("division-filter"),
   conferenceFilter: document.getElementById("conference-filter"),
   rankingFilter: document.getElementById("ranking-filter"),
-  hbcuFilter: document.getElementById("hbcu-filter"),
   filterCount: document.getElementById("filter-count"),
 };
 
@@ -124,10 +123,6 @@ function populateFilters(filters) {
   setSelectOptions(els.teamFilter, filters?.teams || [], "All teams");
   setSelectOptions(els.divisionFilter, filters?.divisions || [], "All divisions");
   setSelectOptions(els.conferenceFilter, filters?.conferences || [], "All conferences");
-  if (els.hbcuFilter) {
-    els.hbcuFilter.disabled = filters?.hbcu === false;
-    if (filters?.hbcu === false) els.hbcuFilter.checked = false;
-  }
 }
 
 function top25Rank(value) {
@@ -160,7 +155,6 @@ function passesFilters(game) {
   if (ranking === "top25" && !homeRanked && !awayRanked) return false;
   if (ranking === "ranked-v-ranked" && !(homeRanked && awayRanked)) return false;
 
-  if (els.hbcuFilter?.checked && !game.is_hbcu) return false;
   return true;
 }
 
@@ -188,7 +182,6 @@ function matchupMarkup(game) {
   conferences.forEach((conference) => {
     meta.push('<span class="meta-chip">' + escapeHtml(conference) + "</span>");
   });
-  if (game.is_hbcu) meta.push('<span class="meta-chip meta-chip-hbcu">HBCU</span>');
   if (game.network) meta.push('<span class="meta-chip">' + escapeHtml(game.network) + "</span>");
 
   return '<div class="matchup-title">' + linkedTitle + '</div><div class="game-meta">' + meta.join("") + "</div>";
@@ -281,8 +274,7 @@ function visibleParlays(parlays, slate) {
     (els.teamFilter?.value || "all") !== "all" ||
     (els.divisionFilter?.value || "all") !== "all" ||
     (els.conferenceFilter?.value || "all") !== "all" ||
-    (els.rankingFilter?.value || "all") !== "all" ||
-    Boolean(els.hbcuFilter?.checked);
+    (els.rankingFilter?.value || "all") !== "all";
   if (!filtersActive) return parlays || [];
   return (parlays || []).filter((parlay) =>
     (parlay.legs || []).length > 0 &&
@@ -383,7 +375,6 @@ els.minEdgeInput?.addEventListener("change", () => loadBoard(false));
   els.divisionFilter,
   els.conferenceFilter,
   els.rankingFilter,
-  els.hbcuFilter,
 ].forEach((control) => control?.addEventListener("change", renderFilteredBoard));
 
 loadBoard(false);

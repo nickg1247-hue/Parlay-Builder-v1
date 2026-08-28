@@ -1,5 +1,16 @@
 # CFB moneyline model
 
+## Separate FCS model family
+
+FCS predictions use `app/models/fcs_baseline.py`, separate artifacts
+`fcs_baseline_model.joblib` / `active_fcs_model.json`, and FCS-native features
+from `app/features/fcs_pregame.py`. Only FCS-vs-FCS rows may train it. The fixed
+split is through 2023 training, 2024 calibration, and 2025 locked holdout.
+FBS-vs-FCS games are schedule-visible and prediction-ineligible. The manifest
+remains disabled unless Brier beats the home baseline by 0.005 and log loss by
+0.01. Train only after authoritative `fcs_games.parquet` is built:
+`python scripts/train_fcs_baseline.py`.
+
 ## Active production model: **v4** (`cfb_v4`) when it beats v3
 
 College football is not an NFL clone. v4 blends **offseason priors** (returning production, talent, last-year FPI, preseason SP+, coach change) with **in-season** Elo + rolling SRS. Priors dominate Weeks 1–3 and fade to 30% by Week 8 — they never turn off.

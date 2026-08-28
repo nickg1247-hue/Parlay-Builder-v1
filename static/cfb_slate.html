@@ -82,10 +82,6 @@
             <option value="ranked-v-ranked">Ranked vs ranked</option>
           </select>
         </label>
-        <label class="toolbar-check">
-          <input type="checkbox" id="slate-hbcu-filter" />
-          HBCU games
-        </label>
         <span class="filter-count" id="slate-filter-count" aria-live="polite"></span>
       </div>
 
@@ -115,7 +111,6 @@
       const divisionFilter = document.getElementById("slate-division-filter");
       const conferenceFilter = document.getElementById("slate-conference-filter");
       const rankingFilter = document.getElementById("slate-ranking-filter");
-      const hbcuFilter = document.getElementById("slate-hbcu-filter");
       const filterCount = document.getElementById("slate-filter-count");
       const dateParam = qs("date");
       const refreshParam = qs("refresh") === "true";
@@ -143,25 +138,21 @@
       }
 
       function populateSlateFilters(games) {
-        const labels = { fbs: "FBS", fcs: "FCS", d2: "Division II", d3: "Division III" };
+        const labels = { fbs: "FBS", fcs: "FCS" };
         const teams = new Set();
         const presentDivisions = new Set();
         const conferences = new Set();
-        let hasHbcu = false;
         games.forEach((game) => {
           if (game.home_team) teams.add(game.home_team);
           if (game.away_team) teams.add(game.away_team);
           if (game.home_conference) conferences.add(game.home_conference);
           if (game.away_conference) conferences.add(game.away_conference);
-          if (game.is_hbcu) hasHbcu = true;
         });
-        const divisions = ["fbs", "fcs", "d2", "d3"]
+        const divisions = ["fbs", "fcs"]
           .map((key) => ({ key, label: labels[key] }));
         setFilterOptions(teamFilter, Array.from(teams).sort(), "All teams");
         setFilterOptions(divisionFilter, divisions, "All divisions");
         setFilterOptions(conferenceFilter, Array.from(conferences).sort(), "All conferences");
-        hbcuFilter.disabled = !hasHbcu;
-        if (!hasHbcu) hbcuFilter.checked = false;
       }
 
       function isTop25(value) {
@@ -182,7 +173,6 @@
         const awayRanked = isTop25(game.away_rank);
         if (rankingFilter.value === "top25" && !homeRanked && !awayRanked) return false;
         if (rankingFilter.value === "ranked-v-ranked" && !(homeRanked && awayRanked)) return false;
-        if (hbcuFilter.checked && !game.is_hbcu) return false;
         return true;
       }
 
@@ -201,7 +191,7 @@
         });
       }
 
-      [teamFilter, divisionFilter, conferenceFilter, rankingFilter, hbcuFilter].forEach((control) => {
+      [teamFilter, divisionFilter, conferenceFilter, rankingFilter].forEach((control) => {
         control.addEventListener("change", renderFilteredSlate);
       });
 

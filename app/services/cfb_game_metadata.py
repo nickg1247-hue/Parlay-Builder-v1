@@ -7,13 +7,21 @@ from typing import Any
 
 from app.odds.cfb_team_aliases import normalize_team_name
 
-DIVISION_LABELS = {
-    "fbs": "FBS",
-    "fcs": "FCS",
-    "d2": "Division II",
-    "d3": "Division III",
-}
-DIVISION_ORDER = ("fbs", "fcs", "d2", "d3")
+DIVISION_LABELS = {"fbs": "FBS", "fcs": "FCS"}
+DIVISION_ORDER = ("fbs", "fcs")
+FCS_CONFERENCES = frozenset({"big sky","big south-ovc","caa","ivy league","meac","mvfc","nec","ovc","patriot league","pioneer football league","socon","southland","swac","uac"})
+KNOWN_LOWER_DIVISION_TEAM_KEYS = frozenset({"west florida","northwestern (ia)","la. christian"})
+
+def is_fcs_conference(value: Any) -> bool:
+    return str(value or "").strip().lower() in FCS_CONFERENCES
+
+def is_public_fbs_fcs_game(game: dict[str, Any]) -> bool:
+    divisions=set(game.get("divisions") or [game.get("division")])
+    if not divisions or not divisions <= {"fbs","fcs"}: return False
+    if divisions=={"fcs"}:
+        teams={_school_key(game.get("home_team")),_school_key(game.get("away_team"))}
+        return not bool(teams & KNOWN_LOWER_DIVISION_TEAM_KEYS) and is_fcs_conference(game.get("home_conference")) and is_fcs_conference(game.get("away_conference"))
+    return True
 
 HBCU_CONFERENCES = frozenset(
     {
@@ -159,12 +167,12 @@ def annotate_game_metadata(game: dict[str, Any]) -> dict[str, Any]:
     game["division"] = primary
     game["division_label"] = DIVISION_LABELS.get(primary, primary.upper())
     game["divisions"] = divisions or [primary]
-    game["model_eligible"] = "fbs" in game["divisions"]
-    game["is_hbcu"] = bool(
-        game.get("is_hbcu")
-        or is_hbcu_team(game.get("home_team"), game.get("home_conference"))
-        or is_hbcu_team(game.get("away_team"), game.get("away_conference"))
-    )
+    pure_fbs = game["divisions"] == ["fbs"]
+    pure_fcs = game["divisions"] == ["fcs"]
+    game["model_eligible"] = pure_fbs
+    game["model_family"] = "cfb_moneyline" if pure_fbs else ("fcs_moneyline" if pure_fcs else None)
+    game["model_version"] = None if not pure_fbs else "active_fbs"
+    game.pop("is_hbcu", None)
     return game
 
 
@@ -217,6 +225,5 @@ def merge_game_records(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 + (incoming.get("sources") or [incoming.get("source")])
             )
         )
-        current["is_hbcu"] = bool(current.get("is_hbcu") or incoming.get("is_hbcu"))
         annotate_game_metadata(current)
     return [merged[key] for key in order]

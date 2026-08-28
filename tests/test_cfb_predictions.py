@@ -19,6 +19,10 @@ MOCK_GAME = {
     "start_time_utc": "2024-11-30T20:00:00Z",
     "status": "Preview",
     "sport": "cfb",
+    "division": "fbs",
+    "divisions": ["fbs"],
+    "model_eligible": True,
+    "model_family": "cfb_moneyline",
 }
 
 

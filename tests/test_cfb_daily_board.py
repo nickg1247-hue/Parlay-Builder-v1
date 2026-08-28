@@ -79,8 +79,9 @@ def test_cfb_board_page():
     assert "cfb_board.js" in resp.text
     assert "Run live" in resp.text
     assert "Cross-game parlays" in resp.text
-    for control in ("team-filter", "division-filter", "conference-filter", "ranking-filter", "hbcu-filter"):
+    for control in ("team-filter", "division-filter", "conference-filter", "ranking-filter"):
         assert control in resp.text
+    assert "hbcu-filter" not in resp.text
 @patch("app.services.cfb_daily_board.predict_slate")
 @patch("app.services.cfb_daily_board.get_cfb_schedule")
 @patch("app.services.cfb_daily_board.enrich_games_logos")
@@ -99,7 +100,6 @@ def test_daily_board_keeps_lower_division_games_without_fabricated_picks(
         "home_conference": "MEAC",
         "home_rank": 14,
         "away_conference": "SWAC",
-        "is_hbcu": True,
     }
     mock_schedule.return_value = {
         **MOCK_SCHEDULE,
@@ -115,15 +115,14 @@ def test_daily_board_keeps_lower_division_games_without_fabricated_picks(
     assert len(data["slate"]) == 2
     lower = next(row for row in data["slate"] if row["game_id"] == "ncaa-1")
     assert lower["model_eligible"] is False
-    assert lower["is_hbcu"] is True
     assert lower["prediction_available"] is False
     assert lower["model_prob_home"] is None
     assert lower["model_pick"] is None
     assert lower["spread_pick"] is None
-    assert [item["key"] for item in data["filters"]["divisions"]] == ["fbs", "fcs", "d2", "d3"]
+    assert [item["key"] for item in data["filters"]["divisions"]] == ["fbs", "fcs"]
     assert data["filters"]["teams"] == ["Georgia", "Georgia Tech", "Howard Bison", "North Carolina Central Eagles"]
     assert data["filters"]["conferences"] == ["MEAC", "SEC", "SWAC"]
-    assert data["filters"]["hbcu"] is True
+    assert "hbcu" not in data["filters"]
 
 @patch("app.services.cfb_daily_board.predict_slate", side_effect=FileNotFoundError("missing model"))
 @patch("app.services.cfb_daily_board.get_cfb_schedule")

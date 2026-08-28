@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from app.services.cfb_game_metadata import annotate_game_metadata
+from app.services.cfb_game_metadata import annotate_game_metadata, game_identity
 from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,8 @@ ESPN_CFB_SCOREBOARD = (
 )
 FBS_GROUPS = "80"
 NCAA_SCOREBOARD = "https://ncaa-api.henrygd.me/scoreboard/football/{division}/{season}/{week:02d}/all-conf"
-NCAA_DIVISIONS = ("fbs", "fcs", "d2", "d3")
+NCAA_DIVISIONS = ("fbs", "fcs")
+NCAA_OWNERSHIP_DIVISIONS = ("d2", "d3")
 SCORES_CACHE_TTL_SECONDS = 45
 
 _scores_cache: dict[str, Any] | None = None
@@ -287,7 +288,10 @@ def fetch_lower_division_scores_day(
     warnings: list[str] = []
     successful_divisions: set[str] = set()
     with httpx.Client(timeout=30.0) as client:
-        for division in NCAA_DIVISIONS:
+        lower_owned_ids: set[str] = set()
+        lower_owned_matchups: set[tuple[str, tuple[str, str]]] = set()
+        lower_owned_teams: set[str] = set()
+        for division in NCAA_DIVISIONS + NCAA_OWNERSHIP_DIVISIONS:
             for candidate_week in candidate_weeks:
                 url = NCAA_SCOREBOARD.format(
                     division=division,
@@ -311,8 +315,17 @@ def fetch_lower_division_scores_day(
                     record = ncaa_game_record(raw, division)
                     if record.get("date") != game_date.isoformat():
                         continue
-                    key = (division, str(record.get("game_id") or ""))
-                    games_by_key[key] = record
+                    game_id = str(record.get("game_id") or "")
+                    if division in NCAA_OWNERSHIP_DIVISIONS:
+                        lower_owned_ids.add(game_id)
+                        lower_owned_matchups.add(game_identity(record))
+                        lower_owned_teams.update(game_identity(record)[1])
+                    else:
+                        games_by_key[(division, game_id)] = record
+        games_by_key = {
+            key: record for key, record in games_by_key.items()
+            if not (key[0] == "fcs" and (key[1] in lower_owned_ids or game_identity(record) in lower_owned_matchups or bool(set(game_identity(record)[1]) & lower_owned_teams)))
+        }
     for division in NCAA_DIVISIONS:
         if division not in successful_divisions:
             warnings.append(f"NCAA {division.upper()} coverage unavailable.")

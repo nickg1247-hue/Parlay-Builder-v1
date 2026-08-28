@@ -165,8 +165,9 @@ def test_cfb_slate_page():
     assert "College Football" in resp.text
     assert "/api/cfb/predictions" in resp.text
     assert "slate-date-input" in resp.text
-    for control in ("slate-team-filter", "slate-division-filter", "slate-conference-filter", "slate-ranking-filter", "slate-hbcu-filter"):
+    for control in ("slate-team-filter", "slate-division-filter", "slate-conference-filter", "slate-ranking-filter"):
         assert control in resp.text
+    assert "slate-hbcu-filter" not in resp.text
 def test_ncaa_lower_division_parser_preserves_metadata():
     raw = {
         "game": {
@@ -194,8 +195,8 @@ def test_ncaa_lower_division_parser_preserves_metadata():
     assert game["home_rank"] == 12
     assert game["away_rank"] == 19
     assert game["start_time_utc"] == "2026-08-29T17:30:00Z"
-    assert game["is_hbcu"] is True
     assert game["model_eligible"] is False
+    assert game["model_family"] == "fcs_moneyline"
 
 
 def test_duplicate_fbs_fcs_merge_retains_divisions_sources_and_model_eligibility():
@@ -213,7 +214,8 @@ def test_duplicate_fbs_fcs_merge_retains_divisions_sources_and_model_eligibility
     assert len(merged) == 1
     assert merged[0]["divisions"] == ["fbs", "fcs"]
     assert merged[0]["sources"] == ["espn", "ncaa"]
-    assert merged[0]["model_eligible"] is True
+    assert merged[0]["model_eligible"] is False
+    assert merged[0]["model_family"] is None
 
 
 @patch("app.services.schedule_cfb.fetch_lower_division_scores_day")
@@ -248,7 +250,6 @@ def test_combined_schedule_includes_espn_fbs_and_ncaa_fcs_metadata(mock_fbs, moc
     lower = next(game for game in payload["games"] if game["division"] == "fcs")
     assert lower["home_conference"] == "MEAC"
     assert lower["away_conference"] == "SWAC"
-    assert lower["is_hbcu"] is True
     assert lower["model_eligible"] is False
     assert payload["coverage"]["source_counts"]["espn_fbs"] == 1
     assert payload["coverage"]["source_counts"]["ncaa_fcs"] == 1
@@ -282,8 +283,6 @@ def test_lower_division_fetch_is_date_complete_across_adjacent_weeks(mock_client
             game("fcs-hbcu", "Howard", "Delaware St.", "meac", "meac"),
         ],
         ("fbs", 1): [game("fbs-1", "Temple", "Rutgers", "american", "big-ten")],
-        ("d2", 1): [game("d2-1", "Bowie St.", "Virginia Union", "ciaa", "ciaa")],
-        ("d3", 2): [game("d3-1", "Mount Union", "Heidelberg", "oac", "oac")],
     }
 
     class Response:
@@ -320,8 +319,8 @@ def test_lower_division_fetch_is_date_complete_across_adjacent_weeks(mock_client
     )
 
     assert warnings == []
-    assert len(games) == 5
-    assert {game["division"] for game in games} == {"fbs", "fcs", "d2", "d3"}
+    assert len(games) == 3
+    assert {game["division"] for game in games} == {"fbs", "fcs"}
     sentinel = next(game for game in games if game["game_id"] == "6604373")
     assert sentinel["away_team"] == "Mercyhurst"
     assert sentinel["home_team"] == "Youngstown St."
@@ -330,13 +329,12 @@ def test_lower_division_fetch_is_date_complete_across_adjacent_weeks(mock_client
     assert sentinel["away_conference"] == "NEC"
     assert sentinel["home_conference"] == "MVFC"
     assert sentinel["model_eligible"] is False
-    assert next(game for game in games if game["game_id"] == "fcs-hbcu")["is_hbcu"] is True
     assert any("/00/all-conf" in url for url in client_instance.urls)
     assert any("/01/all-conf" in url for url in client_instance.urls)
     assert any("/02/all-conf" in url for url in client_instance.urls)
 
 @patch("app.services.scores_cfb.httpx.Client")
-def test_lower_division_fetch_reports_partial_source_failure(mock_client):
+def test_fbs_fcs_fetch_reports_partial_source_failure(mock_client):
     class Response:
         def raise_for_status(self):
             return None
@@ -352,8 +350,8 @@ def test_lower_division_fetch_reports_partial_source_failure(mock_client):
             return None
 
         def get(self, url):
-            if "/d3/" in url:
-                raise httpx.ConnectError("D3 feed unavailable")
+            if "/fcs/" in url:
+                raise httpx.ConnectError("FCS feed unavailable")
             return Response()
 
     mock_client.return_value = Client()
@@ -361,4 +359,4 @@ def test_lower_division_fetch_reports_partial_source_failure(mock_client):
         date(2026, 8, 27), season=2026, week=1
     )
     assert games == []
-    assert warnings == ["NCAA D3 coverage unavailable."]
+    assert warnings == ["NCAA FCS coverage unavailable."]

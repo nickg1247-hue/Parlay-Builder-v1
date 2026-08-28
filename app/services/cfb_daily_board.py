@@ -9,7 +9,7 @@ from typing import Any
 from app.models.cfb_baseline import ACTIVE_CFB_MANIFEST, load_model_artifact
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.parlay.cfb_parlay import top_parlays_payload
-from app.services.cfb_game_metadata import DIVISION_LABELS, DIVISION_ORDER, annotate_game_metadata
+from app.services.cfb_game_metadata import DIVISION_LABELS, annotate_game_metadata
 from app.services.cfb_slate_predictions import predict_slate
 from app.services.slate_clock import slate_today
 from app.services.cfb_team_logos import enrich_games_logos
@@ -101,8 +101,9 @@ def _slate_rows(
             "away_conference": game.get("away_conference"),
             "home_rank": game.get("home_rank"),
             "away_rank": game.get("away_rank"),
-            "is_hbcu": bool(game.get("is_hbcu")),
             "model_eligible": bool(game.get("model_eligible")),
+            "model_family": pred.get("model_family") or game.get("model_family"),
+            "model_version": pred.get("model_version") or game.get("model_version"),
             "prediction_available": bool(pred),
             "model_prob_home": prob_home,
             "model_prob_away": prob_away,
@@ -179,7 +180,7 @@ def build_cfb_daily_board(
         "plus_ev_count": 0,
         "board_spread_enabled": True,
         "board_totals_enabled": True,
-        "filters": {"teams": [], "divisions": [], "conferences": [], "hbcu": False},
+        "filters": {"teams": [], "divisions": [], "conferences": []},
     }
 
     if not games:
@@ -209,7 +210,7 @@ def build_cfb_daily_board(
         ),
         "divisions": [
             {"key": key, "label": DIVISION_LABELS[key]}
-            for key in DIVISION_ORDER
+            for key in ("fbs", "fcs")
         ],
         "conferences": sorted(
             {
@@ -219,7 +220,6 @@ def build_cfb_daily_board(
                 if conference
             }
         ),
-        "hbcu": any(bool(row.get("is_hbcu")) for row in slate),
     }
     has_ml_odds = any(g.get("home_ml") is not None for g in slate)
     has_spread = any(g.get("home_spread_point") is not None for g in slate)
