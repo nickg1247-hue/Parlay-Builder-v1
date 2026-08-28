@@ -86,7 +86,7 @@ def _slate_rows(
 
         row: dict[str, Any] = {
             "game_id": gid,
-            "date": str(game.get("start_time_utc") or "")[:10],
+            "date": str(game.get("date") or game.get("start_time_utc") or "")[:10],
             "matchup": matchup,
             "away_team": away,
             "home_team": home,
@@ -145,14 +145,16 @@ def build_cfb_daily_board(
     force_refresh: bool = False,
 ) -> dict[str, Any]:
     """Build CFB slate envelope for /cfb/board UI."""
-    del force_refresh  # predict_slate uses CFBD lines cache + optional live odds
     if use_cache and game_date is None:
         game_date = date.fromisoformat(DEMO_DATE)
     game_date = game_date or slate_today()
     mode = "demo" if use_cache else "live"
     warnings: list[str] = []
 
-    schedule = get_cfb_schedule(game_date, auto_resolve=not use_cache)
+    schedule = get_cfb_schedule(
+        game_date, auto_resolve=not use_cache, force_live=force_refresh
+    )
+    warnings.extend(schedule.get("coverage_warnings") or [])
     games = list(schedule.get("games") or [])
     enrich_games_logos(games)
 
@@ -166,6 +168,7 @@ def build_cfb_daily_board(
         "mode": mode,
         "disclaimer": CFB_DISCLAIMER,
         "warnings": warnings,
+        "coverage": schedule.get("coverage") or {},
         "message": None,
         "odds_source": "cfbd_lines",
         "edge_threshold": min_edge,
@@ -176,7 +179,7 @@ def build_cfb_daily_board(
         "plus_ev_count": 0,
         "board_spread_enabled": True,
         "board_totals_enabled": True,
-        "filters": {"divisions": [], "conferences": [], "hbcu": False},
+        "filters": {"teams": [], "divisions": [], "conferences": [], "hbcu": False},
     }
 
     if not games:
@@ -187,28 +190,26 @@ def build_cfb_daily_board(
         preds = predict_slate(slate_day)
     except FileNotFoundError as exc:
         base["error"] = str(exc)
-        base["message"] = (
-            "CFB model not trained — run scripts/bootstrap_cfb.py "
-            "(or scripts/train_cfb_baseline.py after ingest)."
-        )
-        return base
+        base["message"] = "CFB model not trained — schedule coverage remains available."
+        preds = {}
 
-    if not preds:
+    if not preds and not base.get("message"):
         base["message"] = "No model predictions available for this slate."
         warnings.append("Train models with scripts/bootstrap_cfb.py if this persists.")
 
     slate = _slate_rows(games, preds, min_edge=min_edge)
-    present_divisions = {
-        division
-        for row in slate
-        for division in (row.get("divisions") or [row.get("division")])
-        if division
-    }
     base["filters"] = {
+        "teams": sorted(
+            {
+                str(team)
+                for row in slate
+                for team in (row.get("home_team"), row.get("away_team"))
+                if team
+            }
+        ),
         "divisions": [
             {"key": key, "label": DIVISION_LABELS[key]}
             for key in DIVISION_ORDER
-            if key in present_divisions
         ],
         "conferences": sorted(
             {

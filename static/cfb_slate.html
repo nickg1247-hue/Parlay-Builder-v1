@@ -57,6 +57,12 @@
         </button>
         <span class="slate-source-badge hidden" id="slate-source" aria-live="polite"></span>
         <label class="toolbar-field">
+          Team
+          <select id="slate-team-filter">
+            <option value="all">All teams</option>
+          </select>
+        </label>
+        <label class="toolbar-field">
           Division
           <select id="slate-division-filter">
             <option value="all">All divisions</option>
@@ -105,6 +111,7 @@
       const goBtn = document.getElementById("slate-date-go");
       const refreshBtn = document.getElementById("slate-date-refresh");
       const sourceEl = document.getElementById("slate-source");
+      const teamFilter = document.getElementById("slate-team-filter");
       const divisionFilter = document.getElementById("slate-division-filter");
       const conferenceFilter = document.getElementById("slate-conference-filter");
       const rankingFilter = document.getElementById("slate-ranking-filter");
@@ -137,18 +144,20 @@
 
       function populateSlateFilters(games) {
         const labels = { fbs: "FBS", fcs: "FCS", d2: "Division II", d3: "Division III" };
+        const teams = new Set();
         const presentDivisions = new Set();
         const conferences = new Set();
         let hasHbcu = false;
         games.forEach((game) => {
-          (game.divisions || [game.division || "fbs"]).forEach((division) => presentDivisions.add(division));
+          if (game.home_team) teams.add(game.home_team);
+          if (game.away_team) teams.add(game.away_team);
           if (game.home_conference) conferences.add(game.home_conference);
           if (game.away_conference) conferences.add(game.away_conference);
           if (game.is_hbcu) hasHbcu = true;
         });
         const divisions = ["fbs", "fcs", "d2", "d3"]
-          .filter((key) => presentDivisions.has(key))
           .map((key) => ({ key, label: labels[key] }));
+        setFilterOptions(teamFilter, Array.from(teams).sort(), "All teams");
         setFilterOptions(divisionFilter, divisions, "All divisions");
         setFilterOptions(conferenceFilter, Array.from(conferences).sort(), "All conferences");
         hbcuFilter.disabled = !hasHbcu;
@@ -161,6 +170,7 @@
       }
 
       function gamePassesFilters(game) {
+        if (teamFilter.value !== "all" && game.home_team !== teamFilter.value && game.away_team !== teamFilter.value) return false;
         const divisions = game.divisions || [game.division || "fbs"];
         if (divisionFilter.value !== "all" && !divisions.includes(divisionFilter.value)) return false;
         if (
@@ -191,7 +201,7 @@
         });
       }
 
-      [divisionFilter, conferenceFilter, rankingFilter, hbcuFilter].forEach((control) => {
+      [teamFilter, divisionFilter, conferenceFilter, rankingFilter, hbcuFilter].forEach((control) => {
         control.addEventListener("change", renderFilteredSlate);
       });
 

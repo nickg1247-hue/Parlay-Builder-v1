@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -17,8 +18,8 @@ ESPN_CFB_SCOREBOARD = (
     "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
 )
 FBS_GROUPS = "80"
-NCAA_SCOREBOARD = "https://ncaa-api.henrygd.me/scoreboard/football/{division}/{season}/{week:02d}"
-LOWER_DIVISIONS = ("fcs", "d2", "d3")
+NCAA_SCOREBOARD = "https://ncaa-api.henrygd.me/scoreboard/football/{division}/{season}/{week:02d}/all-conf"
+NCAA_DIVISIONS = ("fbs", "fcs", "d2", "d3")
 SCORES_CACHE_TTL_SECONDS = 45
 
 _scores_cache: dict[str, Any] | None = None
@@ -141,16 +142,35 @@ def _ncaa_team_name(team: dict[str, Any], fallback: str) -> str:
     )
 
 
+_CONFERENCE_LABELS = {
+    "big-sky": "Big Sky", "big-south-ovc": "Big South-OVC", "caa": "CAA",
+    "ciaa": "CIAA", "ivy": "Ivy League", "meac": "MEAC", "mvfc": "MVFC",
+    "nec": "NEC", "ovc": "OVC", "patriot": "Patriot League",
+    "pioneer": "Pioneer Football League", "siac": "SIAC", "socon": "SoCon",
+    "southland": "Southland", "swac": "SWAC", "uac": "UAC",
+}
+
+
+def _conference_label(value: Any) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    return _CONFERENCE_LABELS.get(raw.lower(), raw.replace("-", " ").title())
+
+
 def _ncaa_conference(team: dict[str, Any]) -> str | None:
-    conference = team.get("conference")
+    conference = _conference_label(team.get("conference"))
     if conference:
-        return str(conference)
+        return conference
     conferences = team.get("conferences") or []
     if conferences:
         first = conferences[0]
         if isinstance(first, dict):
-            return str(first.get("name") or first.get("shortName") or "") or None
-        return str(first)
+            return _conference_label(
+                first.get("conferenceName") or first.get("conferenceSeo")
+                or first.get("name") or first.get("shortName")
+            )
+        return _conference_label(first)
     return None
 
 
@@ -163,18 +183,58 @@ def _ncaa_rank(team: dict[str, Any]) -> int | None:
     return rank if 1 <= rank <= 25 else None
 
 
+def _ncaa_game_date(game: dict[str, Any]) -> str | None:
+    raw = game.get("startDate") or game.get("date")
+    if not raw:
+        return None
+    text = str(raw).strip()
+    if "T" in text and len(text) >= 10:
+        return text[:10]
+    try:
+        return datetime.strptime(text[:10], "%m/%d/%Y").date().isoformat()
+    except ValueError:
+        return text[:10]
+
+def _ncaa_start_time(game: dict[str, Any]) -> str | None:
+    epoch = game.get("startTimeEpoch")
+    if epoch not in (None, ""):
+        try:
+            return datetime.fromtimestamp(int(epoch), tz=timezone.utc).isoformat().replace("+00:00", "Z")
+        except (TypeError, ValueError, OSError):
+            pass
+    raw = game.get("start_time_utc") or game.get("startDate") or game.get("date")
+    if not raw:
+        return None
+    text = str(raw).strip()
+    if "T" in text:
+        return text
+    try:
+        day = datetime.strptime(text[:10], "%m/%d/%Y").date()
+    except ValueError:
+        return text
+    clock = str(game.get("startTime") or "12:00 AM ET").replace(" ET", "").strip()
+    try:
+        local_time = datetime.strptime(clock, "%I:%M %p").time()
+    except ValueError:
+        local_time = time(12, 0)
+    local = datetime.combine(day, local_time, tzinfo=ZoneInfo("America/New_York"))
+    return local.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _ncaa_status(game: dict[str, Any]) -> str:
+    state = str(game.get("gameState") or game.get("status") or "pre").lower()
+    if state in {"live", "in", "in_progress"}:
+        return "Live"
+    if state in {"final", "post", "completed"}:
+        return "Final"
+    return "Preview"
+
 def ncaa_game_record(raw: dict[str, Any], division: str) -> dict[str, Any]:
     """Normalize one NCAA lower-division scoreboard game."""
     game = raw.get("game") if isinstance(raw.get("game"), dict) else raw
     home = _ncaa_side(game, "home")
     away = _ncaa_side(game, "away")
-    start = (
-        game.get("start_time_utc")
-        or game.get("startTime")
-        or game.get("startDate")
-        or game.get("date")
-    )
-    status = str(game.get("status") or game.get("gameState") or "Preview")
+    start = _ncaa_start_time(game)
     record = {
         "sport": "cfb",
         "game_id": str(game.get("game_id") or game.get("gameID") or game.get("id") or ""),
@@ -190,8 +250,11 @@ def ncaa_game_record(raw: dict[str, Any], division: str) -> dict[str, Any]:
         "away_rank": _ncaa_rank(away),
         "home_score": _parse_score(home.get("score")),
         "away_score": _parse_score(away.get("score")),
-        "start_time_utc": str(start) if start else None,
-        "status": status,
+        "date": _ncaa_game_date(game),
+        "start_time_utc": start,
+        "status": _ncaa_status(game),
+        "detailed_status": game.get("finalMessage") or game.get("currentPeriod") or "",
+        "period_label": game.get("currentPeriod") or None,
         "network": game.get("network"),
         "division": division,
         "divisions": [division],
@@ -201,34 +264,59 @@ def ncaa_game_record(raw: dict[str, Any], division: str) -> dict[str, Any]:
     return annotate_game_metadata(record)
 
 
+def _fallback_ncaa_week(game_date: date) -> int:
+    september_first = date(game_date.year, 9, 1)
+    labor_day = september_first
+    while labor_day.weekday() != 0:
+        labor_day = labor_day.replace(day=labor_day.day + 1)
+    if game_date < labor_day:
+        return 1
+    return 2 + max(0, (game_date - labor_day).days // 7)
+
+
 def fetch_lower_division_scores_day(
     game_date: date,
     *,
     season: int,
     week: int,
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    """Fetch FCS, D-II, and D-III games; failures are reported without hiding FBS."""
-    if week <= 0:
-        return [], ["NCAA lower-division week could not be resolved."]
-    games: list[dict[str, Any]] = []
+    """Fetch every real NCAA FBS/FCS/D-II/D-III game for a calendar date."""
+    resolved_week = week if week > 0 else _fallback_ncaa_week(game_date)
+    candidate_weeks = sorted({max(0, resolved_week - 1), resolved_week, resolved_week + 1})
+    games_by_key: dict[tuple[str, str], dict[str, Any]] = {}
     warnings: list[str] = []
+    successful_divisions: set[str] = set()
     with httpx.Client(timeout=30.0) as client:
-        for division in LOWER_DIVISIONS:
-            url = NCAA_SCOREBOARD.format(division=division, season=season, week=week)
-            try:
-                response = client.get(url)
-                response.raise_for_status()
-                payload = response.json()
-            except (httpx.HTTPError, ValueError) as exc:
-                logger.warning("NCAA %s scoreboard failed: %s", division, exc)
-                warnings.append(f"NCAA {division.upper()} coverage unavailable.")
-                continue
-            for raw in payload.get("games") or []:
-                record = ncaa_game_record(raw, division)
-                day = str(record.get("start_time_utc") or "")[:10]
-                if not day or day == game_date.isoformat():
-                    games.append(record)
-    return games, warnings
+        for division in NCAA_DIVISIONS:
+            for candidate_week in candidate_weeks:
+                url = NCAA_SCOREBOARD.format(
+                    division=division,
+                    season=season,
+                    week=candidate_week,
+                )
+                try:
+                    response = client.get(url)
+                    response.raise_for_status()
+                    payload = response.json()
+                    successful_divisions.add(division)
+                except (httpx.HTTPError, ValueError) as exc:
+                    logger.warning(
+                        "NCAA %s week %s scoreboard failed: %s",
+                        division,
+                        candidate_week,
+                        exc,
+                    )
+                    continue
+                for raw in payload.get("games") or []:
+                    record = ncaa_game_record(raw, division)
+                    if record.get("date") != game_date.isoformat():
+                        continue
+                    key = (division, str(record.get("game_id") or ""))
+                    games_by_key[key] = record
+    for division in NCAA_DIVISIONS:
+        if division not in successful_divisions:
+            warnings.append(f"NCAA {division.upper()} coverage unavailable.")
+    return list(games_by_key.values()), warnings
 
 
 def clear_scores_cache() -> None:

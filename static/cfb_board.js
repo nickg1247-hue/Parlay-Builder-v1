@@ -21,6 +21,7 @@ const els = {
   minEdgeInput: document.getElementById("min-edge-input"),
   singlesThresholdLabel: document.getElementById("singles-threshold-label"),
   loadingMessage: document.getElementById("loading-message"),
+  teamFilter: document.getElementById("team-filter"),
   divisionFilter: document.getElementById("division-filter"),
   conferenceFilter: document.getElementById("conference-filter"),
   rankingFilter: document.getElementById("ranking-filter"),
@@ -120,6 +121,7 @@ function setSelectOptions(select, options, allLabel) {
 }
 
 function populateFilters(filters) {
+  setSelectOptions(els.teamFilter, filters?.teams || [], "All teams");
   setSelectOptions(els.divisionFilter, filters?.divisions || [], "All divisions");
   setSelectOptions(els.conferenceFilter, filters?.conferences || [], "All conferences");
   if (els.hbcuFilter) {
@@ -134,6 +136,9 @@ function top25Rank(value) {
 }
 
 function passesFilters(game) {
+  const team = els.teamFilter?.value || "all";
+  if (team !== "all" && game.home_team !== team && game.away_team !== team) return false;
+
   const division = els.divisionFilter?.value || "all";
   const divisions = Array.isArray(game.divisions) && game.divisions.length
     ? game.divisions.map(String)
@@ -273,6 +278,7 @@ function renderParlays(parlays) {
 function visibleParlays(parlays, slate) {
   const visibleIds = new Set(slate.map((game) => String(game.game_id)));
   const filtersActive =
+    (els.teamFilter?.value || "all") !== "all" ||
     (els.divisionFilter?.value || "all") !== "all" ||
     (els.conferenceFilter?.value || "all") !== "all" ||
     (els.rankingFilter?.value || "all") !== "all" ||
@@ -373,6 +379,7 @@ els.runDemo?.addEventListener("click", () => {
 els.refresh?.addEventListener("click", () => loadBoard(true));
 els.minEdgeInput?.addEventListener("change", () => loadBoard(false));
 [
+  els.teamFilter,
   els.divisionFilter,
   els.conferenceFilter,
   els.rankingFilter,

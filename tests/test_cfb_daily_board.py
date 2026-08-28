@@ -79,7 +79,7 @@ def test_cfb_board_page():
     assert "cfb_board.js" in resp.text
     assert "Run live" in resp.text
     assert "Cross-game parlays" in resp.text
-    for control in ("division-filter", "conference-filter", "ranking-filter", "hbcu-filter"):
+    for control in ("team-filter", "division-filter", "conference-filter", "ranking-filter", "hbcu-filter"):
         assert control in resp.text
 @patch("app.services.cfb_daily_board.predict_slate")
 @patch("app.services.cfb_daily_board.get_cfb_schedule")
@@ -97,6 +97,7 @@ def test_daily_board_keeps_lower_division_games_without_fabricated_picks(
         "status": "Preview",
         "division": "fcs",
         "home_conference": "MEAC",
+        "home_rank": 14,
         "away_conference": "SWAC",
         "is_hbcu": True,
     }
@@ -119,6 +120,38 @@ def test_daily_board_keeps_lower_division_games_without_fabricated_picks(
     assert lower["model_prob_home"] is None
     assert lower["model_pick"] is None
     assert lower["spread_pick"] is None
-    assert [item["key"] for item in data["filters"]["divisions"]] == ["fbs", "fcs"]
+    assert [item["key"] for item in data["filters"]["divisions"]] == ["fbs", "fcs", "d2", "d3"]
+    assert data["filters"]["teams"] == ["Georgia", "Georgia Tech", "Howard Bison", "North Carolina Central Eagles"]
     assert data["filters"]["conferences"] == ["MEAC", "SEC", "SWAC"]
     assert data["filters"]["hbcu"] is True
+
+@patch("app.services.cfb_daily_board.predict_slate", side_effect=FileNotFoundError("missing model"))
+@patch("app.services.cfb_daily_board.get_cfb_schedule")
+@patch("app.services.cfb_daily_board.enrich_games_logos")
+def test_daily_board_keeps_schedule_and_filters_when_model_is_missing(
+    mock_logos, mock_schedule, _mock_predict
+):
+    game = {
+        "game_id": "fcs-only",
+        "home_team": "Youngstown St.",
+        "away_team": "Mercyhurst",
+        "date": "2026-08-27",
+        "start_time_utc": "2026-08-27T22:00:00Z",
+        "division": "fcs",
+        "home_conference": "MVFC",
+        "away_conference": "NEC",
+    }
+    mock_schedule.return_value = {
+        "date": "2026-08-27",
+        "resolved_date": "2026-08-27",
+        "games": [game],
+        "games_count": 1,
+    }
+    mock_logos.side_effect = lambda games: games
+    response = client.get("/api/cfb/daily", params={"date": "2026-08-27"})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["slate"]) == 1
+    assert data["slate"][0]["prediction_available"] is False
+    assert data["filters"]["teams"] == ["Mercyhurst", "Youngstown St."]
+    assert data["filters"]["conferences"] == ["MVFC", "NEC"]

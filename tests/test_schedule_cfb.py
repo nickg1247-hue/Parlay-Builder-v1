@@ -4,6 +4,7 @@ import json
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,7 +12,7 @@ from app.main import app
 from app.services import scores_cfb as sc
 from app.services.cfb_game_metadata import merge_game_records
 from app.services.schedule_cfb import get_cfb_schedule, resolve_cfb_slate_date
-from app.services.scores_cfb import ncaa_game_record
+from app.services.scores_cfb import fetch_lower_division_scores_day, ncaa_game_record
 
 client = TestClient(app)
 
@@ -164,7 +165,7 @@ def test_cfb_slate_page():
     assert "College Football" in resp.text
     assert "/api/cfb/predictions" in resp.text
     assert "slate-date-input" in resp.text
-    for control in ("slate-division-filter", "slate-conference-filter", "slate-ranking-filter", "slate-hbcu-filter"):
+    for control in ("slate-team-filter", "slate-division-filter", "slate-conference-filter", "slate-ranking-filter", "slate-hbcu-filter"):
         assert control in resp.text
 def test_ncaa_lower_division_parser_preserves_metadata():
     raw = {
@@ -249,3 +250,115 @@ def test_combined_schedule_includes_espn_fbs_and_ncaa_fcs_metadata(mock_fbs, moc
     assert lower["away_conference"] == "SWAC"
     assert lower["is_hbcu"] is True
     assert lower["model_eligible"] is False
+    assert payload["coverage"]["source_counts"]["espn_fbs"] == 1
+    assert payload["coverage"]["source_counts"]["ncaa_fcs"] == 1
+
+@patch("app.services.scores_cfb.httpx.Client")
+def test_lower_division_fetch_is_date_complete_across_adjacent_weeks(mock_client):
+    def game(game_id, away, home, away_conf, home_conf, *, rank=None):
+        return {
+            "game": {
+                "gameID": game_id,
+                "startDate": "08/27/2026",
+                "startTime": "6:00 PM ET",
+                "gameState": "pre",
+                "away": {
+                    "names": {"short": away},
+                    "conferences": [{"conferenceSeo": away_conf, "conferenceName": ""}],
+                },
+                "home": {
+                    "names": {"short": home},
+                    "rank": str(rank or ""),
+                    "conferences": [{"conferenceSeo": home_conf, "conferenceName": ""}],
+                },
+            }
+        }
+
+    mercyhurst = game("6604373", "Mercyhurst", "Youngstown St.", "nec", "mvfc", rank=9)
+    payloads = {
+        ("fcs", 0): [mercyhurst],
+        ("fcs", 1): [
+            mercyhurst,
+            game("fcs-hbcu", "Howard", "Delaware St.", "meac", "meac"),
+        ],
+        ("fbs", 1): [game("fbs-1", "Temple", "Rutgers", "american", "big-ten")],
+        ("d2", 1): [game("d2-1", "Bowie St.", "Virginia Union", "ciaa", "ciaa")],
+        ("d3", 2): [game("d3-1", "Mount Union", "Heidelberg", "oac", "oac")],
+    }
+
+    class Response:
+        def __init__(self, games):
+            self._games = games
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"games": self._games}
+
+    class Client:
+        def __init__(self):
+            self.urls = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def get(self, url):
+            self.urls.append(url)
+            parts = url.rstrip("/").split("/")
+            division = parts[-4]
+            week = int(parts[-2])
+            return Response(payloads.get((division, week), []))
+
+    client_instance = Client()
+    mock_client.return_value = client_instance
+    games, warnings = fetch_lower_division_scores_day(
+        date(2026, 8, 27), season=2026, week=0
+    )
+
+    assert warnings == []
+    assert len(games) == 5
+    assert {game["division"] for game in games} == {"fbs", "fcs", "d2", "d3"}
+    sentinel = next(game for game in games if game["game_id"] == "6604373")
+    assert sentinel["away_team"] == "Mercyhurst"
+    assert sentinel["home_team"] == "Youngstown St."
+    assert sentinel["start_time_utc"] == "2026-08-27T22:00:00Z"
+    assert sentinel["home_rank"] == 9
+    assert sentinel["away_conference"] == "NEC"
+    assert sentinel["home_conference"] == "MVFC"
+    assert sentinel["model_eligible"] is False
+    assert next(game for game in games if game["game_id"] == "fcs-hbcu")["is_hbcu"] is True
+    assert any("/00/all-conf" in url for url in client_instance.urls)
+    assert any("/01/all-conf" in url for url in client_instance.urls)
+    assert any("/02/all-conf" in url for url in client_instance.urls)
+
+@patch("app.services.scores_cfb.httpx.Client")
+def test_lower_division_fetch_reports_partial_source_failure(mock_client):
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"games": []}
+
+    class Client:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def get(self, url):
+            if "/d3/" in url:
+                raise httpx.ConnectError("D3 feed unavailable")
+            return Response()
+
+    mock_client.return_value = Client()
+    games, warnings = fetch_lower_division_scores_day(
+        date(2026, 8, 27), season=2026, week=1
+    )
+    assert games == []
+    assert warnings == ["NCAA D3 coverage unavailable."]

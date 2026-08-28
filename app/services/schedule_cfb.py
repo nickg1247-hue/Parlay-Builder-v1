@@ -9,6 +9,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import httpx
+
 from app.config import PROJECT_ROOT
 from app.ingest.cfb_season_schedule import load_season_schedule
 from app.odds.cfb_team_aliases import normalize_team_name
@@ -26,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
-SCHEDULE_SCHEMA_VERSION = 2
+SCHEDULE_SCHEMA_VERSION = 3
 SLATE_LOOKAHEAD_DAYS = 7
 
 
@@ -56,7 +58,18 @@ def _date_has_games(game_date: date) -> bool:
             pass
     if _is_past_date(game_date):
         return ingest_has_games(game_date)
-    return bool(fetch_cfb_scores_day(game_date))
+    try:
+        if fetch_cfb_scores_day(game_date):
+            return True
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("ESPN FBS date lookup unavailable for %s: %s", game_date, exc)
+    season, week = _season_week_for_date(game_date)
+    lower_games, _ = fetch_lower_division_scores_day(
+        game_date,
+        season=season,
+        week=week,
+    )
+    return bool(lower_games)
 
 
 def _slate_meta(
@@ -251,24 +264,42 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
             logger.info("No ingested CFB games for %s", game_date.isoformat())
         return _write_schedule_cache(game_date, games, source=source)
 
-    events = fetch_cfb_scores_day(game_date)
+    coverage_warnings: list[str] = []
+    try:
+        events = fetch_cfb_scores_day(game_date)
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("ESPN FBS schedule unavailable for %s: %s", game_date, exc)
+        events = []
+        coverage_warnings.append("ESPN FBS coverage unavailable.")
     fbs_games = _annotate_fbs_schedule(
         [live_game_record(event) for event in events],
         game_date=game_date,
     )
     season, week = _season_week_for_date(game_date)
-    lower_games, coverage_warnings = fetch_lower_division_scores_day(
+    lower_games, lower_warnings = fetch_lower_division_scores_day(
         game_date,
         season=season,
         week=week,
     )
+    coverage_warnings.extend(lower_warnings)
     games = enrich_games_logos(merge_game_records(fbs_games + lower_games))
     divisions = sorted(
-        {
-            division
-            for game in games
-            for division in game.get("divisions") or []
-        }
+        {division for game in games for division in game.get("divisions") or []}
+    )
+    source_counts = {
+        "espn_fbs": len(fbs_games),
+        "ncaa_fbs": sum(1 for game in lower_games if game.get("division") == "fbs"),
+        "ncaa_fcs": sum(1 for game in lower_games if game.get("division") == "fcs"),
+        "ncaa_d2": sum(1 for game in lower_games if game.get("division") == "d2"),
+        "ncaa_d3": sum(1 for game in lower_games if game.get("division") == "d3"),
+    }
+    division_counts = {
+        division: sum(1 for game in games if division in (game.get("divisions") or []))
+        for division in ("fbs", "fcs", "d2", "d3")
+    }
+    logger.info(
+        "CFB coverage %s: source_counts=%s division_counts=%s warnings=%s",
+        game_date.isoformat(), source_counts, division_counts, coverage_warnings,
     )
     return _write_schedule_cache(
         game_date,
@@ -276,6 +307,11 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
         source="espn+ncaa",
         metadata={
             "coverage_warnings": coverage_warnings,
+            "coverage": {
+                "complete": not coverage_warnings,
+                "source_counts": source_counts,
+                "division_counts": division_counts,
+            },
             "divisions": divisions,
             "ncaa_week": week,
         },

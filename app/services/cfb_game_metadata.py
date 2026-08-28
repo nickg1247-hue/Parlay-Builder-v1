@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.odds.cfb_team_aliases import normalize_team_name
@@ -102,6 +103,7 @@ def normalize_division(value: Any) -> str:
 
 def _school_key(name: Any) -> str:
     normalized = normalize_team_name(str(name or "")).lower().strip()
+    normalized = re.sub(r"\bst\.?$", "state", normalized)
     for suffix in (
         " wildcats",
         " bulldogs",
@@ -118,6 +120,11 @@ def _school_key(name: Any) -> str:
         " bison",
         " aggies",
         " jaguars",
+        " penguins",
+        " mountaineers",
+        " redhawks",
+        " governors",
+        " paladins",
     ):
         if normalized.endswith(suffix):
             normalized = normalized[: -len(suffix)]
@@ -166,8 +173,8 @@ def game_identity(game: dict[str, Any]) -> tuple[str, tuple[str, str]]:
     teams = tuple(
         sorted(
             (
-                normalize_team_name(str(game.get("home_team") or "")).lower(),
-                normalize_team_name(str(game.get("away_team") or "")).lower(),
+                _school_key(game.get("home_team_model_name") or game.get("home_team")),
+                _school_key(game.get("away_team_model_name") or game.get("away_team")),
             )
         )
     )
