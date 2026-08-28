@@ -16,6 +16,7 @@ from app.ingest.cfb_season_schedule import load_season_schedule
 from app.odds.cfb_team_aliases import normalize_team_name
 from app.services.cfb_game_metadata import annotate_game_metadata, game_identity, is_public_fbs_fcs_game, merge_game_records
 from app.services.cfb_historical_slate import games_from_ingest, ingest_has_games
+from app.services.cfbd_fcs_metadata import fetch_cfbd_fcs_metadata
 from app.services.cfb_team_logos import enrich_games_logos
 from app.services.scores_cfb import (
     fetch_cfb_scores_day,
@@ -282,12 +283,25 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
         season=season,
         week=week,
     )
+    cfbd_matched=0
+    try:
+        cfbd_games=fetch_cfbd_fcs_metadata(game_date,week=week)
+        cfbd_by_identity={game_identity(game):game for game in cfbd_games}
+        for lower in lower_games:
+            matched=cfbd_by_identity.get(game_identity(lower))
+            if matched:
+                for field in ("neutral_site","neutral_site_known","neutral_site_missing","neutral_site_source","cfbd_game_id"):
+                    lower[field]=matched[field]
+                cfbd_matched+=1
+    except (httpx.HTTPError,RuntimeError,ValueError)as exc:
+        logger.warning("CFBD FCS metadata unavailable for %s: %s",game_date,exc)
+        coverage_warnings.append("CollegeFootballData FCS site metadata unavailable; optional fallback used.")
     try:
         espn_all=[live_game_record(event)for event in fetch_espn_all_scores_day(game_date)]
         espn_by_identity={game_identity(game):game for game in espn_all}
         for lower in lower_games:
             matched=espn_by_identity.get(game_identity(lower))
-            if matched and matched.get("neutral_site_known"):
+            if not lower.get("neutral_site_known") and matched and matched.get("neutral_site_known"):
                 lower["neutral_site"]=matched["neutral_site"]
                 lower["neutral_site_known"]=True
                 lower["neutral_site_missing"]=False
@@ -305,6 +319,8 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
     source_counts = {
         "espn_fbs": len(fbs_games),
         "espn_metadata": len(espn_all) if 'espn_all' in locals() else 0,
+        "cfbd_fcs_metadata": len(cfbd_games) if 'cfbd_games' in locals() else 0,
+        "cfbd_fcs_matched": cfbd_matched,
         "ncaa_fbs": sum(1 for game in lower_games if game.get("division") == "fbs"),
         "ncaa_fcs": sum(1 for game in lower_games if game.get("division") == "fcs"),
     }

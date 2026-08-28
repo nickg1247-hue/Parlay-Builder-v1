@@ -44,3 +44,9 @@ def test_fcs_display_cap_preserves_probability_orientation():
     assert capped_display_probability(.96)==(.89,True)
     assert capped_display_probability(.04)==pytest.approx((.11,True))
     assert capped_display_probability(.72)==(.72,False)
+
+def test_fcs_alias_keys_bridge_cfbd_and_ncaa_names():
+    from app.services.cfb_game_metadata import _school_key
+    assert _school_key("Southern Illinois")==_school_key("Southern Ill.")
+    assert _school_key("SE Louisiana")==_school_key("Southeastern La.")
+    assert _school_key("Central Arkansas")==_school_key("Central Ark.")

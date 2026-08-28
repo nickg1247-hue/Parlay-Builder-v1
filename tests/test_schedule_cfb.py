@@ -54,6 +54,10 @@ ESPN_EVENT = {
 def clear_cfb_cache(tmp_path, monkeypatch):
     sc.clear_scores_cache()
     monkeypatch.setattr(
+        "app.services.schedule_cfb.fetch_cfbd_fcs_metadata",
+        lambda *args, **kwargs: [],
+    )
+    monkeypatch.setattr(
         "app.services.schedule_cfb.fetch_espn_all_scores_day",
         lambda *args, **kwargs: [],
     )

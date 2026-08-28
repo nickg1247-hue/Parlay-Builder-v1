@@ -111,6 +111,8 @@ def normalize_division(value: Any) -> str:
 
 def _school_key(name: Any) -> str:
     normalized = normalize_team_name(str(name or "")).lower().strip()
+    aliases={"charleston so.":"charleston southern","charleston so":"charleston southern","southern ill.":"southern illinois","southern ill":"southern illinois","southeastern la.":"southeastern louisiana","southeastern la":"southeastern louisiana","se louisiana":"southeastern louisiana","mississippi val.":"mississippi valley state","mississippi val":"mississippi valley state","eastern ill.":"eastern illinois","eastern ill":"eastern illinois","murray st.":"murray state","murray st":"murray state","central ark.":"central arkansas","central ark":"central arkansas"}
+    normalized=aliases.get(normalized,normalized)
     normalized = re.sub(r"\bst\.?$", "state", normalized)
     for suffix in (
         " wildcats",

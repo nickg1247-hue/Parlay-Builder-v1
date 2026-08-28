@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from app.config import PROJECT_ROOT
 from app.features.fcs_pregame import FEATURE_COLUMNS,build_features,canonical_team_id
 from app.models.platt_calibration import PlattCalibrator
+from app.services.cfb_game_metadata import _school_key
 
 MODEL_PATH=PROJECT_ROOT/"data/processed/fcs_baseline_model.joblib"
 MANIFEST_PATH=PROJECT_ROOT/"data/processed/active_fcs_model.json"
@@ -82,9 +83,14 @@ def live_game_features(game:dict[str,Any],game_date:str)->pd.Series:
     """Build one pregame row from the immutable FCS history; never uses FBS state."""
     history=pd.read_parquet(HISTORY_PATH)
     known=set(history.home_team_id.astype(str))|set(history.away_team_id.astype(str))
+    alias_ids={}
+    for side in ("home","away"):
+        for name,team_id in zip(history[f"{side}_team"].astype(str),history[f"{side}_team_id"].astype(str)):
+            alias_ids.setdefault(_school_key(name),set()).add(team_id)
     def owned(side:str)->str:
         name=str(game.get(f"{side}_team_model_name")or game.get(f"{side}_team")or"");source=canonical_team_id(name,game.get(f"{side}_team_id"));fallback=canonical_team_id(name)
         candidates=[value for value in (source,fallback)if value in known]
+        candidates.extend(alias_ids.get(_school_key(name),set()))
         if len(set(candidates))!=1:raise ValueError("ambiguous_or_unknown_fcs_team_id")
         return candidates[0]
     home,away=owned("home"),owned("away")
