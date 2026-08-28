@@ -25,6 +25,13 @@ def test_stable_ids_alias_and_neutral_leakage_safe_features():
     assert frame.iloc[1].elo_diff>0
     assert frame.iloc[1].srs_diff>0
     assert frame.iloc[1].rank_missing==1
+    assert "neutral_site_missing" in FEATURE_COLUMNS
+
+def test_same_day_results_do_not_leak_between_rows():
+    sample=games()
+    sample.loc[1,"date"]=sample.loc[0,"date"]
+    frame=build_features(sample)
+    assert frame.iloc[0].elo_diff==frame.iloc[1].elo_diff==0
 
 def test_schema_and_cross_division_ownership():
     frame=build_features(games());validate_schema(frame)

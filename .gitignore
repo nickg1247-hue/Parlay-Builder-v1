@@ -19,6 +19,8 @@ venv/
 # Data — raw ingest scratch stays local; processed artifacts tracked for VPS deploy
 data/raw/*
 !data/raw/.gitkeep
+data/processed/fcs_ncaa_cache/
+data/processed/fcs_espn_cache/
 # Prop line cache is always rebuilt locally / on VPS — never ship stale lines via git.
 data/processed/props_repository/**
 !data/processed/props_repository/.gitkeep

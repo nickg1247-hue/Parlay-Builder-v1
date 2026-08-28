@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-08-28T03:08:13.358389+00:00",
+  "source": "NCAA scoreboard API (no key), ESPN neutral-site enrichment (no key)",
+  "seasons": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "schema": [
+    "game_id",
+    "source_game_id",
+    "date",
+    "season",
+    "week",
+    "home_team_id",
+    "away_team_id",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "home_win",
+    "neutral_site",
+    "neutral_site_missing",
+    "conference_game",
+    "home_conference",
+    "away_conference",
+    "home_rank",
+    "away_rank",
+    "cohort",
+    "source",
+    "provenance"
+  ],
+  "rows": 3500,
+  "season_counts": {
+    "2018": 497,
+    "2019": 502,
+    "2020": 2,
+    "2021": 427,
+    "2022": 479,
+    "2023": 490,
+    "2024": 528,
+    "2025": 575
+  },
+  "raw_listings": 32175,
+  "unique_source_games": 27039,
+  "exclusions": {
+    "cross_division": 2299,
+    "nonfinal_or_cancelled": 57,
+    "missing_score": 27,
+    "unverified_fcs_ownership": 357,
+    "tie": 5
+  },
+  "fetch_failures": [],
+  "identity_conflicts": [],
+  "neutral_site_enrichment": {
+    "matched": 1543,
+    "unknown": 1957,
+    "conflicts": 0,
+    "fetch_failures": []
+  },
+  "neutral_site_missing": 1957
+}

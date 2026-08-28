@@ -17,20 +17,45 @@ MANIFEST_PATH=PROJECT_ROOT/"data/processed/active_fcs_model.json"
 REPORT_PATH=PROJECT_ROOT/"data/processed/fcs_model_evaluation.json"
 MODEL_FAMILY="fcs_moneyline";MODEL_VERSION="fcs_v1_logistic_platt"
 
+def _metrics(y:pd.Series,p:np.ndarray)->dict[str,Any]:
+    from sklearn.metrics import accuracy_score,brier_score_loss,log_loss
+    y=np.asarray(y,dtype=int);p=np.clip(np.asarray(p,dtype=float),1e-6,1-1e-6);conf=np.maximum(p,1-p);pred=(p>=.5).astype(int)
+    bins=[];ece=0.0
+    for lo in np.arange(.5,1,.1):
+        mask=(conf>=lo)&(conf<(lo+.1) if lo<.9 else conf<=1)
+        if mask.any():
+            acc=float((pred[mask]==y[mask]).mean());avg=float(conf[mask].mean());ece+=float(mask.mean())*abs(acc-avg);bins.append({"range":f"{lo:.1f}-{min(lo+.1,1):.1f}","games":int(mask.sum()),"accuracy":acc,"confidence":avg})
+    hi=conf>=.9
+    return {"games":int(len(y)),"accuracy":float(accuracy_score(y,pred)),"brier":float(brier_score_loss(y,p)),"log_loss":float(log_loss(y,p,labels=[0,1])),"ece":float(ece),"mean_confidence":float(conf.mean()),"confidence_bins":bins,"ninety_plus_games":int(hi.sum()),"ninety_plus_accuracy":float((pred[hi]==y[hi]).mean()) if hi.any() else None}
+
+def _fit(train:pd.DataFrame,cal:pd.DataFrame)->tuple[Pipeline,PlattCalibrator]:
+    pipe=Pipeline([("imputer",SimpleImputer(strategy="median",add_indicator=True)),("scale",StandardScaler()),("model",LogisticRegression(max_iter=2000,random_state=42))]);pipe.fit(train[FEATURE_COLUMNS],train.home_win)
+    platt=PlattCalibrator().fit(pipe.predict_proba(cal[FEATURE_COLUMNS])[:,1],cal.home_win.to_numpy());return pipe,platt
+
+def _predict(pipe:Pipeline,platt:PlattCalibrator,frame:pd.DataFrame)->np.ndarray:return platt.transform(pipe.predict_proba(frame[FEATURE_COLUMNS])[:,1])
+
 def validate_schema(frame:pd.DataFrame)->None:
     missing=[c for c in FEATURE_COLUMNS if c not in frame]
     if missing: raise ValueError(f"FCS feature schema mismatch: {missing}")
 
 def train_separate(games:pd.DataFrame)->dict[str,Any]:
     if set(games.get("cohort",pd.Series(["fcs_vs_fcs"])).dropna().unique())!={"fcs_vs_fcs"}: raise ValueError("FCS trainer accepts FCS-vs-FCS rows only")
-    feat=build_features(games);validate_schema(feat);base=feat[feat.season<=2023];cal=feat[feat.season==2024];hold=feat[feat.season==2025]
-    if min(len(base),len(cal),len(hold))==0: raise ValueError("FCS requires <=2023 train, 2024 calibration, 2025 locked holdout")
-    pipe=Pipeline([("imputer",SimpleImputer(strategy="median",add_indicator=True)),("scale",StandardScaler()),("model",LogisticRegression(max_iter=2000,random_state=42))]);pipe.fit(base[FEATURE_COLUMNS],base.home_win)
-    platt=PlattCalibrator().fit(pipe.predict_proba(cal[FEATURE_COLUMNS])[:,1],cal.home_win.to_numpy());p=platt.transform(pipe.predict_proba(hold[FEATURE_COLUMNS])[:,1]);home=float(hold.home_win.mean())
-    from sklearn.metrics import accuracy_score,brier_score_loss,log_loss
-    metrics={"games":len(hold),"accuracy":float(accuracy_score(hold.home_win,p>=.5)),"brier":float(brier_score_loss(hold.home_win,p)),"log_loss":float(log_loss(hold.home_win,p)),"home_accuracy":home}
-    metrics["promoted"]=bool(metrics["log_loss"]<-(home*np.log(home)+(1-home)*np.log(1-home))-.01 and metrics["brier"]<home*(1-home)-.005)
-    artifact={"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"feature_columns":FEATURE_COLUMNS,"model":pipe,"calibrator":platt,"metrics":metrics};joblib.dump(artifact,MODEL_PATH);REPORT_PATH.write_text(json.dumps(metrics,indent=2),encoding="utf-8");MANIFEST_PATH.write_text(json.dumps({"enabled":metrics["promoted"],"path":str(MODEL_PATH.relative_to(PROJECT_ROOT)),"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"metrics":metrics},indent=2),encoding="utf-8");return metrics
+    total_rows=len(games);known=games[games.get("neutral_site_missing",pd.Series(0,index=games.index)).fillna(1).astype(int)==0].copy()
+    feat=build_features(known);validate_schema(feat)
+    if any((feat.season==s).sum()==0 for s in (2023,2024,2025)): raise ValueError("FCS requires <=2022 train, 2023 calibration, 2024 OOS and 2025 locked holdout")
+    reports={};final_pipe=None;final_platt=None
+    for season,train_end,cal_year in ((2024,2022,2023),(2025,2023,2024)):
+        train=feat[feat.season<=train_end];cal=feat[feat.season==cal_year];test=feat[feat.season==season]
+        pipe,platt=_fit(train,cal);p=_predict(pipe,platt,test);model=_metrics(test.home_win,p);home=float(train.home_win.mean());baseline=np.full(len(test),home);base_metrics=_metrics(test.home_win,baseline)
+        model.update({"home_win_rate":float(test.home_win.mean()),"home_baseline":base_metrics,"brier_gain":base_metrics["brier"]-model["brier"],"log_loss_gain":base_metrics["log_loss"]-model["log_loss"]})
+        reports[str(season)]=model
+        if season==2025:final_pipe,final_platt=pipe,platt
+    neutral_known_rate=len(known)/total_rows
+    score_gate=all(reports[str(s)]["brier_gain"]>=.005 and reports[str(s)]["log_loss_gain"]>=.01 and reports[str(s)]["ece"]<=.10 and (reports[str(s)]["ninety_plus_games"]==0 or reports[str(s)]["ninety_plus_accuracy"]>=.75) for s in (2024,2025))
+    data_gate=all(reports[str(s)]["games"]>=100 for s in (2024,2025))
+    promoted=score_gate and data_gate
+    metrics={"protocol":"unknown neutral-site rows excluded; expanding window: <=2022/2023->2024; <=2023/2024 calibration->locked 2025","rows_found":total_rows,"rows_evaluable":len(known),"rows_excluded_unknown_neutral":total_rows-len(known),"seasons":reports,"promoted":bool(promoted),"score_gate_passed":bool(score_gate),"data_quality_gate_passed":bool(data_gate),"neutral_site_known_rate":neutral_known_rate,"promotion_gates":{"each_season_brier_gain":.005,"each_season_log_loss_gain":.01,"each_season_max_ece":.10,"minimum_90_plus_accuracy_when_present":.75,"minimum_evaluable_games_each_holdout":100}}
+    artifact={"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"feature_columns":FEATURE_COLUMNS,"model":final_pipe,"calibrator":final_platt,"metrics":metrics};joblib.dump(artifact,MODEL_PATH);REPORT_PATH.write_text(json.dumps(metrics,indent=2),encoding="utf-8");MANIFEST_PATH.write_text(json.dumps({"enabled":metrics["promoted"],"path":str(MODEL_PATH.relative_to(PROJECT_ROOT)),"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"metrics":metrics},indent=2),encoding="utf-8");return metrics
 
 def load_artifact()->dict[str,Any]:
     manifest=json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))

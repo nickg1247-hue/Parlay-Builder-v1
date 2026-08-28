@@ -1,22 +1,139 @@
 {
-  "status": "disabled_pending_fcs_native_training_data",
-  "production_enabled": false,
-  "source": "NCAA weekly football scoreboards",
-  "evaluation_seasons": [2024, 2025],
-  "fcs_vs_fcs_games": 1453,
-  "current_fbs_model_exact_behavior": {
-    "accuracy": 0.5685,
-    "brier": 0.2520,
-    "log_loss": 0.7012,
-    "ece": 0.0848,
-    "home_baseline_accuracy": 0.6056
+  "protocol": "unknown neutral-site rows excluded; expanding window: <=2022/2023->2024; <=2023/2024 calibration->locked 2025",
+  "rows_found": 3500,
+  "rows_evaluable": 1543,
+  "rows_excluded_unknown_neutral": 1957,
+  "seasons": {
+    "2024": {
+      "games": 234,
+      "accuracy": 0.6666666666666666,
+      "brier": 0.2068512829716534,
+      "log_loss": 0.6006485931032505,
+      "ece": 0.056613534506399735,
+      "mean_confidence": 0.6499478115700209,
+      "confidence_bins": [
+        {
+          "range": "0.5-0.6",
+          "games": 82,
+          "accuracy": 0.5365853658536586,
+          "confidence": 0.5441177092309024
+        },
+        {
+          "range": "0.6-0.7",
+          "games": 71,
+          "accuracy": 0.5915492957746479,
+          "confidence": 0.6485919061127775
+        },
+        {
+          "range": "0.7-0.8",
+          "games": 70,
+          "accuracy": 0.8714285714285714,
+          "confidence": 0.7494096531920235
+        },
+        {
+          "range": "0.8-0.9",
+          "games": 11,
+          "accuracy": 0.8181818181818182,
+          "confidence": 0.8146758811820017
+        }
+      ],
+      "ninety_plus_games": 0,
+      "ninety_plus_accuracy": null,
+      "home_win_rate": 0.5982905982905983,
+      "home_baseline": {
+        "games": 234,
+        "accuracy": 0.5982905982905983,
+        "brier": 0.24277126381877015,
+        "log_loss": 0.6786509378770788,
+        "ece": 0.049318409656982864,
+        "mean_confidence": 0.5489721886336154,
+        "confidence_bins": [
+          {
+            "range": "0.5-0.6",
+            "games": 234,
+            "accuracy": 0.5982905982905983,
+            "confidence": 0.5489721886336154
+          }
+        ],
+        "ninety_plus_games": 0,
+        "ninety_plus_accuracy": null
+      },
+      "brier_gain": 0.035919980847116756,
+      "log_loss_gain": 0.07800234477382828
+    },
+    "2025": {
+      "games": 252,
+      "accuracy": 0.6626984126984127,
+      "brier": 0.20754641272056387,
+      "log_loss": 0.6046485940189139,
+      "ece": 0.03089490784656795,
+      "mean_confidence": 0.6835276949715082,
+      "confidence_bins": [
+        {
+          "range": "0.5-0.6",
+          "games": 73,
+          "accuracy": 0.5205479452054794,
+          "confidence": 0.5499180233980387
+        },
+        {
+          "range": "0.6-0.7",
+          "games": 69,
+          "accuracy": 0.6086956521739131,
+          "confidence": 0.6467637016078038
+        },
+        {
+          "range": "0.7-0.8",
+          "games": 60,
+          "accuracy": 0.7666666666666667,
+          "confidence": 0.7455288529623746
+        },
+        {
+          "range": "0.8-0.9",
+          "games": 47,
+          "accuracy": 0.851063829787234,
+          "confidence": 0.8514004685691937
+        },
+        {
+          "range": "0.9-1.0",
+          "games": 3,
+          "accuracy": 0.3333333333333333,
+          "confidence": 0.9102382711100659
+        }
+      ],
+      "ninety_plus_games": 3,
+      "ninety_plus_accuracy": 0.3333333333333333,
+      "home_win_rate": 0.5436507936507936,
+      "home_baseline": {
+        "games": 252,
+        "accuracy": 0.5436507936507936,
+        "brier": 0.24809472493001414,
+        "log_loss": 0.6893317767231898,
+        "ece": 0.00034163775885620584,
+        "mean_confidence": 0.5439924314096498,
+        "confidence_bins": [
+          {
+            "range": "0.5-0.6",
+            "games": 252,
+            "accuracy": 0.5436507936507936,
+            "confidence": 0.5439924314096498
+          }
+        ],
+        "ninety_plus_games": 0,
+        "ninety_plus_accuracy": null
+      },
+      "brier_gain": 0.040548312209450266,
+      "log_loss_gain": 0.08468318270427588
+    }
   },
-  "expanded_history_proxy": {
-    "accuracy": 0.7385,
-    "brier": 0.1758,
-    "log_loss": 0.5292,
-    "ece": 0.0449,
-    "note": "Same FBS artifact with authoritative FCS rolling history; not the new FCS model and never production eligible."
-  },
-  "promotion_gate": "Separate FCS model must beat home baseline Brier by 0.005 and log loss by 0.01, remain stable in 2024/2025, and pass leakage/schema/routing tests."
+  "promoted": false,
+  "score_gate_passed": false,
+  "data_quality_gate_passed": true,
+  "neutral_site_known_rate": 0.44085714285714284,
+  "promotion_gates": {
+    "each_season_brier_gain": 0.005,
+    "each_season_log_loss_gain": 0.01,
+    "each_season_max_ece": 0.1,
+    "minimum_90_plus_accuracy_when_present": 0.75,
+    "minimum_evaluable_games_each_holdout": 100
+  }
 }
