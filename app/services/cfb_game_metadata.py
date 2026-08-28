@@ -213,6 +213,10 @@ def merge_game_records(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "home_record",
             "away_record",
             "network",
+            "neutral_site",
+            "neutral_site_known",
+            "neutral_site_missing",
+            "neutral_site_source",
         ):
             if current.get(field) in (None, "") and incoming.get(field) not in (None, ""):
                 current[field] = incoming[field]

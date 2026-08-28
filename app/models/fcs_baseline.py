@@ -1,6 +1,6 @@
 """Separate, disabled-by-default FCS-vs-FCS model family."""
 from __future__ import annotations
-import json
+import hashlib,json
 from pathlib import Path
 from typing import Any
 import joblib,numpy as np,pandas as pd
@@ -9,13 +9,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from app.config import PROJECT_ROOT
-from app.features.fcs_pregame import FEATURE_COLUMNS,build_features
+from app.features.fcs_pregame import FEATURE_COLUMNS,build_features,canonical_team_id
 from app.models.platt_calibration import PlattCalibrator
 
 MODEL_PATH=PROJECT_ROOT/"data/processed/fcs_baseline_model.joblib"
 MANIFEST_PATH=PROJECT_ROOT/"data/processed/active_fcs_model.json"
 REPORT_PATH=PROJECT_ROOT/"data/processed/fcs_model_evaluation.json"
+HISTORY_PATH=PROJECT_ROOT/"data/processed/fcs_games.parquet"
 MODEL_FAMILY="fcs_moneyline";MODEL_VERSION="fcs_v1_logistic_platt"
+DISPLAY_CONFIDENCE_CAP=.89
 
 def _metrics(y:pd.Series,p:np.ndarray)->dict[str,Any]:
     from sklearn.metrics import accuracy_score,brier_score_loss,log_loss
@@ -55,13 +57,17 @@ def train_separate(games:pd.DataFrame)->dict[str,Any]:
     data_gate=all(reports[str(s)]["games"]>=100 for s in (2024,2025))
     promoted=score_gate and data_gate
     metrics={"protocol":"unknown neutral-site rows excluded; expanding window: <=2022/2023->2024; <=2023/2024 calibration->locked 2025","rows_found":total_rows,"rows_evaluable":len(known),"rows_excluded_unknown_neutral":total_rows-len(known),"seasons":reports,"promoted":bool(promoted),"score_gate_passed":bool(score_gate),"data_quality_gate_passed":bool(data_gate),"neutral_site_known_rate":neutral_known_rate,"promotion_gates":{"each_season_brier_gain":.005,"each_season_log_loss_gain":.01,"each_season_max_ece":.10,"minimum_90_plus_accuracy_when_present":.75,"minimum_evaluable_games_each_holdout":100}}
-    artifact={"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"feature_columns":FEATURE_COLUMNS,"model":final_pipe,"calibrator":final_platt,"metrics":metrics};joblib.dump(artifact,MODEL_PATH);REPORT_PATH.write_text(json.dumps(metrics,indent=2),encoding="utf-8");MANIFEST_PATH.write_text(json.dumps({"enabled":metrics["promoted"],"path":str(MODEL_PATH.relative_to(PROJECT_ROOT)),"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"metrics":metrics},indent=2),encoding="utf-8");return metrics
+    artifact={"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"feature_columns":FEATURE_COLUMNS,"model":final_pipe,"calibrator":final_platt,"metrics":metrics};joblib.dump(artifact,MODEL_PATH);REPORT_PATH.write_text(json.dumps(metrics,indent=2),encoding="utf-8");MANIFEST_PATH.write_text(json.dumps({"enabled":metrics["promoted"],"path":MODEL_PATH.relative_to(PROJECT_ROOT).as_posix(),"model_family":MODEL_FAMILY,"model_version":MODEL_VERSION,"metrics":metrics},indent=2),encoding="utf-8");return metrics
 
 def load_artifact()->dict[str,Any]:
     manifest=json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     if not manifest.get("enabled"): raise RuntimeError("FCS model has not passed promotion gates")
-    artifact=joblib.load(PROJECT_ROOT/manifest["path"])
+    path=PROJECT_ROOT/str(manifest["path"]).replace("\\","/")
+    expected=manifest.get("artifact_sha256")
+    if expected and hashlib.sha256(path.read_bytes()).hexdigest().lower()!=str(expected).lower():raise ValueError("FCS artifact checksum mismatch")
+    artifact=joblib.load(path)
     if artifact.get("model_family")!=MODEL_FAMILY: raise ValueError("FCS artifact family mismatch")
+    if artifact.get("model_version")!=manifest.get("model_version"):raise ValueError("FCS artifact version mismatch")
     if artifact.get("feature_columns")!=FEATURE_COLUMNS: raise ValueError("FCS artifact schema mismatch")
     return artifact
 
@@ -72,6 +78,33 @@ def predict_fcs(features:pd.DataFrame)->np.ndarray:
     if np.any((probs<=0)|(probs>=1)): raise ValueError("Invalid FCS calibrated probability")
     return probs
 
+def live_game_features(game:dict[str,Any],game_date:str)->pd.Series:
+    """Build one pregame row from the immutable FCS history; never uses FBS state."""
+    history=pd.read_parquet(HISTORY_PATH)
+    known=set(history.home_team_id.astype(str))|set(history.away_team_id.astype(str))
+    def owned(side:str)->str:
+        name=str(game.get(f"{side}_team_model_name")or game.get(f"{side}_team")or"");source=canonical_team_id(name,game.get(f"{side}_team_id"));fallback=canonical_team_id(name)
+        candidates=[value for value in (source,fallback)if value in known]
+        if len(set(candidates))!=1:raise ValueError("ambiguous_or_unknown_fcs_team_id")
+        return candidates[0]
+    home,away=owned("home"),owned("away")
+    if home not in known or away not in known or home==away:raise ValueError("ambiguous_or_unknown_fcs_team_id")
+    upcoming={"game_id":str(game.get("game_id")or"live"),"date":game_date,"season":int(str(game_date)[:4]),"home_team_id":home,"away_team_id":away,"home_score":0,"away_score":0,"home_win":0,"neutral_site":int(bool(game["neutral_site"])),"neutral_site_missing":0,"conference_game":int(bool(game.get("conference_game"))),"home_rank":game.get("home_rank"),"away_rank":game.get("away_rank")}
+    frame=build_features(pd.concat([history,pd.DataFrame([upcoming])],ignore_index=True))
+    row=frame[frame.game_id.astype(str)==upcoming["game_id"]]
+    if len(row)!=1:raise ValueError("fcs_feature_ownership_failure")
+    validate_schema(row)
+    return row.iloc[0]
+
+def capped_display_probability(raw_home:float)->tuple[float,bool]:
+    favorite=max(raw_home,1-raw_home)
+    if favorite<=DISPLAY_CONFIDENCE_CAP:return raw_home,False
+    return (DISPLAY_CONFIDENCE_CAP if raw_home>=.5 else 1-DISPLAY_CONFIDENCE_CAP),True
+
 def diagnostic(artifact:dict[str,Any],row:pd.Series)->list[dict[str,Any]]:
-    validate_schema(pd.DataFrame([row]));pipe=artifact["model"];imputed=pipe.named_steps["imputer"].transform(pd.DataFrame([row])[FEATURE_COLUMNS]);scaled=pipe.named_steps["scale"].transform(imputed);coef=pipe.named_steps["model"].coef_[0]
-    return [{"feature":name,"raw":None if pd.isna(row[name]) else float(row[name]),"difference":None if pd.isna(row[name]) else float(row[name]),"normalized":float(scaled[0,i]),"sign":int(np.sign(coef[i])),"weight":float(coef[i]),"contribution":float(scaled[0,i]*coef[i]),"missing":bool(pd.isna(row[name])),"default":None,"source":"fcs_pregame","freshness":"pregame"} for i,name in enumerate(FEATURE_COLUMNS)]
+    validate_schema(pd.DataFrame([row]));pipe=artifact["model"];source=pd.DataFrame([row])[FEATURE_COLUMNS];imputer=pipe.named_steps["imputer"];imputed=imputer.transform(source);scaled=pipe.named_steps["scale"].transform(imputed);coef=pipe.named_steps["model"].coef_[0];names=list(imputer.get_feature_names_out(FEATURE_COLUMNS));lookup={name:i for i,name in enumerate(names)}
+    out=[]
+    for name in FEATURE_COLUMNS:
+        i=lookup.get(name);missing=bool(pd.isna(row[name]));weight=float(coef[i])if i is not None else 0.0;normalized=float(scaled[0,i])if i is not None else None
+        out.append({"feature":name,"raw":None if missing else float(row[name]),"difference":None if missing else float(row[name]),"normalized":normalized,"sign":int(np.sign(weight)),"weight":weight,"contribution":None if normalized is None else normalized*weight,"missing":missing,"default":"training_median"if missing else None,"source":"fcs_pregame_history","freshness":"pregame"})
+    return out

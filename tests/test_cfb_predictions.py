@@ -132,3 +132,27 @@ def test_model_team_name_prefers_espn_location():
     canonical = ("North Dakota State",)
     game = {"home_team": "NDSU Bison", "home_team_model_name": "North Dakota State"}
     assert _model_team_name(game, "home", canonical) == "North Dakota State"
+
+def test_fcs_beta_cap_winner_and_no_high_confidence(monkeypatch):
+    import pandas as pd
+    from app.features.fcs_pregame import FEATURE_COLUMNS
+    from app.services.cfb_slate_predictions import _fcs_beta_predictions
+    game={"game_id":"fcs-1","home_team":"Montana","away_team":"Weber State","division":"fcs","divisions":["fcs"],"neutral_site":0,"neutral_site_known":True,"neutral_site_missing":False}
+    row=pd.Series({name:0.0 for name in FEATURE_COLUMNS})
+    monkeypatch.setattr("app.services.cfb_slate_predictions.load_fcs_artifact",lambda:{"model_version":"fcs_v1_logistic_platt"})
+    monkeypatch.setattr("app.services.cfb_slate_predictions.live_game_features",lambda *a:row)
+    monkeypatch.setattr("app.services.cfb_slate_predictions.predict_fcs",lambda *a:[.96])
+    monkeypatch.setattr("app.services.cfb_slate_predictions.fcs_diagnostic",lambda *a:[])
+    pred=_fcs_beta_predictions({"games":[game]},"2026-08-29")["fcs-1"]
+    assert pred["model_pick"]=="Montana"
+    assert pred["raw_model_prob_home"]==.96 and pred["model_prob_home"]==.89
+    assert pred["display_probability_capped"] is True
+    assert pred["model_category_label"]==pred["model_confidence"]=="FCS Beta"
+    assert "BAM" not in str(pred) and "High" not in str(pred)
+
+def test_fcs_beta_fails_closed_for_mixed_or_unknown_site(monkeypatch):
+    from app.services.cfb_slate_predictions import _fcs_beta_predictions
+    monkeypatch.setattr("app.services.cfb_slate_predictions.load_fcs_artifact",lambda:{"model_version":"fcs_v1_logistic_platt"})
+    mixed={"game_id":"mixed","division":"fbs","divisions":["fbs","fcs"],"neutral_site":0,"neutral_site_known":True}
+    unknown={"game_id":"unknown","division":"fcs","divisions":["fcs"],"neutral_site_missing":True}
+    assert _fcs_beta_predictions({"games":[mixed,unknown]},"2026-08-29")=={}

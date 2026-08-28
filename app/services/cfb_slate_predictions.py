@@ -11,6 +11,7 @@ from app.models.cfb_baseline import load_games, load_model_artifact, predict_hom
 from app.models.cfb_confidence import category_for_proba, category_label
 from app.models.cfb_margin import PROXY_AWAY_SPREAD, PROXY_HOME_SPREAD, predict_spread_covers
 from app.models.cfb_totals import enrich_totals_columns
+from app.models.fcs_baseline import capped_display_probability,diagnostic as fcs_diagnostic,live_game_features,load_artifact as load_fcs_artifact,predict_fcs
 from app.models.constants import DEFAULT_MIN_EDGE
 from app.odds.cfb_betting_lines import resolve_lines_for_slate
 from app.odds.cfb_team_aliases import normalize_team_name
@@ -19,6 +20,25 @@ from app.odds.team_aliases import is_valid_american_odds
 from app.services.cfb_odds_attach import attach_cfb_odds
 from app.services.daily_board import confidence_label
 from app.services.schedule_cfb import get_cfb_schedule
+
+def _pure_fcs(game:dict[str,Any])->bool:
+    divisions={str(x).lower() for x in (game.get("divisions")or[game.get("division")]) if x}
+    return divisions=={"fcs"}
+
+def _fcs_beta_predictions(schedule:dict[str,Any],slate_date:str)->dict[str,dict[str,Any]]:
+    """Route pure FCS games only. Any eligibility failure is fail-closed."""
+    try:artifact=load_fcs_artifact()
+    except (FileNotFoundError,RuntimeError,ValueError,KeyError):return {}
+    out={}
+    for game in schedule.get("games")or[]:
+        if not _pure_fcs(game):continue
+        if "neutral_site"not in game or bool(game.get("neutral_site_missing")) or game.get("neutral_site_known") is False:continue
+        try:
+            features=live_game_features(game,slate_date);raw=float(predict_fcs(pd.DataFrame([features]))[0])
+        except (FileNotFoundError,RuntimeError,ValueError,KeyError):continue
+        shown,capped=capped_display_probability(raw);pick_side="home"if raw>=.5 else"away";home=str(game.get("home_team")or"Home");away=str(game.get("away_team")or"Away");gid=str(game.get("game_id")or"")
+        out[gid]={"game_id":gid,"home_team":home,"away_team":away,"model_prob_home":shown,"model_prob_away":1-shown,"raw_model_prob_home":raw,"raw_model_prob_away":1-raw,"raw_calibrated_probability":max(raw,1-raw),"display_probability":max(shown,1-shown),"display_probability_capped":capped,"display_probability_cap":.89,"display_probability_cap_reason":"FCS Beta hides 90%+ presentation until prospective reliability is established"if capped else None,"model_belief_home_pct":round(shown*100),"model_belief_away_pct":100-round(shown*100),"model_belief_pick_pct":round(max(shown,1-shown)*100),"model_pick":home if pick_side=="home"else away,"model_pick_side":pick_side,"model_family":"fcs_moneyline","model_version":artifact.get("model_version"),"active_model_version":artifact.get("model_version"),"model_category":"fcs_beta","model_category_label":"FCS Beta","model_confidence":"FCS Beta","ml_confidence":"FCS Beta","experimental":True,"prediction_available":True,"sample_context":{"historical_rows":3500,"evaluable_rows":1543,"locked_2025_games":252,"locked_2025_accuracy":.6627},"diagnostics":{"raw_calibrated_probability":raw,"displayed_home_probability":shown,"cap_policy":{"maximum_display_confidence":.89,"applied":capped},"features":fcs_diagnostic(artifact,features)}}
+    return out
 
 
 def cfb_season_end_year(game_date: date) -> int:
@@ -137,6 +157,8 @@ def _resolve_home_spread(
 
 def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
     schedule = get_cfb_schedule(game_date, auto_resolve=game_date is None)
+    slate_date = schedule.get("resolved_date") or schedule.get("date")
+    fcs_out=_fcs_beta_predictions(schedule,str(slate_date)[:10])
     games = [
         game
         for game in schedule.get("games") or []
@@ -144,9 +166,8 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
         and game.get("model_family") in (None, "cfb_moneyline")
     ]
     if not games:
-        return {}
+        return fcs_out
 
-    slate_date = schedule.get("resolved_date") or schedule.get("date")
     slate_day = date.fromisoformat(str(slate_date)[:10])
     season_end = cfb_season_end_year(slate_day)
     history = load_games()
@@ -308,6 +329,7 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
             )
 
         out[gid] = payload
+    out.update(fcs_out)
     return out
 
 

@@ -40,6 +40,13 @@ def fetch_cfb_scores_day(game_date: date) -> list[dict[str, Any]]:
         data = response.json()
     return list(data.get("events") or [])
 
+def fetch_espn_all_scores_day(game_date:date)->list[dict[str,Any]]:
+    """Full ESPN college-football slate used only as a metadata enrichment source."""
+    params={"dates":_espn_date_param(game_date),"groups":"81"}
+    with httpx.Client(timeout=30.0)as client:
+        response=client.get(ESPN_CFB_SCOREBOARD,params=params);response.raise_for_status();data=response.json()
+    return list(data.get("events")or[])
+
 
 def _parse_score(value: Any) -> int | None:
     if value is None or value == "":
@@ -117,6 +124,8 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
         "home_record": _competitor_record(home),
         "away_record": _competitor_record(away),
         "neutral_site": int(bool(competition.get("neutralSite"))),
+        "neutral_site_known": "neutralSite" in competition,
+        "neutral_site_source": "espn",
         "week": int((event.get("week") or {}).get("number") or 0),
         "start_time_utc": event.get("date") or competition.get("date"),
         "status": _cfb_status(status),
@@ -261,6 +270,8 @@ def ncaa_game_record(raw: dict[str, Any], division: str) -> dict[str, Any]:
         "divisions": [division],
         "source": "ncaa",
         "sources": ["ncaa"],
+        "neutral_site_missing": True,
+        "neutral_site_known": False,
     }
     return annotate_game_metadata(record)
 

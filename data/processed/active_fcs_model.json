@@ -1,6 +1,14 @@
 {
-  "enabled": false,
-  "path": "data\\processed\\fcs_baseline_model.joblib",
+  "enabled": true,
+  "deployment_mode": "experimental_directional_beta",
+  "display_probability_cap": 0.89,
+  "display_probability_cap_reason": "Locked 2025 90%+ cohort was 1-3; raw probability retained in diagnostics",
+  "eligibility": "pure FCS-vs-FCS, known site status, owned team IDs, compatible artifact and feature schema",
+  "path": "data/processed/fcs_baseline_model.joblib",
+  "artifact_sha256": "fc3aff0ba9df5d727b42a1a873a35d83d8a7018a3a8ad7a8154b1979638130db",
+  "trained_through_season": 2023,
+  "calibrated_on_season": 2024,
+  "locked_holdout_season": 2025,
   "model_family": "fcs_moneyline",
   "model_version": "fcs_v1_logistic_platt",
   "metrics": {

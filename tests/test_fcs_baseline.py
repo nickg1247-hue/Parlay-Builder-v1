@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from app.features.fcs_pregame import FEATURE_COLUMNS,build_features,canonical_team_id
-from app.models.fcs_baseline import MODEL_FAMILY,MODEL_PATH,MANIFEST_PATH,validate_schema
+from app.models.fcs_baseline import MODEL_FAMILY,MODEL_PATH,MANIFEST_PATH,capped_display_probability,validate_schema
 from app.services.cfb_game_metadata import is_public_fbs_fcs_game
 
 def games():
@@ -39,3 +39,8 @@ def test_schema_and_cross_division_ownership():
     assert is_public_fbs_fcs_game({"divisions":["fcs"],"home_conference":"NEC","away_conference":"MVFC"})
     assert not is_public_fbs_fcs_game({"divisions":["fcs"],"home_conference":"SoCon","away_conference":"SAC"})
     assert not is_public_fbs_fcs_game({"divisions":["d2"],"home_conference":"SAC","away_conference":"SAC"})
+
+def test_fcs_display_cap_preserves_probability_orientation():
+    assert capped_display_probability(.96)==(.89,True)
+    assert capped_display_probability(.04)==pytest.approx((.11,True))
+    assert capped_display_probability(.72)==(.72,False)

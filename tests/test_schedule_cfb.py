@@ -54,6 +54,10 @@ ESPN_EVENT = {
 def clear_cfb_cache(tmp_path, monkeypatch):
     sc.clear_scores_cache()
     monkeypatch.setattr(
+        "app.services.schedule_cfb.fetch_espn_all_scores_day",
+        lambda *args, **kwargs: [],
+    )
+    monkeypatch.setattr(
         "app.services.schedule_cfb.fetch_lower_division_scores_day",
         lambda *args, **kwargs: ([], []),
     )
@@ -168,6 +172,9 @@ def test_cfb_slate_page():
     for control in ("slate-team-filter", "slate-division-filter", "slate-conference-filter", "slate-ranking-filter"):
         assert control in resp.text
     assert "slate-hbcu-filter" not in resp.text
+    board=client.get("/cfb/board")
+    assert "FCS Beta" in board.text
+    assert "never receive BAM or high-confidence labels" in board.text
 def test_ncaa_lower_division_parser_preserves_metadata():
     raw = {
         "game": {
@@ -197,6 +204,15 @@ def test_ncaa_lower_division_parser_preserves_metadata():
     assert game["start_time_utc"] == "2026-08-29T17:30:00Z"
     assert game["model_eligible"] is False
     assert game["model_family"] == "fcs_moneyline"
+    assert game["neutral_site_known"] is False
+    assert game["neutral_site_missing"] is True
+
+def test_espn_game_marks_explicit_neutral_site_as_known():
+    event=dict(ESPN_EVENT);event["competitions"]=[dict(ESPN_EVENT["competitions"][0])];event["competitions"][0]["neutralSite"]=True
+    game=sc.live_game_record(event)
+    assert game["neutral_site"]==1
+    assert game["neutral_site_known"] is True
+    assert game["neutral_site_source"]=="espn"
 
 
 def test_duplicate_fbs_fcs_merge_retains_divisions_sources_and_model_eligibility():

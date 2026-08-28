@@ -14,11 +14,12 @@ import httpx
 from app.config import PROJECT_ROOT
 from app.ingest.cfb_season_schedule import load_season_schedule
 from app.odds.cfb_team_aliases import normalize_team_name
-from app.services.cfb_game_metadata import annotate_game_metadata, is_public_fbs_fcs_game, merge_game_records
+from app.services.cfb_game_metadata import annotate_game_metadata, game_identity, is_public_fbs_fcs_game, merge_game_records
 from app.services.cfb_historical_slate import games_from_ingest, ingest_has_games
 from app.services.cfb_team_logos import enrich_games_logos
 from app.services.scores_cfb import (
     fetch_cfb_scores_day,
+    fetch_espn_all_scores_day,
     fetch_lower_division_scores_day,
     live_game_record,
 )
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 SCHEDULE_CACHE_TTL_SECONDS = 6 * 3600
-SCHEDULE_SCHEMA_VERSION = 4
+SCHEDULE_SCHEMA_VERSION = 5
 SLATE_LOOKAHEAD_DAYS = 7
 
 
@@ -281,6 +282,21 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
         season=season,
         week=week,
     )
+    try:
+        espn_all=[live_game_record(event)for event in fetch_espn_all_scores_day(game_date)]
+        espn_by_identity={game_identity(game):game for game in espn_all}
+        for lower in lower_games:
+            matched=espn_by_identity.get(game_identity(lower))
+            if matched and matched.get("neutral_site_known"):
+                lower["neutral_site"]=matched["neutral_site"]
+                lower["neutral_site_known"]=True
+                lower["neutral_site_missing"]=False
+                lower["neutral_site_source"]="espn"
+                for field in ("home_team_id","away_team_id","home_team_model_name","away_team_model_name"):
+                    if matched.get(field)not in(None,""):lower[field]=matched[field]
+    except (httpx.HTTPError,ValueError)as exc:
+        logger.warning("ESPN all-CFB metadata unavailable for %s: %s",game_date,exc)
+        coverage_warnings.append("ESPN neutral-site enrichment unavailable.")
     coverage_warnings.extend(lower_warnings)
     games = enrich_games_logos(merge_game_records(fbs_games + lower_games))
     divisions = sorted(
@@ -288,6 +304,7 @@ def _load_schedule_payload(game_date: date, *, force_live: bool = False) -> dict
     )
     source_counts = {
         "espn_fbs": len(fbs_games),
+        "espn_metadata": len(espn_all) if 'espn_all' in locals() else 0,
         "ncaa_fbs": sum(1 for game in lower_games if game.get("division") == "fbs"),
         "ncaa_fcs": sum(1 for game in lower_games if game.get("division") == "fcs"),
     }
