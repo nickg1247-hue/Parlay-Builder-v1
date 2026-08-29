@@ -152,6 +152,8 @@ def log_offered_props(
             "line_insight": prop.get("line_insight"),
             "bookmaker": bookmaker,
             "source": source,
+            "sport": prop.get("sport") or "mlb",
+            "team": prop.get("team"),
             "actual_stat": None,
             "hit": None,
             "result_status": "pending",
@@ -196,8 +198,18 @@ def backfill_prop_results(game_date: date | None = None) -> dict[str, Any]:
         side = str(row.get("recommended_side") or "")
         line = float(row.get("line") or 0)
         season = board_day.year
+        sport = str(row.get("sport") or "").lower()
+        if sport == "nfl" or str(market_type).startswith("player_"):
+            from app.services.nfl_player_stats import nfl_stat_on_date
 
-        actual = player_stat_on_date(player, market_type, season, board_date_str)
+            actual = nfl_stat_on_date(
+                player,
+                market_type,
+                board_day,
+                team_abbr=row.get("team"),
+            )
+        else:
+            actual = player_stat_on_date(player, market_type, season, board_date_str)
         if actual is None:
             if board_day < today:
                 new_row = {
@@ -242,7 +254,7 @@ def _bucket_stats() -> dict[str, dict[str, Any]]:
     }
 
 
-def summarize_prop_tracker(days: int = 30) -> dict[str, Any]:
+def summarize_prop_tracker(days: int = 30, sport: str | None = None) -> dict[str, Any]:
     """Aggregate offered prop accuracy by line strength."""
     cutoff = datetime.now(timezone.utc).date()
     rows = list(_latest_by_pick_id(_read_all_rows()).values())
@@ -253,6 +265,13 @@ def summarize_prop_tracker(days: int = 30) -> dict[str, Any]:
             for r in rows
             if r.get("board_date")
             and date.fromisoformat(r["board_date"]) >= min_date
+        ]
+    if sport:
+        want = str(sport).strip().lower()
+        rows = [
+            r
+            for r in rows
+            if str(r.get("sport") or "mlb").lower() == want
         ]
 
     buckets = _bucket_stats()
@@ -294,6 +313,7 @@ def summarize_prop_tracker(days: int = 30) -> dict[str, Any]:
 
     return {
         "days": days,
+        "sport": sport,
         "props_logged": len(rows),
         "props_settled": total_settled,
         "overall_hit_rate": overall_hit_rate,

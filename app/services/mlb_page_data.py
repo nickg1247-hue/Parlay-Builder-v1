@@ -36,7 +36,7 @@ def _read_build_id() -> str:
 
 
 def performance_summary_payload(days: int = 30) -> dict[str, Any]:
-    summary = summarize_prop_tracker(days=days)
+    summary = summarize_prop_tracker(days=days, sport="mlb")
     clv = summarize_mlb_clv(days=days)
     return {
         "prop_tracker": summary,
@@ -65,7 +65,7 @@ async def build_home_page_data(game_date: date | None = None) -> dict[str, Any]:
         asyncio.to_thread(local_mlb_scores, game_date),
         asyncio.to_thread(get_today_snapshot),
         asyncio.to_thread(get_refresh_status),
-        asyncio.to_thread(summarize_prop_tracker, 30),
+        asyncio.to_thread(summarize_prop_tracker, 30, "mlb"),
         asyncio.to_thread(performance_summary_payload, 30),
     )
 
@@ -218,7 +218,7 @@ async def build_mlb_props_page_data(
         asyncio.to_thread(search_daily_props, game_date, **search_kwargs),
         asyncio.to_thread(list_prop_market_types),
         asyncio.to_thread(list_prop_bookmakers),
-        asyncio.to_thread(summarize_prop_tracker, 30),
+        asyncio.to_thread(summarize_prop_tracker, 30, "mlb"),
         asyncio.to_thread(get_refresh_status),
         asyncio.to_thread(local_mlb_scores, game_date),
     )

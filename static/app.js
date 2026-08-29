@@ -977,6 +977,9 @@ function modelLeanChips(boardRow, options = {}) {
   let modelConf = isFcsBeta
     ? (boardRow.public_tier_label || boardRow.tier_status_label || "FCS Beta")
     : (boardRow.model_confidence || boardRow.ml_confidence || confidenceFromModelProb(boardRow.model_prob_home));
+  if (isFcsBeta && /bam|\bhigh\b/i.test(String(modelConf))) {
+    modelConf = boardRow.public_tier_label || "FCS Beta";
+  }
   if (!modelTeam && boardRow.model_prob_home != null) {
     const home = Number(boardRow.model_prob_home) >= 0.5;
     modelTeam = home
@@ -1005,7 +1008,10 @@ function modelLeanChips(boardRow, options = {}) {
       pct != null
         ? `Our belief: ${modelTeam} ${pct}%${summerTag}`
         : `Our belief: ${modelTeam}${summerTag}`;
-    chips.push({ text: label, tier: modelConf || "Medium" });
+    chips.push({
+      text: isFcsBeta ? `FCS Beta · ${label}` : label,
+      tier: isFcsBeta ? "FCS Beta" : (modelConf || "Medium"),
+    });
   }
   const evTeam = boardRow.ev_pick_team ?? boardRow.best_pick?.team;
   if (evTeam && options.sport !== "cfb") {
@@ -1170,9 +1176,9 @@ function renderEmptyState(el, kind, extraHtml = "") {
       cta: '<a href="/nba-summer/board">Predictions board</a>',
     },
     "no-cfb-games": {
-      title: "No games on the slate",
-      body: "No FBS games in the next week. Try a Saturday during the season.",
-      cta: '<a href="/cfb">Refresh slate</a>',
+      title: "No FBS games on this date",
+      body: "College football is weekly. If today is empty, the next Saturday slate should load automatically. Pick a Saturday or use All divisions for FCS Beta games.",
+      cta: '<a href="/cfb">Open next slate</a>',
     },
     "no-nfl-games": {
       title: "No games on the slate",
@@ -1660,6 +1666,10 @@ function gameCardHtml(game, options = {}) {
     ? `<span class="game-card-pct${pcts.homePct >= pcts.awayPct ? " game-card-pct--fav" : ""}">${pcts.homePct}%</span>`
     : "";
   const league = String(game.sport || "mlb").toUpperCase();
+    const divs = game.divisions && game.divisions.length ? game.divisions : [game.division];
+    const isFcs =
+    String(game.model_family || boardRow?.model_family || "").toLowerCase() === "fcs_moneyline" ||
+    (divs.length > 0 && divs.every((d) => String(d || "").toLowerCase() === "fcs"));
   const statusLabel = isGameLive(game.status)
     ? (game.period_label || "Live")
     : isGameFinal(game.status)
@@ -1674,18 +1684,37 @@ function gameCardHtml(game, options = {}) {
   }
   const confLabel =
     (boardRow && (boardRow.model_confidence || boardRow.ml_confidence || lean?.tier)) || "";
+  const holdLabel = !leanHtml && !isGameFinal(game.status) ? "Hold — waiting on a model pick" : "";
+  let resultLabel = "";
+  if (isGameFinal(game.status)) {
+    const pick = boardRow?.model_pick_team || boardRow?.model_pick;
+    const hs = Number(game.home_score);
+    const ascore = Number(game.away_score);
+    if (pick && Number.isFinite(hs) && Number.isFinite(ascore) && hs !== ascore) {
+      const winner = hs > ascore ? game.home_team : game.away_team;
+      const hit = String(winner || "").toLowerCase().includes(String(pick).toLowerCase()) ||
+        String(pick).toLowerCase().includes(String(winner || "").toLowerCase());
+      resultLabel = hit ? "Final · hit" : "Final · miss";
+    } else {
+      resultLabel = "Final · pending";
+    }
+  }
+  const footLabel = resultLabel || (edgeLabel ? `Model edge ${edgeLabel}` : holdLabel || confLabel || "View matchup");
   const probBar = typeof ntgProbabilityBarHtml === "function" ? ntgProbabilityBarHtml(pcts) : "";
+  const awayName = typeof escapeHtml === "function" ? escapeHtml(game.away_team || "") : (game.away_team || "");
+  const homeName = typeof escapeHtml === "function" ? escapeHtml(game.home_team || "") : (game.home_team || "");
   return `
-    ${showWatch ? `<button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" data-watch-sport="${game.sport || options.sport || "mlb"}" data-watch-matchup="${(game.away_team || "")} @ ${(game.home_team || "")}" aria-label="Save game">☆ Save</button>` : ""}
+    ${showWatch ? `<button type="button" class="watch-btn ${watched ? "watched" : ""}" data-watch-id="${game.game_id}" data-watch-sport="${game.sport || options.sport || "mlb"}" data-watch-matchup="${awayName} @ ${homeName}" aria-label="Save game">☆ Save</button>` : ""}
     <div class="game-card-kicker">
-      <span>${league}</span>
+      <span>${league}${isFcs ? " · FCS Beta" : ""}</span>
       <span>${statusLabel}${isGameLive(game.status) ? ' · <span class="status-badge badge-live">Live</span>' : ""}</span>
     </div>
     ${seriesHtml}
     <div class="game-card-row">
       <div class="game-card-team">
         ${awayLogoHtml}
-        <span class="team-name">${game.away_team}${lineMoveBadge("away", lineMove)}</span>
+        <span class="team-name">${awayName}${lineMoveBadge("away", lineMove)}</span>
+        ${typeof teamRecordHtml === "function" ? teamRecordHtml(game.away_record) : ""}
         ${showScores ? `<span class="team-score">${game.away_score ?? 0}</span>` : ""}
       </div>
       ${awayPctHtml}
@@ -1693,15 +1722,17 @@ function gameCardHtml(game, options = {}) {
     <div class="game-card-row">
       <div class="game-card-team">
         ${homeLogoHtml}
-        <span class="team-name">${game.home_team}${lineMoveBadge("home", lineMove)}</span>
+        <span class="team-name">${homeName}${lineMoveBadge("home", lineMove)}</span>
+        ${typeof teamRecordHtml === "function" ? teamRecordHtml(game.home_record) : ""}
         ${showScores ? `<span class="team-score">${game.home_score ?? 0}</span>` : ""}
       </div>
       ${homePctHtml}
     </div>
     ${probBar}
     ${leanHtml}
+    ${holdLabel && !leanHtml ? `<span class="model-lean-chip chip-lean">${holdLabel}</span>` : ""}
     <div class="game-card-foot">
-      <span>${edgeLabel ? `Model edge ${edgeLabel}` : confLabel ? confLabel : "View matchup"}</span>
+      <span>${footLabel}</span>
       <span class="game-card-cta">View matchup →</span>
     </div>
     ${preview ? `<p class="game-card-preview">${preview}</p>` : ""}
@@ -1710,6 +1741,7 @@ function gameCardHtml(game, options = {}) {
 
 function attachWatchHandlers(listEl, options = {}) {
   if (!listEl) return;
+  const opts = { ...(listEl._renderOptions || {}), ...options };
   listEl.querySelectorAll(".watch-btn").forEach((btn) => {
     btn.onclick = async (e) => {
       e.preventDefault();
@@ -1719,15 +1751,17 @@ function attachWatchHandlers(listEl, options = {}) {
       btn.classList.toggle("watched", on);
       btn.textContent = on ? "★ Saved" : "☆ Save";
       if (on && typeof saveGameToWatchlist === "function") {
-        await saveGameToWatchlist(
-          {
-            game_id: id,
-            sport: btn.dataset.watchSport || options.sport || "mlb",
-            away_team: (btn.dataset.watchMatchup || "").split(" @ ")[0],
-            home_team: (btn.dataset.watchMatchup || "").split(" @ ")[1],
-          },
-          { sport: btn.dataset.watchSport || options.sport || "mlb" }
-        );
+        const parts = (btn.dataset.watchMatchup || "").split(" @ ");
+        const gameStub = {
+          game_id: id,
+          sport: btn.dataset.watchSport || opts.sport || "mlb",
+          away_team: parts[0],
+          home_team: parts[1],
+        };
+        await saveGameToWatchlist(gameStub, {
+          sport: gameStub.sport,
+          boardRow: lookupBoardRow(opts.boardMap || {}, gameStub),
+        });
       }
     };
   });
@@ -2870,7 +2904,7 @@ function formatPropsSearchMeta(data, filters = {}) {
   if (filters.side === "over") parts.push("overs only");
   else if (filters.side === "under") parts.push("unders only");
 
-  if (data?.games_on_slate && data?.games_with_props != null) {
+  if (data?.games_on_slate != null && data?.games_with_props != null) {
     parts.push(`${data.games_with_props}/${data.games_on_slate} games`);
   }
   if (data?.hint) parts.push(data.hint.trim());
@@ -3162,10 +3196,17 @@ function renderMatchupHeader(el, game, boardRow, options = {}) {
   }
   const btn = el.querySelector(".watch-btn");
   if (btn) {
-    btn.onclick = (e) => {
+    btn.onclick = async (e) => {
       e.preventDefault();
       const on = toggleWatch(btn.dataset.watchId);
       btn.classList.toggle("watched", on);
+      btn.textContent = on ? "★ Saved" : "☆ Save";
+      if (on && typeof saveGameToWatchlist === "function") {
+        await saveGameToWatchlist(game, {
+          sport: game.sport || options.sport || "mlb",
+          boardRow: boardRow || options.boardRow,
+        });
+      }
     };
   }
 }

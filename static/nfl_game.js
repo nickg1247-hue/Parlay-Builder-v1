@@ -301,6 +301,12 @@
         renderPropExplorerList(body, data.props || [], {
           sport: "nfl",
           emptyMessage: data.message || "Sportsbooks haven't posted NFL player props for this game yet.",
+          emptyTitle:
+            data.empty_reason === "quota"
+              ? "ODDS QUOTA EXHAUSTED"
+              : data.empty_reason === "no_cache"
+                ? "NFL PROP LINES NOT CACHED YET"
+                : "NO PROPS AVAILABLE",
         });
       }
     } catch (err) {

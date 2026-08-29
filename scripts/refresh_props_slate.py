@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.services.props_platform import refresh_props  # noqa: E402
+from app.services.slate_clock import slate_today  # noqa: E402
 
 
 def main() -> int:
@@ -43,7 +44,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    game_date = date.fromisoformat(args.date) if args.date else date.today()
+    game_date = date.fromisoformat(args.date) if args.date else slate_today()
     last: dict | None = None
     for attempt in range(1, max(1, args.loop) + 1):
         last = refresh_props(

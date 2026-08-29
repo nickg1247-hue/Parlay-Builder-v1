@@ -56,6 +56,7 @@ from app.services.prop_books import (
     list_static_prop_bookmakers,
     normalize_prop_bookmaker,
 )
+from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
@@ -496,7 +497,7 @@ def build_nfl_game_props(
 ) -> dict[str, Any] | None:
     from app.services.schedule_nfl import get_nfl_game
 
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     book = _normalize_bookmaker(bookmaker)
     detail = get_nfl_game(str(game_id), game_date)
     if detail is None:
@@ -521,6 +522,20 @@ def build_nfl_game_props(
         cached = _load_json(cache_path)
         if cached and cached.get("props") is not None:
             return cached
+        return {
+            "sport": "nfl",
+            "game_id": str(game_id),
+            "date": game_date.isoformat(),
+            "props": [],
+            "status": "empty",
+            "empty_reason": "no_cache",
+            "message": (
+                "NFL prop lines are not cached for this game yet. "
+                "Click Refresh on the props page (uses Odds API credits) or wait for the morning job."
+            ),
+            "bookmaker": book,
+            "bookmaker_label": _bookmaker_label(book),
+        }
 
     markets = SLATE_NFL_PROP_MARKETS
     if include_alternates:
@@ -579,7 +594,7 @@ def _load_nfl_props_schedule(game_date: date) -> tuple[date, dict[str, Any]]:
     """
     from app.services.schedule_nfl import get_nfl_schedule, resolve_nfl_slate_date
 
-    if game_date == date.today():
+    if game_date == slate_today():
         resolved, _days = resolve_nfl_slate_date(game_date)
         schedule = get_nfl_schedule(resolved)
     else:
@@ -595,11 +610,12 @@ def refresh_nfl_props_slate(
     force: bool = False,
     include_alternates: bool | None = None,
 ) -> dict[str, Any]:
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     resolved, schedule = _load_nfl_props_schedule(game_date)
     book = _normalize_bookmaker(bookmaker)
     games = [g for g in (schedule.get("games") or []) if g.get("game_id") and not _game_started(g)]
     fetched = 0
+    games_with_props = 0
     pending: list[str] = []
     quota_stopped = False
     for game in games:
@@ -607,6 +623,9 @@ def refresh_nfl_props_slate(
         cache_path = _cache_path(resolved, gid, book)
         if not force and cache_path.exists():
             fetched += 1
+            cached = _load_json(cache_path) or {}
+            if cached.get("props"):
+                games_with_props += 1
             continue
         payload = build_nfl_game_props(
             gid,
@@ -621,6 +640,8 @@ def refresh_nfl_props_slate(
             break
         if payload and payload.get("props") is not None:
             fetched += 1
+            if payload.get("props"):
+                games_with_props += 1
         else:
             pending.append(gid)
     return {
@@ -628,6 +649,7 @@ def refresh_nfl_props_slate(
         "date": resolved.isoformat(),
         "bookmaker": book,
         "games_on_slate": len(games),
+        "games_with_props": games_with_props,
         "games_fetched": fetched,
         "pending_game_ids": pending,
         "quota_stopped": quota_stopped,
@@ -660,7 +682,7 @@ def search_nfl_daily_props(
 ) -> dict[str, Any]:
     """NFL explorer search. Hit-rate filters are ignored (MLB-only)."""
     del min_hit_l5, min_hit_l10
-    game_date = game_date or date.today()
+    game_date = game_date or slate_today()
     book = _normalize_bookmaker(bookmaker)
     resolved, schedule = _load_nfl_props_schedule(game_date)
     games = list(schedule.get("games") or [])
@@ -674,9 +696,15 @@ def search_nfl_daily_props(
 
     pool: list[dict[str, Any]] = []
     games_with_props = 0
+    games_started = 0
+    cached_any = False
+    quota_hit = False
     for game in games:
         gid = str(game.get("game_id") or "")
-        if not gid or _game_started(game):
+        if not gid:
+            continue
+        if _game_started(game):
+            games_started += 1
             continue
         payload = _load_json(_cache_path(resolved, gid, book))
         if not payload:
@@ -690,6 +718,11 @@ def search_nfl_daily_props(
                 )
             else:
                 continue
+        if payload:
+            cached_any = True
+            msg = str(payload.get("message") or "").lower()
+            if payload.get("status") == "error" and "quota" in msg:
+                quota_hit = True
         props = list((payload or {}).get("props") or [])
         if props:
             games_with_props += 1
@@ -737,10 +770,23 @@ def search_nfl_daily_props(
     empty_reason = None
     if not games:
         empty_reason = "no_slate"
+    elif games_started == len(games) and games:
+        empty_reason = "kickoff"
+    elif not pool and quota_hit:
+        empty_reason = "quota"
+    elif not pool and not cached_any:
+        empty_reason = "no_cache"
     elif not pool:
         empty_reason = "no_offers"
     elif not filtered:
         empty_reason = "filters"
+    if filtered:
+        try:
+            from app.services.prop_pick_tracker import log_offered_props
+
+            log_offered_props(filtered, resolved.isoformat(), source="nfl_daily_props")
+        except Exception:
+            logger.exception("NFL prop tracker log failed")
     return {
         "sport": "nfl",
         "date": resolved.isoformat(),
@@ -751,16 +797,41 @@ def search_nfl_daily_props(
         "total_matched": len(filtered),
         "games_on_slate": len(games),
         "games_with_props": games_with_props,
+        "games_started": games_started,
         "empty_reason": empty_reason,
-        "message": _empty_message(empty_reason, filtered, pool),
+        "message": _empty_message(
+            empty_reason,
+            games_on_slate=len(games),
+            games_with_props=games_with_props,
+        ),
     }
 
 
-def _empty_message(reason: str | None, filtered: list, pool: list) -> str | None:
+def _empty_message(
+    reason: str | None,
+    *,
+    games_on_slate: int = 0,
+    games_with_props: int = 0,
+) -> str | None:
     if reason == "no_slate":
         return "No NFL games on the current slate."
+    if reason == "kickoff":
+        return "Pregame NFL player props are hidden after kickoff."
+    if reason == "quota":
+        return (
+            "Odds API quota is exhausted. NFL prop lines will refresh after quota resets. "
+            f"{games_with_props}/{games_on_slate} games currently cached."
+        )
+    if reason == "no_cache":
+        return (
+            f"{games_on_slate} NFL games are on the slate, but prop lines are not cached yet. "
+            "Click Refresh (uses Odds API credits) or wait for the morning job."
+        )
     if reason == "no_offers":
-        return "Sportsbooks haven't posted NFL player props yet."
+        return (
+            f"Sportsbooks haven't posted NFL player props yet "
+            f"({games_with_props}/{games_on_slate} games with lines)."
+        )
     if reason == "filters":
         return "No props match your current filters."
     return None

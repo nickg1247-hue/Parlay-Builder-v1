@@ -11,6 +11,7 @@ from app.services.prop_books import DEFAULT_DISPLAY_BOOKMAKER, normalize_prop_sp
 from app.services.slate_clock import slate_today
 from app.services.prop_engine.nfl_markets import list_nfl_market_types
 from app.services.prop_pick_tracker import summarize_prop_tracker
+from app.services.ssr_local_data import local_nfl_scores
 from app.services.props_mlb import (
     build_daily_top_props as build_mlb_daily_top_props,
     build_game_props as build_mlb_game_props,
@@ -200,9 +201,17 @@ async def build_player_props_page_data(
         asyncio.to_thread(get_refresh_status),
     )
     try:
-        tracker = await asyncio.to_thread(summarize_prop_tracker, 30)
+        tracker = await asyncio.to_thread(summarize_prop_tracker, 30, "nfl")
     except Exception:
         tracker = {}
+    ticker_date = game_date
+    raw_date = str(props_search.get("date") or "")[:10]
+    if raw_date:
+        try:
+            ticker_date = date.fromisoformat(raw_date)
+        except ValueError:
+            ticker_date = game_date
+    ticker = await asyncio.to_thread(local_nfl_scores, ticker_date)
     filters = {
         "bookmaker": kwargs.get("bookmaker") or DEFAULT_DISPLAY_BOOKMAKER,
         "market_type": kwargs.get("market_type") or "",
@@ -231,5 +240,5 @@ async def build_player_props_page_data(
         "tracker": tracker,
         "filters": filters,
         "status": status,
-        "tickerScores": {},
+        "tickerScores": ticker,
     }

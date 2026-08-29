@@ -165,14 +165,24 @@ One Player Props product. Sport is a filter, not a separate app.
 
 **CLV:** Player-prop closing-line history is not stored. Performance “CLV” is MLB moneyline only.
 
-**Odds:** The Odds API `americanfootball_nfl` / `americanfootball_nfl_preseason` event-odds. Same quota gate as MLB. Cache: `data/processed/props_repository/nfl/{date}/`.
+**Odds:** The Odds API `americanfootball_nfl` / `americanfootball_nfl_preseason` event-odds. Same quota gate as MLB. Cache: `data/processed/props_repository/nfl/{date}/`. Page loads are **cache-only** (`scan=False`); they never spend Odds API credits. Fill the cache from the VPS morning job (`USE_LIVE_ODDS=true` runs `refresh_nfl_props_slate`) or one-shot:
+
+```powershell
+python scripts/refresh_props_slate.py --sport nfl
+# Resume after a quota stop (same command; skip --force unless you need a full re-fetch):
+python scripts/refresh_props_slate.py --sport nfl --loop 3
+```
+
+Dates use `slate_today()` (America/New_York). Thu–Mon look-ahead runs when the requested day is ET today.
 
 **NFL model:** ESPN game logs (strictly before slate date) + spread/total environment. L3 usage is weighted above season average. Not the MLB L5/L10 formula. Both Over and Under are scored against vig-free market probability when both sides are posted.
+
+**Measure before retune:** `python scripts/backtest_nfl_props.py` grades cached recommended sides vs ESPN box scores into `data/processed/nfl_props_backtest.json`. Do not change projection weights until that report is reviewed.
 
 **Not fabricated:** snap share / route participation are omitted until we ingest those feeds.
 
 ```powershell
-pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py tests/test_watchlist.py -q
+pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py tests/test_watchlist.py tests/test_prop_pick_tracker.py -q
 ```
 
 ---
@@ -191,7 +201,7 @@ pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py tests
 
 **Date picker (`/cfb`):** Choose any date. **Past dates** load from `cfb_games.parquet` ingest (no ESPN). **Today/future** use ESPN once, then save to `data/processed/cfb_schedule_{date}.json` for reuse. Badge shows source: `Saved ingest`, `Saved snapshot`, or `ESPN API`. Use **Refresh** or `?refresh=true` to re-fetch.
 
-**Auto look-ahead:** If the requested day has **zero** games, the backend tries **+1..+7** days (CFB is weekly). Disabled when `?date=` is set.
+**Auto look-ahead:** If the requested day has **zero FBS games**, the backend tries **+1..+7** days and prefers the next FBS slate (so an FCS-only Friday does not hide Saturday). Disabled when `?date=` is set. Undated `GET /api/schedule/cfb` and `GET /api/scores/today?sport=cfb` use this look-ahead.
 
 **Data sources:**
 

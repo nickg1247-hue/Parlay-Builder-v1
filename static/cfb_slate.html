@@ -114,7 +114,7 @@
       const filterCount = document.getElementById("slate-filter-count");
       const dateParam = qs("date");
       const refreshParam = qs("refresh") === "true";
-      let pollTimer = null;
+      let divisionDefaultApplied = false;
       let currentGames = [];
       let currentBoardMap = {};
       let currentSlateDate = "";
@@ -301,6 +301,10 @@
         currentBoardMap = boardMap;
         currentSlateDate = slateDate;
         populateSlateFilters(currentGames);
+        if (!divisionDefaultApplied && currentGames.some((g) => (g.divisions || [g.division || "fbs"]).includes("fbs"))) {
+          divisionFilter.value = "fbs";
+          divisionDefaultApplied = true;
+        }
         renderFilteredSlate();
       }
 

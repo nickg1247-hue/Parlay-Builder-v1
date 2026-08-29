@@ -261,6 +261,8 @@ def test_unified_props_page_nfl_selector(monkeypatch):
     assert "Player props" in response.text
     assert 'name="sport"' in response.text
     assert 'id="filter-position"' in response.text
+    assert 'id="live-ticker"' in response.text
+    assert 'data-sport-panel="mlb nfl"' in response.text
 
 
 def test_signin_page():

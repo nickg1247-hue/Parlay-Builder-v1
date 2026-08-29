@@ -39,13 +39,51 @@ def _is_past_date(game_date: date) -> bool:
 
 
 def resolve_cfb_slate_date(start: date | None = None) -> tuple[date, int]:
-    """Pick slate date: start at *start* or today; if no games, try +1..+7 days."""
+    """Pick slate date: prefer the next FBS Saturday, not an FCS-only weekday."""
     anchor = start or slate_today()
+    any_hit: tuple[date, int] | None = None
     for offset in range(SLATE_LOOKAHEAD_DAYS + 1):
         candidate = anchor + timedelta(days=offset)
-        if _date_has_games(candidate):
+        if _date_has_fbs_games(candidate):
             return candidate, offset
+        if any_hit is None and _date_has_games(candidate):
+            any_hit = (candidate, offset)
+    if any_hit:
+        return any_hit
     return anchor + timedelta(days=SLATE_LOOKAHEAD_DAYS), SLATE_LOOKAHEAD_DAYS
+
+
+def _game_has_fbs(game: dict[str, Any]) -> bool:
+    divisions = [str(d or "").lower() for d in (game.get("divisions") or [])]
+    primary = str(game.get("division") or "").lower()
+    if "fbs" in divisions or primary == "fbs":
+        return True
+    if divisions or primary:
+        return False
+    return True
+
+
+def _payload_has_fbs(payload: dict[str, Any]) -> bool:
+    return any(_game_has_fbs(game) for game in (payload.get("games") or []))
+
+
+def _date_has_fbs_games(game_date: date) -> bool:
+    path = schedule_cache_path(game_date)
+    if path.exists():
+        try:
+            payload = _load_cache_payload(path)
+            games = payload.get("games") or []
+            if games:
+                return _payload_has_fbs(payload)
+        except (json.JSONDecodeError, OSError):
+            pass
+    if _is_past_date(game_date):
+        return ingest_has_games(game_date)
+    try:
+        return bool(fetch_cfb_scores_day(game_date))
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("ESPN FBS date lookup unavailable for %s: %s", game_date, exc)
+        return False
 
 
 def _date_has_games(game_date: date) -> bool:
@@ -372,8 +410,8 @@ def get_cfb_schedule(
     force_live: bool = False,
 ) -> dict[str, Any]:
     requested_date = game_date or slate_today()
-    if auto_resolve and game_date is None:
-        resolved_date, days_ahead = resolve_cfb_slate_date(None)
+    if auto_resolve:
+        resolved_date, days_ahead = resolve_cfb_slate_date(requested_date)
         auto_advanced = days_ahead > 0
     else:
         resolved_date = requested_date

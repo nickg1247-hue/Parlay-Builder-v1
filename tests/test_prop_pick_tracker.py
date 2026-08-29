@@ -1,6 +1,6 @@
 """Prop pick tracker logging and grading tests."""
 
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -94,18 +94,47 @@ def test_backfill_sets_hit_fields(isolated_prop_log, monkeypatch):
 
 
 def test_summarize_by_line_strength(isolated_prop_log, monkeypatch):
+    board_day = date.today() - timedelta(days=2)
+    board = board_day.isoformat()
     moderate = {**SAMPLE_PROP, "line_strength": "moderate", "player": "Mookie Betts"}
-    ppt.log_offered_props([SAMPLE_PROP, moderate], "2026-06-15")
+    ppt.log_offered_props([SAMPLE_PROP, moderate], board)
     monkeypatch.setattr(
         ppt,
         "player_stat_on_date",
         lambda player, market, season, day: 2.0 if player == "Aaron Judge" else 0.0,
     )
-    ppt.backfill_prop_results(date(2026, 6, 15))
+    ppt.backfill_prop_results(board_day)
     summary = ppt.summarize_prop_tracker(days=30)
     assert summary["props_logged"] == 2
     assert summary["line_strength"]["strong"]["hits"] == 1
     assert summary["line_strength"]["moderate"]["misses"] == 1
+
+
+def test_nfl_prop_is_logged_and_graded_with_box_stat(isolated_prop_log, monkeypatch):
+    nfl_prop = {
+        **SAMPLE_PROP,
+        "sport": "nfl",
+        "player": "Nick Chubb",
+        "market_type": "player_rush_yds",
+        "team": "CLE",
+        "line": 74.5,
+        "game_id": "nfl-1",
+    }
+    board_day = date.today() - timedelta(days=2)
+    written = ppt.log_offered_props([nfl_prop], board_day.isoformat(), source="test")
+    assert written[0]["sport"] == "nfl"
+    monkeypatch.setattr(
+        "app.services.nfl_player_stats.nfl_stat_on_date",
+        lambda player, market, day, team_abbr=None: 90.0,
+    )
+    result = ppt.backfill_prop_results(board_day)
+    assert result["updated"] == 1
+    row = next(iter(ppt._latest_by_pick_id(ppt._read_all_rows()).values()))
+    assert row["hit"] is True
+    nfl_only = ppt.summarize_prop_tracker(days=30, sport="nfl")
+    mlb_only = ppt.summarize_prop_tracker(days=30, sport="mlb")
+    assert nfl_only["props_logged"] == 1
+    assert mlb_only["props_logged"] == 0
 
 
 def test_api_props_tracker_summary():

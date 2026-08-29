@@ -180,6 +180,29 @@
       }));
   }
 
+  function asEdgesFromCfbPreds(payload) {
+    const rows = Array.isArray(payload)
+      ? payload
+      : Object.values(payload && !Array.isArray(payload) ? payload.predictions || payload : {});
+    return rows
+      .filter((row) => row && row.game_id && (row.model_pick_team || row.model_pick))
+      .map((row) => ({
+        kind: "game",
+        sport: "cfb",
+        game_id: row.game_id,
+        name: row.model_pick_team || row.model_pick,
+        matchup: row.matchup || [row.away_team, row.home_team].filter(Boolean).join(" @ "),
+        home_team: row.home_team,
+        away_team: row.away_team,
+        home_logo_url: row.home_logo_url,
+        away_logo_url: row.away_logo_url,
+        recommendation: row.model_pick_team || row.model_pick,
+        win_prob: num(row.model_prob_home != null && String(row.model_pick_side) === "home" ? row.model_prob_home : row.model_prob_away),
+        edge: num(row.ev_pick_edge ?? row.edge),
+        confidence: row.public_tier_label || row.model_category_label || row.ml_confidence,
+      }));
+  }
+
   function asEdgesFromProps(payload, sport) {
     const rows = [].concat(payload?.very_strong_props || [], payload?.top_props || [], payload?.props || []);
     const seen = new Set();
@@ -507,34 +530,46 @@
         fetchJSON("/api/scores/today?sport=all").catch(() => embedded?.scores || { games: [], sports: {} }),
         fetchJSON("/api/daily/props?sport=nfl&limit=20&cache_only=true&scan=false").catch(() => null),
         signedIn ? fetch("/api/watchlist", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null),
+        fetchJSON("/api/cfb/predictions").catch(() => null),
       ]);
       scores = extra[0];
       nflProps = extra[1];
       watch = extra[2];
+      gameEdges = gameEdges.concat(asEdgesFromCfbPreds(extra[3]));
     } catch (_) {
       scores = embedded?.scores || { games: [], sports: {} };
     }
 
-    props = asEdgesFromProps(nflProps, "nfl").concat(props);
+    const mlbPropEdges = asEdgesFromProps(mlbProps, "mlb");
+    const nflPropEdges = asEdgesFromProps(nflProps, "nfl");
+    props = nflPropEdges.concat(mlbPropEdges).concat(asEdgesFromSingles(summary?.top_singles || []).filter((e) => e.kind === "prop"));
     const edges = gameEdges.concat(props);
-    renderIntel(
-      $("hl-intel"),
-      { gameEdge: gameEdges[0] || null, playerEdge: props[0] || null, confident: mostConfidentGame(summary) },
-      scores?.games || []
-    );
-
     const games = scores?.games || [];
     const sports = scores?.sports || {};
     SPORT_ORDER.forEach((key) => {
       if (sports[key] == null) sports[key] = games.filter((g) => sportOf(g) === key).length;
     });
     renderSports($("hl-sports"), sports);
-    renderLiveSummary($("hl-live-summary"), edges.length, games.length, status);
 
-    const counts = edgeCountsByGame(edges);
     const paintGames = (sport) => {
       renderGameFilters($("hl-game-filters"), sports, sport, paintGames);
-      renderGames($("hl-games"), games, counts, sport);
+      const sportEdges =
+        sport === "nfl"
+          ? nflPropEdges.concat(gameEdges.filter((e) => e.sport === "nfl"))
+          : sport === "mlb"
+            ? mlbPropEdges.concat(gameEdges.filter((e) => e.sport === "mlb"))
+            : sport === "cfb"
+              ? gameEdges.filter((e) => e.sport === "cfb")
+              : edges;
+      renderLiveSummary($("hl-live-summary"), sportEdges.length, games.filter((g) => sport === "all" || sportOf(g) === sport).length, status);
+      renderGames($("hl-games"), games, edgeCountsByGame(sportEdges), sport);
+      const playerPool = sport === "nfl" ? nflPropEdges : sport === "mlb" ? mlbPropEdges : props;
+      const gamePool = sport === "all" ? gameEdges : gameEdges.filter((e) => e.sport === sport);
+      renderIntel(
+        $("hl-intel"),
+        { gameEdge: gamePool[0] || null, playerEdge: playerPool[0] || null, confident: mostConfidentGame(summary) },
+        scores?.games || []
+      );
     };
     paintGames("all");
     renderYours($("hl-picks"), watch, signedIn);

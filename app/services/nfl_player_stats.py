@@ -222,6 +222,67 @@ def nfl_game_log_values(
     return [value for _, value in rows]
 
 
+def nfl_stat_on_date(
+    player_name: str,
+    market_type: str,
+    game_date: date,
+    team_abbr: str | None = None,
+) -> float | None:
+    """Actual ESPN box-stat for one player on a calendar date (None if DNP)."""
+    from app.services.prop_engine.nfl_markets import MARKET_STAT
+
+    stat_key = MARKET_STAT.get(str(market_type or ""))
+    if not stat_key:
+        return None
+    resolved = resolve_nfl_player(player_name, team_abbr)
+    if not resolved:
+        return None
+    payload = _raw_gamelog(str(resolved["athlete_id"]))
+    events: list[dict[str, Any]] = []
+    for block in payload.get("seasonTypes") or []:
+        for cat in block.get("categories") or []:
+            events.extend(cat.get("events") or [])
+    if not events:
+        for key in ("events", "games"):
+            if isinstance(payload.get(key), list):
+                events.extend(payload[key])
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        when = _parse_game_date(
+            event.get("gameDate") or event.get("date") or (event.get("event") or {}).get("date")
+        )
+        if when != game_date:
+            continue
+        stats = event.get("stats") or event.get("statistics") or event
+        if isinstance(stats, list):
+            return None
+        passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
+        rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
+        rec_yds = _stat_number(stats, "receivingYards", "recYds")
+        rec_td = _stat_number(stats, "receivingTouchdowns", "receivingTDs", "recTd")
+        rush_td = _stat_number(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
+        pass_td = _stat_number(stats, "passingTouchdowns", "passingTDs", "passTd")
+        mapping = {
+            "passingYards": passing_yds,
+            "passingTouchdowns": pass_td,
+            "passingAttempts": _stat_number(stats, "passingAttempts", "passAtt"),
+            "passingCompletions": _stat_number(stats, "passingCompletions", "completions", "passComp"),
+            "interceptions": _stat_number(stats, "interceptions", "ints"),
+            "passingLong": _stat_number(stats, "passingLong", "longestPass"),
+            "rushingYards": rushing_yds,
+            "rushingAttempts": _stat_number(stats, "rushingAttempts", "carries", "rushAtt"),
+            "rushingLong": _stat_number(stats, "rushingLong", "longestRush"),
+            "receptions": _stat_number(stats, "receptions", "rec"),
+            "receivingYards": rec_yds,
+            "receivingLong": _stat_number(stats, "receivingLong", "longestReception"),
+            "rushRecYards": rushing_yds + rec_yds,
+            "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
+        }
+        return float(mapping.get(stat_key, 0.0))
+    return None
+
+
 @lru_cache(maxsize=2)
 def _injury_payload() -> list[dict[str, Any]]:
     try:

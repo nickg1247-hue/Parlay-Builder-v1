@@ -371,6 +371,10 @@ def _game_status_bucket(status: str | None) -> str:
 
 def _lookup_schedule_game(sport: str, game_id: str) -> dict[str, Any] | None:
     try:
+        if sport == "cfb":
+            from app.services.schedule_cfb import get_cfb_game
+
+            return get_cfb_game(game_id)
         if sport == "nfl":
             from app.services.schedule_nfl import get_nfl_game
 
@@ -381,6 +385,34 @@ def _lookup_schedule_game(sport: str, game_id: str) -> dict[str, Any] | None:
             return get_mlb_game(game_id, slate_today())
     except Exception:
         return None
+    return None
+
+
+def _grade_saved_game(item: dict[str, Any], game: dict[str, Any]) -> str | None:
+    """WIN/LOSS/PUSH after Final; None means still pending."""
+    if _game_status_bucket(game.get("status")) != "final":
+        return None
+    home_score = game.get("home_score")
+    away_score = game.get("away_score")
+    if home_score is None or away_score is None:
+        return None
+    try:
+        home_n = float(home_score)
+        away_n = float(away_score)
+    except (TypeError, ValueError):
+        return None
+    if home_n == away_n:
+        return "PUSH"
+    winner = str(game.get("home_team") or "") if home_n > away_n else str(game.get("away_team") or "")
+    lean = str(item.get("model_lean") or item.get("saved_model_lean") or "").strip()
+    if not lean or not winner:
+        return None
+    if winner.lower() in lean.lower() or lean.lower() in winner.lower():
+        return "WIN"
+    home = str(game.get("home_team") or "")
+    away = str(game.get("away_team") or "")
+    if home.lower() in lean.lower() or away.lower() in lean.lower():
+        return "LOSS"
     return None
 
 
@@ -482,6 +514,12 @@ def enrich_watchlist(props: list[dict[str, Any]], games: list[dict[str, Any]]) -
                 if game.get("home_team")
                 else item.get("matchup")
             )
+            if item["status"] == "final":
+                graded = _grade_saved_game(item, game)
+                if graded:
+                    item["result"] = graded
+                else:
+                    item["result"] = item.get("result") or "pending"
     counts = {"upcoming": 0, "live": 0, "final": 0}
     for item in props + games:
         bucket = item.get("status") or "upcoming"

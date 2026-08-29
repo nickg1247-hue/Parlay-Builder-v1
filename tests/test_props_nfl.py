@@ -92,6 +92,64 @@ def test_historical_props_schedule_does_not_look_ahead(monkeypatch):
     stub.get_nfl_schedule.assert_called_once_with(past)
 
 
+def test_et_today_looks_ahead_even_when_not_utc_today(monkeypatch):
+    et_today = date(2026, 8, 28)
+    sunday = date(2026, 8, 30)
+    payload = {"date": sunday.isoformat(), "games": [{"game_id": "nfl-1"}]}
+    monkeypatch.setattr("app.services.props_nfl.slate_today", lambda: et_today)
+    stub = _stub_schedule_nfl(
+        monkeypatch,
+        resolve=Mock(return_value=(sunday, 2)),
+        get_schedule=Mock(return_value=payload),
+    )
+    resolved, schedule = _load_nfl_props_schedule(et_today)
+    assert resolved == sunday
+    assert schedule["games"][0]["game_id"] == "nfl-1"
+    stub.resolve_nfl_slate_date.assert_called_once_with(et_today)
+
+
+def test_empty_reason_copy_distinguishes_quota_and_cache():
+    from app.services.props_nfl import _empty_message
+
+    quota = _empty_message("quota", games_on_slate=10, games_with_props=2)
+    assert "quota" in quota.lower()
+    assert "2/10" in quota
+    no_cache = _empty_message("no_cache", games_on_slate=8, games_with_props=0)
+    assert "not cached" in no_cache.lower()
+    assert "Refresh" in no_cache
+    kickoff = _empty_message("kickoff")
+    assert "kickoff" in kickoff.lower()
+    no_slate = _empty_message("no_slate")
+    assert "No NFL games" in no_slate
+
+
+def test_game_props_cache_miss_does_not_fetch(monkeypatch):
+    from app.services.props_nfl import build_nfl_game_props
+
+    monkeypatch.setattr(
+        "app.services.schedule_nfl.get_nfl_game",
+        lambda gid, d: {
+            "game": {
+                "game_id": gid,
+                "status": "Preview",
+                "home_team": "Cleveland Browns",
+                "away_team": "Pittsburgh Steelers",
+                "home_team_abbr": "CLE",
+                "away_team_abbr": "PIT",
+            }
+        },
+    )
+
+    def boom(*_a, **_k):
+        raise AssertionError("Odds API must not run on cache-only game props")
+
+    monkeypatch.setattr("app.services.props_nfl.fetch_nfl_event_props_if_allowed", boom)
+    monkeypatch.setattr("app.services.props_nfl._load_events", boom)
+    out = build_nfl_game_props("nfl-cache-miss", date(2026, 8, 28), refresh=False)
+    assert out["empty_reason"] == "no_cache"
+    assert out["props"] == []
+
+
 def test_normalize_prop_sport():
     assert normalize_prop_sport(None) == "mlb"
     assert normalize_prop_sport("NFL") == "nfl"

@@ -12,6 +12,7 @@ from app.main import app
 from app.services import scores_cfb as sc
 from app.services.cfb_game_metadata import merge_game_records
 from app.services.schedule_cfb import get_cfb_schedule, resolve_cfb_slate_date
+from app.services.slate_clock import slate_today
 from app.services.scores_cfb import fetch_lower_division_scores_day, ncaa_game_record
 
 client = TestClient(app)
@@ -109,13 +110,65 @@ def test_get_cfb_schedule_returns_logos(mock_fetch):
 
 
 @patch("app.services.schedule_cfb.fetch_cfb_scores_day")
-def test_api_schedule_cfb_stays_on_requested_day(mock_fetch):
+def test_api_schedule_cfb_explicit_date_does_not_advance(mock_fetch):
     mock_fetch.return_value = []
-    resp = client.get("/api/schedule/cfb")
+    resp = client.get("/api/schedule/cfb?date=2026-08-28")
     assert resp.status_code == 200
     data = resp.json()
     assert data["auto_advanced"] is False
     assert data["days_ahead"] == 0
+    assert data["requested_date"] == "2026-08-28"
+
+
+@patch("app.services.schedule_cfb.fetch_cfb_scores_day")
+def test_api_schedule_cfb_no_date_looks_ahead(mock_fetch):
+    start = slate_today()
+
+    def side_effect(game_date: date):
+        if (game_date - start).days == 1:
+            return [ESPN_EVENT]
+        return []
+
+    mock_fetch.side_effect = side_effect
+    resp = client.get("/api/schedule/cfb")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["auto_advanced"] is True
+    assert data["days_ahead"] == 1
+
+
+@patch("app.services.schedule_cfb.fetch_cfb_scores_day")
+def test_resolve_skips_fcs_only_day_for_next_fbs(mock_fetch, tmp_path):
+    start = slate_today()
+    friday = tmp_path / f"cfb_schedule_{start.isoformat()}.json"
+    friday.write_text(
+        json.dumps(
+            {
+                "date": start.isoformat(),
+                "games": [
+                    {
+                        "game_id": "fcs-1",
+                        "division": "fcs",
+                        "divisions": ["fcs"],
+                        "home_team": "A",
+                        "away_team": "B",
+                    }
+                ],
+                "games_count": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def side_effect(game_date: date):
+        if (game_date - start).days == 1:
+            return [ESPN_EVENT]
+        return []
+
+    mock_fetch.side_effect = side_effect
+    resolved, days_ahead = resolve_cfb_slate_date(start)
+    assert days_ahead == 1
+    assert resolved == start + timedelta(days=1)
 
 
 @patch("app.services.schedule_cfb.fetch_cfb_scores_day")

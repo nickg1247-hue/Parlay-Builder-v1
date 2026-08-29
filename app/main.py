@@ -893,8 +893,9 @@ async def clv_summary(
 @app.get("/api/props/tracker/summary")
 async def props_tracker_summary(
     days: int = Query(30, ge=1, le=365),
+    sport: str | None = Query(None),
 ):
-    return summarize_prop_tracker(days=days)
+    return summarize_prop_tracker(days=days, sport=sport)
 
 
 @app.post("/api/props/tracker/backfill")
@@ -1084,7 +1085,7 @@ async def cfb_schedule(
     if date_param:
         game_date = date_type.fromisoformat(date_param)
         return get_cfb_schedule(game_date, auto_resolve=False, force_live=refresh)
-    return get_cfb_schedule(None, auto_resolve=False, force_live=refresh)
+    return get_cfb_schedule(None, auto_resolve=True, force_live=refresh)
 
 
 @app.get("/api/schedule/nfl")

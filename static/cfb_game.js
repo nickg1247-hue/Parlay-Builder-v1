@@ -26,7 +26,7 @@
   const dateParam = qs("date");
   const useCache = qs("use_cache") === "true";
 
-  initLiveTicker("live-ticker", { date: dateParam, sport: "all" });
+  initLiveTicker("live-ticker", { date: dateParam, sport: "cfb" });
 
   const scoresUrl = dateParam
     ? `/api/scores/today?sport=cfb&date=${encodeURIComponent(dateParam)}`

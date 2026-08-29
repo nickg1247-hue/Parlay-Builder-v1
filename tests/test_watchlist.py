@@ -44,6 +44,7 @@ def test_watchlist_page_renders():
     res = client.get("/watchlist")
     assert res.status_code == 200
     assert "My Picks" in res.text
+    assert 'data-pick-sport="cfb"' in res.text
 
 
 def test_player_page_renders():
@@ -85,3 +86,41 @@ def test_save_and_remove_prop_keeps_original_line(tmp_path, monkeypatch):
     removed = client.delete(f"/api/watchlist/props/{props[0]['id']}")
     assert removed.status_code == 200
     assert client.get("/api/watchlist").json()["props"] == []
+
+
+def test_grade_saved_cfb_game_hit_and_pending():
+    from app.services.watchlist import _grade_saved_game
+
+    item = {"saved_model_lean": "Georgia Bulldogs"}
+    final_win = {
+        "status": "Final",
+        "home_team": "Georgia Bulldogs",
+        "away_team": "Georgia Tech Yellow Jackets",
+        "home_score": 31,
+        "away_score": 17,
+    }
+    assert _grade_saved_game(item, final_win) == "WIN"
+    live = {**final_win, "status": "In Progress"}
+    assert _grade_saved_game(item, live) is None
+    no_pick = {"saved_model_lean": None}
+    assert _grade_saved_game(no_pick, final_win) is None
+
+
+def test_save_cfb_game_pick(tmp_path, monkeypatch):
+    _register_and_login(tmp_path, monkeypatch)
+    saved = client.post(
+        "/api/watchlist/games",
+        json={
+            "sport": "cfb",
+            "game_id": "401635525",
+            "matchup": "Georgia Tech @ Georgia",
+            "model_lean": "Georgia Bulldogs",
+            "model_probability": 0.62,
+        },
+    )
+    assert saved.status_code == 200
+    listed = client.get("/api/watchlist")
+    games = listed.json()["games"]
+    assert len(games) == 1
+    assert games[0]["sport"] == "cfb"
+    assert games[0]["saved_model_lean"] == "Georgia Bulldogs"

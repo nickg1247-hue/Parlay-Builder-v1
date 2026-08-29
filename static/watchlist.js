@@ -24,10 +24,15 @@
   }
 
   function gameHref(item) {
-    if (!item.game_id) return item.sport === "nfl" ? "/nfl" : "/mlb";
-    return item.sport === "nfl"
-      ? `/nfl/game/${encodeURIComponent(item.game_id)}`
-      : `/mlb/game/${encodeURIComponent(item.game_id)}`;
+    const sport = String(item.sport || "mlb").toLowerCase();
+    if (!item.game_id) {
+      if (sport === "nfl") return "/nfl";
+      if (sport === "cfb") return "/cfb";
+      return "/mlb";
+    }
+    if (sport === "nfl") return `/nfl/game/${encodeURIComponent(item.game_id)}`;
+    if (sport === "cfb") return `/cfb/game/${encodeURIComponent(item.game_id)}`;
+    return `/mlb/game/${encodeURIComponent(item.game_id)}`;
   }
 
   function playerHref(item) {
@@ -51,6 +56,9 @@
     if (item.result === "WIN") return `<span class="ntg-badge ntg-badge-positive">WIN</span>`;
     if (item.result === "LOSS") return `<span class="ntg-badge">LOSS</span>`;
     if (item.result === "PUSH") return `<span class="ntg-badge">PUSH</span>`;
+    if (item.result === "pending" || String(item.status || "").toLowerCase() === "final") {
+      return `<span class="ntg-badge">PENDING</span>`;
+    }
     return `<span class="ntg-badge">${String(item.status || "upcoming").toUpperCase()}</span>`;
   }
 

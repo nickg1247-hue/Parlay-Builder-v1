@@ -85,7 +85,7 @@ def get_scores_today(
     if sport == "cfb":
         return get_cfb_scores_today(
             game_date=game_date,
-            auto_resolve=auto_resolve and game_date is None,
+            auto_resolve=game_date is None,
             force_live=game_date is None,
         )
 
@@ -121,7 +121,7 @@ def get_scores_today(
     def _fetch_cfb() -> dict[str, Any]:
         return get_cfb_scores_today(
             game_date=game_date,
-            auto_resolve=auto_resolve and game_date is None,
+            auto_resolve=game_date is None,
             force_live=game_date is None,
         )
 

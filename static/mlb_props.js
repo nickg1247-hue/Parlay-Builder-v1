@@ -99,7 +99,8 @@
       el.hidden = el.getAttribute("data-sport-filter") !== key;
     });
     document.querySelectorAll("[data-sport-panel]").forEach((el) => {
-      el.hidden = el.getAttribute("data-sport-panel") !== key;
+      const allowed = (el.getAttribute("data-sport-panel") || "").split(/\s+/).filter(Boolean);
+      el.hidden = allowed.length > 0 && !allowed.includes(key);
     });
     const inlinePos = document.getElementById("pp-inline-position");
     if (inlinePos) inlinePos.hidden = key !== "nfl";
@@ -145,11 +146,32 @@
 
   function emptyMessageFor(data, filters) {
     if ((data?.total_matched || 0) > 0) return data.hint || "";
-    if (data?.empty_reason === "no_offers" || /haven't posted/i.test(data?.message || "")) {
-      return data.message || "Sportsbooks have not posted eligible props for the selected sport/date yet.";
+    if (data?.message) return data.message;
+    const reason = data?.empty_reason;
+    if (reason === "quota") {
+      return "Odds API quota is exhausted. NFL prop lines will refresh after quota resets.";
     }
-    if (hasTightFilters(filters)) return data?.message || EMPTY_FILTER_MESSAGE;
-    return data?.message || data?.hint || "Sportsbooks have not posted eligible props for the selected sport/date yet.";
+    if (reason === "kickoff") return "Pregame NFL player props are hidden after kickoff.";
+    if (reason === "no_cache") {
+      return "NFL games are on the slate, but prop lines are not cached yet. Click Refresh or wait for the morning job.";
+    }
+    if (reason === "no_slate") return "No NFL games on the current slate.";
+    if (reason === "no_offers" || /haven't posted/i.test(data?.message || "")) {
+      return "Sportsbooks have not posted eligible props for the selected sport/date yet.";
+    }
+    if (hasTightFilters(filters) || reason === "filters") return EMPTY_FILTER_MESSAGE;
+    return data?.hint || "Sportsbooks have not posted eligible props for the selected sport/date yet.";
+  }
+
+  function emptyTitleFor(data, filters) {
+    const reason = data?.empty_reason;
+    if (reason === "quota") return "ODDS QUOTA EXHAUSTED";
+    if (reason === "kickoff") return "PROPS HIDDEN AFTER KICKOFF";
+    if (reason === "no_cache") return "NFL PROP LINES NOT CACHED YET";
+    if (reason === "no_slate") return "NO NFL GAMES ON THIS SLATE";
+    if (reason === "no_offers" || /haven't posted/i.test(data?.message || "")) return "NO PROPS AVAILABLE";
+    if (hasTightFilters(filters) || reason === "filters") return "NO PROPS MATCH YOUR FILTERS";
+    return "NO PROPS AVAILABLE";
   }
 
   function renderTracker(tracker) {
@@ -618,16 +640,15 @@
 
     const props = search.props || [];
     _allProps = props;
-    const noOffers = search.empty_reason === "no_offers" || /haven't posted/i.test(search.message || "");
     const emptyOpts = {
       emptyMessage: emptyMessageFor(search, filters),
-      emptyTitle: noOffers ? "NO PROPS AVAILABLE" : "NO PROPS MATCH YOUR FILTERS",
+      emptyTitle: emptyTitleFor(search, filters),
       sport,
     };
     renderFeatured(props[0] || null, sport);
     renderOpportunities(props, props[0] || null, sport);
     renderAllProps(props, emptyOpts);
-    if (sport === "mlb") renderTracker(data.tracker);
+    renderTracker(data.tracker);
   }
 
   function propsFilterParams() {
@@ -959,7 +980,11 @@
       initPropSlipUi();
     }
     initSiteChrome();
-    initLiveTicker("live-ticker", { sport: "all" });
+    const sport = currentSport();
+    initLiveTicker("live-ticker", {
+      sport,
+      date: dateInputEl?.value || qs("date") || undefined,
+    });
 
     renderFromPageData(pageData());
     initPropsFilterDrawer();
