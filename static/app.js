@@ -9,6 +9,19 @@ function ntgSlateTodayIso() {
 }
 window.ntgSlateTodayIso = ntgSlateTodayIso;
 
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, (char) =>
+    ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    }[char])
+  );
+}
+window.escapeHtml = escapeHtml;
+
 function getPageData() {
   if (typeof window.readNTGPageData === "function") {
     return window.readNTGPageData();

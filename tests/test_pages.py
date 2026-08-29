@@ -272,6 +272,17 @@ def test_signin_page():
     assert "Sign in" in text
 
 
+def test_app_js_defines_escape_html_for_cfb_cards():
+    from app.config import PROJECT_ROOT
+
+    text = (PROJECT_ROOT / "static" / "app.js").read_text(encoding="utf-8")
+    define_at = text.find("function escapeHtml(")
+    use_at = text.find("${escapeHtml(label)}")
+    assert define_at != -1
+    assert use_at != -1
+    assert define_at < use_at
+
+
 def test_backtest_saved_endpoint(auth_env):
     _login()
     response = client.get("/api/backtest/saved")
