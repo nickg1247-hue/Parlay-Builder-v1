@@ -24,6 +24,9 @@ ESPN_GAMELOG = (
     "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/{athlete_id}/gamelog"
 )
 ESPN_INJURIES = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries"
+ESPN_TEAM_STATS = (
+    "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_id}/statistics"
+)
 
 _NAME_STRIP = re.compile(r"[^a-z0-9]+")
 
@@ -160,13 +163,27 @@ def _raw_gamelog(athlete_id: str) -> dict[str, Any]:
         return {}
 
 
-def nfl_game_log_values(
+def _opponent_abbr(event: dict[str, Any]) -> str:
+    opp = event.get("opponent") or event.get("opponentTeam") or {}
+    if isinstance(opp, str):
+        return normalize_nfl_team(opp)
+    if isinstance(opp, dict):
+        return normalize_nfl_team(
+            opp.get("abbreviation") or opp.get("displayName") or opp.get("name") or ""
+        )
+    team = event.get("team") or {}
+    if isinstance(team, dict):
+        return normalize_nfl_team(team.get("abbreviation") or "")
+    return ""
+
+
+def nfl_game_log_entries(
     athlete_id: str,
     market_stat: str,
     *,
     before: date | None = None,
-) -> list[float]:
-    """Chronological (oldest-first) per-game values dated strictly before *before*."""
+) -> list[dict[str, Any]]:
+    """Chronological (oldest-first) per-game rows dated strictly before *before*."""
     payload = _raw_gamelog(athlete_id)
     events: list[dict[str, Any]] = []
 
@@ -179,7 +196,7 @@ def nfl_game_log_values(
             if isinstance(payload.get(key), list):
                 events.extend(payload[key])
 
-    rows: list[tuple[date, float]] = []
+    rows: list[dict[str, Any]] = []
     for event in events:
         if not isinstance(event, dict):
             continue
@@ -192,7 +209,6 @@ def nfl_game_log_values(
             continue
         stats = event.get("stats") or event.get("statistics") or event
         if isinstance(stats, list):
-            # Some payloads use ordered stat names + values.
             continue
         passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
         rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
@@ -216,10 +232,99 @@ def nfl_game_log_values(
             "rushRecYards": rushing_yds + rec_yds,
             "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
         }
-        rows.append((game_date, float(mapping.get(market_stat, 0.0))))
+        rows.append(
+            {
+                "date": game_date.isoformat(),
+                "opponent": _opponent_abbr(event),
+                "stat_value": float(mapping.get(market_stat, 0.0)),
+                "stats": {
+                    "passingYards": passing_yds,
+                    "rushingYards": rushing_yds,
+                    "receivingYards": rec_yds,
+                    "receptions": _stat_number(stats, "receptions", "rec"),
+                },
+            }
+        )
 
-    rows.sort(key=lambda item: item[0])
-    return [value for _, value in rows]
+    rows.sort(key=lambda item: item["date"])
+    return rows
+
+
+def nfl_game_log_values(
+    athlete_id: str,
+    market_stat: str,
+    *,
+    before: date | None = None,
+) -> list[float]:
+    """Chronological (oldest-first) per-game values dated strictly before *before*."""
+    return [float(row["stat_value"]) for row in nfl_game_log_entries(athlete_id, market_stat, before=before)]
+
+
+def _walk_named_stats(node: Any, found: dict[str, float]) -> None:
+    if isinstance(node, dict):
+        name = str(node.get("name") or node.get("abbreviation") or node.get("displayName") or "").lower()
+        name = name.replace(" ", "").replace("_", "")
+        value = node.get("value")
+        if value is None:
+            value = node.get("displayValue")
+        try:
+            num = float(str(value).replace(",", "")) if value not in (None, "") else None
+        except (TypeError, ValueError):
+            num = None
+        if num is not None and name:
+            found[name] = num
+        for child in node.values():
+            _walk_named_stats(child, found)
+    elif isinstance(node, list):
+        for child in node:
+            _walk_named_stats(child, found)
+
+
+@lru_cache(maxsize=64)
+def opponent_defense_profile(team_abbr: str) -> dict[str, Any] | None:
+    """Season opponent-allowed rates from ESPN team statistics (public, no key)."""
+    team_id = espn_team_id(team_abbr)
+    if not team_id:
+        return None
+    try:
+        with _http() as client:
+            resp = client.get(ESPN_TEAM_STATS.format(team_id=team_id))
+            resp.raise_for_status()
+            payload = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("ESPN NFL team stats failed for %s: %s", team_abbr, exc)
+        return None
+    named: dict[str, float] = {}
+    _walk_named_stats(payload, named)
+
+    def _pick(*keys: str) -> float | None:
+        for key in keys:
+            compact = key.replace(" ", "").replace("_", "").lower()
+            if compact in named:
+                return named[compact]
+        return None
+
+    pass_yds = _pick(
+        "passingYardsAllowed",
+        "opponentPassingYards",
+        "passingYardsPerGameAllowed",
+        "netPassingYardsAllowed",
+    )
+    rush_yds = _pick(
+        "rushingYardsAllowed",
+        "opponentRushingYards",
+        "rushingYardsPerGameAllowed",
+    )
+    points = _pick("pointsAllowed", "pointsAgainst", "opponentPoints", "pointsPerGameAllowed")
+    if pass_yds is None and rush_yds is None and points is None:
+        return None
+    return {
+        "team": normalize_abbr(team_abbr),
+        "pass_yds_allowed": round(pass_yds, 1) if pass_yds is not None else None,
+        "rush_yds_allowed": round(rush_yds, 1) if rush_yds is not None else None,
+        "points_allowed": round(points, 1) if points is not None else None,
+        "source": "espn_team_statistics",
+    }
 
 
 def nfl_stat_on_date(

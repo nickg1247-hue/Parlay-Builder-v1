@@ -43,11 +43,19 @@ def get_player_prop_context(
     game_id: str | None = None,
 ) -> dict[str, Any]:
     """Recent games vs prop line + full season stat table."""
+    if sport == "nfl":
+        return get_nfl_player_prop_context(
+            player_id,
+            market_type=market_type,
+            line=line,
+            side=side,
+            season=season,
+        )
     if sport != "mlb":
         return {
             "sport": sport,
             "status": "unsupported",
-            "message": "Prop context available for MLB only in v1.",
+            "message": "Prop context available for MLB and NFL.",
         }
 
     mapping = MARKET_STAT.get(market_type)
@@ -140,6 +148,64 @@ def get_player_prop_context(
             "highlight_column": prop_col,
         },
         "depth": depth,
+    }
+
+
+def get_nfl_player_prop_context(
+    player_id: str,
+    *,
+    market_type: str,
+    line: float,
+    side: str,
+    season: int | None = None,
+) -> dict[str, Any]:
+    from app.services.nfl_player_stats import nfl_game_log_entries
+    from app.services.prop_engine.nfl_context import hit_rates_vs_line, recommended_hit_rates
+    from app.services.prop_engine.nfl_markets import MARKET_STAT, market_label as nfl_market_label
+
+    stat_key = MARKET_STAT.get(market_type)
+    if not stat_key:
+        return {"status": "error", "message": f"Unknown market: {market_type}"}
+    entries = nfl_game_log_entries(str(player_id), stat_key)
+    if season:
+        entries = [row for row in entries if str(row.get("date") or "").startswith(str(season))]
+    values = [float(row["stat_value"]) for row in entries]
+    hit_side = side if side in ("over", "under") else "over"
+    rates = hit_rates_vs_line(values, float(line))
+    rec = recommended_hit_rates(rates, hit_side)
+    games = []
+    for row in reversed(entries[-20:]):
+        val = float(row["stat_value"])
+        hit = val > float(line) if hit_side == "over" else val < float(line)
+        games.append(
+            {
+                "date": row.get("date"),
+                "opponent": row.get("opponent") or "",
+                "prop_hit": hit,
+                "stats": {"stat": val, **(row.get("stats") or {})},
+            }
+        )
+    return {
+        "status": "ok",
+        "sport": "nfl",
+        "player_id": str(player_id),
+        "player_name": "",
+        "photo_url": None,
+        "market_type": market_type,
+        "market_label": nfl_market_label(market_type),
+        "line": float(line),
+        "side": hit_side,
+        "season": season or date.today().year,
+        "prop_stat_key": "stat",
+        "hit_rates": rec,
+        "sample_games": len(values),
+        "recent_games": games,
+        "game_log": {
+            "columns": [{"key": "stat", "label": nfl_market_label(market_type)}],
+            "games": games,
+            "highlight_column": "stat",
+        },
+        "depth": {},
     }
 
 

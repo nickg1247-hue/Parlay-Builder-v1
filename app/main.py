@@ -1802,7 +1802,7 @@ async def player_prop_context(
     season: int | None = Query(None),
     game_id: str | None = Query(None),
 ):
-    if sport not in ("mlb", "nba", "cfb"):
+    if sport not in ("mlb", "nba", "cfb", "nfl"):
         raise HTTPException(status_code=400, detail="Unsupported sport")
     canonical = market_type
     if canonical.endswith("_alternate"):

@@ -175,11 +175,22 @@ python scripts/refresh_props_slate.py --sport nfl --loop 3
 
 Dates use `slate_today()` (America/New_York). Thu–Mon look-ahead runs when the requested day is ET today.
 
-**NFL model:** ESPN game logs (strictly before slate date) + spread/total environment. L3 usage is weighted above season average. Not the MLB L5/L10 formula. Both Over and Under are scored against vig-free market probability when both sides are posted.
+**NFL model:** ESPN game logs (strictly before slate date) + spread/total environment + ESPN opponent yards allowed + ESPN scoreboard weather/kickoff window. Recent role (L3/L5) is weighted above season average for the **projection**. L5 / L10 / season **hit rates vs the posted line** are shown as records and used as a small blend in cash confidence — not a copy of the MLB score formula. Both Over and Under are scored against vig-free market probability when both sides are posted. Alternate yards/reception ladders come from Odds API `*_alternate` markets (extra credits; refresh with Alt lines or the include-alternates checkbox).
 
-**Measure before retune:** `python scripts/backtest_nfl_props.py` grades cached recommended sides vs ESPN box scores into `data/processed/nfl_props_backtest.json`. Do not change projection weights until that report is reviewed.
+**Cash confidence %:** `P(recommended side)` from the context-adjusted projection, blended with L10 hit rate when sample ≥ 5, then haircut for injury, tiny samples, and outdoor weather risk. This is our cashing estimate, not a sportsbook implied price.
+
+**Measure before retune:** `python scripts/backtest_nfl_props.py` grades cached recommended sides vs ESPN box scores into `data/processed/nfl_props_backtest.json`. Do not retune MIN_EDGE / distribution families until that report is reviewed.
 
 **Not fabricated:** snap share / route participation are omitted until we ingest those feeds.
+
+**External data (NFL props):**
+
+| Purpose | Source |
+|---------|--------|
+| Posted main + alt lines | The Odds API event-odds (`americanfootball_nfl`) |
+| Player game logs / injuries | ESPN public athlete gamelog + injuries APIs |
+| Opponent defense (yards allowed) | ESPN team statistics `.../nfl/teams/{id}/statistics` |
+| Weather / indoor / kickoff | ESPN scoreboard `competitions.weather` + `venue.indoor` + `date` |
 
 ```powershell
 pytest tests/test_props_nfl.py tests/test_pages.py tests/test_props_mlb.py tests/test_watchlist.py tests/test_prop_pick_tracker.py -q

@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/static/design.css?v=20260725">
   <link rel="stylesheet" href="/static/home-v2.css?v=20260820">
   <link rel="stylesheet" href="/static/ntg-system.css?v=20260828">
-  <link rel="stylesheet" href="/static/props-page.css?v=20260828">
+  <link rel="stylesheet" href="/static/props-page.css?v=20260913">
 </head>
 <body class="ntg-shell home-v2 slate-mlb">
   <div class="app-shell">
@@ -104,11 +104,17 @@
             <option value="under">Unders</option>
           </select>
           <select id="pp-inline-book" aria-label="Sportsbook"></select>
+          <select id="pp-inline-line-kind" aria-label="Main or alternate lines" data-sport-filter="nfl">
+            <option value="main">Main lines</option>
+            <option value="alternate">Alt lines</option>
+            <option value="both">Main + alt</option>
+          </select>
           <select id="pp-inline-sort" aria-label="Sort">
             <option value="score">Best first</option>
             <option value="edge">Model edge</option>
-            <option value="hit_l5" data-sport-filter="mlb">L5 hit rate</option>
-            <option value="hit_l10" data-sport-filter="mlb">L10 hit rate</option>
+            <option value="confidence" data-sport-filter="nfl">Cash confidence</option>
+            <option value="hit_l5" data-sport-filter="mlb nfl">L5 hit rate</option>
+            <option value="hit_l10" data-sport-filter="mlb nfl">L10 hit rate</option>
             <option value="risk_asc">Lowest risk</option>
             <option value="risk_desc">Highest risk</option>
           </select>
@@ -229,8 +235,9 @@
           <select id="filter-sort" name="sort" class="home-props-select">
             <option value="score" selected>Best first (model score)</option>
             <option value="edge">Model edge</option>
-            <option value="hit_l5" data-sport-filter="mlb">L5 hit rate</option>
-            <option value="hit_l10" data-sport-filter="mlb">L10 hit rate</option>
+            <option value="confidence" data-sport-filter="nfl">Cash confidence</option>
+            <option value="hit_l5" data-sport-filter="mlb nfl">L5 hit rate</option>
+            <option value="hit_l10" data-sport-filter="mlb nfl">L10 hit rate</option>
             <option value="risk_asc">Lowest risk</option>
             <option value="risk_desc">Highest risk</option>
           </select>
@@ -256,7 +263,7 @@
             <option value="65" selected>65+ (recommended)</option>
           </select>
         </label>
-        <label class="props-filter-field" data-sport-filter="mlb">
+        <label class="props-filter-field" data-sport-filter="mlb nfl">
           <span>Min L10 hit rate</span>
           <select id="filter-min-hit-l10" name="min_hit_l10" class="home-props-select">
             <option value="">Any (includes weak)</option>
@@ -266,7 +273,7 @@
             <option value="80">80%+</option>
           </select>
         </label>
-        <label class="props-filter-field" data-sport-filter="mlb">
+        <label class="props-filter-field" data-sport-filter="mlb nfl">
           <span>Min L5 hit rate</span>
           <select id="filter-min-hit-l5" name="min_hit_l5" class="home-props-select">
             <option value="" selected>Any</option>
@@ -284,8 +291,8 @@
         </div>
       </form>
   </aside>
-  <script src="/static/player_prop_modal.js?v=20260828"></script>
+  <script src="/static/player_prop_modal.js?v=20260913"></script>
   <script src="/static/app.js?v=20260828"></script>
-  <script src="/static/mlb_props.js?v=20260902"></script>
+  <script src="/static/mlb_props.js?v=20260913"></script>
 </body>
 </html>

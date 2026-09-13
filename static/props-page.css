@@ -615,6 +615,17 @@
   white-space: nowrap;
 }
 
+.pp-hit-rates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pp-featured-hits {
+  margin-top: 12px;
+}
+
 /* --- Mobile list --- */
 
 .pp-mobile-list {

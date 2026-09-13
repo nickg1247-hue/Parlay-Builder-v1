@@ -235,11 +235,11 @@
     return `
       <div class="pp-analysis-stats">
         <div class="pp-stat"><span class="pp-stat-label">NTG Projection</span><span class="pp-stat-value">${prop.model_projection ?? "—"}</span></div>
-        <div class="pp-stat pp-stat--prob"><span class="pp-stat-label">Win Probability</span><span class="pp-stat-value">${fmtPct(modelPct)}</span></div>
+        <div class="pp-stat pp-stat--prob"><span class="pp-stat-label">${prop.sport === "nfl" ? "Cash confidence" : "Win Probability"}</span><span class="pp-stat-value">${prop.confidence_pct != null ? `${Number(prop.confidence_pct).toFixed(1)}%` : fmtPct(modelPct)}</span></div>
         <div class="pp-stat"><span class="pp-stat-label">Market Probability</span><span class="pp-stat-value">${fmtPct(mktPct)}</span></div>
         <div class="pp-stat pp-stat--edge"><span class="pp-stat-label">Edge</span><span class="pp-stat-value${edge != null && Number(edge) > 0 ? " is-pos" : ""}">${edgeLabel === "—" ? "—" : (Number(edge) > 0 ? "+" : "") + edgeLabel.replace("+", "")}</span></div>
         ${book ? `<div class="pp-stat"><span class="pp-stat-label">Sportsbook</span><span class="pp-stat-value">${book}</span></div>` : ""}
-        ${conf ? `<div class="pp-stat"><span class="pp-stat-label">Confidence</span><span class="pp-stat-value">${conf}</span></div>` : ""}
+        <div class="pp-stat"><span class="pp-stat-label">Confidence</span><span class="pp-stat-value">${prop.confidence_pct != null ? `${Number(prop.confidence_pct).toFixed(1)}%` : (conf || "—")}</span></div>
       </div>`;
   }
 
@@ -516,6 +516,10 @@
     const usage = analysis.usage || {};
     const env = analysis.environment || {};
     const risks = analysis.risks || prop.risk_flags || [];
+    const rates = analysis.hit_rates || {};
+    const weather = env.weather || {};
+    const kickoff = env.kickoff || {};
+    const matchup = analysis.matchup || {};
     const sides = (prop.sides || [])
       .map(
         (s) =>
@@ -540,6 +544,12 @@
       ${analysisHeroHtml(prop)}
       ${why}
       ${projectionVsLineHtml(prop)}
+      <div class="prop-modal-rates">
+        <span class="hero-chip">L5 ${fmtPct(rates.l5 ?? prop.hit_rate_l5)}</span>
+        <span class="hero-chip">L10 ${fmtPct(rates.l10 ?? prop.hit_rate_l10)}</span>
+        <span class="hero-chip">Season ${fmtPct(rates.season ?? prop.hit_rate_season)}</span>
+        ${prop.confidence_pct != null ? `<span class="hero-chip">Cash ${Number(prop.confidence_pct).toFixed(1)}%</span>` : ""}
+      </div>
       <section class="why-pick-card ntg-card">
         <h3 class="why-pick-card__title">Projection</h3>
         <p>Model ${prop.model_projection ?? "—"} · P(${sideLabel}) ${
@@ -555,8 +565,19 @@
         }</p>
       </section>
       <section class="why-pick-card ntg-card">
+        <h3 class="why-pick-card__title">Matchup</h3>
+        <p>${matchup.label || `${prop.team || ""} vs ${prop.opponent || ""}`}${
+          env.defense_multiplier != null ? ` · defense factor ${env.defense_multiplier}` : ""
+        }</p>
+      </section>
+      <section class="why-pick-card ntg-card">
         <h3 class="why-pick-card__title">Game environment</h3>
         <p>Spread ${env.team_spread ?? "—"} · Total ${env.game_total ?? "—"} · Implied ${env.team_implied_total ?? "—"}</p>
+        <p>${kickoff.kickoff_et || kickoff.window || "Kickoff TBD"}${
+          weather.note ? ` · ${weather.note}` : ""
+        }${weather.temp_f != null ? ` · ${weather.temp_f}°F` : ""}${
+          weather.wind_mph != null ? ` · wind ${weather.wind_mph} mph` : ""
+        }</p>
       </section>
       ${
         risks.length

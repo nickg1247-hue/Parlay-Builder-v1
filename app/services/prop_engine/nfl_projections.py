@@ -94,6 +94,9 @@ def build_nfl_projection(
     team_spread: float | None = None,
     team_implied_total: float | None = None,
     injury_note: str | None = None,
+    defense_multiplier: float = 1.0,
+    weather_multiplier: float = 1.0,
+    kickoff_multiplier: float = 1.0,
 ) -> dict[str, Any]:
     """Recent-weighted projection. L3 outranks season average when roles change."""
     clean = [float(v) for v in values if v is not None]
@@ -118,11 +121,15 @@ def build_nfl_projection(
     l5_avg = statistics.mean(l5) if l5 else season_avg
     # Heavy recent weight so a 41% season snap / 78% last-3 usage pattern moves.
     base = _weighted_mean([l3_avg, l5_avg, season_avg], [0.50, 0.30, 0.20])
-    env = _script_multiplier(
+    script = _script_multiplier(
         market_type=market_type,
         team_spread=team_spread,
         team_implied_total=team_implied_total,
     )
+    env = script * float(defense_multiplier or 1.0) * float(weather_multiplier or 1.0) * float(
+        kickoff_multiplier or 1.0
+    )
+    env = round(max(0.72, min(1.28, env)), 4)
     projection = max(0.0, base * env)
     std = statistics.pstdev(clean) if len(clean) >= 2 else max(projection * 0.35, 0.8)
     if market_type in COUNT_MARKETS:
@@ -153,6 +160,10 @@ def build_nfl_projection(
         "season_avg": round(season_avg, 3),
         "role_shift": role_shift,
         "env_multiplier": env,
+        "script_multiplier": script,
+        "defense_multiplier": round(float(defense_multiplier or 1.0), 4),
+        "weather_multiplier": round(float(weather_multiplier or 1.0), 4),
+        "kickoff_multiplier": round(float(kickoff_multiplier or 1.0), 4),
         "injury_note": injury_note,
     }
 

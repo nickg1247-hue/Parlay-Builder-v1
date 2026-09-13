@@ -11,8 +11,15 @@ import pytest
 
 from app.services.prop_books import normalize_prop_sport
 from app.services.prop_engine.nfl_markets import MARKET_LABELS, list_nfl_market_types
+from app.services.prop_engine.nfl_context import (
+    cash_confidence,
+    hit_rates_vs_line,
+    kickoff_profile,
+    weather_market_multiplier,
+    weather_profile,
+)
 from app.services.prop_engine.nfl_projections import build_nfl_projection, score_nfl_prop
-from app.services.props_nfl import _load_nfl_props_schedule, parse_nfl_event_props
+from app.services.props_nfl import _load_nfl_props_schedule, parse_nfl_event_props, score_nfl_prop_row
 
 
 def _event(over: int = -110, under: int = -110, point: float = 74.5) -> dict:
@@ -232,3 +239,94 @@ def test_search_props_dispatches_nfl_without_touching_mlb(monkeypatch):
     assert result["props"][0]["player"] == "A"
     assert "mlb" not in called
     assert called["nfl"]["position"] == "WR"
+
+
+def test_hit_rates_vs_posted_line():
+    values = [40, 50, 60, 70, 75, 80, 90, 100, 110, 120]
+    rates = hit_rates_vs_line(values, 75.5)
+    assert rates["hit_rate_over_l5"] == 1.0
+    assert rates["hit_rate_under_l5"] == 0.0
+    assert rates["hit_rate_over_season"] == 0.5
+    assert rates["sample_games_season"] == 10
+
+
+def test_cash_confidence_haircuts_injury_and_weather():
+    healthy = cash_confidence(
+        model_p=0.62,
+        hit_l10=0.70,
+        sample_games=8,
+        injury_note=None,
+        weather_risk="none",
+        projection_confidence="high",
+    )
+    hurt = cash_confidence(
+        model_p=0.62,
+        hit_l10=0.70,
+        sample_games=8,
+        injury_note="Questionable — ankle",
+        weather_risk="high",
+        projection_confidence="high",
+    )
+    assert healthy["confidence_pct"] is not None
+    assert hurt["confidence_pct"] < healthy["confidence_pct"]
+
+
+def test_kickoff_and_weather_multipliers():
+    profile = kickoff_profile("2026-09-13T20:20:00Z")
+    assert profile["window"] in ("sunday_night", "primetime", "afternoon", "sunday_early")
+    wx = weather_profile(
+        {
+            "indoor": False,
+            "weather_display": "Rain",
+            "weather_temp": 48,
+            "weather_wind_mph": 18,
+        }
+    )
+    assert wx["risk"] == "high"
+    passing = weather_market_multiplier("player_pass_yds", wx)
+    rushing = weather_market_multiplier("player_rush_yds", wx)
+    assert passing < 1.0
+    assert rushing > 1.0
+    indoor = weather_profile({"indoor": True, "weather_display": "Rain"})
+    assert indoor["risk"] == "none"
+    assert weather_market_multiplier("player_pass_yds", indoor) == 1.0
+
+
+def test_score_nfl_prop_row_attaches_hit_rates_and_confidence(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.props_nfl.resolve_nfl_player",
+        lambda name, team: {"position": "RB", "athlete_id": "123"},
+    )
+    monkeypatch.setattr("app.services.props_nfl.player_injury_note", lambda *_a, **_k: None)
+    monkeypatch.setattr(
+        "app.services.props_nfl.nfl_game_log_values",
+        lambda *_a, **_k: [40, 45, 50, 80, 82, 85, 88, 90],
+    )
+    monkeypatch.setattr("app.services.props_nfl.opponent_defense_profile", lambda *_a, **_k: None)
+    rows = score_nfl_prop_row(
+        {
+            "player": "Nick Chubb",
+            "market_type": "player_rush_yds",
+            "market_label": "Rushing yards",
+            "line": 64.5,
+            "line_kind": "main",
+            "over_odds": -110,
+            "under_odds": -110,
+        },
+        game={
+            "game_id": "401",
+            "home_team_abbr": "CLE",
+            "away_team_abbr": "PIT",
+            "start_time_utc": "2026-09-13T17:00:00Z",
+            "indoor": True,
+        },
+        game_date=date(2026, 9, 13),
+        env={"home": "CLE", "away": "PIT", "spread_home": -3.5, "total": 41.5},
+    )
+    assert len(rows) == 1
+    prop = rows[0]
+    assert prop["hit_rate_over_l5"] is not None
+    assert prop["hit_rate_l10"] is not None
+    assert prop["confidence_pct"] is not None
+    assert prop["line_kind"] == "main"
+    assert "sides" in prop

@@ -102,6 +102,27 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
     from app.ingest.nfl import _parse_espn_odds
 
     espn_odds = _parse_espn_odds(competition)
+    weather = competition.get("weather") or event.get("weather") or {}
+    venue = competition.get("venue") or {}
+    indoor = bool(venue.get("indoor"))
+    wind = weather.get("windSpeed") or weather.get("gust") or weather.get("displayWindSpeed")
+    try:
+        wind_mph = float(wind) if wind not in (None, "") else None
+    except (TypeError, ValueError):
+        wind_mph = None
+    temp = weather.get("temperature")
+    temp_f = None
+    try:
+        if temp not in (None, ""):
+            temp_f = float(temp)
+    except (TypeError, ValueError):
+        temp_f = None
+    condition = (
+        weather.get("displayValue")
+        or weather.get("conditionId")
+        or weather.get("summary")
+        or ""
+    )
     return {
         "sport": "nfl",
         "game_id": str(event.get("id")),
@@ -130,6 +151,13 @@ def live_game_record(event: dict[str, Any]) -> dict[str, Any]:
         "espn_away_ml": espn_odds.get("espn_away_ml"),
         "espn_spread": espn_odds.get("espn_spread"),
         "espn_ou": espn_odds.get("espn_ou"),
+        "indoor": indoor,
+        "venue_indoor": indoor,
+        "venue_name": venue.get("fullName") or venue.get("name"),
+        "weather_display": str(condition).strip() or None,
+        "weather_condition": str(condition).strip() or None,
+        "weather_temp": temp_f,
+        "weather_wind_mph": wind_mph,
     }
 
 

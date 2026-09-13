@@ -228,6 +228,8 @@ async def build_player_props_page_data(
         "position": kwargs.get("position") or "",
         "team": kwargs.get("team") or "",
         "min_edge": kwargs.get("min_edge"),
+        "min_hit_l5": kwargs.get("min_hit_l5"),
+        "min_hit_l10": kwargs.get("min_hit_l10"),
     }
     return {
         "kind": "player_props",

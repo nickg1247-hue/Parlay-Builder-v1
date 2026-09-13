@@ -96,7 +96,8 @@
       }
     });
     document.querySelectorAll("[data-sport-filter]").forEach((el) => {
-      el.hidden = el.getAttribute("data-sport-filter") !== key;
+      const allowed = (el.getAttribute("data-sport-filter") || "").split(/\s+/).filter(Boolean);
+      el.hidden = allowed.length > 0 && !allowed.includes(key);
     });
     document.querySelectorAll("[data-sport-panel]").forEach((el) => {
       const allowed = (el.getAttribute("data-sport-panel") || "").split(/\s+/).filter(Boolean);
@@ -221,8 +222,12 @@
   }
 
   function propWinProb(p) {
+    if (p?.confidence_pct != null && !Number.isNaN(Number(p.confidence_pct))) {
+      return Number(p.confidence_pct) / 100;
+    }
     const side = propSide(p);
     const raw =
+      p?.cash_probability ??
       p?.model_probability ??
       p?.recommended_probability ??
       (side === "under" ? p?.model_probability_under : p?.model_probability_over);
@@ -237,6 +242,31 @@
       return Math.abs(n) > 1 ? n / 100 : n;
     }
     return null;
+  }
+
+  function propHitRates(p) {
+    const side = propSide(p);
+    if (side === "under") {
+      return {
+        l5: p.hit_rate_under_l5 ?? p.hit_rate_l5,
+        l10: p.hit_rate_under_l10 ?? p.hit_rate_l10 ?? p.recommended_hit_rate,
+        season: p.hit_rate_under_season ?? p.hit_rate_season,
+      };
+    }
+    return {
+      l5: p.hit_rate_over_l5 ?? p.hit_rate_l5,
+      l10: p.hit_rate_over_l10 ?? p.hit_rate_l10 ?? p.recommended_hit_rate,
+      season: p.hit_rate_over_season ?? p.hit_rate_season,
+    };
+  }
+
+  function hitRateChipsHtml(p) {
+    const rates = propHitRates(p);
+    const chip = typeof propHitRateChip === "function" ? propHitRateChip : (label, rate) => {
+      const pct = rate == null ? "—" : `${Math.round(Number(rate) * 100)}%`;
+      return `<span class="hit-rate-chip"><span class="hit-rate-lbl">${label}</span> ${pct}</span>`;
+    };
+    return `<span class="hit-rate-row pp-hit-rates">${chip("L5", rates.l5)}${chip("L10", rates.l10)}${chip("Season", rates.season)}</span>`;
   }
 
   function fmtWinProb(p) {
@@ -258,6 +288,10 @@
   }
 
   function propConfidence(p) {
+    if (p?.confidence_pct != null && !Number.isNaN(Number(p.confidence_pct))) {
+      const label = p.confidence_label ? ` ${p.confidence_label}` : "";
+      return `${Number(p.confidence_pct).toFixed(1)}%${label}`;
+    }
     return p?.line_strength_label || p?.grade_label || p?.line_strength || p?.confidence || "—";
   }
 
@@ -345,7 +379,7 @@
             <span class="pp-stat-value">${fmtProjection(prop)}</span>
           </div>
           <div class="pp-stat pp-stat--prob">
-            <span class="pp-stat-label">Win Probability</span>
+            <span class="pp-stat-label">${sport === "nfl" ? "Cash confidence" : "Win Probability"}</span>
             <span class="pp-stat-value">${fmtWinProb(prop)}</span>
             <span class="pp-prob-bar" aria-hidden="true"><span style="--pp-prob:${winPct}%"></span></span>
           </div>
@@ -363,6 +397,7 @@
             <span class="pp-stat-value">${propConfidence(prop)}</span>
           </div>
         </div>
+        ${sport === "nfl" ? `<div class="pp-featured-hits">${hitRateChipsHtml(prop)}</div>` : ""}
         <div class="pp-featured-actions">
           <button type="button" class="ntg-btn ntg-btn-ghost" data-save-featured>Save</button>
           <button type="button" class="ntg-btn ntg-btn-primary" data-open-featured>View Full Analysis</button>
@@ -428,6 +463,7 @@
             <span class="pp-opp-edge${edge != null && edge > 0 ? " is-pos" : ""}">${fmtEdge(p)}</span>
           </div>
           <p class="pp-opp-book">${bookLabel(p)} ${fmtOdds(recommendedOdds(p))}</p>
+          ${sport === "nfl" ? hitRateChipsHtml(p) : ""}
         </article>`;
       })
       .join("");
@@ -490,6 +526,7 @@
               <div>
                 <div class="pp-table-name">${p.player || ""}</div>
                 <div class="pp-table-sub">${playerMeta(p, sport)}</div>
+                ${sport === "nfl" ? hitRateChipsHtml(p) : ""}
               </div>
             </div>
           </td>
@@ -518,10 +555,11 @@
           </div>
           <div>
             <p class="pp-mobile-line">${sideLine(p)}</p>
-            <div class="pp-mobile-metrics">
+            <p class="pp-mobile-metrics">
               <span>${fmtWinProb(p)}</span>
               <span class="pp-table-edge${edge != null && edge > 0 ? " is-pos" : ""}">${fmtEdge(p)}</span>
             </div>
+            ${sport === "nfl" ? hitRateChipsHtml(p) : ""}
           </div>
         </button>`;
       })
@@ -535,7 +573,7 @@
               <th>Market</th>
               <th data-sort="line">Line</th>
               <th>NTG Projection</th>
-              <th data-sort="prob">Win Probability</th>
+              <th data-sort="prob">${sport === "nfl" ? "Cash %" : "Win Probability"}</th>
               <th data-sort="edge">Edge</th>
               <th>Best Line</th>
               <th>Book</th>
@@ -658,7 +696,7 @@
     for (const [key, value] of new FormData(form).entries()) {
       if (value == null || String(value).trim() === "") continue;
       if (sport !== "nfl" && (key === "position" || key === "min_edge")) continue;
-      if (sport !== "mlb" && (key === "min_hit_l5" || key === "min_hit_l10")) continue;
+      if (sport !== "mlb" && sport !== "nfl" && (key === "min_hit_l5" || key === "min_hit_l10")) continue;
       params.append(key, String(value));
     }
     params.set("sport", sport);
@@ -669,6 +707,10 @@
   function buildRefreshUrl() {
     const params = propsFilterParams();
     params.set("refresh", "true");
+    const lineKind = params.get("line_kind") || "main";
+    if (lineKind === "alternate" || lineKind === "both") {
+      params.set("include_alternates", "true");
+    }
     const base = params.get("sport") === "mlb" ? "/mlb/props" : "/props";
     return `${base}?${params.toString()}`;
   }
@@ -875,6 +917,7 @@
       ["pp-inline-position", positionEl],
       ["pp-inline-market", marketEl],
       ["pp-inline-side", sideEl],
+      ["pp-inline-line-kind", lineKindEl],
       ["pp-inline-book", bookEl],
       ["pp-inline-sort", sortEl],
     ];
@@ -889,6 +932,7 @@
       ["pp-inline-position", positionEl],
       ["pp-inline-market", marketEl],
       ["pp-inline-side", sideEl],
+      ["pp-inline-line-kind", lineKindEl],
       ["pp-inline-book", bookEl],
       ["pp-inline-sort", sortEl],
     ];
