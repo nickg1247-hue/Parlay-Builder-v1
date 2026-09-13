@@ -334,6 +334,37 @@ def test_kickoff_and_weather_multipliers():
     assert weather_market_multiplier("player_pass_yds", indoor) == 1.0
 
 
+def test_hit_rates_count_misses_not_perfect_unders():
+    """Etienne-style: two overs in last 5 must not show as 5/5 unders."""
+    entries = [
+        {"date": "2025-11-23", "season_year": 2025, "opponent": "ARI", "stat_value": 86, "stats": {"rushingAttempts": 18}},
+        {"date": "2025-11-30", "season_year": 2025, "opponent": "TEN", "stat_value": 28, "stats": {"rushingAttempts": 12}},
+        {"date": "2025-12-07", "season_year": 2025, "opponent": "IND", "stat_value": 74, "stats": {"rushingAttempts": 20}},
+        {"date": "2025-12-14", "season_year": 2025, "opponent": "NYJ", "stat_value": 32, "stats": {"rushingAttempts": 12}},
+        {"date": "2025-12-21", "season_year": 2025, "opponent": "DEN", "stat_value": 50, "stats": {"rushingAttempts": 16}},
+        {"date": "2025-12-28", "season_year": 2025, "opponent": "IND", "stat_value": 76, "stats": {"rushingAttempts": 19}},
+        {"date": "2026-01-04", "season_year": 2025, "opponent": "TEN", "stat_value": 32, "stats": {"rushingAttempts": 14}},
+        {"date": "2026-01-11", "season_year": 2025, "opponent": "BUF", "stat_value": 67, "stats": {"rushingAttempts": 10}},
+        {"date": "2026-08-15", "season_year": 2026, "opponent": "KC", "stat_value": 0, "stats": {"rushingAttempts": 0}},
+        {"date": "2026-08-22", "season_year": 2026, "opponent": "MIA", "stat_value": 0, "stats": {"rushingAttempts": 0}},
+        {"date": "2026-08-29", "season_year": 2026, "opponent": "TB", "stat_value": 0, "stats": {"rushingAttempts": 0}},
+    ]
+    rates = hit_rates_from_log(
+        entries,
+        55.5,
+        slate_date=date(2026, 9, 13),
+        opponent="CAR",
+        market_stat="rushingYards",
+    )
+    assert rates["hit_count_under_l5"] == 3
+    assert rates["hit_count_over_l5"] == 2
+    assert rates["sample_games_l5"] == 5
+    assert rates["hit_rate_under_l5"] == 0.6
+    assert rates["hit_rate_under_l10"] != 1.0
+    recent5 = [g["stat"] for g in rates["recent_games"][-5:]]
+    assert recent5 == [32.0, 50.0, 76.0, 32.0, 67.0]
+
+
 def test_score_nfl_prop_row_attaches_hit_rates_and_confidence(monkeypatch):
     monkeypatch.setattr(
         "app.services.props_nfl.resolve_nfl_player",

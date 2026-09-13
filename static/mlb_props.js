@@ -246,27 +246,43 @@
 
   function propHitRates(p) {
     const side = propSide(p);
+    const rec = p?.analysis?.hit_rates || {};
     if (side === "under") {
       return {
         l5: p.hit_rate_under_l5 ?? p.hit_rate_l5,
         l10: p.hit_rate_under_l10 ?? p.hit_rate_l10 ?? p.recommended_hit_rate,
         season: p.hit_rate_under_season ?? p.hit_rate_season,
+        l5Hits: p.hit_count_under_l5 ?? rec.l5_hits,
+        l10Hits: p.hit_count_under_l10 ?? rec.l10_hits,
+        l5N: p.sample_games_l5 ?? rec.l5_n,
+        l10N: p.sample_games_l10 ?? rec.l10_n,
       };
     }
     return {
       l5: p.hit_rate_over_l5 ?? p.hit_rate_l5,
       l10: p.hit_rate_over_l10 ?? p.hit_rate_l10 ?? p.recommended_hit_rate,
       season: p.hit_rate_over_season ?? p.hit_rate_season,
+      l5Hits: p.hit_count_over_l5 ?? rec.l5_hits,
+      l10Hits: p.hit_count_over_l10 ?? rec.l10_hits,
+      l5N: p.sample_games_l5 ?? rec.l5_n,
+      l10N: p.sample_games_l10 ?? rec.l10_n,
     };
   }
 
   function hitRateChipsHtml(p) {
     const rates = propHitRates(p);
-    const chip = typeof propHitRateChip === "function" ? propHitRateChip : (label, rate) => {
+    const chip = (label, rate, hits, sample) => {
+      if (hits != null && sample) {
+        const tierFn = typeof propHitRateTier === "function" ? propHitRateTier : () => null;
+        const tier = tierFn(rate, label);
+        const cls = tier ? `hit-rate-chip hit-rate-${tier}` : "hit-rate-chip";
+        return `<span class="${cls}"><span class="hit-rate-lbl">${label}</span> ${hits}/${sample}</span>`;
+      }
+      if (typeof propHitRateChip === "function") return propHitRateChip(label, rate);
       const pct = rate == null ? "—" : `${Math.round(Number(rate) * 100)}%`;
       return `<span class="hit-rate-chip"><span class="hit-rate-lbl">${label}</span> ${pct}</span>`;
     };
-    return `<span class="hit-rate-row pp-hit-rates">${chip("L5", rates.l5)}${chip("L10", rates.l10)}${chip("Season", rates.season)}</span>`;
+    return `<span class="hit-rate-row pp-hit-rates">${chip("L5", rates.l5, rates.l5Hits, rates.l5N)}${chip("L10", rates.l10, rates.l10Hits, rates.l10N)}${chip("Season", rates.season)}</span>`;
   }
 
   function fmtWinProb(p) {

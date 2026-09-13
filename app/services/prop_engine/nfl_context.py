@@ -36,12 +36,73 @@ def _side_hits(stat: float, line: float, side: str) -> bool:
 
 
 def _hit_pair(values: list[float], line: float) -> tuple[float | None, float | None]:
-    if not values:
+    over_n, under_n, n = _hit_counts(values, line)
+    if n == 0:
         return None, None
-    n = len(values)
-    over = sum(1 for v in values if _side_hits(v, line, "over")) / n
-    under = sum(1 for v in values if _side_hits(v, line, "under")) / n
-    return round(over, 3), round(under, 3)
+    return round(over_n / n, 3), round(under_n / n, 3)
+
+
+def _hit_counts(values: list[float], line: float) -> tuple[int, int, int]:
+    if not values:
+        return 0, 0, 0
+    over_n = sum(1 for v in values if _side_hits(v, line, "over"))
+    under_n = sum(1 for v in values if _side_hits(v, line, "under"))
+    return over_n, under_n, len(values)
+
+
+def _volume_ok(entry: dict[str, Any], market_stat: str | None) -> bool:
+    """Skip DNP / no-touch games so zeros do not inflate unders."""
+    if not market_stat:
+        return True
+    stats = entry.get("stats") or {}
+    if not stats:
+        return True
+    if market_stat in ("rushingYards", "rushingAttempts", "rushingLong"):
+        att = stats.get("rushingAttempts")
+        return att is None or float(att) > 0
+    if market_stat in ("receivingYards", "receptions", "receivingLong"):
+        rec = stats.get("receptions")
+        yds = stats.get("receivingYards")
+        if rec is None and yds is None:
+            return True
+        return float(rec or 0) > 0 or float(yds or 0) > 0
+    if market_stat in (
+        "passingYards",
+        "passingAttempts",
+        "passingCompletions",
+        "passingTouchdowns",
+        "interceptions",
+        "passingLong",
+    ):
+        att = stats.get("passingAttempts")
+        return att is None or float(att) > 0
+    if market_stat == "rushRecYards":
+        rush_att = stats.get("rushingAttempts")
+        rec = stats.get("receptions")
+        if rush_att is None and rec is None:
+            return True
+        return float(rush_att or 0) > 0 or float(rec or 0) > 0
+    return True
+
+
+def _recent_vs_line(rows: list[dict[str, Any]], line: float, n: int = 10) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for entry in rows[-n:]:
+        try:
+            stat = float(entry["stat_value"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        out.append(
+            {
+                "date": entry.get("date"),
+                "opponent": entry.get("opponent"),
+                "stat": stat,
+                "over": _side_hits(stat, line, "over"),
+                "under": _side_hits(stat, line, "under"),
+                "push": not _side_hits(stat, line, "over") and not _side_hits(stat, line, "under"),
+            }
+        )
+    return out
 
 
 def hit_rates_vs_line(values: list[float], line: float) -> dict[str, float | None]:
@@ -79,11 +140,17 @@ def hit_rates_from_log(
     slate_date: Any,
     opponent: str | None = None,
     similar_opponents: set[str] | None = None,
+    market_stat: str | None = None,
 ) -> dict[str, float | None]:
     """L5/L10 from recent games including last season; season = this NFL year only."""
     from app.services.nfl_player_stats import nfl_season_year
 
-    rows = [e for e in entries if e.get("stat_value") is not None]
+    rows = [
+        e
+        for e in entries
+        if e.get("stat_value") is not None and _volume_ok(e, market_stat)
+    ]
+    rows.sort(key=lambda item: str(item.get("date") or ""))
     all_vals = [float(e["stat_value"]) for e in rows]
     year = nfl_season_year(slate_date)
     season_vals = [
@@ -110,6 +177,8 @@ def hit_rates_from_log(
     o_s, u_s = _hit_pair(season_vals, line)
     o_opp, u_opp = _hit_pair(vs_opp_vals, line)
     o_sim, u_sim = _hit_pair(vs_sim_vals, line)
+    o5_n, u5_n, n5 = _hit_counts(l5, line)
+    o10_n, u10_n, n10 = _hit_counts(l10, line)
     return {
         "hit_rate_over_l5": o5,
         "hit_rate_under_l5": u5,
@@ -123,11 +192,16 @@ def hit_rates_from_log(
         "hit_rate_under_vs_similar": u_sim,
         "hit_rate_over": o10,
         "hit_rate_under": u10,
-        "sample_games_l5": len(l5),
-        "sample_games_l10": len(l10),
+        "hit_count_over_l5": o5_n,
+        "hit_count_under_l5": u5_n,
+        "hit_count_over_l10": o10_n,
+        "hit_count_under_l10": u10_n,
+        "sample_games_l5": n5,
+        "sample_games_l10": n10,
         "sample_games_season": len(season_vals),
         "sample_games_vs_opp": len(vs_opp_vals),
         "sample_games_vs_similar": len(vs_sim_vals),
+        "recent_games": _recent_vs_line(rows, line, 10),
         "hit_window": "prior_season" if not season_vals and all_vals else "current_season",
     }
 
@@ -151,6 +225,10 @@ def recommended_hit_rates(rates: dict[str, Any], side: str) -> dict[str, float |
             "season": rates.get("hit_rate_under_season"),
             "vs_opp": rates.get("hit_rate_under_vs_opp"),
             "vs_similar": rates.get("hit_rate_under_vs_similar"),
+            "l5_hits": rates.get("hit_count_under_l5"),
+            "l10_hits": rates.get("hit_count_under_l10"),
+            "l5_n": rates.get("sample_games_l5"),
+            "l10_n": rates.get("sample_games_l10"),
         }
     return {
         "l5": rates.get("hit_rate_over_l5"),
@@ -158,6 +236,10 @@ def recommended_hit_rates(rates: dict[str, Any], side: str) -> dict[str, float |
         "season": rates.get("hit_rate_over_season"),
         "vs_opp": rates.get("hit_rate_over_vs_opp"),
         "vs_similar": rates.get("hit_rate_over_vs_similar"),
+        "l5_hits": rates.get("hit_count_over_l5"),
+        "l10_hits": rates.get("hit_count_over_l10"),
+        "l5_n": rates.get("sample_games_l5"),
+        "l10_n": rates.get("sample_games_l10"),
     }
 
 

@@ -315,12 +315,18 @@
         }.`,
       });
     }
-    const rates = data?.hit_rates || {};
+    const rates = data?.hit_rates || prop.analysis?.hit_rates || {};
     if (rates.l10 != null) {
+      const hits = rates.l10_hits;
+      const n = rates.l10_n;
+      const form =
+        hits != null && n
+          ? `This ${side} cashed in ${hits} of the last ${n} games (${fmtPct(rates.l10)}).`
+          : `This ${side} cashed in ${fmtPct(rates.l10)} of the last 10 logged games.`;
       reasons.push({
         label: "Recent form",
-        tone: "up",
-        text: `This ${side} hit in ${fmtPct(rates.l10)} of the last 10 logged games.`,
+        tone: Number(rates.l10) >= 0.7 ? "up" : "neutral",
+        text: form,
       });
     }
     if (data?.depth?.opposing_pitcher) {
@@ -509,6 +515,28 @@
     }
   }
 
+  function nflRecentGamesHtml(prop, side) {
+    const games = prop.analysis?.recent_games || [];
+    if (!games.length) return "";
+    const wantUnder = side === "under";
+    const last5 = games.slice(-5).reverse();
+    const rows = last5
+      .map((g) => {
+        const cashed = wantUnder ? g.under : g.over;
+        const mark = g.push ? "P" : cashed ? "Hit" : "Miss";
+        const cls = g.push ? "" : cashed ? " is-pos" : "";
+        return `<li><strong>${g.date || ""} vs ${g.opponent || ""}</strong> ${g.stat}${
+          g.stat != null ? " yds" : ""
+        } · <span class="${cls}">${mark}</span></li>`;
+      })
+      .join("");
+    return `
+      <section class="why-pick-card ntg-card" aria-label="Last 5 vs this line">
+        <h3 class="why-pick-card__title">Last 5 vs ${prop.line}</h3>
+        <ul class="why-pick-card__factors">${rows}</ul>
+      </section>`;
+  }
+
   function renderNflModalContent(prop) {
     const side = prop.recommended_side || "over";
     const sideLabel = side === "under" ? "Under" : "Over";
@@ -530,7 +558,7 @@
           }</span>`
       )
       .join("");
-    const why = renderWhyPickCard(prop, {});
+    const why = renderWhyPickCard(prop, analysis);
     const gameHref = prop.game_id ? `/nfl/game/${encodeURIComponent(prop.game_id)}` : "/nfl";
     return `
       <header class="prop-modal-head">
@@ -545,11 +573,20 @@
       ${why}
       ${projectionVsLineHtml(prop)}
       <div class="prop-modal-rates">
-        <span class="hero-chip">L5 ${fmtPct(rates.l5 ?? prop.hit_rate_l5)}</span>
-        <span class="hero-chip">L10 ${fmtPct(rates.l10 ?? prop.hit_rate_l10)}</span>
+        <span class="hero-chip">L5 ${
+          rates.l5_hits != null && rates.l5_n
+            ? `${rates.l5_hits}/${rates.l5_n}`
+            : fmtPct(rates.l5 ?? prop.hit_rate_l5)
+        }</span>
+        <span class="hero-chip">L10 ${
+          rates.l10_hits != null && rates.l10_n
+            ? `${rates.l10_hits}/${rates.l10_n}`
+            : fmtPct(rates.l10 ?? prop.hit_rate_l10)
+        }</span>
         <span class="hero-chip">Season ${fmtPct(rates.season ?? prop.hit_rate_season)}</span>
         ${prop.confidence_pct != null ? `<span class="hero-chip">Cash ${Number(prop.confidence_pct).toFixed(1)}%</span>` : ""}
       </div>
+      ${nflRecentGamesHtml(prop, side)}
       <section class="why-pick-card ntg-card">
         <h3 class="why-pick-card__title">Projection</h3>
         <p>Model ${prop.model_projection ?? "—"} · P(${sideLabel}) ${

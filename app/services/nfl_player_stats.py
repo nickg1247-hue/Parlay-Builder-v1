@@ -124,7 +124,14 @@ def resolve_nfl_player(
 
 
 def _stat_number(row: dict[str, Any], *keys: str) -> float:
+    found = _optional_stat(row, *keys)
+    return 0.0 if found is None else found
+
+
+def _optional_stat(row: dict[str, Any], *keys: str) -> float | None:
     for key in keys:
+        if key not in row:
+            continue
         raw = row.get(key)
         if raw in (None, "", "--"):
             continue
@@ -132,7 +139,7 @@ def _stat_number(row: dict[str, Any], *keys: str) -> float:
             return float(str(raw).replace(",", ""))
         except (TypeError, ValueError):
             continue
-    return 0.0
+    return None
 
 
 def _parse_game_date(raw: str | None) -> date | None:
@@ -194,28 +201,36 @@ def _stats_dict(event: dict[str, Any], names: list[str]) -> dict[str, Any]:
 
 
 def _market_stat_map(stats: dict[str, Any]) -> dict[str, float]:
-    passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
-    rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
-    rec_yds = _stat_number(stats, "receivingYards", "recYds")
-    rec_td = _stat_number(stats, "receivingTouchdowns", "receivingTDs", "recTd")
-    rush_td = _stat_number(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
-    pass_td = _stat_number(stats, "passingTouchdowns", "passingTDs", "passTd")
-    return {
+    passing_yds = _optional_stat(stats, "passingYards", "passYds", "passingYds")
+    rushing_yds = _optional_stat(stats, "rushingYards", "rushYds")
+    rec_yds = _optional_stat(stats, "receivingYards", "recYds")
+    rec_td = _optional_stat(stats, "receivingTouchdowns", "receivingTDs", "recTd")
+    rush_td = _optional_stat(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
+    pass_td = _optional_stat(stats, "passingTouchdowns", "passingTDs", "passTd")
+    out: dict[str, float] = {}
+    pairs = {
         "passingYards": passing_yds,
         "passingTouchdowns": pass_td,
-        "passingAttempts": _stat_number(stats, "passingAttempts", "passAtt"),
-        "passingCompletions": _stat_number(stats, "passingCompletions", "completions", "passComp"),
-        "interceptions": _stat_number(stats, "interceptions", "ints"),
-        "passingLong": _stat_number(stats, "passingLong", "longestPass", "longPassing"),
+        "passingAttempts": _optional_stat(stats, "passingAttempts", "passAtt"),
+        "passingCompletions": _optional_stat(stats, "passingCompletions", "completions", "passComp"),
+        "interceptions": _optional_stat(stats, "interceptions", "ints"),
+        "passingLong": _optional_stat(stats, "passingLong", "longestPass", "longPassing"),
         "rushingYards": rushing_yds,
-        "rushingAttempts": _stat_number(stats, "rushingAttempts", "carries", "rushAtt"),
-        "rushingLong": _stat_number(stats, "rushingLong", "longestRush", "longRushing"),
-        "receptions": _stat_number(stats, "receptions", "rec"),
+        "rushingAttempts": _optional_stat(stats, "rushingAttempts", "carries", "rushAtt"),
+        "rushingLong": _optional_stat(stats, "rushingLong", "longestRush", "longRushing"),
+        "receptions": _optional_stat(stats, "receptions", "rec"),
         "receivingYards": rec_yds,
-        "receivingLong": _stat_number(stats, "receivingLong", "longestReception", "longReception"),
-        "rushRecYards": rushing_yds + rec_yds,
-        "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
+        "receivingLong": _optional_stat(stats, "receivingLong", "longestReception", "longReception"),
     }
+    for key, value in pairs.items():
+        if value is not None:
+            out[key] = value
+    if rushing_yds is not None or rec_yds is not None:
+        out["rushRecYards"] = (rushing_yds or 0.0) + (rec_yds or 0.0)
+    td_parts = [v for v in (rec_td, rush_td, pass_td) if v is not None]
+    if td_parts:
+        out["anytimeTd"] = 1.0 if sum(td_parts) >= 1 else 0.0
+    return out
 
 
 def _opponent_abbr(event: dict[str, Any]) -> str:
@@ -279,18 +294,31 @@ def nfl_game_log_entries(
                     if not stats:
                         continue
                     mapping = _market_stat_map(stats)
-                    merged[eid or f"{game_date.isoformat()}:{combined.get('opponent')}"] = {
+                    if market_stat not in mapping:
+                        continue
+                    key = eid or f"{game_date.isoformat()}:{combined.get('opponent')}"
+                    row = {
                         "date": game_date.isoformat(),
                         "season_year": nfl_season_year(game_date),
                         "opponent": _opponent_abbr(combined),
-                        "stat_value": float(mapping.get(market_stat, 0.0)),
+                        "stat_value": float(mapping[market_stat]),
                         "stats": {
-                            "passingYards": mapping["passingYards"],
-                            "rushingYards": mapping["rushingYards"],
-                            "receivingYards": mapping["receivingYards"],
-                            "receptions": mapping["receptions"],
+                            "passingYards": mapping.get("passingYards"),
+                            "passingAttempts": mapping.get("passingAttempts"),
+                            "rushingYards": mapping.get("rushingYards"),
+                            "rushingAttempts": mapping.get("rushingAttempts"),
+                            "receivingYards": mapping.get("receivingYards"),
+                            "receptions": mapping.get("receptions"),
                         },
                     }
+                    prev = merged.get(key)
+                    if prev is not None:
+                        # Same game in multiple ESPN splits — keep the richer box, not a later receiving-only overwrite.
+                        prev_vol = abs(float(prev.get("stat_value") or 0))
+                        new_vol = abs(float(row["stat_value"]))
+                        if new_vol <= prev_vol:
+                            continue
+                    merged[key] = row
         if len(merged) >= 12 and season < season_now:
             break
 

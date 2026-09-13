@@ -77,7 +77,7 @@ logger = logging.getLogger(__name__)
 NFL_PROPS_DIR = PROJECT_ROOT / "data" / "processed" / "props_repository" / "nfl"
 EVENTS_CACHE = NFL_PROPS_DIR / "events"
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
-NFL_PROP_MODEL_VERSION = 2
+NFL_PROP_MODEL_VERSION = 3
 
 
 def _utc_now() -> str:
@@ -366,6 +366,7 @@ def score_nfl_prop_row(
         slate_date=game_date,
         opponent=opponent,
         similar_opponents=similar_opponent_abbrs(opponent),
+        market_stat=stat_key,
     )
     projection = build_nfl_projection(
         values,
@@ -426,6 +427,10 @@ def score_nfl_prop_row(
         if weather.get("risk") in ("moderate", "high"):
             risk_flags.append("WEATHER")
         rec_hits = recommended_hit_rates(rates, side)
+        l5_n = int(rates.get("sample_games_l5") or 0)
+        l10_n = int(rates.get("sample_games_l10") or 0)
+        l5_hits = rec_hits.get("l5_hits")
+        l10_hits = rec_hits.get("l10_hits")
         conf = cash_confidence(
             model_p=model_p,
             hit_l5=rec_hits.get("l5"),
@@ -443,10 +448,10 @@ def score_nfl_prop_row(
             factors.append(f"L3 avg {projection['l3_avg']}")
         if projection.get("season_avg") is not None:
             factors.append(f"Season avg {projection['season_avg']}")
-        if rec_hits.get("l5") is not None:
-            factors.append(f"L5 hit {rec_hits['l5']:.0%}")
-        if rec_hits.get("l10") is not None:
-            factors.append(f"L10 hit {rec_hits['l10']:.0%}")
+        if rec_hits.get("l5") is not None and l5_n:
+            factors.append(f"L5 {l5_hits}/{l5_n} {side}s ({rec_hits['l5']:.0%})")
+        if rec_hits.get("l10") is not None and l10_n:
+            factors.append(f"L10 {l10_hits}/{l10_n} {side}s ({rec_hits['l10']:.0%})")
         if rec_hits.get("season") is not None:
             factors.append(f"Season hit {rec_hits['season']:.0%}")
         if rec_hits.get("vs_opp") is not None:
@@ -534,6 +539,7 @@ def score_nfl_prop_row(
                         "label": matchup_note,
                     },
                     "hit_rates": rec_hits,
+                    "recent_games": rates.get("recent_games") or [],
                     "hit_window": rates.get("hit_window"),
                     "risks": risk_flags,
                     "injury": injury,
