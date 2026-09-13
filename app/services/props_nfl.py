@@ -31,17 +31,18 @@ from app.odds.the_odds_api import (
 )
 from app.services.nfl_player_stats import (
     game_environment,
-    nfl_game_log_values,
+    nfl_game_log_entries,
     opponent_defense_profile,
     player_injury_note,
     resolve_nfl_player,
+    similar_opponent_abbrs,
 )
 from app.services.prop_engine.nfl_context import (
     LINE_STRENGTH_LABELS,
     cash_confidence,
     defense_label,
     defense_market_multiplier,
-    hit_rates_vs_line,
+    hit_rates_from_log,
     kickoff_market_multiplier,
     kickoff_profile,
     recommended_hit_rates,
@@ -76,6 +77,7 @@ logger = logging.getLogger(__name__)
 NFL_PROPS_DIR = PROJECT_ROOT / "data" / "processed" / "props_repository" / "nfl"
 EVENTS_CACHE = NFL_PROPS_DIR / "events"
 DEFAULT_CACHE_TTL_SECONDS = int(os.getenv("PROPS_CACHE_TTL_SECONDS", "7200"))
+NFL_PROP_MODEL_VERSION = 2
 
 
 def _utc_now() -> str:
@@ -350,14 +352,21 @@ def score_nfl_prop_row(
     wx_mult = weather_market_multiplier(market_type, weather)
     ko_mult = kickoff_market_multiplier(market_type, kickoff)
     stat_key = MARKET_STAT.get(market_type)
-    values: list[float] = []
+    entries: list[dict[str, Any]] = []
     if athlete_id and stat_key:
-        values = nfl_game_log_values(athlete_id, stat_key, before=game_date)
+        entries = nfl_game_log_entries(athlete_id, stat_key, before=game_date)
+    values = [float(row["stat_value"]) for row in entries]
     try:
         line = float(row["line"])
     except (TypeError, ValueError, KeyError):
         return []
-    rates = hit_rates_vs_line(values, line)
+    rates = hit_rates_from_log(
+        entries,
+        line,
+        slate_date=game_date,
+        opponent=opponent,
+        similar_opponents=similar_opponent_abbrs(opponent),
+    )
     projection = build_nfl_projection(
         values,
         market_type=market_type,
@@ -410,14 +419,19 @@ def score_nfl_prop_row(
                 risk_flags.append(status)
         if (projection.get("role_shift") or 0) >= 0.35:
             risk_flags.append("ROLE CHANGE")
-        if int(projection.get("sample_games") or 0) < 3:
+        if int(rates.get("sample_games_season") or 0) < 3 and int(projection.get("sample_games") or 0) >= 5:
+            risk_flags.append("PRIOR SEASON FORM")
+        elif int(projection.get("sample_games") or 0) < 3:
             risk_flags.append("LIMITED SAMPLE")
         if weather.get("risk") in ("moderate", "high"):
             risk_flags.append("WEATHER")
         rec_hits = recommended_hit_rates(rates, side)
         conf = cash_confidence(
             model_p=model_p,
+            hit_l5=rec_hits.get("l5"),
             hit_l10=rec_hits.get("l10"),
+            hit_vs_opp=rec_hits.get("vs_opp"),
+            hit_vs_similar=rec_hits.get("vs_similar"),
             sample_games=int(projection.get("sample_games") or 0),
             injury_note=injury,
             weather_risk=str(weather.get("risk") or "none"),
@@ -435,6 +449,16 @@ def score_nfl_prop_row(
             factors.append(f"L10 hit {rec_hits['l10']:.0%}")
         if rec_hits.get("season") is not None:
             factors.append(f"Season hit {rec_hits['season']:.0%}")
+        if rec_hits.get("vs_opp") is not None:
+            factors.append(
+                f"vs {opponent} historically {rec_hits['vs_opp']:.0%} "
+                f"({rates.get('sample_games_vs_opp') or 0} g)"
+            )
+        elif rec_hits.get("vs_similar") is not None:
+            factors.append(
+                f"vs similar defenses {rec_hits['vs_similar']:.0%} "
+                f"({rates.get('sample_games_vs_similar') or 0} g)"
+            )
         if context.get("team_implied_total") is not None:
             factors.append(f"Team implied total {context['team_implied_total']}")
         if context.get("team_spread") is not None:
@@ -510,15 +534,23 @@ def score_nfl_prop_row(
                         "label": matchup_note,
                     },
                     "hit_rates": rec_hits,
+                    "hit_window": rates.get("hit_window"),
                     "risks": risk_flags,
                     "injury": injury,
                 },
+                "prop_model_version": NFL_PROP_MODEL_VERSION,
             }
         )
 
     if not sides:
         return []
-    sides.sort(key=lambda r: (r.get("edge") is None, -(r.get("edge") or -99), -r["prop_score"]))
+    sides.sort(
+        key=lambda r: (
+            r.get("cash_probability") is None,
+            -(r.get("cash_probability") or 0),
+            -(r.get("model_probability") or 0),
+        )
+    )
     best = sides[0]
     best["sides"] = [
         {
@@ -548,7 +580,13 @@ def _assemble_game_payload(
         row["bookmaker"] = book
         row["bookmaker_label"] = _bookmaker_label(book)
         scored.extend(score_nfl_prop_row(row, game=game, game_date=game_date, env=env))
-    scored.sort(key=lambda r: (-(r.get("prop_score") or 0), -(r.get("edge") or 0)))
+    scored.sort(
+        key=lambda r: (
+            -(float(r.get("confidence_pct") or 0)),
+            -(r.get("cash_probability") or 0),
+            -(r.get("edge") or 0),
+        )
+    )
     home = _team_abbr(game, "home")
     away = _team_abbr(game, "away")
     return {
@@ -567,6 +605,7 @@ def _assemble_game_payload(
         "bookmaker_label": _bookmaker_label(book),
         "odds_event_id": event.get("id"),
         "pregame_only": True,
+        "prop_model_version": NFL_PROP_MODEL_VERSION,
     }
 
 
@@ -575,7 +614,12 @@ def _needs_nfl_rescore(payload: dict[str, Any] | None) -> bool:
     if not props:
         return False
     sample = props[0]
-    return sample.get("hit_rate_l5") is None or sample.get("confidence_pct") is None
+    version = int(payload.get("prop_model_version") or sample.get("prop_model_version") or 0)
+    return (
+        version < NFL_PROP_MODEL_VERSION
+        or sample.get("hit_rate_l5") is None
+        or sample.get("confidence_pct") is None
+    )
 
 
 def _rescore_cached_payload(
@@ -614,8 +658,14 @@ def _rescore_cached_payload(
             "bookmaker_label": _bookmaker_label(book),
         }
         scored.extend(score_nfl_prop_row(row, game=game, game_date=game_date, env=env))
-    scored.sort(key=lambda r: (-(r.get("prop_score") or 0), -(r.get("edge") or 0)))
-    out = {**payload, "props": scored, "rescored_at": _utc_now()}
+    scored.sort(
+        key=lambda r: (
+            -(float(r.get("confidence_pct") or 0)),
+            -(r.get("cash_probability") or 0),
+            -(r.get("edge") or 0),
+        )
+    )
+    out = {**payload, "props": scored, "rescored_at": _utc_now(), "prop_model_version": NFL_PROP_MODEL_VERSION}
     if cache_path is not None:
         _write_json(cache_path, out)
     return out
@@ -825,7 +875,7 @@ def search_nfl_daily_props(
     actionable_only: bool = False,
     very_strong_only: bool = False,
     include_alternates: bool = False,
-    sort: str = "score",
+    sort: str = "confidence",
     risk: str | None = None,
     min_score: int | None = None,
     min_edge: float | None = None,
@@ -934,7 +984,6 @@ def search_nfl_daily_props(
         return True
 
     filtered = [p for p in pool if _ok(p)]
-    reverse = sort not in ("risk_asc",)
 
     def _side_hit(prop: dict[str, Any], key: str) -> float:
         val = prop.get(key)
@@ -943,16 +992,25 @@ def search_nfl_daily_props(
         except (TypeError, ValueError):
             return -1.0
 
+    def _cash_key(prop: dict[str, Any]) -> tuple[float, float, float]:
+        return (
+            -(float(prop.get("confidence_pct") or 0)),
+            -(float(prop.get("cash_probability") or 0)),
+            -(float(prop.get("model_probability") or 0)),
+        )
+
     if sort == "edge":
         filtered.sort(key=lambda p: (p.get("edge") is None, -(p.get("edge") or 0)))
     elif sort == "hit_l5":
         filtered.sort(key=lambda p: _side_hit(p, "hit_rate_l5"), reverse=True)
     elif sort == "hit_l10":
         filtered.sort(key=lambda p: _side_hit(p, "hit_rate_l10"), reverse=True)
-    elif sort == "confidence":
-        filtered.sort(key=lambda p: float(p.get("confidence_pct") or 0), reverse=True)
+    elif sort == "risk_asc":
+        filtered.sort(key=lambda p: (1 if p.get("risk_flag") else 0, _cash_key(p)))
+    elif sort == "risk_desc":
+        filtered.sort(key=lambda p: (0 if p.get("risk_flag") else 1, _cash_key(p)))
     else:
-        filtered.sort(key=lambda p: (-(p.get("prop_score") or 0), -(p.get("edge") or 0)), reverse=reverse)
+        filtered.sort(key=_cash_key)
     empty_reason = None
     if not games:
         empty_reason = "no_slate"

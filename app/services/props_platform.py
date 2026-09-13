@@ -76,12 +76,18 @@ def build_daily_props(sport: str | None, game_date: date | None = None, **kwargs
         result = search_nfl_daily_props(
             game_date,
             bookmaker=kwargs.get("bookmaker"),
-            actionable_only=True,
+            actionable_only=False,
+            sort="confidence",
             limit=max(limit, 20),
             scan=bool(kwargs.get("scan")),
             refresh=bool(kwargs.get("refresh")),
         )
-        props = list(result.get("props") or [])
+        props = [
+            p
+            for p in (result.get("props") or [])
+            if str(p.get("risk_flag") or "").upper() != "OUT"
+        ]
+        props.sort(key=lambda p: float(p.get("confidence_pct") or 0), reverse=True)
         very_strong = [
             p
             for p in props
@@ -222,7 +228,7 @@ async def build_player_props_page_data(
         "actionable_only": bool(kwargs.get("actionable_only")),
         "very_strong_only": bool(kwargs.get("very_strong_only")),
         "include_alternates": bool(kwargs.get("include_alternates")),
-        "sort": kwargs.get("sort") or "score",
+        "sort": kwargs.get("sort") or "confidence",
         "risk": kwargs.get("risk") or "",
         "min_score": kwargs.get("min_score"),
         "position": kwargs.get("position") or "",

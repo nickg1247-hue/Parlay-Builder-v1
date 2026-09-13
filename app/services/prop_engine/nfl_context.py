@@ -45,7 +45,12 @@ def _hit_pair(values: list[float], line: float) -> tuple[float | None, float | N
 
 
 def hit_rates_vs_line(values: list[float], line: float) -> dict[str, float | None]:
-    """L5 / L10 / season hit rates vs a posted line (both sides)."""
+    """L5 / L10 / season hit rates vs a posted line (both sides).
+
+    When *values* is the full prior-game log (including last season), L5/L10
+    bleed across seasons. Pass current-season-only values if you want season
+    isolated — prefer ``hit_rates_from_log`` for that split.
+    """
     clean = [float(v) for v in values if v is not None]
     l5 = recent_game_window(clean, 5)
     l10 = recent_game_window(clean, 10)
@@ -67,17 +72,92 @@ def hit_rates_vs_line(values: list[float], line: float) -> dict[str, float | Non
     }
 
 
+def hit_rates_from_log(
+    entries: list[dict[str, Any]],
+    line: float,
+    *,
+    slate_date: Any,
+    opponent: str | None = None,
+    similar_opponents: set[str] | None = None,
+) -> dict[str, float | None]:
+    """L5/L10 from recent games including last season; season = this NFL year only."""
+    from app.services.nfl_player_stats import nfl_season_year
+
+    rows = [e for e in entries if e.get("stat_value") is not None]
+    all_vals = [float(e["stat_value"]) for e in rows]
+    year = nfl_season_year(slate_date)
+    season_vals = [
+        float(e["stat_value"])
+        for e in rows
+        if int(e.get("season_year") or nfl_season_year(_as_date(e.get("date")))) == year
+    ]
+    opp = str(opponent or "").upper()
+    vs_opp_vals = [
+        float(e["stat_value"])
+        for e in rows
+        if str(e.get("opponent") or "").upper() == opp and opp
+    ]
+    similar = {str(a).upper() for a in (similar_opponents or set()) if a}
+    vs_sim_vals = [
+        float(e["stat_value"])
+        for e in rows
+        if str(e.get("opponent") or "").upper() in similar
+    ]
+    l5 = recent_game_window(all_vals, 5)
+    l10 = recent_game_window(all_vals, 10)
+    o5, u5 = _hit_pair(l5, line)
+    o10, u10 = _hit_pair(l10, line)
+    o_s, u_s = _hit_pair(season_vals, line)
+    o_opp, u_opp = _hit_pair(vs_opp_vals, line)
+    o_sim, u_sim = _hit_pair(vs_sim_vals, line)
+    return {
+        "hit_rate_over_l5": o5,
+        "hit_rate_under_l5": u5,
+        "hit_rate_over_l10": o10,
+        "hit_rate_under_l10": u10,
+        "hit_rate_over_season": o_s,
+        "hit_rate_under_season": u_s,
+        "hit_rate_over_vs_opp": o_opp,
+        "hit_rate_under_vs_opp": u_opp,
+        "hit_rate_over_vs_similar": o_sim,
+        "hit_rate_under_vs_similar": u_sim,
+        "hit_rate_over": o10,
+        "hit_rate_under": u10,
+        "sample_games_l5": len(l5),
+        "sample_games_l10": len(l10),
+        "sample_games_season": len(season_vals),
+        "sample_games_vs_opp": len(vs_opp_vals),
+        "sample_games_vs_similar": len(vs_sim_vals),
+        "hit_window": "prior_season" if not season_vals and all_vals else "current_season",
+    }
+
+
+def _as_date(raw: Any):
+    from datetime import date as date_cls
+
+    if isinstance(raw, date_cls):
+        return raw
+    try:
+        return date_cls.fromisoformat(str(raw)[:10])
+    except ValueError:
+        return date_cls.today()
+
+
 def recommended_hit_rates(rates: dict[str, Any], side: str) -> dict[str, float | None]:
     if side == "under":
         return {
             "l5": rates.get("hit_rate_under_l5"),
             "l10": rates.get("hit_rate_under_l10"),
             "season": rates.get("hit_rate_under_season"),
+            "vs_opp": rates.get("hit_rate_under_vs_opp"),
+            "vs_similar": rates.get("hit_rate_under_vs_similar"),
         }
     return {
         "l5": rates.get("hit_rate_over_l5"),
         "l10": rates.get("hit_rate_over_l10"),
         "season": rates.get("hit_rate_over_season"),
+        "vs_opp": rates.get("hit_rate_over_vs_opp"),
+        "vs_similar": rates.get("hit_rate_over_vs_similar"),
     }
 
 
@@ -237,28 +317,41 @@ def defense_market_multiplier(market_type: str, defense: dict[str, Any] | None) 
 def cash_confidence(
     *,
     model_p: float | None,
+    hit_l5: float | None = None,
     hit_l10: float | None,
+    hit_vs_opp: float | None = None,
+    hit_vs_similar: float | None = None,
     sample_games: int,
     injury_note: str | None,
     weather_risk: str | None,
     projection_confidence: str,
 ) -> dict[str, Any]:
     """Calibrated chance the recommended side cashes (percent)."""
-    if model_p is None:
+    parts: list[tuple[float, float]] = []
+    if model_p is not None:
+        parts.append((float(model_p), 0.55))
+    if hit_l10 is not None:
+        parts.append((float(hit_l10), 0.22 if model_p is not None else 0.45))
+    if hit_l5 is not None:
+        parts.append((float(hit_l5), 0.12 if model_p is not None else 0.30))
+    if hit_vs_opp is not None:
+        parts.append((float(hit_vs_opp), 0.08))
+    elif hit_vs_similar is not None:
+        parts.append((float(hit_vs_similar), 0.06))
+    if not parts:
         return {
             "confidence_pct": None,
             "confidence_label": "Insufficient data",
             "cash_probability": None,
         }
-    raw = float(model_p)
-    if hit_l10 is not None and sample_games >= 5:
-        raw = 0.78 * raw + 0.22 * float(hit_l10)
+    total_w = sum(w for _, w in parts)
+    raw = sum(v * w for v, w in parts) / total_w
     if sample_games < 3:
-        raw *= 0.90
+        raw *= 0.94
     elif sample_games < 5:
-        raw *= 0.96
-    if projection_confidence == "low":
         raw *= 0.97
+    if projection_confidence == "low":
+        raw *= 0.98
     if injury_note:
         note = injury_note.upper()
         if "OUT" in note:

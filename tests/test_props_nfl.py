@@ -13,6 +13,7 @@ from app.services.prop_books import normalize_prop_sport
 from app.services.prop_engine.nfl_markets import MARKET_LABELS, list_nfl_market_types
 from app.services.prop_engine.nfl_context import (
     cash_confidence,
+    hit_rates_from_log,
     hit_rates_vs_line,
     kickoff_profile,
     weather_market_multiplier,
@@ -241,6 +242,47 @@ def test_search_props_dispatches_nfl_without_touching_mlb(monkeypatch):
     assert called["nfl"]["position"] == "WR"
 
 
+def test_hit_rates_l5_bleeds_prior_season_season_stays_empty():
+    entries = [
+        {"date": "2025-12-28", "season_year": 2025, "opponent": "PIT", "stat_value": 90},
+        {"date": "2025-12-21", "season_year": 2025, "opponent": "CIN", "stat_value": 88},
+        {"date": "2025-12-14", "season_year": 2025, "opponent": "PIT", "stat_value": 85},
+        {"date": "2025-12-07", "season_year": 2025, "opponent": "BAL", "stat_value": 95},
+        {"date": "2025-11-30", "season_year": 2025, "opponent": "DEN", "stat_value": 80},
+        {"date": "2025-11-23", "season_year": 2025, "opponent": "LV", "stat_value": 70},
+    ]
+    # Chronological oldest-first for windows.
+    entries = sorted(entries, key=lambda e: e["date"])
+    rates = hit_rates_from_log(
+        entries,
+        64.5,
+        slate_date=date(2026, 9, 13),
+        opponent="PIT",
+        similar_opponents={"PIT", "BAL", "CIN", "CLE"},
+    )
+    assert rates["sample_games_season"] == 0
+    assert rates["hit_rate_over_season"] is None
+    assert rates["hit_rate_over_l5"] == 1.0
+    assert rates["sample_games_l5"] == 5
+    assert rates["sample_games_vs_opp"] == 2
+    assert rates["hit_window"] == "prior_season"
+
+
+def test_cash_confidence_uses_hit_rates_when_projection_missing():
+    out = cash_confidence(
+        model_p=None,
+        hit_l5=0.80,
+        hit_l10=0.70,
+        hit_vs_opp=0.75,
+        sample_games=10,
+        injury_note=None,
+        weather_risk="none",
+        projection_confidence="medium",
+    )
+    assert out["confidence_pct"] is not None
+    assert out["confidence_pct"] > 50
+
+
 def test_hit_rates_vs_posted_line():
     values = [40, 50, 60, 70, 75, 80, 90, 100, 110, 120]
     rates = hit_rates_vs_line(values, 75.5)
@@ -299,8 +341,11 @@ def test_score_nfl_prop_row_attaches_hit_rates_and_confidence(monkeypatch):
     )
     monkeypatch.setattr("app.services.props_nfl.player_injury_note", lambda *_a, **_k: None)
     monkeypatch.setattr(
-        "app.services.props_nfl.nfl_game_log_values",
-        lambda *_a, **_k: [40, 45, 50, 80, 82, 85, 88, 90],
+        "app.services.props_nfl.nfl_game_log_entries",
+        lambda *_a, **_k: [
+            {"date": f"2025-11-{i:02d}", "season_year": 2025, "opponent": "PIT", "stat_value": v}
+            for i, v in enumerate([40, 45, 50, 80, 82, 85, 88, 90], start=10)
+        ],
     )
     monkeypatch.setattr("app.services.props_nfl.opponent_defense_profile", lambda *_a, **_k: None)
     rows = score_nfl_prop_row(

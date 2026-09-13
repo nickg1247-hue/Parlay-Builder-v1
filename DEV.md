@@ -175,9 +175,9 @@ python scripts/refresh_props_slate.py --sport nfl --loop 3
 
 Dates use `slate_today()` (America/New_York). Thu–Mon look-ahead runs when the requested day is ET today.
 
-**NFL model:** ESPN game logs (strictly before slate date) + spread/total environment + ESPN opponent yards allowed + ESPN scoreboard weather/kickoff window. Recent role (L3/L5) is weighted above season average for the **projection**. L5 / L10 / season **hit rates vs the posted line** are shown as records and used as a small blend in cash confidence — not a copy of the MLB score formula. Both Over and Under are scored against vig-free market probability when both sides are posted. Alternate yards/reception ladders come from Odds API `*_alternate` markets (extra credits; refresh with Alt lines or the include-alternates checkbox).
+**NFL model:** ESPN game logs (array stats + prior seasons, strictly before slate date) + spread/total environment + ESPN opponent yards allowed + ESPN scoreboard weather/kickoff. **L5 / L10 bleed into last season** when this year is thin (Week 1). **Season hit rate stays empty** until a current-season game exists. Historical hit rate vs the **same opponent**, else same-division defenses, is blended into cash %. Rank and recommend by **cash confidence %**, not sportsbook price. Alternate yards/reception ladders come from Odds API `*_alternate` markets.
 
-**Cash confidence %:** `P(recommended side)` from the context-adjusted projection, blended with L10 hit rate when sample ≥ 5, then haircut for injury, tiny samples, and outdoor weather risk. This is our cashing estimate, not a sportsbook implied price.
+**Cash confidence %:** Blend of context-adjusted model probability + L5/L10 (including last season) + same/similar-team history, then haircut for injury and outdoor weather. Always shown when logs parse. Not a sportsbook implied price.
 
 **Measure before retune:** `python scripts/backtest_nfl_props.py` grades cached recommended sides vs ESPN box scores into `data/processed/nfl_props_backtest.json`. Do not retune MIN_EDGE / distribution families until that report is reviewed.
 

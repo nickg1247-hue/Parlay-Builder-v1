@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 
-from app.ingest.nfl import normalize_abbr
+from app.ingest.nfl import NFL_DIVISIONS, normalize_abbr
 from app.odds.nfl_team_aliases import normalize_nfl_team
 
 logger = logging.getLogger(__name__)
@@ -151,16 +151,71 @@ def _parse_game_date(raw: str | None) -> date | None:
     return None
 
 
-@lru_cache(maxsize=256)
-def _raw_gamelog(athlete_id: str) -> dict[str, Any]:
+def nfl_season_year(game_date: date) -> int:
+    """NFL season label: Aug–Dec use calendar year; Jan–Jul belong to the prior season."""
+    return game_date.year if game_date.month >= 8 else game_date.year - 1
+
+
+def similar_opponent_abbrs(opponent: str | None) -> set[str]:
+    """Same-division teams (plus the opponent). Used when same-team history is thin."""
+    opp = normalize_nfl_team(opponent or "")
+    if not opp:
+        return set()
+    division = NFL_DIVISIONS.get(normalize_abbr(opp), "")
+    peers = {abbr for abbr, div in NFL_DIVISIONS.items() if div == division} if division else set()
+    peers.add(opp)
+    return peers
+
+
+@lru_cache(maxsize=512)
+def _raw_gamelog(athlete_id: str, season: int | None = None) -> dict[str, Any]:
+    params = {"season": season} if season else None
     try:
         with _http() as client:
-            resp = client.get(ESPN_GAMELOG.format(athlete_id=athlete_id))
+            resp = client.get(ESPN_GAMELOG.format(athlete_id=athlete_id), params=params)
             resp.raise_for_status()
             return resp.json()
     except (httpx.HTTPError, ValueError) as exc:
-        logger.warning("ESPN NFL gamelog failed for %s: %s", athlete_id, exc)
+        logger.warning("ESPN NFL gamelog failed for %s season=%s: %s", athlete_id, season, exc)
         return {}
+
+
+def _stats_dict(event: dict[str, Any], names: list[str]) -> dict[str, Any]:
+    stats = event.get("stats") or event.get("statistics")
+    if isinstance(stats, list):
+        out: dict[str, Any] = {}
+        for idx, name in enumerate(names):
+            if idx < len(stats):
+                out[str(name)] = stats[idx]
+        return out
+    if isinstance(stats, dict):
+        return stats
+    return {}
+
+
+def _market_stat_map(stats: dict[str, Any]) -> dict[str, float]:
+    passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
+    rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
+    rec_yds = _stat_number(stats, "receivingYards", "recYds")
+    rec_td = _stat_number(stats, "receivingTouchdowns", "receivingTDs", "recTd")
+    rush_td = _stat_number(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
+    pass_td = _stat_number(stats, "passingTouchdowns", "passingTDs", "passTd")
+    return {
+        "passingYards": passing_yds,
+        "passingTouchdowns": pass_td,
+        "passingAttempts": _stat_number(stats, "passingAttempts", "passAtt"),
+        "passingCompletions": _stat_number(stats, "passingCompletions", "completions", "passComp"),
+        "interceptions": _stat_number(stats, "interceptions", "ints"),
+        "passingLong": _stat_number(stats, "passingLong", "longestPass", "longPassing"),
+        "rushingYards": rushing_yds,
+        "rushingAttempts": _stat_number(stats, "rushingAttempts", "carries", "rushAtt"),
+        "rushingLong": _stat_number(stats, "rushingLong", "longestRush", "longRushing"),
+        "receptions": _stat_number(stats, "receptions", "rec"),
+        "receivingYards": rec_yds,
+        "receivingLong": _stat_number(stats, "receivingLong", "longestReception", "longReception"),
+        "rushRecYards": rushing_yds + rec_yds,
+        "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
+    }
 
 
 def _opponent_abbr(event: dict[str, Any]) -> str:
@@ -183,69 +238,63 @@ def nfl_game_log_entries(
     *,
     before: date | None = None,
 ) -> list[dict[str, Any]]:
-    """Chronological (oldest-first) per-game rows dated strictly before *before*."""
-    payload = _raw_gamelog(athlete_id)
-    events: list[dict[str, Any]] = []
+    """Chronological regular/postseason rows dated strictly before *before*.
 
-    season_types = payload.get("seasonTypes") or []
-    for block in season_types:
-        for cat in block.get("categories") or []:
-            events.extend(cat.get("events") or [])
-    if not events:
-        for key in ("events", "games"):
-            if isinstance(payload.get(key), list):
-                events.extend(payload[key])
+    ESPN stores per-game stats as arrays aligned with ``names``. Week-1 slates
+    have no current-season games, so we also pull the prior one or two seasons.
+    """
+    slate = before or date.today()
+    season_now = nfl_season_year(slate)
+    seasons = [season_now, season_now - 1, season_now - 2]
+    merged: dict[str, dict[str, Any]] = {}
 
-    rows: list[dict[str, Any]] = []
-    for event in events:
-        if not isinstance(event, dict):
-            continue
-        game_date = _parse_game_date(
-            event.get("gameDate") or event.get("date") or (event.get("event") or {}).get("date")
-        )
-        if game_date is None:
-            continue
-        if before is not None and game_date >= before:
-            continue
-        stats = event.get("stats") or event.get("statistics") or event
-        if isinstance(stats, list):
-            continue
-        passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
-        rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
-        rec_yds = _stat_number(stats, "receivingYards", "recYds")
-        rec_td = _stat_number(stats, "receivingTouchdowns", "receivingTDs", "recTd")
-        rush_td = _stat_number(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
-        pass_td = _stat_number(stats, "passingTouchdowns", "passingTDs", "passTd")
-        mapping = {
-            "passingYards": passing_yds,
-            "passingTouchdowns": pass_td,
-            "passingAttempts": _stat_number(stats, "passingAttempts", "passAtt"),
-            "passingCompletions": _stat_number(stats, "passingCompletions", "completions", "passComp"),
-            "interceptions": _stat_number(stats, "interceptions", "ints"),
-            "passingLong": _stat_number(stats, "passingLong", "longestPass"),
-            "rushingYards": rushing_yds,
-            "rushingAttempts": _stat_number(stats, "rushingAttempts", "carries", "rushAtt"),
-            "rushingLong": _stat_number(stats, "rushingLong", "longestRush"),
-            "receptions": _stat_number(stats, "receptions", "rec"),
-            "receivingYards": rec_yds,
-            "receivingLong": _stat_number(stats, "receivingLong", "longestReception"),
-            "rushRecYards": rushing_yds + rec_yds,
-            "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
-        }
-        rows.append(
-            {
-                "date": game_date.isoformat(),
-                "opponent": _opponent_abbr(event),
-                "stat_value": float(mapping.get(market_stat, 0.0)),
-                "stats": {
-                    "passingYards": passing_yds,
-                    "rushingYards": rushing_yds,
-                    "receivingYards": rec_yds,
-                    "receptions": _stat_number(stats, "receptions", "rec"),
-                },
-            }
-        )
+    for season in seasons:
+        payload = _raw_gamelog(athlete_id, season)
+        names = [str(n) for n in (payload.get("names") or [])]
+        meta_by_id = payload.get("events") or {}
+        if not isinstance(meta_by_id, dict):
+            meta_by_id = {}
+        blocks = payload.get("seasonTypes") or []
+        for block in blocks:
+            block_name = str(block.get("displayName") or block.get("name") or "").lower()
+            if "preseason" in block_name:
+                continue
+            for cat in block.get("categories") or []:
+                for event in cat.get("events") or []:
+                    if not isinstance(event, dict):
+                        continue
+                    eid = str(event.get("eventId") or event.get("id") or "")
+                    meta = dict(meta_by_id.get(eid) or {})
+                    combined = {**meta, **event}
+                    game_date = _parse_game_date(
+                        combined.get("gameDate")
+                        or combined.get("date")
+                        or (combined.get("event") or {}).get("date")
+                    )
+                    if game_date is None:
+                        continue
+                    if before is not None and game_date >= before:
+                        continue
+                    stats = _stats_dict(combined, names)
+                    if not stats:
+                        continue
+                    mapping = _market_stat_map(stats)
+                    merged[eid or f"{game_date.isoformat()}:{combined.get('opponent')}"] = {
+                        "date": game_date.isoformat(),
+                        "season_year": nfl_season_year(game_date),
+                        "opponent": _opponent_abbr(combined),
+                        "stat_value": float(mapping.get(market_stat, 0.0)),
+                        "stats": {
+                            "passingYards": mapping["passingYards"],
+                            "rushingYards": mapping["rushingYards"],
+                            "receivingYards": mapping["receivingYards"],
+                            "receptions": mapping["receptions"],
+                        },
+                    }
+        if len(merged) >= 12 and season < season_now:
+            break
 
+    rows = list(merged.values())
     rows.sort(key=lambda item: item["date"])
     return rows
 
@@ -342,48 +391,27 @@ def nfl_stat_on_date(
     resolved = resolve_nfl_player(player_name, team_abbr)
     if not resolved:
         return None
-    payload = _raw_gamelog(str(resolved["athlete_id"]))
+    payload = _raw_gamelog(str(resolved["athlete_id"]), nfl_season_year(game_date))
+    names = [str(n) for n in (payload.get("names") or [])]
+    meta_by_id = payload.get("events") or {}
     events: list[dict[str, Any]] = []
     for block in payload.get("seasonTypes") or []:
         for cat in block.get("categories") or []:
             events.extend(cat.get("events") or [])
-    if not events:
-        for key in ("events", "games"):
-            if isinstance(payload.get(key), list):
-                events.extend(payload[key])
     for event in events:
         if not isinstance(event, dict):
             continue
+        eid = str(event.get("eventId") or event.get("id") or "")
+        combined = {**(meta_by_id.get(eid) or {} if isinstance(meta_by_id, dict) else {}), **event}
         when = _parse_game_date(
-            event.get("gameDate") or event.get("date") or (event.get("event") or {}).get("date")
+            combined.get("gameDate") or combined.get("date") or (combined.get("event") or {}).get("date")
         )
         if when != game_date:
             continue
-        stats = event.get("stats") or event.get("statistics") or event
-        if isinstance(stats, list):
+        stats = _stats_dict(combined, names)
+        if not stats:
             return None
-        passing_yds = _stat_number(stats, "passingYards", "passYds", "passingYds")
-        rushing_yds = _stat_number(stats, "rushingYards", "rushYds")
-        rec_yds = _stat_number(stats, "receivingYards", "recYds")
-        rec_td = _stat_number(stats, "receivingTouchdowns", "receivingTDs", "recTd")
-        rush_td = _stat_number(stats, "rushingTouchdowns", "rushingTDs", "rushTd")
-        pass_td = _stat_number(stats, "passingTouchdowns", "passingTDs", "passTd")
-        mapping = {
-            "passingYards": passing_yds,
-            "passingTouchdowns": pass_td,
-            "passingAttempts": _stat_number(stats, "passingAttempts", "passAtt"),
-            "passingCompletions": _stat_number(stats, "passingCompletions", "completions", "passComp"),
-            "interceptions": _stat_number(stats, "interceptions", "ints"),
-            "passingLong": _stat_number(stats, "passingLong", "longestPass"),
-            "rushingYards": rushing_yds,
-            "rushingAttempts": _stat_number(stats, "rushingAttempts", "carries", "rushAtt"),
-            "rushingLong": _stat_number(stats, "rushingLong", "longestRush"),
-            "receptions": _stat_number(stats, "receptions", "rec"),
-            "receivingYards": rec_yds,
-            "receivingLong": _stat_number(stats, "receivingLong", "longestReception"),
-            "rushRecYards": rushing_yds + rec_yds,
-            "anytimeTd": 1.0 if (rec_td + rush_td + pass_td) >= 1 else 0.0,
-        }
+        mapping = _market_stat_map(stats)
         return float(mapping.get(stat_key, 0.0))
     return None
 
