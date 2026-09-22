@@ -1130,6 +1130,26 @@ async def nfl_futures(refresh: bool = Query(False)):
     return build_nfl_futures(refresh=refresh)
 
 
+@app.get("/api/nfl/power-rankings")
+async def nfl_power_rankings():
+    from app.services.nfl_power_rankings import build_nfl_power_rankings
+
+    try:
+        return build_nfl_power_rankings()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/cfb/power-rankings")
+async def cfb_power_rankings():
+    from app.services.cfb_power_rankings import build_cfb_power_rankings
+
+    try:
+        return build_cfb_power_rankings()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @app.get("/api/schedule/ufc")
 async def ufc_schedule(
     date_param: str | None = Query(None, alias="date"),
@@ -2351,6 +2371,11 @@ async def nfl_futures_page():
     return FileResponse(STATIC_DIR / "nfl_futures.html")
 
 
+@app.get("/nfl/rankings")
+async def nfl_rankings_page():
+    return FileResponse(STATIC_DIR / "nfl_rankings.html")
+
+
 @app.get("/nfl/game/{game_id}")
 async def nfl_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "nfl_game.html")
@@ -2399,6 +2424,11 @@ async def cfb_board():
 @app.get("/cfb/futures")
 async def cfb_futures_page():
     return FileResponse(STATIC_DIR / "cfb_futures.html")
+
+
+@app.get("/cfb/rankings")
+async def cfb_rankings_page():
+    return FileResponse(STATIC_DIR / "cfb_rankings.html")
 
 
 @app.get("/cfb/bam-progress")

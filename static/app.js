@@ -350,6 +350,7 @@ function sportNavContext(path) {
       label: "CFB",
       slate: "/cfb",
       board: "/cfb/board",
+      rankings: "/cfb/rankings",
       futures: "/cfb/futures",
     };
   }
@@ -362,6 +363,7 @@ function sportNavContext(path) {
       label: "NFL",
       slate: "/nfl",
       board: "/nfl/board",
+      rankings: "/nfl/rankings",
       futures: "/nfl/futures",
     };
   }
@@ -3982,6 +3984,13 @@ function renderSportPills(container, path) {
       isActive: (p) => p === sport.board || p.startsWith(`${sport.board}/`),
     },
   ];
+  if (sport.rankings) {
+    specs.push({
+      href: sport.rankings,
+      label: "Rankings",
+      isActive: (p) => p === sport.rankings || p.startsWith(`${sport.rankings}/`),
+    });
+  }
   if (sport.futures) {
     specs.push({
       href: sport.futures,
