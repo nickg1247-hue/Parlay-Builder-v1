@@ -259,4 +259,9 @@ def build_cfb_daily_board(
     base["games_with_odds"] = sum(1 for g in slate if g.get("home_ml") is not None)
     base["parlays"] = top_parlays_payload(slate, min_edge=min_edge)
     base["warnings"] = warnings
+    from app.services.season_relearn import board_relearn_note
+
+    note = board_relearn_note("cfb", slate_day)
+    if note:
+        base["season_relearn"] = note
     return base

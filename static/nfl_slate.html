@@ -55,6 +55,10 @@
           Refresh
         </button>
         <span class="slate-source-badge hidden" id="slate-source" aria-live="polite"></span>
+        <button type="button" class="dash-btn dash-btn-ghost" id="model-relearn-btn" title="Rebuild winner picks from this season and the current power rankings">
+          Model relearn
+        </button>
+        <span id="model-relearn-status" class="dash-page-kicker" aria-live="polite"></span>
       </div>
 
       <div id="slate-advance-banner" class="hidden" aria-live="polite"></div>
@@ -67,7 +71,7 @@
       <div id="game-list" class="game-list"></div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260922"></script>
+  <script src="/static/app.js?v=20260922r"></script>
   <script>
     (async function () {
       const loading = document.getElementById("slate-loading");
@@ -205,6 +209,10 @@
         errEl.classList.remove("hidden");
         errEl.textContent = e.message || "Failed to load schedule";
       }
+
+      initModelRelearn("nfl", {
+        onDone: () => loadSlate(scheduleUrl(true)),
+      });
 
       window.addEventListener("beforeunload", () => {
         if (pollTimer) clearInterval(pollTimer);

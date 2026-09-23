@@ -1130,6 +1130,25 @@ async def nfl_futures(refresh: bool = Query(False)):
     return build_nfl_futures(refresh=refresh)
 
 
+@app.get("/api/nfl/model/relearn")
+def nfl_model_relearn_status():
+    from app.services.season_relearn import relearn_status
+
+    return relearn_status("nfl")
+
+
+@app.post("/api/nfl/model/relearn")
+def nfl_model_relearn():
+    from app.services.season_relearn import public_summary, relearn
+
+    try:
+        return public_summary(relearn("nfl"))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"NFL model relearn failed: {exc}") from exc
+
+
 @app.get("/api/nfl/power-rankings")
 async def nfl_power_rankings():
     from app.services.nfl_power_rankings import build_nfl_power_rankings
@@ -1138,6 +1157,25 @@ async def nfl_power_rankings():
         return build_nfl_power_rankings()
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/cfb/model/relearn")
+def cfb_model_relearn_status():
+    from app.services.season_relearn import relearn_status
+
+    return relearn_status("cfb")
+
+
+@app.post("/api/cfb/model/relearn")
+def cfb_model_relearn():
+    from app.services.season_relearn import public_summary, relearn
+
+    try:
+        return public_summary(relearn("cfb"))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"College football model relearn failed: {exc}") from exc
 
 
 @app.get("/api/cfb/power-rankings")

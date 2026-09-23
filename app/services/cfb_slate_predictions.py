@@ -21,6 +21,7 @@ from app.odds.team_aliases import is_valid_american_odds
 from app.services.cfb_odds_attach import attach_cfb_odds
 from app.services.daily_board import confidence_label
 from app.services.schedule_cfb import get_cfb_schedule
+from app.services.season_relearn import blend_home_probability
 
 def _pure_fcs(game:dict[str,Any])->bool:
     divisions={str(x).lower() for x in (game.get("divisions")or[game.get("division")]) if x}
@@ -237,6 +238,14 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
     for i, row in df.iterrows():
         gid = str(row["game_id"])
         prob = float(probs[i])
+        prob, relearn = blend_home_probability(
+            "cfb",
+            slate_day,
+            str(row.get("home_team") or ""),
+            str(row.get("away_team") or ""),
+            bool(row.get("neutral_site")),
+            prob,
+        )
         pick_side = "home" if prob >= 0.5 else "away"
         model_pick = row["home_team"] if pick_side == "home" else row["away_team"]
         category = category_for_proba(prob)
@@ -273,6 +282,7 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
             "model_confidence": cat_label,
             "ml_confidence": cat_label,
             **ml_fields,
+            **(relearn or {}),
         }
 
         spread_row = spread_by_id.get(gid)

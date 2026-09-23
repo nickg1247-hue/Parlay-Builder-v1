@@ -293,6 +293,10 @@ function renderFooter(data, visibleCount) {
     "+EV singles: " + (data.plus_ev_count ?? 0),
     "Games: " + visibleCount + " of " + total,
   ];
+  if (data.season_relearn?.applied) {
+    const weight = Math.round((Number(data.season_relearn.blend_weight) || 0) * 100);
+    parts.push("Relearn: rankings " + weight + "%");
+  }
   els.footer.textContent = parts.join(" · ");
 }
 
@@ -379,3 +383,8 @@ els.minEdgeInput?.addEventListener("change", () => loadBoard(false));
 ].forEach((control) => control?.addEventListener("change", renderFilteredBoard));
 
 loadBoard(false);
+initModelRelearn("cfb", {
+  onDone: async () => {
+    if (boardMode === "live") await loadBoard(false);
+  },
+});

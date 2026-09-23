@@ -1617,6 +1617,50 @@ async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
   }
 }
 
+function relearnStatusText(payload) {
+  if (!payload || !payload.applied) {
+    return "Uses the saved model until you relearn.";
+  }
+  const weight = Math.round((Number(payload.blend_weight) || 0) * 100);
+  const through = payload.through ? ` through ${payload.through}` : "";
+  const games = Number(payload.games_fit) || 0;
+  const source = payload.fit_source === "current_season"
+    ? `${games} results this season`
+    : "power rankings prior";
+  return `Relearned ${payload.season} season${through} · ${source} · rankings are ${weight}% of each pick`;
+}
+
+function initModelRelearn(sport, { buttonId = "model-relearn-btn", statusId = "model-relearn-status", onDone } = {}) {
+  const button = document.getElementById(buttonId);
+  const status = document.getElementById(statusId);
+  if (!button) return;
+  const endpoint = sport === "cfb" ? "/api/cfb/model/relearn" : "/api/nfl/model/relearn";
+
+  function show(payload) {
+    if (status) status.textContent = relearnStatusText(payload);
+  }
+
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    const previous = button.textContent;
+    button.textContent = "Relearning…";
+    if (status) status.textContent = "Updating this season and the power rankings…";
+    try {
+      const payload = await fetchJSON(endpoint, { method: "POST" });
+      show(payload);
+      if (typeof onDone === "function") await onDone(payload);
+    } catch (err) {
+      if (status) status.textContent = err?.message || "Relearn failed";
+    } finally {
+      button.disabled = false;
+      button.textContent = previous;
+    }
+  });
+
+  fetchJSON(endpoint).then(show).catch(() => {});
+}
+
+window.initModelRelearn = initModelRelearn;
 window.winProbPcts = winProbPcts;
 window.winProbBandHtml = winProbBandHtml;
 window.fetchSportBoardMap = fetchSportBoardMap;

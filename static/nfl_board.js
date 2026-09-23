@@ -197,6 +197,10 @@ function renderFooter(data) {
     `+EV singles: ${data.plus_ev_count ?? 0}`,
     `Games: ${(data.slate || []).length}`,
   ];
+  if (data.season_relearn?.applied) {
+    const weight = Math.round((Number(data.season_relearn.blend_weight) || 0) * 100);
+    parts.push(`Relearn: rankings ${weight}%`);
+  }
   els.footer.textContent = parts.join(" · ");
 }
 
@@ -268,3 +272,8 @@ els.minEdgeInput?.addEventListener("change", () => {
 
 boardMode = "live";
 loadBoard(false);
+initModelRelearn("nfl", {
+  onDone: async () => {
+    if (boardMode === "live") await loadBoard(false);
+  },
+});

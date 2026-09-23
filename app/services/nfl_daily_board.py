@@ -154,6 +154,11 @@ def build_nfl_daily_board(
         warnings.append("Moneyline odds unavailable — showing model probabilities only.")
     first_pred = next(iter(preds.values()), {})
     base["odds_source"] = first_pred.get("odds_source") or "none"
+    from app.services.season_relearn import board_relearn_note
+
+    note = board_relearn_note("nfl", slate_day)
+    if note:
+        base["season_relearn"] = note
     base["slate"] = slate
     base["plus_ev_count"] = sum(1 for g in slate if g.get("plus_ev_single"))
     base["parlays"] = top_parlays_payload(slate, min_edge=min_edge)

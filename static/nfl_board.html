@@ -51,6 +51,10 @@
           <input type="number" id="min-edge-input" min="0" max="50" step="1" value="8" />
         </label>
         <button type="button" class="dash-btn dash-btn-ghost hidden" id="refresh-btn">Refresh</button>
+        <button type="button" class="dash-btn dash-btn-ghost" id="model-relearn-btn" title="Rebuild winner picks from this season and the current power rankings">
+          Model relearn
+        </button>
+        <span id="model-relearn-status" class="dash-page-kicker" aria-live="polite"></span>
       </div>
 
       <div class="banner hidden" id="disclaimer"></div>
@@ -102,7 +106,7 @@
       <footer class="footer status-footer hidden" id="status-footer"></footer>
     </main>
   </div>
-  <script src="/static/app.js?v=20260922"></script>
-  <script src="/static/nfl_board.js?v=20260814"></script>
+  <script src="/static/app.js?v=20260922r"></script>
+  <script src="/static/nfl_board.js?v=20260922r"></script>
 </body>
 </html>
