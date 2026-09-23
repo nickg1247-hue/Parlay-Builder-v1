@@ -1,10 +1,9 @@
 """College football power rankings for FBS teams.
 
-Current-season offense and defense are opponent-adjusted and margin-capped so
-one lopsided score cannot set team strength. Last season, roster talent,
-returning production, and coaching continuity are the prior, and they fade as
-games accumulate. Matchup splits, special teams, and weekly injuries stay
-unscored until a feed exists.
+Ratings use this season's games only. Last season, roster talent, returning
+production, and coaching are not mixed in. Margins are capped so one lopsided
+score cannot set team strength. Matchup splits, special teams, and weekly
+injuries stay unscored until a feed exists.
 """
 
 from __future__ import annotations
@@ -24,23 +23,16 @@ from app.services.power_rankings import (
     compose_score,
     football_season,
     from_tenths,
-    prior_weight_for_games,
     rank_map,
     rate_games,
     schedule_needs_refresh,
-    zscores,
+    stabilize_rating,
 )
 
 logger = logging.getLogger(__name__)
 
 CFB_HFA = 3.0
 CFB_MARGIN_CAP = 28.0
-CFB_LATE_GAMES = 12
-CFB_LATE_WEIGHT = 0.15
-TALENT_POINT_SCALE = 3.0
-RETURNING_POINT_SCALE = 2.0
-PASSING_POINT_SCALE = 1.5
-COACH_CHANGE_PENALTY = 1.5
 
 CFB_UNAVAILABLE = (
     {
@@ -199,7 +191,7 @@ def _season_rows(
 def _rate(rows: list[RawGame], ranking_teams: set[str], *, recency: bool) -> dict[str, SideRating]:
     if not rows or not ranking_teams:
         return {team: SideRating() for team in ranking_teams}
-    return rate_games(
+    rated = rate_games(
         rows,
         ranking_teams,
         hfa=CFB_HFA,
@@ -207,81 +199,7 @@ def _rate(rows: list[RawGame], ranking_teams: set[str], *, recency: bool) -> dic
         half_life=HALF_LIFE_GAMES,
         recency=recency,
     )
-
-
-def _prior_ingredients(
-    teams: set[str],
-    season: int,
-    last: dict[str, SideRating],
-) -> dict[str, dict[str, float]]:
-    """Point ingredients for the prior. Missing feeds are omitted, not stored as zero."""
-    try:
-        from app.ingest.cfb_priors import load_priors_store
-    except Exception:
-        load_priors_store = None  # type: ignore[assignment]
-    store = None
-    if load_priors_store is not None:
-        try:
-            store = load_priors_store()
-        except Exception:
-            store = None
-
-    talent: dict[str, float] = {}
-    returning: dict[str, float] = {}
-    passing: dict[str, float] = {}
-    coach_penalty: dict[str, float] = {}
-    if store is not None:
-        for team in teams:
-            key = normalize_team_name(team)
-            if (season, key) in store.talent:
-                talent[team] = float(store.talent[(season, key)])
-            if (season, key) in store.returning_pct:
-                returning[team] = float(store.returning_pct[(season, key)])
-            if (season, key) in store.returning_pass_pct:
-                passing[team] = float(store.returning_pass_pct[(season, key)])
-            coach = store.coaches.get((season, key), "")
-            previous = store.coaches.get((season - 1, key), "")
-            if coach and previous:
-                coach_penalty[team] = COACH_CHANGE_PENALTY if coach != previous else 0.0
-
-    talent_z = zscores(talent)
-    returning_z = zscores(returning)
-    passing_z = zscores(passing)
-    if coach_penalty:
-        coach_mean = sum(coach_penalty.values()) / len(coach_penalty)
-    else:
-        coach_mean = 0.0
-
-    ingredients: dict[str, dict[str, float]] = {}
-    for team in teams:
-        side = last.get(team) or SideRating()
-        parts: dict[str, float] = {"last_season": side.offense + side.defense}
-        offense_extra = 0.0
-        defense_extra = 0.0
-        if team in talent_z:
-            talent_points = talent_z[team] * TALENT_POINT_SCALE
-            parts["talent"] = talent_points
-            offense_extra += talent_points / 2.0
-            defense_extra += talent_points / 2.0
-        if team in returning_z:
-            returning_points = returning_z[team] * RETURNING_POINT_SCALE
-            parts["returning"] = returning_points
-            offense_extra += returning_points
-        if team in passing_z:
-            passing_points = passing_z[team] * PASSING_POINT_SCALE
-            parts["returning_pass"] = passing_points
-            offense_extra += passing_points
-        if team in coach_penalty:
-            coaching_points = -(coach_penalty[team] - coach_mean)
-            parts["coaching"] = coaching_points
-            offense_extra += coaching_points / 2.0
-            defense_extra += coaching_points / 2.0
-        ingredients[team] = {
-            "offense": side.offense + offense_extra,
-            "defense": side.defense + defense_extra,
-            "parts": parts,
-        }
-    return ingredients
+    return {team: stabilize_rating(side) for team, side in rated.items()}
 
 
 def _logo(team: str) -> str | None:
@@ -527,82 +445,79 @@ def _build(
     season = football_season(as_of)
     ranking_teams = _fbs_teams(history, season)
     current = _season_rows(history, season, ranking_teams)
-    previous = _season_rows(history, season - 1, ranking_teams)
     season_rating = _rate(current, ranking_teams, recency=True)
     flat_rating = _rate(current, ranking_teams, recency=False)
-    prior_rating = _rate(previous, ranking_teams, recency=True)
-    ingredients = _prior_ingredients(ranking_teams, season, prior_rating)
     group_names = _conference_names(history, ranking_teams)
     if conferences:
         group_names.update({team: name for team, name in conferences.items() if team in ranking_teams})
 
+    played = {team for team, side in season_rating.items() if side.games > 0}
+    composed: dict[str, tuple] = {}
     blended_offense: dict[str, float] = {}
     blended_defense: dict[str, float] = {}
-    composed: dict[str, tuple] = {}
-    weights: dict[str, float] = {}
-    for team in ranking_teams:
-        season_side = season_rating.get(team) or SideRating()
-        flat_side = flat_rating.get(team) or SideRating()
-        ingredient = ingredients.get(team) or {"offense": 0.0, "defense": 0.0, "parts": {}}
-        weight = prior_weight_for_games(
-            season_side.games,
-            late_weight=CFB_LATE_WEIGHT,
-            late_games=CFB_LATE_GAMES,
-        )
-        part_pairs = [(key, float(value)) for key, value in ingredient["parts"].items()]
+    for team in played:
+        season_side = season_rating[team]
         score = compose_score(
             season_side,
-            flat_side,
-            prior_offense=float(ingredient["offense"]),
-            prior_defense=float(ingredient["defense"]),
-            prior_weight=weight,
-            prior_parts=part_pairs,
+            flat_rating.get(team) or SideRating(),
+            prior_offense=0.0,
+            prior_defense=0.0,
+            prior_weight=0.0,
+            prior_parts=[],
         )
         composed[team] = (score, season_side)
-        weights[team] = weight
         blended_offense[team] = from_tenths(score.offense_tenths)
         blended_defense[team] = from_tenths(score.defense_tenths)
 
     offense_ranks = rank_map(blended_offense)
     defense_ranks = rank_map(blended_defense)
-    team_count = len(ranking_teams)
+    ranked_count = len(played)
     teams = []
     for team in ranking_teams:
-        score, season_side = composed[team]
+        season_side = season_rating.get(team) or SideRating()
+        played_team = team in played
+        score = composed[team][0] if played_team else None
         teams.append(
             {
                 "team": team,
                 "abbr": "",
                 "group": group_names.get(team, ""),
                 "logo_url": _logo(team),
-                "power": from_tenths(score.power_tenths),
-                "offense_rating": blended_offense[team],
-                "defense_rating": blended_defense[team],
-                "offense_rank": offense_ranks[team],
-                "defense_rank": defense_ranks[team],
+                "power": from_tenths(score.power_tenths) if score else None,
+                "offense_rating": blended_offense.get(team),
+                "defense_rating": blended_defense.get(team),
+                "offense_rank": offense_ranks.get(team),
+                "defense_rank": defense_ranks.get(team),
                 "games_played": season_side.games,
                 "wins": season_side.wins,
                 "losses": season_side.games - season_side.wins,
-                "prior_weight": round(weights[team], 2),
+                "prior_weight": 0.0,
                 "subpoints": assemble_subpoints(
                     score,
-                    team_count=team_count,
+                    team_count=ranked_count,
                     offense_rank=offense_ranks[team],
                     defense_rank=defense_ranks[team],
-                    prior_weight=weights[team],
+                    prior_weight=0.0,
                     games_played=season_side.games,
-                ),
+                )
+                if score
+                else [],
             }
         )
-    teams.sort(key=lambda row: (-row["power"], row["team"]))
-    for index, row in enumerate(teams, start=1):
-        row["rank"] = index
+    teams.sort(key=lambda row: (row["power"] is None, -(row["power"] or 0), row["team"]))
+    rank = 0
+    for row in teams:
+        if row["power"] is None:
+            row["rank"] = None
+            continue
+        rank += 1
+        row["rank"] = rank
 
     through = None
     if not history.empty:
         through_dates = pd.to_datetime(history["date"])
         current_dates = through_dates[history["season"] == season]
-        latest = current_dates.max() if len(current_dates) else through_dates.max()
+        latest = current_dates.max() if len(current_dates) else None
         if pd.notna(latest):
             through = pd.Timestamp(latest).date().isoformat()
 
@@ -612,17 +527,17 @@ def _build(
         "as_of": as_of.isoformat(),
         "season": season,
         "through": through,
-        "team_count": team_count,
+        "team_count": len(ranking_teams),
+        "ranked_count": ranked_count,
         "unit": "points versus an average FBS team",
         "groups": groups,
         "group_label": "Conference",
         "unavailable": list(CFB_UNAVAILABLE),
         "summary": (
-            "Offense and defense are opponent-adjusted points against the defenses and "
-            "offenses each team has faced. Strength of schedule is already inside those "
-            "numbers. Talent, returning production, and coaching continuity start as the "
-            "preseason estimate and fade as this year's games accumulate. Margins are "
-            "capped so a lopsided score cannot set the rating."
+            "Offense and defense use only this season's games, adjusted for the "
+            "defenses and offenses each team has faced. Newer games count more. "
+            "Last season, talent, and returning production are not included. "
+            "Margins are capped so a lopsided score cannot set the rating."
         ),
         "teams": teams,
     }

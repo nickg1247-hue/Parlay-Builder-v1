@@ -44,6 +44,13 @@
         <span class="dash-page-kicker" id="pr-meta">Loading rankings…</span>
       </header>
 
+      <div class="slate-toolbar dash-toolbar">
+        <button type="button" class="dash-btn dash-btn-ghost" id="model-relearn-btn" title="Rebuild winner picks from this season and the current power rankings">
+          Model relearn
+        </button>
+        <span id="model-relearn-status" class="dash-page-kicker" aria-live="polite"></span>
+      </div>
+
       <div class="error error-state hidden" id="pr-error"></div>
       <div class="loading empty-state" id="pr-loading">
         <div class="spinner"></div>
@@ -72,7 +79,6 @@
                 <th>Offense</th>
                 <th>Defense</th>
                 <th>Record</th>
-                <th>Prior</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -81,7 +87,7 @@
       </div>
     </main>
   </div>
-  <script src="/static/app.js?v=20260922"></script>
-  <script src="/static/power_rankings.js?v=20260922"></script>
+  <script src="/static/app.js?v=20260922r"></script>
+  <script src="/static/power_rankings.js?v=20260922s"></script>
 </body>
 </html>

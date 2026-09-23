@@ -94,6 +94,24 @@ def test_walk_forward_reads_rankings_from_before_that_week():
     assert samples == [(10.0, 1.0, 1)]
 
 
+def test_short_sample_cannot_produce_a_30_point_rating():
+    from app.services.power_rankings import SideRating, stabilize_rating
+
+    wild = SideRating(offense=30, defense=-20, raw_offense=2, raw_defense=-1, games=2, wins=1)
+    stable = stabilize_rating(wild)
+    assert abs(stable.offense) < 12
+    assert stable.games == 2
+
+
+def test_clear_power_gap_is_not_watered_down_to_a_tossup():
+    from app.services.season_relearn import rankings_blend_weight
+
+    weight = rankings_blend_weight(0.35, 0.15)
+    assert weight >= 0.65
+    mixed = mix_probability(0.66, 0.15, weight)
+    assert mixed < 0.40
+
+
 def test_mix_moves_the_pick_toward_the_rankings():
     mixed = mix_probability(0.55, 0.80, 0.40)
     assert 0.55 < mixed < 0.80

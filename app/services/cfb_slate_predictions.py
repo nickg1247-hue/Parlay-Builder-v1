@@ -322,22 +322,21 @@ def predict_slate(game_date: date | None = None) -> dict[str, dict[str, Any]]:
                 row_ou = getattr(totals_row, "ou_line", None)
                 if row_ou is not None and not pd.isna(row_ou):
                     ou_line = float(row_ou)
-            if ou_line is None:
-                continue
-            totals_pick, totals_edge = _totals_pick(expected, prob_over, float(ou_line))
-            ou_source = "book" if gid in book_ou else "matchup"
-            if ou_source == "matchup" and pd.notna(row.get("ou_line")):
-                ou_source = "book"
-            payload.update(
-                {
-                    "expected_total_pts": round(expected, 1),
-                    "model_prob_over": prob_over,
-                    "ou_line": float(ou_line),
-                    "totals_pick": totals_pick,
-                    "totals_confidence": confidence_label(totals_edge),
-                    "ou_line_source": ou_source,
-                }
-            )
+            if ou_line is not None:
+                totals_pick, totals_edge = _totals_pick(expected, prob_over, float(ou_line))
+                ou_source = "book" if gid in book_ou else "matchup"
+                if ou_source == "matchup" and pd.notna(row.get("ou_line")):
+                    ou_source = "book"
+                payload.update(
+                    {
+                        "expected_total_pts": round(expected, 1),
+                        "model_prob_over": prob_over,
+                        "ou_line": float(ou_line),
+                        "totals_pick": totals_pick,
+                        "totals_confidence": confidence_label(totals_edge),
+                        "ou_line_source": ou_source,
+                    }
+                )
 
         out[gid] = payload
     out.update(fcs_out)

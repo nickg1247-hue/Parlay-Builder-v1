@@ -92,6 +92,12 @@ def power_win_probability(
     return min(0.97, max(0.03, probability))
 
 
+def rankings_blend_weight(base_weight: float, power_probability: float) -> float:
+    """Let a clear power gap decide the pick instead of the preseason model."""
+    gap = abs(float(power_probability) - 0.5)
+    return round(min(0.92, max(float(base_weight), 0.45) + 2.2 * gap), 3)
+
+
 def mix_probability(base: float, power_probability: float, weight: float) -> float:
     mixed = (1.0 - weight) * float(base) + weight * float(power_probability)
     return min(0.99, max(0.01, mixed))
@@ -356,7 +362,10 @@ def blend_home_probability(
         home_power - away_power,
         neutral=neutral,
     )
-    weight = float(artifact.get("blend_weight") or 0.0)
+    weight = rankings_blend_weight(
+        float(artifact.get("blend_weight") or 0.0),
+        power_probability,
+    )
     mixed = mix_probability(base_probability, power_probability, weight)
     return mixed, {
         "base_model_prob_home": round(float(base_probability), 4),

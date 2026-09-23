@@ -74,7 +74,8 @@ async function fetchJSON(url, options = {}) {
     const hit = window.__ntgFetchCache.get(url);
     if (Date.now() - hit.at < hit.ttl) return hit.data;
   }
-  const timeoutMs = options.timeoutMs || 20000;
+  const predictionCall = typeof url === "string" && /\/(predictions|daily)(\?|$)/.test(url);
+  const timeoutMs = options.timeoutMs || (predictionCall ? 90000 : 20000);
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   const started = performance.now();

@@ -25,6 +25,7 @@
   }
 
   function signed(value) {
+    if (value == null || value === "") return "—";
     const number = Number(value);
     if (!Number.isFinite(number)) return "—";
     const text = `${number > 0 ? "+" : ""}${number.toFixed(1)}`;
@@ -33,7 +34,9 @@
   }
 
   function rankLine(rank, count, rating) {
-    return `<span class="pr-rank-cell">${rank} / ${count}${signed(rating).replace("<span", "<small").replace("</span>", "</small>")}</span>`;
+    if (rank == null) return "—";
+    const rated = payload.ranked_count || count;
+    return `<span class="pr-rank-cell">${rank} / ${rated}${signed(rating).replace("<span", "<small").replace("</span>", "</small>")}</span>`;
   }
 
   function teamMatches(team) {
@@ -65,7 +68,7 @@
       .join("");
     return `
       <tr class="pr-break">
-        <td colspan="7">
+          <td colspan="6">
           <div class="pr-break-grid">
             <div>
               <h3>Sub-points</h3>
@@ -74,9 +77,9 @@
             </div>
             <div>
               <h3>Side ranks</h3>
-              <p>Offense ${team.offense_rank} / ${payload.team_count}</p>
-              <p>Defense ${team.defense_rank} / ${payload.team_count}</p>
-              <p class="pr-note">1 is the best on that side of the ball. These ranks use opponent-adjusted efficiency plus that side of the prior. They are not a second copy of the overall rank.</p>
+              <p>Offense ${team.offense_rank ?? "—"} / ${payload.ranked_count || payload.team_count}</p>
+              <p>Defense ${team.defense_rank ?? "—"} / ${payload.ranked_count || payload.team_count}</p>
+              <p class="pr-note">1 is the best on that side of the ball this season. These ranks use opponent-adjusted efficiency only. They are not a second copy of the overall rank.</p>
               <h3>Not scored yet</h3>
               <ul class="pr-missing-list">${unavailable}</ul>
             </div>
@@ -97,13 +100,12 @@
         : "";
       rows.push(`
         <tr class="pr-row" data-team="${escapeHtml(key)}" aria-expanded="${open ? "true" : "false"}">
-          <td>${team.rank}</td>
+          <td>${team.rank ?? "—"}</td>
           <td><span class="pr-team">${logo}<span>${escapeHtml(team.team)}${team.group ? `<small class="pr-record">${escapeHtml(team.group)}</small>` : ""}</span></span></td>
           <td>${signed(team.power)}</td>
-          <td>${rankLine(team.offense_rank, payload.team_count, team.offense_rating)}</td>
-          <td>${rankLine(team.defense_rank, payload.team_count, team.defense_rating)}</td>
-          <td>${team.wins}-${team.losses}</td>
-          <td class="pr-muted">${Math.round(team.prior_weight * 100)}% prior</td>
+          <td>${rankLine(team.offense_rank, payload.ranked_count, team.offense_rating)}</td>
+          <td>${rankLine(team.defense_rank, payload.ranked_count, team.defense_rating)}</td>
+          <td>${team.games_played ? `${team.wins}-${team.losses}` : "—"}</td>
         </tr>`);
       if (open) rows.push(breakdownHtml(team));
     });
@@ -141,25 +143,34 @@
   els.search.addEventListener("input", render);
   els.group.addEventListener("change", render);
 
-  fetch(`/api/${sport}/power-rankings`)
-    .then((response) => {
-      if (!response.ok) throw new Error("Rankings are unavailable right now.");
-      return response.json();
-    })
-    .then((data) => {
-      payload = data;
-      const through = data.through ? ` through ${data.through}` : "";
-      els.meta.textContent = `${data.season} season${through} · ${data.team_count} teams · ${data.unit}`;
-      els.summary.textContent = data.summary || "";
-      fillGroups();
-      fillLegend();
-      els.loading.classList.add("hidden");
-      els.content.classList.remove("hidden");
-      render();
-    })
-    .catch((error) => {
-      els.loading.classList.add("hidden");
-      els.error.textContent = error.message || "Rankings are unavailable right now.";
-      els.error.classList.remove("hidden");
-    });
+  function loadRankings() {
+    els.loading.classList.remove("hidden");
+    els.error.classList.add("hidden");
+    fetch(`/api/${sport}/power-rankings`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Rankings are unavailable right now.");
+        return response.json();
+      })
+      .then((data) => {
+        payload = data;
+        const through = data.through ? ` through ${data.through}` : "";
+        els.meta.textContent = `${data.season} season${through} · ${data.team_count} teams · ${data.unit}`;
+        els.summary.textContent = data.summary || "";
+        fillGroups();
+        fillLegend();
+        els.loading.classList.add("hidden");
+        els.content.classList.remove("hidden");
+        render();
+      })
+      .catch((error) => {
+        els.loading.classList.add("hidden");
+        els.error.textContent = error.message || "Rankings are unavailable right now.";
+        els.error.classList.remove("hidden");
+      });
+  }
+
+  loadRankings();
+  if (typeof initModelRelearn === "function") {
+    initModelRelearn(sport, { onDone: loadRankings });
+  }
 })();

@@ -1,9 +1,8 @@
-"""NFL power rankings from completed games only.
+"""NFL power rankings from this season's regular-season games only.
 
-In-season offense and defense use regular-season results before the slate date.
-Last season is the prior. Preseason games are a small part of that prior, not
-the current-season rating. Quarterback, matchup, special teams, and injury
-factors are listed and left unscored until a feed exists.
+Last season and the preseason are left out so an old result cannot move a team.
+Quarterback, matchup, special teams, and injury factors are listed and left
+unscored until a feed exists.
 """
 
 from __future__ import annotations
@@ -22,19 +21,16 @@ from app.services.power_rankings import (
     compose_score,
     football_season,
     from_tenths,
-    prior_weight_for_games,
     rank_map,
     rate_games,
     schedule_needs_refresh,
+    stabilize_rating,
 )
 
 logger = logging.getLogger(__name__)
 
 NFL_HFA = 2.4
 NFL_MARGIN_CAP = 21.0
-NFL_LATE_GAMES = 8
-NFL_LATE_WEIGHT = 0.30
-PRESEASON_PRIOR_SHARE = 0.20
 
 NFL_UNAVAILABLE = (
     {
@@ -152,7 +148,7 @@ def _empty_rating() -> SideRating:
 def _rate(rows: list[RawGame], *, recency: bool) -> dict[str, SideRating]:
     if not rows:
         return {abbr: _empty_rating() for abbr in NFL_DIVISIONS}
-    return rate_games(
+    rated = rate_games(
         rows,
         set(NFL_DIVISIONS),
         hfa=NFL_HFA,
@@ -160,6 +156,7 @@ def _rate(rows: list[RawGame], *, recency: bool) -> dict[str, SideRating]:
         half_life=HALF_LIFE_GAMES,
         recency=recency,
     )
+    return {team: stabilize_rating(side) for team, side in rated.items()}
 
 
 def _with_current_schedule(games: pd.DataFrame, as_of: date) -> pd.DataFrame:
@@ -252,93 +249,82 @@ def _build(as_of: date, games: pd.DataFrame) -> dict:
     else:
         season = football_season(as_of)
     current = _season_rows(history, season, preseason=False)
-    preseason = _season_rows(history, season, preseason=True)
-    previous = _season_rows(history, season - 1, preseason=False)
     season_rating = _rate(current, recency=True)
     flat_rating = _rate(current, recency=False)
-    prior_rating = _rate(previous, recency=True)
-    preseason_rating = _rate(preseason, recency=True)
     names = _names(history if not history.empty else games)
 
+    played = {
+        abbr
+        for abbr, side in season_rating.items()
+        if side.games > 0
+    }
+    composed: dict[str, object] = {}
     blended_offense: dict[str, float] = {}
     blended_defense: dict[str, float] = {}
-    composed: dict[str, object] = {}
-    weights: dict[str, float] = {}
-    for abbr in NFL_DIVISIONS:
-        season_side = season_rating.get(abbr) or _empty_rating()
-        flat_side = flat_rating.get(abbr) or _empty_rating()
-        last = prior_rating.get(abbr) or _empty_rating()
-        pre = preseason_rating.get(abbr) or _empty_rating()
-        weight = prior_weight_for_games(
-            season_side.games,
-            late_weight=NFL_LATE_WEIGHT,
-            late_games=NFL_LATE_GAMES,
-        )
-        if pre.games:
-            prior_offense = (1.0 - PRESEASON_PRIOR_SHARE) * last.offense + PRESEASON_PRIOR_SHARE * pre.offense
-            prior_defense = (1.0 - PRESEASON_PRIOR_SHARE) * last.defense + PRESEASON_PRIOR_SHARE * pre.defense
-            prior_parts = [
-                ("last_season", (1.0 - PRESEASON_PRIOR_SHARE) * (last.offense + last.defense)),
-                ("preseason", PRESEASON_PRIOR_SHARE * (pre.offense + pre.defense)),
-            ]
-        else:
-            prior_offense = last.offense
-            prior_defense = last.defense
-            prior_parts = [("last_season", last.offense + last.defense)]
+    for abbr in played:
+        season_side = season_rating[abbr]
         score = compose_score(
             season_side,
-            flat_side,
-            prior_offense=prior_offense,
-            prior_defense=prior_defense,
-            prior_weight=weight,
-            prior_parts=prior_parts,
+            flat_rating.get(abbr) or _empty_rating(),
+            prior_offense=0.0,
+            prior_defense=0.0,
+            prior_weight=0.0,
+            prior_parts=[],
         )
         composed[abbr] = (score, season_side)
-        weights[abbr] = weight
         blended_offense[abbr] = from_tenths(score.offense_tenths)
         blended_defense[abbr] = from_tenths(score.defense_tenths)
 
     offense_ranks = rank_map(blended_offense)
     defense_ranks = rank_map(blended_defense)
-    team_count = len(NFL_DIVISIONS)
+    ranked_count = len(played)
     teams = []
     for abbr in NFL_DIVISIONS:
-        score, season_side = composed[abbr]
+        season_side = season_rating.get(abbr) or _empty_rating()
         division = NFL_DIVISIONS[abbr]
+        played_team = abbr in played
+        score = composed[abbr][0] if played_team else None
         teams.append(
             {
                 "team": names.get(abbr, abbr),
                 "abbr": abbr,
                 "group": _division_label(division),
                 "logo_url": _logo(abbr),
-                "power": from_tenths(score.power_tenths),
-                "offense_rating": blended_offense[abbr],
-                "defense_rating": blended_defense[abbr],
-                "offense_rank": offense_ranks[abbr],
-                "defense_rank": defense_ranks[abbr],
+                "power": from_tenths(score.power_tenths) if score else None,
+                "offense_rating": blended_offense.get(abbr),
+                "defense_rating": blended_defense.get(abbr),
+                "offense_rank": offense_ranks.get(abbr),
+                "defense_rank": defense_ranks.get(abbr),
                 "games_played": season_side.games,
                 "wins": season_side.wins,
                 "losses": season_side.games - season_side.wins,
-                "prior_weight": round(weights[abbr], 2),
+                "prior_weight": 0.0,
                 "subpoints": assemble_subpoints(
                     score,
-                    team_count=team_count,
+                    team_count=ranked_count,
                     offense_rank=offense_ranks[abbr],
                     defense_rank=defense_ranks[abbr],
-                    prior_weight=weights[abbr],
+                    prior_weight=0.0,
                     games_played=season_side.games,
-                ),
+                )
+                if score
+                else [],
             }
         )
-    teams.sort(key=lambda row: (-row["power"], row["team"]))
-    for index, row in enumerate(teams, start=1):
-        row["rank"] = index
+    teams.sort(key=lambda row: (row["power"] is None, -(row["power"] or 0), row["team"]))
+    rank = 0
+    for row in teams:
+        if row["power"] is None:
+            row["rank"] = None
+            continue
+        rank += 1
+        row["rank"] = rank
 
     through = None
     if not history.empty:
         through_dates = pd.to_datetime(history["date"])
         current_dates = through_dates[history["season"] == season]
-        latest = current_dates.max() if len(current_dates) else through_dates.max()
+        latest = current_dates.max() if len(current_dates) else None
         if pd.notna(latest):
             through = pd.Timestamp(latest).date().isoformat()
 
@@ -355,15 +341,17 @@ def _build(as_of: date, games: pd.DataFrame) -> dict:
         "as_of": as_of.isoformat(),
         "season": season,
         "through": through,
-        "team_count": team_count,
+        "team_count": len(NFL_DIVISIONS),
+        "ranked_count": ranked_count,
         "unit": "points versus an average team",
         "groups": groups,
         "group_label": "Division",
         "unavailable": list(NFL_UNAVAILABLE),
         "summary": (
-            "Offense and defense are opponent-adjusted points from this season's games. "
-            "Newer games count more. Last season, plus a light preseason blend, fades as "
-            "the regular season builds. Schedule strength is already inside the efficiency numbers."
+            "Offense and defense use only this season's regular-season games, "
+            "adjusted for who each team has played. Newer games count more. "
+            "Last season is not included. Schedule strength is already inside "
+            "the efficiency numbers."
         ),
         "teams": teams,
     }

@@ -304,6 +304,30 @@ def compose_score(
     )
 
 
+SAMPLE_PRIOR_GAMES = 6.0
+
+
+def stabilize_rating(side: SideRating, *, prior_games: float = SAMPLE_PRIOR_GAMES) -> SideRating:
+    """Pull opponent-adjusted ratings toward the raw average on a short sample.
+
+    Two games cannot support a 30-point rating. The adjusted number still
+    counts, and it counts more as games accumulate.
+    """
+    played = max(0, int(side.games))
+    if played <= 0:
+        return side
+    trust = played / (played + max(0.0, prior_games))
+    keep = 1.0 - trust
+    return SideRating(
+        offense=trust * side.offense + keep * side.raw_offense,
+        defense=trust * side.defense + keep * side.raw_defense,
+        raw_offense=side.raw_offense,
+        raw_defense=side.raw_defense,
+        games=side.games,
+        wins=side.wins,
+    )
+
+
 def rank_map(values: dict[str, float]) -> dict[str, int]:
     ordered = sorted(values, key=lambda team: (-values[team], team))
     return {team: index for index, team in enumerate(ordered, start=1)}
@@ -373,29 +397,16 @@ def assemble_subpoints(
     games_played: int,
 ) -> list[dict]:
     """Counted lines sum to power. Schedule and recency are already inside efficiency."""
-    prior_pct = int(round(prior_weight * 100))
-    season_pct = 100 - prior_pct
-    prior_bits = []
-    for key, part_tenths in parts.prior_part_tenths:
-        label, detail = PRIOR_PART_COPY.get(key, (key, ""))
-        prior_bits.append(
-            {
-                "key": key,
-                "label": label,
-                "points": points_label(part_tenths),
-                "detail": detail,
-            }
-        )
-    return [
+    del prior_weight, games_played
+    lines = [
         {
             "key": "offense",
             "label": "Offensive efficiency",
             "points": points_label(parts.offense_season_tenths),
             "counted": True,
             "detail": (
-                f"Opponent-adjusted points scored. This is {season_pct}% of the "
-                f"season offense. Offensive rank {offense_rank} of {team_count} "
-                f"also includes the offensive share of the prior ({points_label(parts.prior_offense_tenths):+.1f})."
+                f"Opponent-adjusted points scored this season. "
+                f"Offensive rank {offense_rank} of {team_count}."
             ),
         },
         {
@@ -404,22 +415,34 @@ def assemble_subpoints(
             "points": points_label(parts.defense_season_tenths),
             "counted": True,
             "detail": (
-                f"Opponent-adjusted points prevented. This is {season_pct}% of the "
-                f"season defense. Defensive rank {defense_rank} of {team_count} "
-                f"also includes the defensive share of the prior ({points_label(parts.prior_defense_tenths):+.1f})."
+                f"Opponent-adjusted points prevented this season. "
+                f"Defensive rank {defense_rank} of {team_count}."
             ),
         },
-        {
-            "key": "prior",
-            "label": "Prior team strength",
-            "points": points_label(parts.prior_tenths),
-            "counted": True,
-            "detail": (
-                f"{prior_pct}% of the rating still comes from before this season's results, "
-                f"after {games_played} current-season game{'s' if games_played != 1 else ''}."
-            ),
-            "parts": prior_bits,
-        },
+    ]
+    if parts.prior_tenths:
+        prior_bits = []
+        for key, part_tenths in parts.prior_part_tenths:
+            label, detail = PRIOR_PART_COPY.get(key, (key, ""))
+            prior_bits.append(
+                {
+                    "key": key,
+                    "label": label,
+                    "points": points_label(part_tenths),
+                    "detail": detail,
+                }
+            )
+        lines.append(
+            {
+                "key": "prior",
+                "label": "Prior team strength",
+                "points": points_label(parts.prior_tenths),
+                "counted": True,
+                "detail": "Earlier seasons are not part of this rating.",
+                "parts": prior_bits,
+            }
+        )
+    return lines + [
         {
             "key": "schedule",
             "label": "Schedule strength",

@@ -127,14 +127,23 @@ def test_nfl_rankings_ignore_future_games_and_sum_subpoints():
     by_abbr = {team["abbr"]: team for team in payload["teams"]}
     assert by_abbr["KC"]["games_played"] == 2
     assert by_abbr["NE"]["games_played"] == 0
-    assert by_abbr["NE"]["prior_weight"] > by_abbr["KC"]["prior_weight"]
-    offense_ranks = [team["offense_rank"] for team in payload["teams"]]
-    defense_ranks = [team["defense_rank"] for team in payload["teams"]]
-    assert sorted(offense_ranks) == list(range(1, 33))
-    assert sorted(defense_ranks) == list(range(1, 33))
+    assert by_abbr["NE"]["power"] is None
+    assert by_abbr["NE"]["rank"] is None
+    assert by_abbr["KC"]["prior_weight"] == 0
+    assert all(point["key"] != "prior" for point in by_abbr["KC"]["subpoints"])
+    played = [team for team in payload["teams"] if team["games_played"]]
+    offense_ranks = [team["offense_rank"] for team in played]
+    defense_ranks = [team["defense_rank"] for team in played]
+    assert sorted(offense_ranks) == list(range(1, len(played) + 1))
+    assert sorted(defense_ranks) == list(range(1, len(played) + 1))
+    assert payload["ranked_count"] == len(played)
     keys = {item["key"] for item in payload["unavailable"]}
     assert {"quarterback", "passing", "rushing", "special_teams", "availability"} <= keys
     for team in payload["teams"]:
+        if team["power"] is None:
+            assert team["games_played"] == 0
+            assert team["subpoints"] == []
+            continue
         counted = [point for point in team["subpoints"] if point["counted"]]
         assert round(sum(point["points"] for point in counted), 1) == team["power"]
         schedule = next(point for point in team["subpoints"] if point["key"] == "schedule")
