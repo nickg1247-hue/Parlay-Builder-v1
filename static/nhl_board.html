@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/assets/ntg-logo.png?v=20260814" type="image/png">
+  <title>NHL predictions — NTG Sports</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260814">
+  <link rel="stylesheet" href="/static/app.css?v=20260816">
+  <link rel="stylesheet" href="/static/brand.css?v=20260814">
+  <link rel="stylesheet" href="/static/design.css?v=20260814">
+  <link rel="stylesheet" href="/static/home-v2.css?v=20260814">
+  <link rel="stylesheet" href="/static/ntg-system.css?v=20260821">
+</head>
+<body class="ntg-shell home-v2" data-sport="nhl">
+  <div class="app-shell">
+    <header class="app-topbar dash-topbar">
+      <div class="app-nav-row dash-nav-row">
+        <a class="app-brand app-brand--lockup" href="/" aria-label="NTG Sports home">
+          <img class="app-brand-logo app-brand-logo--dash" src="/static/assets/ntg-logo.png?v=20260814" alt="NTG Sports" width="56" height="56" />
+        </a>
+        <nav class="app-nav-primary dash-primary-nav" aria-label="Primary"></nav>
+        <nav class="app-nav-links dash-utility-nav" aria-label="Account & tools"></nav>
+      </div>
+      <div class="dash-subnav">
+        <div class="sport-pills dash-sport-pills" aria-label="Sports"></div>
+      </div>
+      <div class="dash-sync-wrap">
+        <div id="site-refresh-bar" class="site-refresh-bar dash-sync-text" aria-live="polite">Checking sync…</div>
+        <div class="dash-progress" aria-hidden="true">
+          <div id="dash-progress-fill" class="dash-progress-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main dash-main">
+      <p class="dash-page-kicker"><a href="/nhl">← NHL slate</a></p>
+      <header class="dash-page-header">
+        <div>
+          <h1>NHL prediction board</h1>
+          <p class="dash-page-kicker" id="board-note">Winner, puck-line cover, and over/under from the NHL score model.</p>
+        </div>
+        <span class="dash-page-kicker" id="board-date"></span>
+      </header>
+      <div id="board-loading" class="ntg-skel-stack" aria-busy="true" aria-label="Loading predictions">
+        <div class="ntg-skel ntg-skel--card"></div>
+        <div class="ntg-skel ntg-skel--card"></div>
+      </div>
+      <div id="board-error" class="error-state hidden"></div>
+      <div id="board-wrap" class="feature-table-wrap hidden"></div>
+    </main>
+  </div>
+  <script src="/static/app.js?v=20260929nhl"></script>
+  <script>
+    (async function () {
+      const loading = document.getElementById("board-loading");
+      const errEl = document.getElementById("board-error");
+      const wrap = document.getElementById("board-wrap");
+      const note = document.getElementById("board-note");
+      const dateEl = document.getElementById("board-date");
+      const dateParam = qs("date");
+      const url = dateParam
+        ? `/api/nhl/predictions?date=${encodeURIComponent(dateParam)}`
+        : "/api/nhl/predictions";
+
+      function pct(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "—";
+        return `${Math.round(n * 100)}%`;
+      }
+
+      function esc(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      try {
+        const data = await fetchJSON(url);
+        const rows = Object.values(data || {}).filter((row) => row && row.game_id);
+        loading.classList.add("hidden");
+        if (!rows.length) {
+          renderEmptyState(wrap, "no-nhl-games");
+          wrap.classList.remove("hidden");
+          return;
+        }
+        dateEl.textContent = rows[0].date || dateParam || "";
+        if (rows[0].ratings_note) note.textContent = rows[0].ratings_note;
+        const body = rows.map((row) => {
+          const href = `/nhl/game/${encodeURIComponent(row.game_id)}?date=${encodeURIComponent(String(row.date || "").slice(0, 10))}`;
+          const cover = row.model_prob_home_cover != null && String(row.spread_pick || "").includes(row.home_team)
+            ? row.model_prob_home_cover
+            : row.model_prob_away_cover;
+          const totalProb = String(row.totals_pick || "").startsWith("Over")
+            ? row.model_prob_over
+            : row.model_prob_under;
+          return `<tr>
+            <td><a href="${href}">${esc(row.away_team)} @ ${esc(row.home_team)}</a></td>
+            <td>${esc(row.model_pick)} <span class="dash-page-kicker">${pct(row.model_pick_side === "home" ? row.model_prob_home : row.model_prob_away)}</span></td>
+            <td>${esc(row.spread_pick)} <span class="dash-page-kicker">${pct(cover)}</span></td>
+            <td>${esc(row.totals_pick)} <span class="dash-page-kicker">${pct(totalProb)}</span></td>
+            <td>${esc(row.expected_away_goals)}–${esc(row.expected_home_goals)}</td>
+          </tr>`;
+        }).join("");
+        wrap.innerHTML = `<table class="feature-table">
+          <thead><tr><th>Game</th><th>Winner</th><th>Puck line</th><th>Total</th><th>Expected goals</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+        <p class="disclaimer-small">Expected goals are regulation rates. A tied game adds one overtime or shootout goal before the total is graded. Not betting advice.</p>`;
+        wrap.classList.remove("hidden");
+      } catch (e) {
+        loading.classList.add("hidden");
+        errEl.classList.remove("hidden");
+        errEl.textContent = e.message || "Failed to load NHL predictions";
+      }
+    })();
+  </script>
+</body>
+</html>

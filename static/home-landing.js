@@ -5,12 +5,13 @@
 (function () {
   "use strict";
 
-  const SPORT_ORDER = ["mlb", "nfl", "nba", "cfb", "ufc"];
-  const SPORT_LABEL = { mlb: "MLB", nfl: "NFL", nba: "NBA", cfb: "CFB", ufc: "UFC" };
+  const SPORT_ORDER = ["mlb", "nfl", "nba", "nhl", "cfb", "ufc"];
+  const SPORT_LABEL = { mlb: "MLB", nfl: "NFL", nba: "NBA", nhl: "NHL", cfb: "CFB", ufc: "UFC" };
   const SPORT_MARK = {
     mlb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5c1.4 2.4 1.4 14.6 0 17"/><path d="M12 3.5c-1.4 2.4-1.4 14.6 0 17"/></svg>',
     nfl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M9.5 9.5l5 5"/></svg>',
     nba: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5v17"/></svg>',
+    nhl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 19V8c0-2 1.5-3.5 3.5-3.5H15c1.8 0 3 1.2 3 3v3"/><path d="M18 11l3 3-2 2-4-3"/><circle cx="7" cy="19" r="1.5"/></svg>',
     cfb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="12" rx="8.5" ry="5.5" transform="rotate(-32 12 12)"/><path d="M8.5 14.5l1.5-.75"/><path d="M14 10.25l1.5-.75"/></svg>',
     ufc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M8 8l8 8"/><path d="M16 8l-8 8"/></svg>',
   };
@@ -18,6 +19,7 @@
     mlb: (id) => (id ? `/mlb/game/${encodeURIComponent(id)}` : "/mlb"),
     nfl: (id) => (id ? `/nfl/game/${encodeURIComponent(id)}` : "/nfl"),
     nba: (id) => (id ? `/nba/game/${encodeURIComponent(id)}` : "/nba"),
+    nhl: (id) => (id ? `/nhl/game/${encodeURIComponent(id)}` : "/nhl"),
     cfb: (id) => (id ? `/cfb/game/${encodeURIComponent(id)}` : "/cfb"),
     ufc: (id) => (id ? `/ufc/game/${encodeURIComponent(id)}` : "/ufc"),
   };

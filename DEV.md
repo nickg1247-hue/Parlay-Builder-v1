@@ -145,6 +145,40 @@ pytest tests/test_schedule_nfl.py tests/test_nfl_ingest.py tests/test_nfl_pregam
 
 See `NFL_MODEL.md` and `MARKET_NFL.md`.
 
+## NHL slate
+
+`/nhl` is the game-winner page. Each card shows the model winner, puck-line side, and over/under. `/nhl/game/{id}` explains the score. `/nhl/board` is the same three markets in a table.
+
+The NHL model is separate from NFL and NBA. It does not use those classifiers.
+
+| Endpoint | Behavior |
+|----------|----------|
+| `GET /api/schedule/nhl` | No `date` → next slate within 7 days; `?date=` → that day; `?refresh=true` → bypass the saved snapshot |
+| `GET /api/scores/today?sport=nhl` | Same look-ahead when `date` is omitted |
+| `GET /api/nhl/predictions?date=` | Winner, puck line, and total for each ESPN `game_id` |
+| `GET /api/games/nhl/{game_id}?date=` | One game plus its prediction and likely scorelines |
+| `/nhl`, `/nhl/board`, `/nhl/game/{id}` | Slate, board, and game pages |
+
+**Model:** Each club’s goals for and against per game come from the NHL stats API. Rates shrink toward the league average, then expected goals are attack × opponent defense with a home-ice bump (+6% home, −3% away). Regulation scores are a Poisson grid. A tie becomes a one-goal overtime or shootout (home wins that coin-flip 54% of the time). Puck line −1.5 is a win by 2+ in regulation — overtime winners do not cover. The total uses the final score, including that extra overtime goal. If ESPN has no number, the puck line defaults to 1.5 on the favorite and the total defaults to 6.5.
+
+**Ratings cache:** `data/processed/nhl_team_ratings.json` (6 hours). Prior season is the full regular season; the current season blends in as games are played (`current games / 25`, capped at 80%). Schedule snapshots: `data/processed/nhl_schedule_{date}.json`.
+
+**Data sources:**
+
+| Purpose | URL |
+|---------|-----|
+| Live slate | `https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=YYYYMMDD` |
+| Team goal rates | `https://api.nhle.com/stats/rest/en/team/summary` (`seasonId` + `gameTypeId=2`) |
+| ESPN / NHL key | none |
+
+Goalie confirmations are not in the model yet.
+
+**Verify:** open `/nhl` on a slate day, open a game, and confirm winner, puck line, and total are all filled.
+
+```powershell
+pytest tests/test_nhl_score_model.py -q
+```
+
 ## Player props (MLB + NFL)
 
 One Player Props product. Sport is a filter, not a separate app.

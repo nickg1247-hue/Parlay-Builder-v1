@@ -173,6 +173,12 @@ function teamLogoUrl(teamId, sport = "mlb", abbr) {
     }
     return "";
   }
+  if (sport === "nhl") {
+    if (abbr) {
+      return `https://a.espncdn.com/i/teamlogos/nhl/500/${String(abbr).toLowerCase()}.png`;
+    }
+    return "";
+  }
   return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
 }
 
@@ -185,7 +191,7 @@ function gameDetailHref(game, options = {}) {
   const base = `/${sport}/game/${game.game_id}`;
   const slateDate = options.gameDate || game.slate_date;
   const params = new URLSearchParams();
-  if ((sport === "nba" || sport === "nba-summer" || sport === "cfb" || sport === "nfl" || sport === "ufc") && slateDate) {
+  if ((sport === "nba" || sport === "nba-summer" || sport === "cfb" || sport === "nfl" || sport === "nhl" || sport === "ufc") && slateDate) {
     params.set("date", slateDate);
   }
   if (options.useCache) {
@@ -367,6 +373,9 @@ function sportNavContext(path) {
       rankings: "/nfl/rankings",
       futures: "/nfl/futures",
     };
+  }
+  if (p.startsWith("/nhl")) {
+    return { key: "nhl", label: "NHL", slate: "/nhl", board: "/nhl/board" };
   }
   return { key: "mlb", label: "MLB", slate: "/mlb", board: "/mlb/board" };
 }
@@ -1132,6 +1141,8 @@ const EMPTY_STATE_ICONS = {
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-nfl-games":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  "no-nhl-games":
+    '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
   "no-ufc-fights":
     '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8 8l8 8"/><path d="M16 8l-8 8"/></svg>',
   "no-odds":
@@ -1187,6 +1198,11 @@ function renderEmptyState(el, kind, extraHtml = "") {
       title: "No games on the slate",
       body: "No NFL games in the next week. Try a Sunday during the season.",
       cta: '<a href="/nfl">Refresh slate</a>',
+    },
+    "no-nhl-games": {
+      title: "No NHL games on this date",
+      body: "Nothing scheduled for this day. The next slate loads automatically when you open NHL without a date.",
+      cta: '<a href="/nhl">Open next slate</a>',
     },
     "no-ufc-fights": {
       title: "No fights on the card",
@@ -1560,6 +1576,9 @@ async function fetchSportBoardMap(sport, slateDate, { soft = true } = {}) {
     nfl: date
       ? `/api/nfl/predictions?date=${encodeURIComponent(date)}`
       : "/api/nfl/predictions",
+    nhl: date
+      ? `/api/nhl/predictions?date=${encodeURIComponent(date)}`
+      : "/api/nhl/predictions",
     ufc: date
       ? `/api/ufc/predictions?date=${encodeURIComponent(date)}`
       : "/api/ufc/predictions",
@@ -3907,6 +3926,7 @@ function sportPrimaryIsActive(href, path) {
   if (href === "/mlb") return (path === "/mlb" || path.startsWith("/mlb/")) && !path.startsWith("/mlb/props");
   if (href === "/nba") return path === "/nba" || path.startsWith("/nba/");
   if (href === "/nfl") return path === "/nfl" || path.startsWith("/nfl/");
+  if (href === "/nhl") return path === "/nhl" || path.startsWith("/nhl/");
   if (href === "/cfb") return path === "/cfb" || path.startsWith("/cfb/");
   if (href === "/ufc") return path === "/ufc" || path.startsWith("/ufc/");
   return path === href || path.startsWith(`${href}/`);
@@ -3922,7 +3942,7 @@ function renderDashboardPrimaryNav(container, path) {
           href: "/mlb",
           label: "Game Matchups",
           isActive: (p) =>
-            ["/mlb", "/nfl", "/nba", "/cfb", "/ufc"].some(
+            ["/mlb", "/nfl", "/nba", "/nhl", "/cfb", "/ufc"].some(
               (s) => (p === s || p.startsWith(`${s}/`)) && !p.startsWith("/mlb/props")
             ),
         },
@@ -3936,6 +3956,7 @@ function renderDashboardPrimaryNav(container, path) {
         { href: "/mlb", label: "MLB" },
         { href: "/nfl", label: "NFL" },
         { href: "/nba", label: "NBA" },
+        { href: "/nhl", label: "NHL" },
         { href: "/cfb", label: "CFB" },
         { href: "/ufc", label: "UFC" },
         { href: "/performance", label: "Performance" },

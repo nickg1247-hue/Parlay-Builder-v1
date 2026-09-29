@@ -130,7 +130,10 @@ from app.services.cfb_backtest_report import (
 )
 from app.services.schedule_cfb import get_cfb_game, get_cfb_schedule
 from app.services.schedule_nfl import get_nfl_game, get_nfl_schedule
+from app.services.schedule_nhl import get_nhl_schedule
 from app.services.nfl_slate_predictions import predict_slate as predict_nfl_slate
+from app.services.nhl_slate_predictions import predict_game as predict_nhl_game
+from app.services.nhl_slate_predictions import predict_slate as predict_nhl_slate
 from app.services.nfl_daily_board import build_nfl_daily_board
 from app.services.schedule_ufc import get_ufc_fight, get_ufc_schedule
 from app.services.ufc_daily_board import build_ufc_daily_board
@@ -1107,6 +1110,38 @@ async def nfl_predictions(
     return predict_nfl_slate(game_date)
 
 
+@app.get("/api/schedule/nhl")
+async def nhl_schedule(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Bypass saved cache; re-fetch ESPN"),
+):
+    if date_param:
+        game_date = date_type.fromisoformat(date_param)
+        return get_nhl_schedule(game_date, auto_resolve=False, force_live=refresh)
+    return get_nhl_schedule(None, auto_resolve=True, force_live=refresh)
+
+
+@app.get("/api/nhl/predictions")
+async def nhl_predictions(
+    date_param: str | None = Query(None, alias="date"),
+    refresh: bool = Query(False, description="Rebuild team goal-rate ratings"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    return predict_nhl_slate(game_date, refresh_ratings=refresh)
+
+
+@app.get("/api/games/nhl/{game_id}")
+async def nhl_game_detail(
+    game_id: str,
+    date_param: str | None = Query(None, alias="date"),
+):
+    game_date = date_type.fromisoformat(date_param) if date_param else None
+    detail = predict_nhl_game(game_id, game_date)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return detail
+
+
 @app.get("/api/nfl/daily")
 async def nfl_daily(
     date_param: str | None = Query(None, alias="date"),
@@ -1365,7 +1400,7 @@ async def cfb_bam_progress():
 
 @app.get("/api/scores/today")
 async def scores_today(
-    sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|nfl|ufc|all)$"),
+    sport: str = Query("mlb", pattern="^(mlb|nba|nba-summer|cfb|nfl|nhl|ufc|all)$"),
     date_param: str | None = Query(None, alias="date"),
 ):
     game_date = date_type.fromisoformat(date_param) if date_param else None
@@ -2417,6 +2452,21 @@ async def nfl_rankings_page():
 @app.get("/nfl/game/{game_id}")
 async def nfl_game_page(game_id: str):
     return FileResponse(STATIC_DIR / "nfl_game.html")
+
+
+@app.get("/nhl")
+async def nhl_slate():
+    return FileResponse(STATIC_DIR / "nhl_slate.html")
+
+
+@app.get("/nhl/board")
+async def nhl_board():
+    return FileResponse(STATIC_DIR / "nhl_board.html")
+
+
+@app.get("/nhl/game/{game_id}")
+async def nhl_game_page(game_id: str):
+    return FileResponse(STATIC_DIR / "nhl_game.html")
 
 
 @app.get("/api/games/nfl/{game_id}/insights")

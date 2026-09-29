@@ -1,4 +1,4 @@
-"""Unified today's scores for MLB, NBA, CFB, UFC, and multi-sport ticker."""
+"""Unified today's scores for MLB, NBA, NHL, CFB, UFC, and multi-sport ticker."""
 
 from __future__ import annotations
 
@@ -12,12 +12,13 @@ from app.services.scores_mlb import get_scores_today as get_mlb_scores_today
 from app.services.scores_nba import get_nba_scores_today
 from app.services.scores_nba_summer import get_nba_summer_scores_today
 from app.services.scores_nfl import get_nfl_scores_today
+from app.services.scores_nhl import get_nhl_scores_today
 from app.services.scores_ufc import get_ufc_scores_today
 from app.services.slate_clock import slate_today
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_SPORTS = ("mlb", "nba", "nba-summer", "cfb", "nfl", "ufc", "all")
+SUPPORTED_SPORTS = ("mlb", "nba", "nba-summer", "cfb", "nfl", "nhl", "ufc", "all")
 MERGED_SPORT_TIMEOUT_SECONDS = 8.0
 
 
@@ -100,6 +101,17 @@ def get_scores_today(
             logger.warning("NFL scores failed", exc_info=True)
             return _empty_scores("nfl", game_date or slate_today())
 
+    if sport == "nhl":
+        try:
+            return get_nhl_scores_today(
+                game_date=game_date,
+                auto_resolve=game_date is None,
+                force_live=False,
+            )
+        except Exception:
+            logger.warning("NHL scores failed", exc_info=True)
+            return _empty_scores("nhl", game_date or slate_today())
+
     if sport == "ufc":
         return get_ufc_scores_today(
             game_date=game_date,
@@ -132,6 +144,13 @@ def get_scores_today(
             force_live=False,
         )
 
+    def _fetch_nhl() -> dict[str, Any]:
+        return get_nhl_scores_today(
+            game_date=game_date,
+            auto_resolve=game_date is None,
+            force_live=False,
+        )
+
     def _fetch_ufc() -> dict[str, Any]:
         return get_ufc_scores_today(
             game_date=game_date,
@@ -139,18 +158,20 @@ def get_scores_today(
             force_live=game_date is None,
         )
 
-    pool = ThreadPoolExecutor(max_workers=5)
+    pool = ThreadPoolExecutor(max_workers=6)
     try:
         mlb_future = pool.submit(_fetch_mlb)
         nba_future = pool.submit(_fetch_nba)
         cfb_future = pool.submit(_fetch_cfb)
         nfl_future = pool.submit(_fetch_nfl)
+        nhl_future = pool.submit(_fetch_nhl)
         ufc_future = pool.submit(_fetch_ufc)
         fallback_date = game_date or slate_today()
         mlb = _future_result(mlb_future, "mlb", fallback_date)
         nba = _future_result(nba_future, "nba", fallback_date)
         cfb = _future_result(cfb_future, "cfb", fallback_date)
         nfl = _future_result(nfl_future, "nfl", fallback_date)
+        nhl = _future_result(nhl_future, "nhl", fallback_date)
         ufc = _future_result(ufc_future, "ufc", fallback_date)
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
@@ -164,6 +185,7 @@ def get_scores_today(
         + _tag_sport(nba_games, "nba")
         + _tag_sport(cfb.get("games") or [], "cfb")
         + _tag_sport(nfl.get("games") or [], "nfl")
+        + _tag_sport(nhl.get("games") or [], "nhl")
         + _tag_sport(ufc.get("games") or [], "ufc")
     )
     games.sort(key=lambda g: g.get("start_time_utc") or "")
@@ -175,17 +197,20 @@ def get_scores_today(
         "resolved_date": nba.get("resolved_date")
         or cfb.get("resolved_date")
         or nfl.get("resolved_date")
+        or nhl.get("resolved_date")
         or ufc.get("resolved_date")
         or mlb_date.isoformat(),
         "days_ahead": max(
             nba.get("days_ahead", 0),
             cfb.get("days_ahead", 0),
             nfl.get("days_ahead", 0),
+            nhl.get("days_ahead", 0),
             ufc.get("days_ahead", 0),
         ),
         "auto_advanced": bool(nba.get("auto_advanced"))
         or bool(cfb.get("auto_advanced"))
         or bool(nfl.get("auto_advanced"))
+        or bool(nhl.get("auto_advanced"))
         or bool(ufc.get("auto_advanced")),
         "games": games,
         "games_count": len(games),
@@ -195,6 +220,7 @@ def get_scores_today(
             "nba-summer": summer_count,
             "cfb": cfb.get("games_count", 0),
             "nfl": nfl.get("games_count", 0),
+            "nhl": nhl.get("games_count", 0),
             "ufc": ufc.get("games_count", 0),
         },
         "cached_at": max(
@@ -202,6 +228,7 @@ def get_scores_today(
             nba.get("cached_at") or "",
             cfb.get("cached_at") or "",
             nfl.get("cached_at") or "",
+            nhl.get("cached_at") or "",
             ufc.get("cached_at") or "",
         ),
         "cache_hit": (
@@ -209,6 +236,7 @@ def get_scores_today(
             and bool(nba.get("cache_hit"))
             and bool(cfb.get("cache_hit"))
             and bool(nfl.get("cache_hit"))
+            and bool(nhl.get("cache_hit"))
             and bool(ufc.get("cache_hit"))
         ),
         "source": "merged",
